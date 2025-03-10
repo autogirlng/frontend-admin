@@ -1,11 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AuthLayout from "@/app/components/auth/AuthLayout";
-import { useState } from "react";
 import OtpInput from "react-otp-input";
 import Image from "next/image";
+
 export default function EmailSentPage() {
   const [otp, setOtp] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+
+  // Simulate verification delay and navigate
+  useEffect(() => {
+    if (otp.length === 5) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        router.push("/auth/new-password"); // Change this to your destination
+      }, 1000);
+    }
+  }, [otp, router]);
 
   return (
     <AuthLayout>
@@ -25,24 +39,33 @@ export default function EmailSentPage() {
           check your spam first before resending the code.
         </p>
 
-        {/* OTP Input */}
+        {/* OTP Input or Loading Indicator */}
         <div className="mt-6 flex justify-center">
-          <OtpInput
-            value={otp}
-            onChange={setOtp}
-            numInputs={5}
-            shouldAutoFocus
-            inputStyle={{
-              width: "2.5rem",
-              height: "2.5rem",
-              margin: "0 0.5rem",
-              fontSize: "1.5rem",
-              textAlign: "center",
-              border: "1px solid #ccc",
-              borderRadius: "0.5rem",
-            }}
-            renderInput={(props) => <input {...props} />}
-          />
+          {isSubmitting ? (
+            <div className="w-full h-1 bg-gray-300 rounded-full relative overflow-hidden">
+              <div className="h-full bg-blue-500 absolute left-0 animate-loading"></div>
+            </div>
+          ) : (
+            <OtpInput
+              value={otp}
+              onChange={setOtp}
+              numInputs={5}
+              shouldAutoFocus
+              // isDisabled={isSubmitting}
+              inputStyle={{
+                width: "2.5rem",
+                height: "2.5rem",
+                margin: "0 0.5rem",
+                fontSize: "1.5rem",
+                textAlign: "center",
+                border: "1px solid #ccc",
+                borderRadius: "0.5rem",
+                backgroundColor: isSubmitting ? "#f3f3f3" : "white",
+                transition: "background-color 0.3s ease",
+              }}
+              renderInput={(props) => <input {...props} />}
+            />
+          )}
         </div>
 
         {/* Timer for OTP Resend */}
@@ -56,13 +79,13 @@ export default function EmailSentPage() {
 function OtpTimer() {
   const [timeLeft, setTimeLeft] = useState(60);
 
-  useState(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => clearInterval(timer);
-  });
+  }, []);
 
   return (
     <p className="text-gray-500 text-sm mt-4">

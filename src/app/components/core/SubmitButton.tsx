@@ -14,7 +14,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ isLoading, text }) => {
       className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center
         ${
           isValid && dirty
-            ? "bg-blue-500 hover:bg-blue-600 text-white"
+            ? "bg-[#0673FF] hover:bg-blue-600 text-white"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }
       `}

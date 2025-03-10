@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Formik, Form } from "formik";
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import SubmitButton from "@/app/components/core/SubmitButton";
 import InputField from "@/app/components/core/InputField";
-import { Form, Formik } from "formik";
 import { loginSchema } from "@/app/validators/AuthSchema";
-import Link from "next/link";
-import { useState } from "react";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   return (
     <AuthLayout>
@@ -24,22 +26,27 @@ export default function LoginPage() {
         <Formik
           initialValues={{ email: "", password: "" }}
           validationSchema={loginSchema}
-          onSubmit={(values) => {
+          onSubmit={(values, { setSubmitting }) => {
             setLoading(true);
             setTimeout(() => {
               console.log("Login Data:", values);
               setLoading(false);
+              setSubmitting(false);
+              router.push("/"); // Navigate to home page after successful login
             }, 2000);
           }}
         >
           {({ isSubmitting }) => (
             <Form className="space-y-5">
+              {/* Email Input */}
               <InputField
                 label="Email"
                 name="email"
                 type="email"
                 placeholder="Enter email address"
               />
+
+              {/* Password Input */}
               <InputField
                 label="Password"
                 name="password"
@@ -47,6 +54,7 @@ export default function LoginPage() {
                 placeholder="Enter password"
               />
 
+              {/* Forgot Password Link */}
               <div className="text-left">
                 <Link
                   href="/auth/reset-password"
@@ -56,6 +64,7 @@ export default function LoginPage() {
                 </Link>
               </div>
 
+              {/* Submit Button */}
               <SubmitButton
                 isLoading={loading || isSubmitting}
                 text="Sign in"
