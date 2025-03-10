@@ -30,7 +30,7 @@ const StatusCard: FC<StatusCardProps> = ({ title, count, tooltip }) => {
   }, [showTooltip]);
 
   return (
-    <div className="relative shadow rounded-2xl p-4 flex-1 text-left">
+    <div className="relative text-black shadow rounded-2xl p-4 flex-1 text-left">
       <div className="flex items-center justify-between gap-1">
         <h3 className="text-sm text-gray-500">{title}</h3>
         {tooltip && (
@@ -54,7 +54,7 @@ const StatusCard: FC<StatusCardProps> = ({ title, count, tooltip }) => {
           </div>
         )}
       </div>
-      <p className="text-3xl font-bold mt-2">{count}</p>
+      <p className="text-3xl font-bold text-black mt-2">{count}</p>
     </div>
   );
 };

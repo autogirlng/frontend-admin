@@ -40,7 +40,7 @@ const Home = () => {
     <DashboardLayout title="Vehicle Onboarding" currentPage="Dashboard">
       <div className="flex flex-col space-y-2  ">
         <SectionHeader />
-        <div className=" grid grid-cols-3 md:grid-cols-4 gap-4">
+        <div className=" grid grid-cols-2 md:grid-cols-4 gap-4">
           {Statdata.map((item) => (
             <StatusCard key={item.title} {...item} />
           ))}
@@ -52,7 +52,7 @@ const Home = () => {
           ))}
         </div>
         <SectionHeader />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 ">
           <CarCard
             location="Lagos"
             imageUrl="/images/reset-password.png"
