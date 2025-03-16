@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Formik, Form } from "formik";
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import SubmitButton from "@/app/components/core/SubmitButton";
-import InputField from "@/app/components/core/InputField";
+import InputField from "@/app/components/core/form-field/InputField";
 import { loginSchema } from "@/app/validators/AuthSchema";
 
 export default function LoginPage() {

@@ -1,188 +1,201 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Formik, Form } from "formik";
-import InputField from "@/app/components/core/InputField";
+import { useRouter } from "next/navigation";
+import InputField from "@/app/components/core/form-field/InputField";
 import { hostOnboardingSchema } from "@/app/validators/HostOnboardingSchema";
+import PageLayout from "@/app/components/dashboard/PageLayout";
+import CurvedFilledButton from "@/app/components/core/button/CurvedFilledButton";
+import PhoneInputField from "@/app/components/core/form-field/PhoneInputField";
+import FileInputField from "@/app/components/core/form-field/FileInputField";
 
 const HostOnboarding: React.FC = () => {
-  const [isBusinessActive, setIsBusinessActive] = useState(false);
-
-  const handleToggleBusiness = useCallback(() => {
-    setIsBusinessActive((prev) => !prev);
-  }, []);
+  const router = useRouter();
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-8">
-        {/* Cancel Button */}
-        <button
-          type="button"
-          className="text-blue-600 font-medium mb-4"
-          aria-label="Cancel"
-        >
-          ← Cancel
-        </button>
+    <PageLayout
+      buttons={
+        <CurvedFilledButton
+          onClick={() => router.push("/dashboard/hosts")}
+          title="Continue >"
+          disabled={!isFormValid || !isFormDirty} // ✅ Controlled by state
+        />
+      }
+    >
+      <div className="min-h-screen py-10 flex justify-start">
+        <div className="w-full lg:w-[70%] lg:ml-10 rounded-xl transition-all duration-300">
+          {/* Title */}
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Host Onboarding
+          </h2>
+          <p className="text-gray-600 text-sm mb-6">
+            Seamlessly onboard new hosts and manage their details for a smooth
+            listing experience.
+          </p>
 
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-gray-900">Host Onboarding</h2>
-        <p className="text-gray-600 text-sm mb-6">
-          Seamlessly onboard new hosts and manage their details for a smooth
-          listing experience.
-        </p>
-
-        {/* FORM */}
-        <Formik
-          initialValues={{
-            firstName: "",
-            lastName: "",
-            phone: "",
-            email: "",
-            businessName: "",
-            businessAddress: "",
-            businessPhone: "",
-            businessEmail: "",
-            onboardBy: "",
-            attachment: null,
-          }}
-          validationSchema={hostOnboardingSchema}
-          onSubmit={(values) => {
-            console.log("Form Submitted:", values);
-          }}
-        >
-          {({ setFieldValue }) => (
-            <Form className="space-y-6">
-              {/* Host Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Host Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                  <InputField name="firstName" label="First Name" />
-                  <InputField name="lastName" label="Last Name" />
-                  <InputField name="phone" label="Phone Number" type="tel" />
-                  <InputField name="email" label="Email" type="email" />
+          {/* FORM */}
+          <Formik
+            initialValues={{
+              firstName: "",
+              lastName: "",
+              phone: "",
+              email: "",
+              isBusinessActive: false,
+              businessName: "",
+              businessAddress: "",
+              businessPhone: "",
+              businessEmail: "",
+              onboardBy: "",
+              attachment: null,
+            }}
+            validationSchema={hostOnboardingSchema}
+            onSubmit={() => {}}
+            validate={(values) => {
+              const isValid = hostOnboardingSchema.isValidSync(values);
+              setIsFormValid(isValid);
+              setIsFormDirty(
+                Object.values(values).some((val) => val !== "" && val !== null)
+              );
+            }}
+          >
+            {({ values, setFieldValue }) => (
+              <Form className="space-y-6">
+                {/* Host Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Host Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <InputField
+                      name="firstName"
+                      placeholder="Enter First Name"
+                      label="First Name"
+                    />
+                    <InputField
+                      name="lastName"
+                      placeholder="Enter Last Name"
+                      label="Last Name"
+                    />
+                  </div>
+                  <PhoneInputField name="phone" label="Phone" />
+                  <InputField
+                    name="email"
+                    label="Email"
+                    placeholder="Enter email address"
+                    type="email"
+                  />
                 </div>
 
-                {/* Toggle Switch */}
+                {/* Business Toggle */}
                 <div className="mt-5 flex items-center">
                   <label
                     htmlFor="business-toggle"
                     className="flex items-center cursor-pointer"
                   >
+                    <span className="mr-3 text-gray-700">
+                      Is Host Operating as a Business?
+                    </span>
                     <input
                       id="business-toggle"
                       type="checkbox"
                       className="hidden"
-                      checked={isBusinessActive}
-                      onChange={handleToggleBusiness}
-                      aria-label="Toggle business operation"
+                      checked={values.isBusinessActive}
+                      onChange={(e) =>
+                        setFieldValue("isBusinessActive", e.target.checked)
+                      }
                     />
                     <div
                       className={`w-12 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${
-                        isBusinessActive ? "bg-blue-600" : "bg-gray-300"
+                        values.isBusinessActive ? "bg-blue-600" : "bg-gray-300"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-all duration-300 ${
-                          isBusinessActive ? "translate-x-6" : ""
+                          values.isBusinessActive ? "translate-x-6" : ""
                         }`}
                       />
                     </div>
                   </label>
-                  <span className="ml-3 text-gray-700">
-                    Is Host Operating as a Business?
-                  </span>
                 </div>
-              </div>
 
-              {/* Business Information - Only Visible When Toggle is On */}
-              {isBusinessActive && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Business Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                {/* Business Information (Only Visible When Toggle is On) */}
+                {values.isBusinessActive && (
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Business Information
+                    </h3>
                     <InputField name="businessName" label="Business Name" />
                     <InputField
                       name="businessAddress"
                       label="Business Address"
                     />
-                    <InputField
+                    <PhoneInputField
                       name="businessPhone"
                       label="Business Phone Number"
-                      type="tel"
+                      placeholder="Enter business Phone Number"
                     />
                     <InputField
                       name="businessEmail"
                       label="Business Email"
                       type="email"
                     />
-                  </div>
-                </div>
-              )}
 
-              {/* Additional Details */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Additional Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                  {/* Dropdown for Onboard By */}
-                  <div>
-                    <label
-                      htmlFor="onboardBy"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Onboard By
-                    </label>
-                    <select
-                      id="onboardBy"
-                      name="onboardBy"
-                      className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Admin</option>
-                      <option value="admin1">Admin 1</option>
-                      <option value="admin2">Admin 2</option>
-                    </select>
-                  </div>
+                    {/* Additional Details */}
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Additional Details
+                    </h3>
 
-                  {/* File Upload */}
-                  <div>
-                    <label
-                      htmlFor="attachment"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Attachment (Optional)
-                    </label>
-                    <input
-                      id="attachment"
-                      type="file"
+                    {/* Dropdown for Onboard By */}
+                    <div className="mb-3">
+                      <label
+                        htmlFor="onboardBy"
+                        className="block text-sm font-semibold text-[#101928]"
+                      >
+                        Onboarded By
+                      </label>
+                      <select
+                        id="onboardBy"
+                        name="onboardBy"
+                        className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800 appearance-none"
+                        onChange={(e) =>
+                          setFieldValue("onboardBy", e.target.value)
+                        }
+                      >
+                        <option value="" disabled className="text-gray-400">
+                          Select an Admin
+                        </option>
+                        {["Admin 1", "Admin 2", "Super Admin"].map(
+                          (admin, index) => (
+                            <option
+                              key={index}
+                              value={admin.toLowerCase().replace(/\s/g, "")}
+                              className="capitalize"
+                            >
+                              {admin}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
+
+                    {/* File Upload */}
+                    <FileInputField
+                      setFieldValue={setFieldValue}
                       name="attachment"
-                      onChange={(event) => {
-                        setFieldValue(
-                          "attachment",
-                          event.currentTarget.files?.[0] || null
-                        );
-                      }}
-                      className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm cursor-pointer focus:ring-blue-500 focus:border-blue-500"
+                      label="Attachment (optional)"
+                      placeholder="Upload signed MOU by host"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white font-medium py-3 rounded-md hover:bg-blue-700 transition"
-              >
-                Submit →
-              </button>
-            </Form>
-          )}
-        </Formik>
+                )}
+              </Form>
+            )}
+          </Formik>
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

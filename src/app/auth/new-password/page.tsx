@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import AuthLayout from "@/app/components/auth/AuthLayout";
-import InputField from "@/app/components/core/InputField";
+import InputField from "@/app/components/core/form-field/InputField";
 import SubmitButton from "@/app/components/core/SubmitButton";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 

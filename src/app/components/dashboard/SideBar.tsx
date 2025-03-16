@@ -11,6 +11,8 @@ import {
   MdAttachMoney,
   MdSupportAgent,
   MdLogout,
+  MdBook,
+  MdBookOnline,
 } from "react-icons/md"; // Better icons
 
 interface SidebarProps {
@@ -22,8 +24,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
   return (
     <div
-      className={`sm:relative sm:w-64 sm:h-full sm:bg-white sm:text-gray-700 fixed inset-0 bg-white
-         bg-opacity-90 z-50 transition-opacity ${
+      className={`sm:relative sm:w-52 sm:h-full sm:bg-white sm:text-gray-700 sm:shadow-2xl fixed inset-0 bg-white
+         bg-opacity-90 z-100 transition-opacity ${
            isOpen
              ? "opacity-100"
              : "opacity-0 pointer-events-none sm:opacity-100 sm:pointer-events-auto"
@@ -48,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
             {menuItems.map(({ href, icon: Icon, label }) => (
               <li
                 key={href}
-                className={`flex items-center gap-3 px-6 py-3 rounded-lg transition-all duration-300 cursor-pointer text-lg font-medium
+                className={`flex items-center gap-3 px-6 py-3 rounded-lg transition-all duration-300 cursor-pointer text-sm font-medium
                   ${
                     currentPage.toLowerCase() === label.toLowerCase()
                       ? "bg-[#EDF8FF] text-[#0673FF] font-semibold"
@@ -71,9 +73,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
 // Sidebar Navigation Items
 const menuItems = [
   { href: "/", icon: MdDashboard, label: "Dashboard" },
+  { href: "/dashboard/booking", icon: MdBookOnline, label: "Bookings" },
   { href: "/fleet", icon: MdDirectionsCar, label: "Fleet" },
   { href: "/dashboard/onboarding", icon: MdAssignmentAdd, label: "Onboarding" },
-  { href: "/hosts", icon: MdPeople, label: "Hosts" },
+  { href: "/dashboard/hosts", icon: MdPeople, label: "Hosts" },
   { href: "/customers", icon: MdPerson, label: "Customers" },
   { href: "/finance", icon: MdAttachMoney, label: "Finance" },
   { href: "/support", icon: MdSupportAgent, label: "Support" },

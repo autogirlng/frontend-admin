@@ -30,7 +30,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex flex-col  relative">
         {/* Fixed Header */}
-        <header className="fixed top-0 left-0 sm:left-64 w-full sm:w-[calc(100%-16rem)] bg-white shadow px-4 py-3 flex justify-between items-center z-50">
+        <header className="fixed top-0 left-0 sm:left-52 w-full sm:w-[calc(100%-13rem)] bg-white shadow-2xl px-4 py-3 flex justify-between items-center z-50">
           <button
             className="sm:hidden p-2"
             onClick={() => setIsSidebarOpen(true)}
@@ -49,7 +49,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         {/* Page Content */}
         <main
-          className={`flex-1 sm:ml-4 overflow-y-auto overflow-x-hidden bg-slate-50 p-3 max-w-full mt-16`}
+          className={`flex-1  overflow-y-auto overflow-x-hidden pt-16 px-4 bg-white  max-w-full `}
         >
           {children}
         </main>

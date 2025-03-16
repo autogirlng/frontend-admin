@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"; // Import useRouter
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import InputField from "@/app/components/core/InputField";
+import InputField from "@/app/components/core/form-field/InputField";
 import SubmitButton from "@/app/components/core/SubmitButton";
 import { useState } from "react";
 

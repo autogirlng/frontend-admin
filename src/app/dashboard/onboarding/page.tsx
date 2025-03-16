@@ -1,9 +1,10 @@
 "use client";
-
 import React from "react";
 // import { useTable, useSortBy, useFilters } from "react-table";
 import DashboardLayout from "@/app/components/dashboard/DashboardLayout";
 import StatusCard from "@/app/components/dashboard/StatusCard";
+import Link from "next/link";
+import { LocalRoute } from "@/app/utils/LocalRoutes";
 //import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 const VehicleOnboardingPage = () => {
@@ -37,7 +38,9 @@ const VehicleOnboardingPage = () => {
   return (
     <DashboardLayout title="Vehicle Onboarding" currentPage="Onboarding">
       <div className="  ">
-        <h2 className="text-lg font-medium mb-4">+ Vehicle Onboarding</h2>
+        <Link href={LocalRoute.vehicleOnboardingPage}>
+          <h2 className="text-lg font-medium mb-4">+ Vehicle Onboarding</h2>
+        </Link>
         <div className=" grid grid-cols-3 md:grid-cols-5 gap-4">
           {Statdata.map((item) => (
             <StatusCard key={item.title} {...item} />

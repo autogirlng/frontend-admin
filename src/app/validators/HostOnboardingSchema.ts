@@ -3,7 +3,9 @@ import * as Yup from "yup";
 export const hostOnboardingSchema = Yup.object().shape({
   firstName: Yup.string().required("First name is required"),
   lastName: Yup.string().required("Last name is required"),
-  phone: Yup.string().required("Phone number is required"),
+  phone: Yup.string()
+    .length(11, "Phone digit must be 11")
+    .required("Phone number is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   businessName: Yup.string().when("isBusinessActive", {
     is: true,
@@ -13,10 +15,12 @@ export const hostOnboardingSchema = Yup.object().shape({
     is: true,
     then: (schema) => schema.required("Business address is required"),
   }),
-  businessPhone: Yup.string().when("isBusinessActive", {
-    is: true,
-    then: (schema) => schema.required("Business phone is required"),
-  }),
+  businessPhone: Yup.string()
+    .length(11, "Phone digit must be 11")
+    .when("isBusinessActive", {
+      is: true,
+      then: (schema) => schema.required("Business phone is required"),
+    }),
   businessEmail: Yup.string().when("isBusinessActive", {
     is: true,
     then: (schema) =>
