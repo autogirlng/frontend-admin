@@ -2,18 +2,8 @@ import React from "react";
 import { FiX } from "react-icons/fi";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  MdDashboard,
-  MdDirectionsCar,
-  MdAssignmentAdd,
-  MdPeople,
-  MdPerson,
-  MdAttachMoney,
-  MdSupportAgent,
-  MdLogout,
-  MdBook,
-  MdBookOnline,
-} from "react-icons/md"; // Better icons
+
+import { SvgAsset } from "@/app/utils/SvgAssets";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -57,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
                       : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
-                <Icon size={22} />
+                <p className="text-[#0673FF]">{Icon}</p>
                 <Link href={href} className="w-full">
                   {label}
                 </Link>
@@ -72,15 +62,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
 
 // Sidebar Navigation Items
 const menuItems = [
-  { href: "/", icon: MdDashboard, label: "Dashboard" },
-  { href: "/dashboard/booking", icon: MdBookOnline, label: "Bookings" },
-  { href: "/fleet", icon: MdDirectionsCar, label: "Fleet" },
-  { href: "/dashboard/onboarding", icon: MdAssignmentAdd, label: "Onboarding" },
-  { href: "/dashboard/hosts", icon: MdPeople, label: "Hosts" },
-  { href: "/customers", icon: MdPerson, label: "Customers" },
-  { href: "/finance", icon: MdAttachMoney, label: "Finance" },
-  { href: "/support", icon: MdSupportAgent, label: "Support" },
-  { href: "/auth/login", icon: MdLogout, label: "Logout" },
+  { href: "/", icon: SvgAsset.dashboard, label: "Dashboard" },
+  { href: "/dashboard/booking", icon: SvgAsset.booking, label: "Bookings" },
+  { href: "/fleet", icon: SvgAsset.fleet, label: "Fleet" },
+  {
+    href: "/dashboard/onboarding",
+    icon: SvgAsset.onboarding,
+    label: "Onboarding",
+  },
+  { href: "/dashboard/hosts", icon: SvgAsset.host, label: "Hosts" },
+  { href: "/customers", icon: SvgAsset.customers, label: "Customers" },
+  { href: "/finance", icon: SvgAsset.finance, label: "Finance" },
+  { href: "/support", icon: SvgAsset.support, label: "Support" },
+  { href: "/auth/login", icon: SvgAsset.toolTip, label: "Logout" },
 ];
 
 export default Sidebar;

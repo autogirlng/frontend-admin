@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import InputField from "@/app/components/core/form-field/InputField";
 import SubmitButton from "@/app/components/core/SubmitButton";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { useAuth } from "@/app/hooks/use_auth";
 
 // Password validation criteria
 const passwordCriteria = [
@@ -21,7 +22,7 @@ const passwordCriteria = [
 
 // Yup validation schema
 const validationSchema = Yup.object().shape({
-  password: Yup.string()
+  newPassword: Yup.string()
     .min(8, "Password must be at least 8 characters")
     .matches(/[A-Z]/, "Must include at least one uppercase letter")
     .matches(/[a-z]/, "Must include at least one lowercase letter")
@@ -33,13 +34,17 @@ const validationSchema = Yup.object().shape({
     .matches(/^\S*$/, "Cannot contain spaces")
     .required("Password is required"),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password")], "Passwords must match")
+    .oneOf([Yup.ref("newPassword")], "Passwords must match") // Correct reference
     .required("Confirm password is required"),
 });
 
 export default function SetNewPasswordPage() {
   const [isTyping, setIsTyping] = useState(false);
-  const router = useRouter();
+
+  const { resetPassword, isResetPasswordLoading } = useAuth();
+  const params = useSearchParams();
+  const email = params.get("email") || "";
+  const token = params.get("token") || "";
 
   return (
     <AuthLayout>
@@ -52,44 +57,39 @@ export default function SetNewPasswordPage() {
         </p>
 
         <Formik
-          initialValues={{ password: "", confirmPassword: "" }}
+          initialValues={{
+            newPassword: "", // Ensured consistency
+            confirmPassword: "",
+            email: email,
+            token: token,
+          }}
           validationSchema={validationSchema}
-          onSubmit={(values, { setSubmitting }) => {
-            setSubmitting(true);
-            setTimeout(() => {
-              console.log("New Password:", values.password);
-              setSubmitting(false);
-              router.push("/auth/login"); // Navigate to the success page
-            }, 2000);
+          onSubmit={async (values, { setSubmitting }) => {
+            resetPassword(values);
+            setSubmitting(false);
           }}
         >
-          {({ values, handleChange, isSubmitting }) => (
+          {({ values, handleChange, errors, touched, isSubmitting }) => (
             <Form className="space-y-5">
               {/* Password Input */}
               <InputField
                 label="New Password"
-                name="password"
+                name="newPassword"
                 type="password"
                 placeholder="Enter new password"
-                onChanged={(value) => {
-                  handleChange({ target: { name: "password", value } });
+                value={values.newPassword}
+                onChange={(e) => {
+                  handleChange(e);
                   setIsTyping(true);
                 }}
-              />
-
-              {/* Confirm Password Input */}
-              <InputField
-                label="Confirm Password"
-                name="confirmPassword"
-                type="password"
-                placeholder="Confirm new password"
+                error={touched.newPassword && errors.newPassword}
               />
 
               {/* Password Validation Criteria */}
               {isTyping && (
                 <div className="mt-3 p-3">
                   {passwordCriteria.map(({ label, regex }, index) => {
-                    const isValid = regex.test(values.password);
+                    const isValid = regex.test(values.newPassword);
                     return (
                       <div key={index} className="flex items-center text-sm">
                         {isValid ? (
@@ -110,8 +110,22 @@ export default function SetNewPasswordPage() {
                 </div>
               )}
 
+              {/* Confirm Password Input */}
+              <InputField
+                label="Confirm Password"
+                name="confirmPassword"
+                type="password"
+                placeholder="Confirm new password"
+                value={values.confirmPassword}
+                onChange={handleChange}
+                error={touched.confirmPassword && errors.confirmPassword}
+              />
+
               {/* Submit Button */}
-              <SubmitButton isLoading={isSubmitting} text="Set Password" />
+              <SubmitButton
+                isLoading={isResetPasswordLoading || isSubmitting}
+                text="Set Password"
+              />
             </Form>
           )}
         </Formik>

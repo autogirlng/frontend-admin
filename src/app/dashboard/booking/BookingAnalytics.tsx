@@ -9,6 +9,7 @@ import {
 import { FaChevronLeft, FaChevronRight, FaChevronDown } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { AiOutlineFilter } from "react-icons/ai";
+import TableSearchFilter from "@/app/components/core/table/TableSearchFilter";
 
 interface Booking {
   bookingId: string;
@@ -109,21 +110,12 @@ export default function BookingTable() {
 
   return (
     <div className="flex flex-col space-y-4">
-      {/* 🔍 Search & Filter */}
-      <div className="flex  md:flex-row justify-between items-center gap-4">
-        <input
-          type="text"
-          placeholder="Search by Booking ID or Guest Name"
-          className="w-full md:w-2/3 px-4 py-3 mt-1 border border-gray-100 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition cursor-pointer"
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
-        <div className="flex items-center gap-2 px-4  py-3 text-[#667185] bg-white shadow rounded-xl cursor-pointer">
-          <AiOutlineFilter />
-          <p className="hidden md:block">Filter</p>
-          <FaChevronDown />
-        </div>
-      </div>
+      {/* Search & Filter */}
+      <TableSearchFilter
+        onSearchChange={handleSearchChange}
+        searchQuery=""
+        placeholder="Hello world..."
+      />
 
       {/* 📱 Mobile View */}
       <div className="md:hidden">

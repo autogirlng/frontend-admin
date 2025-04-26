@@ -1,31 +1,35 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import OtpInput from "react-otp-input";
 import Image from "next/image";
+import { ImageAssets } from "@/app/utils/ImageAssets";
+import { LocalRoute } from "@/app/utils/LocalRoutes";
 
-export default function EmailSentPage() {
+export default function OtpSentPage() {
   const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email");
 
-  // Simulate verification delay and navigate
   useEffect(() => {
     if (otp.length === 5) {
       setIsSubmitting(true);
       setTimeout(() => {
-        router.push("/auth/new-password"); // Change this to your destination
-      }, 1000);
+        router.push(
+          `${LocalRoute.newPasswordPage}?token=${otp}&email=${email}`
+        );
+      }, 200);
     }
-  }, [otp, router]);
+  }, [otp, router, email]);
 
   return (
     <AuthLayout>
       <div className="w-full max-w-md p-6 text-left">
         <Image
-          src="/images/mailbox.png"
+          src={ImageAssets.mailbox}
           alt="mailbox"
           className="mb-4"
           width={200}
@@ -35,7 +39,7 @@ export default function EmailSentPage() {
           We’ve sent a mail your way
         </h2>
         <p className="text-gray-600 text-sm mt-4">
-          We sent you an OTP to verify your email. If you can’t find it please
+          We sent you an OTP to verify your email. If you can’t find it, please
           check your spam first before resending the code.
         </p>
 
@@ -51,7 +55,6 @@ export default function EmailSentPage() {
               onChange={setOtp}
               numInputs={5}
               shouldAutoFocus
-              // isDisabled={isSubmitting}
               inputStyle={{
                 width: "2.5rem",
                 height: "2.5rem",

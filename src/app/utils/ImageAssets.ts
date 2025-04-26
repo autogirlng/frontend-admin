@@ -6,4 +6,6 @@ export const ImageAssets = {
   vehicleInteriorView: "/images/interior-view.png",
   vehicleOtherView: "/images/other-view.png",
   authBg: "/images/reset-password.png",
+  mailbox: "/images/mailbox.png",
+  vehicleType: "/images/vehicle-type.png",
 };

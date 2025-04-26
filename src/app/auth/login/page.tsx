@@ -1,17 +1,15 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Formik, Form } from "formik";
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import SubmitButton from "@/app/components/core/SubmitButton";
 import InputField from "@/app/components/core/form-field/InputField";
 import { loginSchema } from "@/app/validators/AuthSchema";
+import { useAuth } from "@/app/hooks/use_auth";
+import { LocalRoute } from "@/app/utils/LocalRoutes";
 
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { login, isLoading } = useAuth() || {};
 
   return (
     <AuthLayout>
@@ -26,48 +24,48 @@ export default function LoginPage() {
         <Formik
           initialValues={{ email: "", password: "" }}
           validationSchema={loginSchema}
-          onSubmit={(values, { setSubmitting }) => {
-            setLoading(true);
-            setTimeout(() => {
-              console.log("Login Data:", values);
-              setLoading(false);
+          onSubmit={async (values, { setSubmitting }) => {
+            try {
+              await login(values); // Ensure login completes before disabling submit state
+            } finally {
               setSubmitting(false);
-              router.push("/"); // Navigate to home page after successful login
-            }, 2000);
+            }
           }}
         >
-          {({ isSubmitting }) => (
+          {({ values, handleChange, touched, errors, isSubmitting }) => (
             <Form className="space-y-5">
-              {/* Email Input */}
               <InputField
                 label="Email"
                 name="email"
                 type="email"
                 placeholder="Enter email address"
+                value={values.email} // ✅ Ensure Formik handles the value
+                onChange={handleChange} // ✅ Ensure Formik updates correctly
+                error={touched.email && errors.email} // ✅ Show error messages
               />
 
-              {/* Password Input */}
               <InputField
                 label="Password"
                 name="password"
                 type="password"
                 placeholder="Enter password"
+                value={values.password} // ✅ Ensure Formik handles the value
+                onChange={handleChange} // ✅ Ensure Formik updates correctly
+                error={touched.password && errors.password} // ✅ Show error messages
               />
 
-              {/* Forgot Password Link */}
               <div className="text-left">
                 <Link
-                  href="/auth/reset-password"
+                  href={LocalRoute.forgotPasswordPage}
                   className="text-blue-500 text-sm hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
 
-              {/* Submit Button */}
               <SubmitButton
-                isLoading={loading || isSubmitting}
-                text="Sign in"
+                isLoading={isLoading || isSubmitting}
+                text="Login"
               />
             </Form>
           )}

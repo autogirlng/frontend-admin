@@ -3,10 +3,12 @@
 // import React, { useMemo } from "react";
 // import { useTable, useSortBy, useFilters } from "react-table";
 import DashboardLayout from "@/app/components/dashboard/DashboardLayout";
-import StatusCard from "@/app/components/dashboard/StatusCard";
-import { FaChevronDown } from "react-icons/fa";
-import CarCard from "./components/dashboard/CarCard";
 
+import { FaTicket } from "react-icons/fa6";
+import PerfomanceCard from "./components/dashboard/PerfomanceCard";
+import BookingsCarousel from "./components/dashboard/BookingCarousel";
+import MostBookedVehicles from "./components/dashboard/BookedVehicles";
+import { LocalRoute } from "./utils/LocalRoutes";
 //import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 const Home = () => {
@@ -38,38 +40,17 @@ const Home = () => {
 
   return (
     <DashboardLayout title="Vehicle Onboarding" currentPage="Dashboard">
-      <div className="flex flex-col space-y-2  ">
-        <SectionHeader />
-        <div className=" grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Statdata.map((item) => (
-            <StatusCard key={item.title} {...item} />
-          ))}
-        </div>
-
-        <div className=" grid grid-cols-2 gap-4">
-          {Statdata.slice(2, 5).map((item) => (
-            <StatusCard key={item.title} {...item} />
-          ))}
-        </div>
-        <SectionHeader />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 ">
-          <CarCard
-            location="Lagos"
-            imageUrl="/images/reset-password.png"
-            title="Toyota Corolla 2015"
-            price="NGN 20,000/day"
-            type="Sedan"
-            totalImages={6}
-          />
-          <CarCard
-            location="Lagos"
-            imageUrl="/images/auth-bg.jpeg"
-            title="Toyota Corolla 2015"
-            price="NGN 20,000/day"
-            type="Sedan"
-            totalImages={6}
-          />
-        </div>
+      <div className="flex flex-col gap-3  ">
+        {/* Perfomance Card */}
+        <PerfomanceCard path={LocalRoute.bookingPerfomance} />
+        <PerfomanceCard path={LocalRoute.bookingPerfomance} />
+        <PerfomanceCard path={LocalRoute.bookingPerfomance} />
+        <PerfomanceCard path={LocalRoute.bookingPerfomance} />
+        {/* Bookings */}
+        <SectionHeader title="Bookings" />
+        <BookingsCarousel />
+        {/* Most Book Vehicles  */}
+        <MostBookedVehicles />
       </div>
     </DashboardLayout>
   );
@@ -80,12 +61,14 @@ export default Home;
 const SectionHeader = ({ title = "Platform Activity", showFilter = true }) => {
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-[#344054]">{title}</h2>
+      <div className="flex items-center space-x-2 bg-[#EDF8FF] w-fit px-4 py-2 rounded-xl text-sm font-medium text-[#101928]">
+        <FaTicket className="text-[#0673FF]" />
+        <span>{title}</span>
+      </div>
 
       {showFilter && (
-        <div className="shadow flex items-center justify-center space-x-2 rounded px-2 py-1 text-[#344054]">
-          All
-          <FaChevronDown />
+        <div className=" flex items-center justify-center space-x-2  px-2 py-1 text-sm text-[#344054]">
+          View All
         </div>
       )}
     </div>

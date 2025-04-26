@@ -1,20 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation"; // Import useRouter
 import AuthLayout from "@/app/components/auth/AuthLayout";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import InputField from "@/app/components/core/form-field/InputField";
 import SubmitButton from "@/app/components/core/SubmitButton";
-import { useState } from "react";
+import { useAuth } from "@/app/hooks/use_auth";
 
 const ResetPasswordSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
 });
 
-export default function ResetPasswordPage() {
-  const router = useRouter(); // Initialize router
-  const [loading, setLoading] = useState(false);
+export default function ForgotPasswordPage() {
+  const { forgotPassword, isForgotPasswordLoading } = useAuth() || {}; // ✅ Prevent undefined values
 
   return (
     <AuthLayout>
@@ -23,30 +21,29 @@ export default function ResetPasswordPage() {
           Reset Password
         </h2>
         <p className="text-gray-600 text-sm text-left mb-6">
-          Enter your email, and we will send you instructions to regain access
+          Enter your email, and we will send you instructions to regain access.
         </p>
 
         <Formik
           initialValues={{ email: "" }}
           validationSchema={ResetPasswordSchema}
-          onSubmit={() => {
-            setLoading(true);
-            setTimeout(() => {
-              setLoading(false);
-              router.push("/auth/email-sent"); // Navigate to the email-sent page
-            }, 2000);
+          onSubmit={(values, { setSubmitting }) => {
+            forgotPassword(values).finally(() => setSubmitting(false)); // ✅ Ensure Formik stops loading
           }}
         >
-          {({ isSubmitting }) => (
+          {({ values, handleChange, touched, errors, isSubmitting }) => (
             <Form className="space-y-5">
               <InputField
                 label="Email"
                 name="email"
                 type="email"
                 placeholder="Enter email"
+                value={values.email} // ✅ Ensure Formik handles the value
+                onChange={handleChange} // ✅ Ensure Formik updates correctly
+                error={touched.email && errors.email} // ✅ Show error messages
               />
               <SubmitButton
-                isLoading={loading || isSubmitting}
+                isLoading={isForgotPasswordLoading || isSubmitting}
                 text="Reset Password"
               />
             </Form>
