@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AuthLayout from "@/app/components/auth/AuthLayout";
+import AuthLayout from "@/components/auth/AuthLayout";
 import OtpInput from "react-otp-input";
 import Image from "next/image";
-import { ImageAssets } from "@/app/utils/ImageAssets";
-import { LocalRoute } from "@/app/utils/LocalRoutes";
+import { ImageAssets } from "@/utils/ImageAssets";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 export default function OtpSentPage() {
   const [otp, setOtp] = useState("");

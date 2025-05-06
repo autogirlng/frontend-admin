@@ -1,12 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import DashboardLayout from "../../components/dashboard/DashboardLayout";
-import VehicleSelector from "../../components/dashboard/booking-perfomance/VehicleSelector";
-import BookingCalendar from "../../components/dashboard/booking-perfomance/BookingCalender";
-import { vehiclesData } from "@/app/utils/data";
-import BookingHeader from "@/app/components/dashboard/booking-perfomance/BookingHeader";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import VehicleSelector from "@/components/dashboard/booking-perfomance/VehicleSelector";
+import BookingCalendar from "@/components/dashboard/booking-perfomance/BookingCalender";
+import { vehiclesData } from "@/utils/data";
+import BookingHeader from "@/components/dashboard/booking-perfomance/BookingHeader";
 import { useRouter } from "next/navigation";
-import { LocalRoute } from "@/app/utils/LocalRoutes";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 type Props = {};
 

@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { Formik, Form } from "formik";
 import { useRouter } from "next/navigation";
-import InputField from "@/app/components/core/form-field/InputField";
-import { hostOnboardingSchema } from "@/app/validators/HostOnboardingSchema";
-import PageLayout from "@/app/components/dashboard/PageLayout";
-import CurvedFilledButton from "@/app/components/core/button/CurvedFilledButton";
-import PhoneInputField from "@/app/components/core/form-field/PhoneInputField";
-import FileInputField from "@/app/components/core/form-field/FileInputField";
+import InputField from "@/components/core/form-field/InputField";
+import { hostOnboardingSchema } from "@/validators/HostOnboardingSchema";
+import PageLayout from "@/components/dashboard/PageLayout";
+import CurvedFilledButton from "@/components/core/button/CurvedFilledButton";
+import PhoneInputField from "@/components/core/form-field/PhoneInputField";
+import FileInputField from "@/components/core/form-field/FileInputField";
 
 const HostOnboarding: React.FC = () => {
   const router = useRouter();

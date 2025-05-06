@@ -1,11 +1,11 @@
 "use client";
 
-import AuthLayout from "@/app/components/auth/AuthLayout";
+import AuthLayout from "@/components/auth/AuthLayout";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import InputField from "@/app/components/core/form-field/InputField";
-import SubmitButton from "@/app/components/core/SubmitButton";
-import { useAuth } from "@/app/hooks/use_auth";
+import InputField from "@/components/core/form-field/InputField";
+import SubmitButton from "@/components/core/SubmitButton";
+import { useAuth } from "@/hooks/use_auth";
 
 const ResetPasswordSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
@@ -27,8 +27,12 @@ export default function ForgotPasswordPage() {
         <Formik
           initialValues={{ email: "" }}
           validationSchema={ResetPasswordSchema}
-          onSubmit={(values, { setSubmitting }) => {
-            forgotPassword(values).finally(() => setSubmitting(false)); // ✅ Ensure Formik stops loading
+          onSubmit={async (values, { setSubmitting }) => {
+            try {
+              await forgotPassword(values);
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           {({ values, handleChange, touched, errors, isSubmitting }) => (

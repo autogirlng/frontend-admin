@@ -9,7 +9,7 @@ import {
 import { FaChevronLeft, FaChevronRight, FaChevronDown } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { AiOutlineFilter } from "react-icons/ai";
-import TableSearchFilter from "@/app/components/core/table/TableSearchFilter";
+import TableSearchFilter from "@/components/core/table/TableSearchFilter";
 
 interface Booking {
   bookingId: string;

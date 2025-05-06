@@ -2,50 +2,58 @@
 
 // import React, { useMemo } from "react";
 // import { useTable, useSortBy, useFilters } from "react-table";
-import DashboardLayout from "@/app/components/dashboard/DashboardLayout";
-import StatusCard from "@/app/components/dashboard/StatusCard";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import StatusCard from "@/components/dashboard/StatusCard";
 import { FaLine } from "react-icons/fa";
 import BookingAnalytics from "./BookingAnalytics";
-import Tabs from "@/app/components/core/Tabs";
+import Tabs from "@/components/core/Tabs";
+import ActivityCard from "@/components/shared/activityCard";
+import DashboardSectionTitle from "@/components/shared/DashboardSectionTItle";
+import Icons from "@/utils/Icon";
 
 //import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 const Booking = () => {
   const Statdata = [
     {
-      title: "Total Building",
-      count: 4000,
-      // tooltip: "Listings waiting for approval",
+      title: "Pending Listing",
+      value: "_",
+      isLoading: false,
+      className: "min-w-[180px] w-full",
     },
     {
-      title: "Pending Approvals",
-      count: 402,
-      // tooltip: "Submissions needing changes",
+      title: "Approvals",
+      value: "_",
+      isLoading: false,
+      className: "min-w-[180px] w-full",
     },
     {
-      title: "Rejected Bookings",
-      count: 96,
-      // tooltip: "Submissions that were denied",
+      title: "Rejected",
+      value: "_",
+      isLoading: false,
+      className: "min-w-[180px] w-full",
     },
     {
-      title: "Approved Requests",
-      count: 2,
-      // tooltip: "Submissions successfully approved",
+      title: "In Review",
+      value: "_",
+      isLoading: false,
+      className: "min-w-[180px] w-full",
     },
     {
-      title: "Approved ",
-      count: 2,
-      // tooltip: "Submissions successfully approved",
+      title: "Drafts",
+      value: "_",
+      isLoading: false,
+      className: "min-w-[180px] w-full",
     },
   ];
 
   return (
     <DashboardLayout title="Booking" currentPage="Bookings">
       <div className="flex flex-col space-y-2  ">
-        <SectionHeader />
+        <DashboardSectionTitle title="Vehicle Onboarding" icon={Icons.ic_add} />
         <div className=" grid grid-cols-2 md:grid-cols-5 gap-4">
           {Statdata.map((item) => (
-            <StatusCard key={item.title} {...item} />
+            <ActivityCard key={item.title} {...item} />
           ))}
         </div>
         <Tabs

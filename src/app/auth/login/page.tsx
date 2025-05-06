@@ -1,15 +1,21 @@
 "use client";
 import Link from "next/link";
 import { Formik, Form } from "formik";
-import AuthLayout from "@/app/components/auth/AuthLayout";
-import SubmitButton from "@/app/components/core/SubmitButton";
-import InputField from "@/app/components/core/form-field/InputField";
-import { loginSchema } from "@/app/validators/AuthSchema";
-import { useAuth } from "@/app/hooks/use_auth";
-import { LocalRoute } from "@/app/utils/LocalRoutes";
+import AuthLayout from "@/components/auth/AuthLayout";
+import SubmitButton from "@/components/core/SubmitButton";
+import InputField from "@/components/shared/inputField";
+import { loginSchema } from "@/validators/AuthSchema";
+import { useAuth } from "@/hooks/use_auth";
+import { LocalRoute } from "@/utils/LocalRoutes";
+import { useState } from "react";
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth() || {};
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <AuthLayout>
@@ -26,7 +32,7 @@ export default function LoginPage() {
           validationSchema={loginSchema}
           onSubmit={async (values, { setSubmitting }) => {
             try {
-              await login(values); // Ensure login completes before disabling submit state
+              await login(values);
             } finally {
               setSubmitting(false);
             }
@@ -35,23 +41,25 @@ export default function LoginPage() {
           {({ values, handleChange, touched, errors, isSubmitting }) => (
             <Form className="space-y-5">
               <InputField
+                id="email"
                 label="Email"
                 name="email"
                 type="email"
                 placeholder="Enter email address"
-                value={values.email} // ✅ Ensure Formik handles the value
-                onChange={handleChange} // ✅ Ensure Formik updates correctly
-                error={touched.email && errors.email} // ✅ Show error messages
+                value={values.email}
+                onChange={handleChange}
               />
 
               <InputField
+                id="password"
                 label="Password"
                 name="password"
                 type="password"
                 placeholder="Enter password"
-                value={values.password} // ✅ Ensure Formik handles the value
-                onChange={handleChange} // ✅ Ensure Formik updates correctly
-                error={touched.password && errors.password} // ✅ Show error messages
+                value={values.password}
+                toggleShowPassword={togglePasswordVisibility}
+                showPassword={showPassword}
+                onChange={handleChange}
               />
 
               <div className="text-left">

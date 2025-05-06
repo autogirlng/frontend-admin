@@ -1,9 +1,9 @@
 "use client";
-import DashboardLayout from "@/app/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import React from "react";
-import BackButton from "@/app/components/core/button/BackButton";
-import TripsTable from "@/app/components/dashboard/trips/TripTable";
-import Button from "@/app/components/core/button/Button";
+import BackButton from "@/components/core/button/BackButton";
+import TripsTable from "@/components/dashboard/trips/TripTable";
+import Button from "@/components/core/button/Button";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 type Props = {};
