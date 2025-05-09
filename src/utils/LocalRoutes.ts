@@ -16,8 +16,9 @@ export const LocalRoute = {
   vehicleOnboardingPage: "/vehicle-onboarding",
 
   // Dashboard
+  bookingPage: "/dashboard/bookings",
   bookingPerfomance: "/dashboard/booking-perfomance",
-  bookingTrips: "/dashboard/trips",
+  // bookingTrips: "/dashboard/trips",
 
   // finance
   financePage: "/finance",
