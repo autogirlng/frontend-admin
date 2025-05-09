@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Info, Filter, Plus, ChevronDown } from "lucide-react";
+import { Info, Plus } from "lucide-react";
+import FilterComponent from "./FilterComponent";
 
 interface BookingMetricProps {
   title: string;
@@ -140,8 +141,10 @@ const Progress = ({
 
 const BookingMetrics: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isNewBookingOpen, setIsNewBookingOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("this_month");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const newBookingDropdownRef = useRef<HTMLDivElement>(null);
 
   // Filter options
   const filterOptions = [
@@ -160,7 +163,7 @@ const BookingMetrics: React.FC = () => {
     return option ? option.label : "Filter";
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -169,13 +172,20 @@ const BookingMetrics: React.FC = () => {
       ) {
         setIsFilterOpen(false);
       }
+
+      if (
+        newBookingDropdownRef.current &&
+        !newBookingDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsNewBookingOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [dropdownRef]);
+  }, [dropdownRef, newBookingDropdownRef]);
 
   return (
     <div className="w-full p-3 sm:p-4 md:p-6 bg-white">
@@ -184,54 +194,72 @@ const BookingMetrics: React.FC = () => {
           Booking Metrics
         </h1>
         <div className="flex flex-wrap w-full sm:w-auto justify-end gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+          {/* Filter Component */}
+          <FilterComponent />
+
+          {/* New Booking Button with Dropdown */}
+          <div
+            className="relative w-full sm:w-auto"
+            ref={newBookingDropdownRef}
+          >
             <button
-              className="w-full sm:w-auto flex items-center justify-between gap-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-gray-700 min-w-0 sm:min-w-32"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#0673FF] text-white rounded-lg"
               style={{ fontSize: 13 }}
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              onClick={() => setIsNewBookingOpen(!isNewBookingOpen)}
             >
-              <div className="flex items-center gap-2 truncate">
-                <Filter size={16} className="flex-shrink-0" />
-                <span className="truncate">{getSelectedFilterLabel()}</span>
-              </div>
-              <ChevronDown
-                size={16}
-                className={`flex-shrink-0 transition-transform ${
-                  isFilterOpen ? "rotate-180" : ""
-                }`}
-              />
+              <Plus size={16} />
+              <span>New Booking</span>
             </button>
 
-            {/* Dropdown Menu */}
-            {isFilterOpen && (
-              <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-48 bg-white rounded-md shadow-lg z-20 py-1 border border-gray-200">
-                {filterOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      selectedFilter === option.id
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-700"
-                    }`}
-                    onClick={() => {
-                      setSelectedFilter(option.id);
-                      setIsFilterOpen(false);
-                    }}
+            {isNewBookingOpen && (
+              <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-3xl shadow-lg z-20 py-1 border border-[#0673FF]">
+                <div className="px-6 py-4">
+                  <h2
+                    className="text-xl font-bold text-[#1D2739] mb-2"
+                    style={{ fontSize: 17 }}
                   >
-                    {option.label}
-                  </button>
-                ))}
+                    New Booking
+                  </h2>
+                  <div className="border-t border-[#D0D5DD] my-4"></div>
+
+                  <div className="mb-6">
+                    <h3
+                      className="text-lg font-medium text-[#1D2739] mb-1"
+                      style={{ fontSize: 15, fontWeight: "bold" }}
+                    >
+                      Create Booking
+                    </h3>
+                    <p className="text-[#1D2739] mb-2" style={{ fontSize: 12 }}>
+                      Create booking all within the muvment platform.
+                    </p>
+                  </div>
+
+                  <div className="border-t border-[#D0D5DD] my-4"></div>
+
+                  <div>
+                    <h3
+                      className="text-lg font-medium text-[#1D2739] mb-1"
+                      style={{ fontSize: 15, fontWeight: "bold" }}
+                    >
+                      Copy Form Link
+                    </h3>
+                    <p className="text-[#1D2739] mb-2" style={{ fontSize: 12 }}>
+                      Share booking Form with offline users
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <div></div>
+                      <button
+                        className="bg-[#F0F2F5] text-[#344054] px-4 py-2 rounded-md text-sm"
+                        style={{ borderRadius: 30 }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-          <button
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#0673FF] text-white rounded-lg"
-            style={{ fontSize: 13 }}
-          >
-            <Plus size={16} />
-            <span>New Booking</span>
-          </button>
         </div>
       </div>
 
@@ -298,3 +326,47 @@ const BookingMetrics: React.FC = () => {
 };
 
 export default BookingMetrics;
+
+/* 
+
+<div className="relative w-full sm:w-auto" ref={dropdownRef}>
+            <button
+              className="w-full sm:w-auto flex items-center justify-between gap-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-gray-700 min-w-0 sm:min-w-32"
+              style={{ fontSize: 13 }}
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Filter size={16} className="flex-shrink-0" />
+                <span className="truncate">{getSelectedFilterLabel()}</span>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`flex-shrink-0 transition-transform ${
+                  isFilterOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isFilterOpen && (
+              <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-48 bg-white rounded-md shadow-lg z-20 py-1 border border-gray-200">
+                {filterOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      selectedFilter === option.id
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setSelectedFilter(option.id);
+                      setIsFilterOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+*/

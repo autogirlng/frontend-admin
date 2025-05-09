@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 // Define trip data structure
 interface Location {
@@ -253,59 +254,64 @@ const TripsTimeline: React.FC = () => {
                   borderRadius: 25,
                 }}
               >
-                {/* Date header */}
-                <div
-                  className={`px-3 sm:px-4 py-2 ${
-                    day.isToday ? "text-white" : ""
-                  }`}
+                <Link
+                  href="/dashboard/bookings/trips"
+                  className="hover:no-underline"
                 >
-                  <div className="flex items-center text-sm sm:text-base">
-                    {day.isToday && (
-                      <span className="mr-2 font-medium">Today</span>
-                    )}
-                    {day.isTomorrow && (
-                      <span className="mr-2 font-medium">Tomorrow</span>
-                    )}
-                    <span
-                      className={`${
-                        day.isToday || day.isTomorrow ? "" : "font-medium"
-                      }`}
-                    >
-                      {day.displayDate}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Locations grid - Only vertical lines, no horizontal line */}
-                <div
-                  className={`grid ${
-                    isMobile ? "grid-cols-3" : "grid-cols-5"
-                  } divide-x`}
-                >
-                  {day.locations
-                    .slice(0, isMobile ? 3 : 5)
-                    .map((location, locIndex) => (
-                      <div
-                        key={`${day.date}-${locIndex}`}
-                        className={`flex flex-col items-center justify-center py-2 sm:py-3 px-1`}
+                  {/* Date header */}
+                  <div
+                    className={`px-3 sm:px-4 py-2 ${
+                      day.isToday ? "text-white" : ""
+                    }`}
+                  >
+                    <div className="flex items-center text-sm sm:text-base">
+                      {day.isToday && (
+                        <span className="mr-2 font-medium">Today</span>
+                      )}
+                      {day.isTomorrow && (
+                        <span className="mr-2 font-medium">Tomorrow</span>
+                      )}
+                      <span
+                        className={`${
+                          day.isToday || day.isTomorrow ? "" : "font-medium"
+                        }`}
                       >
-                        <span
-                          className={`text-center font-medium text-sm sm:text-base ${
-                            day.isToday ? "text-white" : "text-gray-800"
-                          }`}
+                        {day.displayDate}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Locations grid - Only vertical lines, no horizontal line */}
+                  <div
+                    className={`grid ${
+                      isMobile ? "grid-cols-3" : "grid-cols-5"
+                    } divide-x`}
+                  >
+                    {day.locations
+                      .slice(0, isMobile ? 3 : 5)
+                      .map((location, locIndex) => (
+                        <div
+                          key={`${day.date}-${locIndex}`}
+                          className={`flex flex-col items-center justify-center py-2 sm:py-3 px-1`}
                         >
-                          {location.code}
-                        </span>
-                        <span
-                          className={`text-xs text-center truncate w-full ${
-                            day.isToday ? "text-blue-100" : "text-gray-500"
-                          }`}
-                        >
-                          {location.name}
-                        </span>
-                      </div>
-                    ))}
-                </div>
+                          <span
+                            className={`text-center font-medium text-sm sm:text-base ${
+                              day.isToday ? "text-white" : "text-gray-800"
+                            }`}
+                          >
+                            {location.code}
+                          </span>
+                          <span
+                            className={`text-xs text-center truncate w-full ${
+                              day.isToday ? "text-blue-100" : "text-gray-500"
+                            }`}
+                          >
+                            {location.name}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </Link>
               </div>
             ))}
           </div>

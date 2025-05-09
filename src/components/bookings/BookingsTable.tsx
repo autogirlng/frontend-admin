@@ -92,7 +92,7 @@ const BookingsTable: React.FC = () => {
         <table className="min-w-full">
           <thead>
             <tr
-              className="bg-[#F7F9FC] border-b border-gray-200"
+              className="bg-[#F7F9FC] border-b border-[#D0D5DD]"
               style={{ height: "60px" }}
             >
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -134,7 +134,7 @@ const BookingsTable: React.FC = () => {
             {bookings.map((booking, index) => (
               <tr
                 key={`${booking.id}-${index}`}
-                className={`border-b border-gray-200 hover:bg-gray-50 ${
+                className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${
                   index === bookings.length - 1 ? "border-b-0" : ""
                 }`}
               >
