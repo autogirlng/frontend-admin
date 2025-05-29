@@ -2,9 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/lib/hooks";
-import { VehicleOnboardingStatistics } from "@/utils/types";
+import {
+  VehicleOnboardingStatistics,
+  VehicleOnboardingTable,
+} from "@/utils/types";
 import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
+type vehicleOnboardingStatsTable = {
+  metrics: VehicleOnboardingStatistics;
+  totalCount: number;
+};
 
 export default function useVehicleOnboardingStats() {
   const http = useHttp();
@@ -13,7 +20,7 @@ export default function useVehicleOnboardingStats() {
   const { data, isError, isLoading } = useQuery({
     queryKey: ["getVehicleOnboardingStats", userToken],
     queryFn: () =>
-      http.get<VehicleOnboardingStatistics>(ApiRoutes.vehicleOnboardingStats),
+      http.get<vehicleOnboardingStatsTable>(ApiRoutes.vehicleOnboardingTable),
     enabled: !!user?.id,
     retry: false,
   });
@@ -21,7 +28,12 @@ export default function useVehicleOnboardingStats() {
   return {
     isError,
     isLoading,
-
-    data,
+    data: data?.metrics || {
+      totalListings: 0,
+      approved: 0,
+      rejected: 0,
+      inReview: 0,
+      drafts: 0,
+    },
   };
 }

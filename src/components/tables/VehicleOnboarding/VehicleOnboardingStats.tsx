@@ -1,3 +1,4 @@
+// Your component: VehicleOnboardingStats.tsx
 import ActivityCard from "@/components/shared/activityCard";
 import useVehicleOnboardingStats from "./hooks/useVehicleOnboardingStats";
 
@@ -10,25 +11,25 @@ export default function VehicleOnboardingStats({}: Props) {
       <ActivityCard
         primary
         title="Pending Listing"
-        value={`${data?.pendingListing || `-`}`}
+        value={`${data?.inReview || `-`}`}
         isLoading={isLoading}
         className="min-w-[180px] w-full"
       />
       <ActivityCard
         title="Requires Update"
-        value={`${data?.requiresUpdate || `-`}`}
+        value={`${data?.approved || `-`}`}
         isLoading={isLoading}
         className="min-w-[180px] w-full"
       />
       <ActivityCard
         title="Rejected Submission"
-        value={`${data?.rejectedSubmission || `-`}`}
+        value={`${data?.rejected || `-`}`}
         isLoading={isLoading}
         className="min-w-[180px] w-full"
       />
       <ActivityCard
         title="Accepted Submission"
-        value={`${data?.acceptedSubmission || `-`}`}
+        value={`${data?.approved || `-`}`}
         isLoading={isLoading}
         className="min-w-[180px] w-full"
       />

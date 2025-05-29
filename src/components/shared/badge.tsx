@@ -28,7 +28,19 @@ export const BookingTableBadge = ({ status }: BookingBadgeProps) => {
 };
 
 type VehicleOnboardingTableBadgeProps = {
-  status: "accepted" | "pending" | "rejected" | "inReview" | "approved";
+  status:
+    | "accepted"
+    | "pending"
+    | "rejected"
+    | "inReview"
+    | "approved"
+    | "Active"
+    | "Inactive"
+    | "Successful"
+    | "Admin"
+    | "Customer Support "
+    | "Finance Manager"
+    | "Operation Manager";
 };
 
 export const VehicleOnboardingTableBadge = ({

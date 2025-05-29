@@ -9,11 +9,13 @@ export const LocalRoute = {
   // dashboard
   dashboardPage: "/",
   // hosts
+  hostPage: "/dashboard/hosts",
   hostOnboarding: "/dashboard/host-onboarding",
-  hostPage: "/dashboard/onboarding/hosts",
+  addNewHostPage: "/dashboard/host-onboarding",
   // vehicle onboarding
+  selectHostPage: "/dashboard/onboarding/hosts",
   vehiclesOnboardedPage: "/dashboard/onboarding",
-  vehicleOnboardingPage: "/vehicle-onboarding",
+  vehicleOnboardingPage: "/dashboard/vehicle-onboarding",
 
   // Dashboard
   bookingPerfomance: "/dashboard/booking-perfomance",
@@ -22,7 +24,8 @@ export const LocalRoute = {
   // finance
   financePage: "/finance",
   // fleet
-  fleetPage: "/fleet",
+  fleetPage: "/dashboard/fleet",
+  availabilityPage: "/dashboard/booking/new-availability",
   // customer
   customersPage: "/customer",
 };

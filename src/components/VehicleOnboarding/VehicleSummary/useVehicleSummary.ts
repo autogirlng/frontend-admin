@@ -9,10 +9,11 @@ import {
   MappedInformation,
   VehicleInformation,
 } from "@/utils/types";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import Icons from "@/components/shared/icons";
 import { useHttp } from "@/utils/useHttp";
+import { ApiRoutes } from "@/utils/ApiRoutes";
 
 type VehiclePerksProp = {
   icon: ReactNode;
@@ -133,10 +134,11 @@ export default function useVehicleSummary({
     }
   }, [vehicle]);
 
+  const { host } = useAppSelector((state) => state.host);
   const submitVehicleOnboarding = useMutation({
     mutationFn: () =>
       http.put<VehicleInformation>(
-        `/api/vehicle-onboarding/submit-summary/${vehicle?.id}`
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/submit-summary/${vehicle?.id}`
       ),
 
     onSuccess: (data) => {

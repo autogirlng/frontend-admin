@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { string } from "yup";
 export interface ErrorResponse {
   ERR_CODE: string;
@@ -217,7 +218,42 @@ export interface AvailabilityAndPricingValues {
   outskirtsPrice: string;
 }
 
-// <================= STATUS =================>
+// <================= STATUS =================>// src/utils/types/status.ts
+export enum Status {
+  Joined = "joined",
+  Active = "active",
+  Inactive = "inactive",
+  Pending = "pending",
+  Approved = "approved",
+  Rejected = "rejected",
+  Cancelled = "cancelled",
+  Completed = "completed",
+  Draft = "draft",
+  Submitted = "submitted",
+  Accepted = "accepted",
+  InReview = "inReview",
+  Successful = "successful",
+  Failed = "failed",
+  Paid = "paid",
+  Booked = "booked",
+  Maintenance = "maintenance",
+  Unavailable = "unavailable",
+  Review = "review",
+  Feedback = "feedback",
+  Suspended = "suspended",
+  Assigned = "assigned",
+  Unassigned = "unassigned",
+  Error = "error",
+  Success = "success",
+  Warning = "warning",
+  Info = "info",
+  Processing = "processing",
+  OnHold = "on_hold",
+  Expired = "expired",
+  Deleted = "deleted",
+  Published = "published",
+  Archived = "archived",
+}
 export enum BookingBadgeStatus {
   ACCEPTED = "ACCEPTED",
   PENDING = "PENDING",
@@ -395,11 +431,19 @@ export interface DashboardStatistics {
 }
 
 export interface VehicleOnboardingStatistics {
-  pendingListing: number;
-  requiresUpdate: number;
-  rejectedSubmission: number;
-  acceptedSubmission: number;
+  totalListings: number;
+  approved: number;
+  rejected: number;
+  inReview: number;
   drafts: number;
+}
+
+export interface FleetStatistics {
+  totalVehicles: number;
+  activeVehicles: number;
+  inactiveVehicles: number;
+  vehiclesInMaintenance: number;
+  suspendedVehicles: number;
 }
 
 export interface BookingStatistics {
@@ -408,37 +452,66 @@ export interface BookingStatistics {
   rejectedBookings: number;
   approvedRequests: number;
 }
-
 export interface VehicleOnboardingTable {
-  id: string;
-  listingName: string;
+  vehicleId: string;
+  host: string;
   location: string;
-  address: string;
+  makeAndModel: string;
   vehicleType: string;
-  make: string;
-  model: string;
-  yearOfRelease: number;
-  hasTracker: boolean;
-  hasInsurance: boolean;
-  licensePlateNumber: string;
-  stateOfRegistration: string;
-  vehicleDescription: string;
-  features: string[];
-  vehicleColor: string;
-  numberOfSeats: number;
-  status: string;
-  userId: string;
-  isActive: boolean;
-  unavailableFrom: string | null;
-  unavailableUntil: string | null;
-  pricing: Pricing;
-  tripSettings: TripSettings;
-  outskirtsLocation: string[];
-  outskirtsPrice: number;
-  createdAt: string;
-  updatedAt: string;
+  year: string;
+  dateCreated: string;
+  hostRate: string;
+  customerRate: string;
+  status: "accepted" | "pending" | "rejected" | "inReview";
 }
 
+export interface FleetTable {
+  vehicleId: string;
+  host: string;
+  location: string;
+  makeAndModel: string;
+  vehicleType: string;
+  year: string;
+  plateNumber: string;
+  dateCreated: string;
+  bookingCount: number;
+  vehicleStatus: string;
+}
+
+export interface HostTable {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  dob: Date | null;
+  profileImage: string | null;
+  countryCode: string;
+  country: string;
+  emailConfirmed: boolean;
+  otp: string | null;
+  passwordOtp: string | null;
+  phoneNumber: string;
+  isActive: boolean;
+  phoneVerified: boolean;
+  bvnVerified: boolean;
+  withdrawalAccountVerified: boolean;
+  bio: string | null;
+  city: string | null;
+  userRole: "HOST" | "ADMIN" | "USER"; // Example roles
+  isBusiness: boolean;
+  businessLogo: string | null;
+  businessName: string | null;
+  businessAddress: string | null;
+  businessPhoneNumber: string | null;
+  businessEmail: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  referralCode: string;
+  referredBy: string | null;
+  referralBalance: number;
+  onBoardedBy: string;
+  mouDocument: string | null;
+}
 export interface BookingInformation {
   id: string;
   startDate: string;
@@ -661,3 +734,39 @@ export type TransactionTableRow = {
 };
 
 export type DateRange = { startDate: Date | null; endDate: Date | null };
+
+export type Member = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role:
+    | "Admin"
+    | "Customer Support "
+    | "Finance Manager"
+    | "Operation Manager"
+    | string;
+  lastLogin: string; // Could be a Date object, or a string depending on how you store/display it
+  joined: string; // Could be a Date object, or a string
+  status: "Active" | "Inactive" | "Successful";
+};
+
+// src/utils/enums.ts or src/types/roles.ts
+
+export enum UserRole {
+  OperationManager = "Operation Manager",
+  Admin = "Admin",
+  CustomerSupport = "Customer Support",
+  FinanceManager = "Finance Manager",
+  SuperAdmin = "Super Admin",
+}
+
+export interface AddMemberPayload {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  countryCode: string; // e.g., "+234"
+  country: string; // e.g., "NG" - ISO country code
+  email: string;
+  userRole: UserRole;
+}

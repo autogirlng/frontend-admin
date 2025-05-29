@@ -89,7 +89,7 @@ export const StepperNavigation = ({
     }
   };
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-grey-50 py-4 3xl:py-6 px-4 sm:px-8 lg:px-[52px]">
+    <div className="fixed bottom-0 left-0 w-full bg-grey-100 py-4 3xl:py-6 px-4 sm:px-8 lg:px-[52px]">
       <div className="flex justify-between">
         {currentStep > 0 && (
           <StepperButton

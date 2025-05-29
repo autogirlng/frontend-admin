@@ -1,5 +1,6 @@
 import {
   BookingBadgeStatus,
+  Status,
   TransactionStatus,
   VehicleOnboardingStatus,
 } from "@/utils/types";
@@ -9,12 +10,13 @@ import {
   VehicleOnboardingTableBadge,
 } from "@/components/shared/badge";
 import { ReactNode } from "react";
+import { StatusBadge } from "./shared/StatusBadge";
 
 type Props = {
   content: string;
   className?: string;
   isBadge?: boolean;
-  type?: "transaction" | "booking" | "vehicleOnboarding";
+  type?: "table" | "regular";
   icon?: ReactNode;
 };
 
@@ -30,15 +32,7 @@ const TableCell = ({ content, className, isBadge, type, icon }: Props) => (
         <span>{content}</span>
       </div>
     ) : isBadge ? (
-      type === "transaction" ? (
-        <TransactionBadge status={content as TransactionStatus} />
-      ) : (
-        <BookingTableBadge status={content as BookingBadgeStatus} />
-      )
-    ) : type === "vehicleOnboarding" ? (
-      <VehicleOnboardingTableBadge
-        status={content as VehicleOnboardingStatus}
-      />
+      <StatusBadge status={content as Status} type={type} />
     ) : (
       content
     )}

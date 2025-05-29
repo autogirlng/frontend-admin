@@ -8,22 +8,28 @@ import TableCell from "@/components/TableCell";
 const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
   return (
     <tr>
-      <TableCell content={items?.id} className="!text-grey-900 !font-medium" />
-      <TableCell content={items?.make} />
-      <TableCell content={items?.location} />
-      <TableCell content={`${items?.make} \n${items.model}`} />
-      <TableCell content={items?.vehicleType} />
-      <TableCell content={items?.yearOfRelease.toString()} />
+      <TableCell
+        content={items?.vehicleId}
+        className="!text-grey-900 text-wrap !font-medium"
+      />
+      <TableCell className="text-wrap" content={items?.host ?? "-"} />
+      <TableCell className="text-wrap" content={items?.location ?? "-"} />
+      <TableCell
+        className="text-wrap"
+        content={`${items?.makeAndModel ?? "-"}`}
+      />
+      <TableCell content={items?.vehicleType ?? "-"} />
+      <TableCell content={items?.year?.toString() ?? "-"} />
       <TableCell
         content={
-          items?.createdAt
-            ? format(new Date(items?.createdAt), "MMM d ,yyyy")
-            : ""
+          items?.dateCreated
+            ? format(new Date(items?.dateCreated), "MMM d, yyyy")
+            : "-"
         }
       />
-      <TableCell content={"host rate"} />
-      <TableCell content={"customer rate"} />
-      <TableCell content={items?.status} isBadge type="vehicleOnboarding" />
+      <TableCell content={items?.hostRate ?? "-"} />
+      <TableCell content={items?.customerRate ?? "-"} />
+      <TableCell content={items?.status} isBadge />
       <td>
         <Popup
           trigger={<MoreButton />}
@@ -33,43 +39,55 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
               <ul className="space-y-2 *:py-2">
                 <>
                   <li>
-                    <a>hey</a>
-                    {/* <DeclineTrip
-                          openModal={openDeclineModal}
-                          handleModal={() => handleDeclineModal()}
-                          isLoading={declineBooking.isPending}
-                          handleAction={() => declineBooking.mutate()}
-                          trigger={
-                            <button className="!text-xs 3xl:!text-base ">
-                              Decline Trip
-                            </button>
-                          }
-                        /> */}
+                    <Link
+                      href={`/bookings/${items?.vehicleId}`}
+                      className="!text-xs 3xl:!text-base"
+                    >
+                      View Details
+                    </Link>
                   </li>
-                  <li>
-                    <a>ho</a>
-                    {/* <AcceptTrip
-                          openModal={openAcceptModal}
-                          handleModal={() => handleAcceptModal()}
-                          isLoading={acceptBooking.isPending}
-                          handleAction={() => acceptBooking.mutate()}
-                          trigger={
-                            <button className="!text-xs 3xl:!text-base ">
-                              Accept Trip
-                            </button>
-                          }
-                        /> */}
-                  </li>
+                  {(items?.status === "pending" ||
+                    items?.status === "inReview") && (
+                    <>
+                      <li>
+                        <Link
+                          href={`/bookings/${items?.vehicleId}`}
+                          className="!text-xs 3xl:!text-base"
+                        >
+                          Approve
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`/bookings/${items?.vehicleId}`}
+                          className="!text-xs 3xl:!text-base"
+                        >
+                          Request update
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href={`/bookings/${items?.vehicleId}`}
+                          className="!text-xs 3xl:!text-base"
+                        >
+                          Reject
+                        </Link>
+                      </li>
+                    </>
+                  )}
+                  {items?.status === "rejected" ||
+                    items?.status === "pending" ||
+                    (items?.status === "inReview" && (
+                      <li>
+                        <Link
+                          href={`/bookings/${items?.vehicleId}`}
+                          className="!text-xs 3xl:!text-base"
+                        >
+                          Request update
+                        </Link>
+                      </li>
+                    ))}
                 </>
-
-                <li>
-                  <Link
-                    href={`/bookings/${items?.vehicleID}`}
-                    className="!text-xs 3xl:!text-base"
-                  >
-                    View Booking Details
-                  </Link>
-                </li>
               </ul>
             </>
           }

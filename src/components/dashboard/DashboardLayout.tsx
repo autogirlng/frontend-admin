@@ -4,7 +4,6 @@ import { ReactNode, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 // import { useAppSelector } from "@/lib/hooks";
-import { FullPageSpinner } from "../shared/spinner";
 import SideNav from "@/components/Navbar/SideNav";
 import TopHeader from "@/components/Navbar/TopHeader";
 // import useUser from "@/hooks/useUser";

@@ -13,6 +13,8 @@ import {
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useState } from "react";
 import { useHttp } from "@/utils/useHttp";
+import { ApiRoutes } from "@/utils/ApiRoutes";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 export default function useAvailabilityAndPricingForm({
   currentStep,
@@ -103,10 +105,12 @@ export default function useAvailabilityAndPricingForm({
     };
   };
 
+  const { host } = useAppSelector((state) => state.host);
   const saveStep4 = useMutation({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
-        `/api/vehicle-onboarding/step4/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step4/${vehicle?.id}`,
+
         values
       ),
 
@@ -115,7 +119,7 @@ export default function useAvailabilityAndPricingForm({
       dispatch(
         updateVehicleInformation({ ...vehicle, ...data } as VehicleInformation)
       );
-      router.push("/listings");
+      router.push(LocalRoute.fleetPage);
     },
 
     onError: (error: AxiosError<ErrorResponse>) =>
@@ -124,7 +128,8 @@ export default function useAvailabilityAndPricingForm({
   const submitStep4 = useMutation({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
-        `/api/vehicle-onboarding/step4/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step4/${vehicle?.id}`,
+
         values
       ),
 

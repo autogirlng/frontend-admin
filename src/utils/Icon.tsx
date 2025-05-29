@@ -2197,6 +2197,37 @@ const Icons = {
       />
     </svg>
   ),
+  ic_host_Admin: (
+    <svg
+      width="20"
+      height="21"
+      viewBox="0 0 20 21"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M16.6654 18.8613V14.6947C16.6654 13.1233 16.6654 12.3377 16.1772 11.8495C15.689 11.3613 14.9034 11.3613 13.332 11.3613L9.9987 18.8613L6.66536 11.3613C5.09401 11.3613 4.30834 11.3613 3.82019 11.8495C3.33203 12.3377 3.33203 13.1233 3.33203 14.6947V18.8613"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M10.0013 13.027L9.58464 16.3604L10.0013 17.6104L10.418 16.3604L10.0013 13.027ZM10.0013 13.027L9.16797 11.3604H10.8346L10.0013 13.027Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M12.9154 5.94434V5.111C12.9154 3.50018 11.6095 2.19434 9.9987 2.19434C8.38786 2.19434 7.08203 3.50018 7.08203 5.111V5.94434C7.08203 7.55517 8.38786 8.86099 9.9987 8.86099C11.6095 8.86099 12.9154 7.55517 12.9154 5.94434Z"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  ),
 };
 
 export default Icons;
