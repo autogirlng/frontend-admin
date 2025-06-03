@@ -394,7 +394,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
 // Main Component
 const BookingManagementSystem = () => {
-  const [currentPage, setCurrentPage] = useState<number>(3); // Set to page 3 to match the image
+  const [currentPage, setCurrentPage] = useState<number>(1); // Set to page 3 to match the image
   const itemsPerPage = 10;
 
   // Calculate total pages
