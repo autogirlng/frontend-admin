@@ -30,7 +30,7 @@ export const dashboardNavItems = [
   {
     icon: Icons.ic_ticket,
     name: "Bookings",
-    link: LocalRoute.bookingTrips,
+    link: LocalRoute.bookingPage,
   },
   {
     icon: Icons.ic_add,
