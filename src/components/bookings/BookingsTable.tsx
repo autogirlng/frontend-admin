@@ -2,6 +2,7 @@
 
 import React from "react";
 import { MoreVertical } from "lucide-react";
+import Link from "next/link";
 
 // Define the booking data type
 interface Booking {
@@ -80,9 +81,12 @@ const BookingsTable: React.FC = () => {
     <div className="w-full bg-white">
       <div className="flex justify-between items-center px-4 py-4">
         <h2 className="text-xl font-medium text-[#344054]">Bookings</h2>
-        <a href="#" className="text-[#667185] hover:text-blue-700 text-sm">
+        <Link
+          href="/dashboard/bookings/list"
+          className="text-[#667185] hover:text-blue-700 text-sm"
+        >
           View All
-        </a>
+        </Link>
       </div>
 
       <div
