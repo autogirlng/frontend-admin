@@ -13,6 +13,8 @@ import {
 } from "@/utils/types";
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useHttp } from "@/utils/useHttp";
+import { ApiRoutes } from "@/utils/ApiRoutes";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 export default function useBasicInformationForm({
   currentStep,
@@ -102,14 +104,18 @@ export default function useBasicInformationForm({
     }
   }, [searchAddressQuery, debouncedFetchPlaces]);
 
+  const { host } = useAppSelector((state) => state.host);
   const saveStep1 = useMutation({
     mutationFn: (values: BasicVehicleInformationValues) =>
-      http.put<VehicleInformation>("/api/vehicle-onboarding/step1", {
-        ...values,
-        hasTracker: values.hasTracker === "yes" ? true : false,
-        hasInsurance: values.hasInsurance === "yes" ? true : false,
-        ...(vehicle?.id && { id: vehicle.id }),
-      }),
+      http.put<VehicleInformation>(
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step1`,
+        {
+          ...values,
+          hasTracker: values.hasTracker === "yes" ? true : false,
+          hasInsurance: values.hasInsurance === "yes" ? true : false,
+          ...(vehicle?.id && { id: vehicle.id }),
+        }
+      ),
 
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Saved", data);
@@ -117,7 +123,7 @@ export default function useBasicInformationForm({
         // @ts-ignore
         updateVehicleInformation({ ...vehicle, ...data })
       );
-      router.push("/listings");
+      router.push(LocalRoute.fleetPage);
     },
 
     onError: (error: AxiosError<ErrorResponse>) =>
@@ -126,12 +132,15 @@ export default function useBasicInformationForm({
 
   const submitStep1 = useMutation({
     mutationFn: (values: BasicVehicleInformationValues) =>
-      http.put<VehicleInformation>("/api/vehicle-onboarding/step1", {
-        ...values,
-        hasTracker: values.hasTracker === "yes" ? true : false,
-        hasInsurance: values.hasInsurance === "yes" ? true : false,
-        ...(vehicle?.id && { id: vehicle.id }),
-      }),
+      http.put<VehicleInformation>(
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step1`,
+        {
+          ...values,
+          hasTracker: values.hasTracker === "yes" ? true : false,
+          hasInsurance: values.hasInsurance === "yes" ? true : false,
+          ...(vehicle?.id && { id: vehicle.id }),
+        }
+      ),
 
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Submitted", data);

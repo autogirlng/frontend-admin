@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { SvgAsset } from "@/utils/SvgAssets";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -64,17 +65,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
 const menuItems = [
   { href: "/", icon: SvgAsset.dashboard, label: "Dashboard" },
   { href: "/dashboard/booking", icon: SvgAsset.booking, label: "Bookings" },
-  { href: "/fleet", icon: SvgAsset.fleet, label: "Fleet" },
+  { href: LocalRoute.fleetPage, icon: SvgAsset.fleet, label: "Fleet" },
   {
-    href: "/dashboard/onboarding",
+    href: LocalRoute.vehiclesOnboardedPage,
     icon: SvgAsset.onboarding,
     label: "Onboarding",
   },
-  { href: "/dashboard/hosts", icon: SvgAsset.host, label: "Hosts" },
+  { href: LocalRoute.hostPage, icon: SvgAsset.host, label: "Hosts" },
   { href: "/customers", icon: SvgAsset.customers, label: "Customers" },
   { href: "/finance", icon: SvgAsset.finance, label: "Finance" },
   { href: "/support", icon: SvgAsset.support, label: "Support" },
-  { href: "/auth/login", icon: SvgAsset.toolTip, label: "Logout" },
+  { href: LocalRoute.login, icon: SvgAsset.toolTip, label: "Logout" },
 ];
 
 export default Sidebar;

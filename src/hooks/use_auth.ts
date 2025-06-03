@@ -21,89 +21,88 @@ import {
 import { LocalRoute } from "@/utils/LocalRoutes";
 import { User } from "@/utils/types";
 import { useHttp } from "@/utils/useHttp";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 
 interface APIError {
   message?: string;
 }
-
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const http = useHttp();
 
-  const [token, setClientToken] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  // Ensure running on client
+  // Get token from localStorage (client-side only)
+  const token = isClient ? localStorage.getItem("user_token") : null;
+
+  // Set client flag on mount
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Initial token check (only once)
+  // Initial auth check
   useEffect(() => {
     if (isClient && !hasCheckedAuth) {
-      const storedToken = localStorage.getItem("user_token");
-      setClientToken(storedToken);
       setHasCheckedAuth(true);
 
-      console.log(storedToken);
-      if (!storedToken && pathname !== LocalRoute.login) {
+      if (!token && !pathname.includes(LocalRoute.login)) {
         router.push(LocalRoute.login);
       }
     }
-  }, [isClient, hasCheckedAuth, router, pathname]);
+  }, [isClient, hasCheckedAuth, token, pathname, router]);
 
   // Token expiration checker
-  const checkTokenExpiration = () => {
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<JwtPayload & { exp?: number }>(token);
-        if (decodedToken?.exp) {
-          const currentTime = Date.now() / 1000;
-          if (decodedToken.exp < currentTime) {
-            dispatch(clearUser());
-            localStorage.removeItem("user_token");
-            router.push(LocalRoute.login);
-            toast.warn("Your session has expired. Please log in again.");
-          }
-        }
-      } catch (error) {
-        console.error("Error decoding JWT:", error);
+  const checkTokenExpiration = useCallback(() => {
+    if (!token) return;
+
+    try {
+      const decoded = jwtDecode<JwtPayload & { exp?: number }>(token);
+      if (decoded?.exp && decoded.exp < Date.now() / 1000) {
         dispatch(clearUser());
         localStorage.removeItem("user_token");
         router.push(LocalRoute.login);
-        toast.error("Invalid session. Please log in again.");
+        toast.warn("Session expired. Please log in again.");
       }
+    } catch (error) {
+      console.error("Token decode error:", error);
+      dispatch(clearUser());
+      localStorage.removeItem("user_token");
+      router.push(LocalRoute.login);
+      toast.error("Invalid session. Please log in.");
     }
-  };
+  }, [token, dispatch, router]);
 
+  // Setup token expiration checker
   useEffect(() => {
-    if (isClient && token) {
-      checkTokenExpiration();
-      const intervalId = setInterval(checkTokenExpiration, 60000);
-      return () => clearInterval(intervalId);
-    }
-  }, [token, isClient]);
+    if (!isClient || !token) return;
 
-  // Fetch user data
+    checkTokenExpiration(); // Immediate check
+    const intervalId = setInterval(checkTokenExpiration, 60000); // Check every minute
+    return () => clearInterval(intervalId);
+  }, [isClient, token, checkTokenExpiration]);
+
+  // User data query
   const {
     isLoading: isUserLoading,
     isError: isUserError,
     data: userData,
   } = useQuery({
-    queryKey: ["user"],
+    queryKey: ["user", token],
     queryFn: () => http.get<User>(ApiRoutes.getUser),
     retry: false,
-    enabled: isClient && !!token,
+    enabled: isClient && hasCheckedAuth && !!token,
   });
 
+  // Handle user data changes
   useEffect(() => {
-    if (isClient && userData) {
+    if (!isClient) return;
+
+    if (userData) {
       dispatch(
         setUser({
           user: userData,
@@ -112,72 +111,55 @@ export function useAuth() {
           isLoading: false,
         })
       );
-    } else if (isClient && isUserError && token) {
-      dispatch(clearUser());
-      localStorage.removeItem("user_token");
-      router.push(LocalRoute.login);
-      toast.error("Your session might be invalid. Please log in again.");
-      dispatch(setLoading(false));
-    } else if (isClient && isUserLoading) {
+    } else if (isUserError && token) {
+      handleAuthError();
+    } else if (isUserLoading) {
       dispatch(setLoading(true));
     }
-  }, [userData, isUserError, isUserLoading, dispatch, router, token, isClient]);
+  }, [userData, isUserError, isUserLoading, dispatch, token, isClient]);
 
-  // Login
+  const handleAuthError = useCallback(() => {
+    dispatch(clearUser());
+    localStorage.removeItem("user_token");
+    router.push(LocalRoute.login);
+    toast.error("Authentication failed. Please log in again.");
+    dispatch(setLoading(false));
+  }, [dispatch, router]);
+
+  // Login mutation
   const loginMutation = useMutation({
-    mutationFn: (credentials: LoginRequest) => loginUser(credentials),
-    onSuccess: (data) => {
-      localStorage.setItem("user_token", data);
-      dispatch(setToken(data));
-      setClientToken(data);
+    mutationFn: (data: LoginRequest) => loginUser(data),
+    onSuccess: (token) => {
+      localStorage.setItem("user_token", token);
+      dispatch(setToken(token));
       router.push(LocalRoute.dashboardPage);
     },
-    onError: (error: unknown) => {
-      const errorMessage =
-        (error as APIError)?.message || "Invalid email or password.";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    onError: (error: APIError) => {
+      toast.error(error.message || "Login failed. Please try again.");
     },
   });
 
-  // Forgot Password
+  // Forgot password mutation
   const forgotPasswordMutation = useMutation({
     mutationFn: (data: ForgotPasswordRequest) => forgotPassword(data),
     onSuccess: (response, variables) => {
-      toast.success(response.message, {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.success(response.message);
       router.push(`${LocalRoute.otpSentPage}?email=${variables.email}`);
     },
-    onError: (error: unknown) => {
-      const errorMessage = (error as APIError)?.message || "Invalid email.";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    onError: (error: APIError) => {
+      toast.error(error.message || "Password reset request failed.");
     },
   });
 
-  // Reset Password
+  // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: (data: ResetPasswordRequest) => resetNewPassword(data),
     onSuccess: (response) => {
-      toast.success(response.message, {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.success(response.message);
       router.push(LocalRoute.login);
     },
-    onError: (error: unknown) => {
-      const errorMessage =
-        (error as APIError)?.message || "Failed to reset password.";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    onError: (error: APIError) => {
+      toast.error(error.message || "Password reset failed.");
     },
   });
 

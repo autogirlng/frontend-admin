@@ -89,25 +89,22 @@ const VehicleOnboardingMobileRow = ({
           </>
         }
       />
-      <TableCell title="Vehicle ID" content={items?.id} />
-      <TableCell title="Host" content={"host"} />
+      <TableCell title="Vehicle ID" content={items?.vehicleId} />
+      <TableCell title="Host" content={items.host} />
       <TableCell title="Location" content={items?.location} />
-      <TableCell
-        title="Make And Model"
-        content={`${items?.make} ${items.model}`}
-      />
+      <TableCell title="Make And Model" content={`${items?.makeAndModel}`} />
       <TableCell title="Vehicle Type" content={items?.vehicleType} />
-      <TableCell title="Year" content={items?.yearOfRelease.toString()} />
+      <TableCell title="Year" content={items?.year.toString()} />
       <TableCell
         title="Date Created"
         content={
-          items?.createdAt
-            ? format(new Date(items?.createdAt), "MMM d ,yyyy")
+          items?.dateCreated
+            ? format(new Date(items?.dateCreated), "MMM d ,yyyy")
             : ""
         }
       />
-      <TableCell title="Host Rate" content={"host rate"} />
-      <TableCell title="Customer Rate" content={"customer rate"} />
+      <TableCell title="Host Rate" content={items.hostRate} />
+      <TableCell title="Customer Rate" content={items.customerRate} />
       <TableCell
         title="Status"
         content={items?.status}

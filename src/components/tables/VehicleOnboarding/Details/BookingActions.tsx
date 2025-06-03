@@ -2,10 +2,9 @@ import cn from "classnames";
 import { Dispatch, forwardRef, ReactNode, SetStateAction } from "react";
 import { BookingBadgeStatus } from "@/utils/types";
 import Icons from "@/components/shared/icons";
-import AcceptTrip from "@/components/BookingsAnalytics/Details/modals/AcceptTrip";
-import DeclineTrip from "@/components/BookingsAnalytics/Details/modals/DeclineTrip";
-import ReportTrip from "@/components/BookingsAnalytics/Details/modals/ReportTrip";
-
+import AcceptTrip from "./modals/AcceptTrip";
+import DeclineTrip from "./modals/DeclineTrip";
+import ReportTrip from "./modals/ReportTrip";
 type BookingActionsProps = {
   bookingStatus: BookingBadgeStatus;
 

@@ -3,14 +3,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAppSelector } from "@/lib/hooks";
-import { BookingInformation, VehicleOnboardingTable } from "@/utils/types";
+import { VehicleOnboardingTable } from "@/utils/types";
 import { useHttp } from "@/utils/useHttp";
 import { handleFilterQuery } from "@/utils/functions";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 
 type vehicleOnboardingTable = {
   data: VehicleOnboardingTable[];
-  totalCount: number;
+  total: number;
+  pageSize: number;
+  totalPages: number;
 };
 
 export default function useVehicleOnboardingTable({
@@ -28,14 +30,19 @@ export default function useVehicleOnboardingTable({
   const { user } = useAppSelector((state) => state.user);
 
   const { data, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ["vehicleOnboardingTable", user?.id, currentPage],
+    queryKey: [
+      "vehicleOnboardingTable",
+      user?.id,
+      currentPage,
+      search,
+      filters,
+    ],
 
     queryFn: async () =>
       http.get<vehicleOnboardingTable>(
-        `${ApiRoutes.vehicleOnboardingTable}/?
-        ${handleFilterQuery({
+        `${ApiRoutes.vehicleOnboardingTable}?${handleFilterQuery({
           filters,
-        })}&search=${search}&page=${currentPage}&limit=${pageLimit}`
+        })}&search=${search}&page=${currentPage}`
       ),
     enabled: !!user?.id,
     retry: false,
@@ -46,6 +53,8 @@ export default function useVehicleOnboardingTable({
     isError,
     isLoading,
     isSuccess,
-    totalCount: data?.totalCount || 0,
+    totalCount: data?.total || 0,
+    pageSize: data?.pageSize || 0,
+    totalPages: data?.totalPages || 0,
   };
 }

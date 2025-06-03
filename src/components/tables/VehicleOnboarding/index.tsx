@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import SearchInput from "@/components/shared/searchInput";
 import FilterBy from "@/components/shared/filter";
-import { bookingFilters } from "@/utils/data";
+import { bookingFilters, VehicleOnboardingFilters } from "@/utils/data";
 import { debounce } from "@/utils/functions";
 import VehicleOnboardingTable from "./vehicleOnboardingTable";
 import Button from "@/components/shared/button";
@@ -47,16 +47,18 @@ export default function VehicleOnboarding({}: Props) {
             handleSearch(event.target.value)
           }
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <FilterBy
-            categories={bookingFilters}
+            categories={VehicleOnboardingFilters}
             dateEnabled
             onChange={handleFilterChange}
           />
-          <Button color="primary" className="flex gap-1  p-3 items-center">
-            <Link href={LocalRoute.vehicleOnboardingPage}>
-              {Icons.ic_add} Add Vehicle
-            </Link>
+          <Button
+            color="primary"
+            className="flex gap-1 justify-center text-sm text-nowrap items-center"
+          >
+            {Icons.ic_add}
+            <Link href={LocalRoute.selectHostPage}>Add Vehicle</Link>
           </Button>
         </div>
       </div>

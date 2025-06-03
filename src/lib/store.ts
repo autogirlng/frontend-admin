@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./features/userSlice";
+import hostReducer from "./features/hostSlice";
 import forgotPasswordReducer from "./features/forgotPasswordSlice";
 import accountSetupReducer from "./features/accountSetupSlice";
 import vehicleOnboardingReducer from "./features/vehicleOnboardingSlice";
@@ -7,6 +8,7 @@ import vehicleOnboardingReducer from "./features/vehicleOnboardingSlice";
 export const makeStore = () => {
   return configureStore({
     reducer: {
+      host: hostReducer,
       user: userReducer,
       forgotPassword: forgotPasswordReducer,
       accountSetup: accountSetupReducer,

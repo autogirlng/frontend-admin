@@ -5,16 +5,16 @@ import useVehicleOnboardingTable from "./hooks/useVehicleOnboardingTable";
 import OnboardedAnalyticsTable from "./Table";
 type Props = { search?: string; filters?: Record<string, string[]> };
 
-export default function VehicleOnboardingTable({}: Props) {
+export default function VehicleOnboardingTable({ search, filters }: Props) {
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const pageLimit = 10;
 
-  const { data, totalCount, isError, isLoading } = useVehicleOnboardingTable({
-    currentPage: 1,
-    pageLimit: 10,
-    search: "",
-    filters: {},
-  });
+  const { data, totalCount, isError, pageSize, totalPages, isLoading } =
+    useVehicleOnboardingTable({
+      currentPage: currentPage,
+      pageLimit: 10,
+      search: search,
+      filters: filters,
+    });
 
   return (
     <div>
@@ -33,7 +33,8 @@ export default function VehicleOnboardingTable({}: Props) {
       <Pagination
         currentPage={currentPage}
         totalCount={totalCount}
-        pageLimit={pageLimit}
+        pageLimit={pageSize}
+        totalPage={totalPages}
         onPageChange={(page) => setCurrentPage(page)}
       />
     </div>

@@ -6,16 +6,15 @@ import { FaChevronLeft } from "react-icons/fa6";
 
 interface PageLayoutProps {
   children: ReactNode;
-  buttons?: ReactNode;
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({ children, buttons }) => {
+const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
   const router = useRouter();
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content Container */}
-      <div className="max-w-5xl w-full mx-auto py-4 px-4 sm:px-6 flex flex-col flex-grow">
+      <div className="max-w-5xl w-full mx-auto space-y-5 py-4 px-4 sm:px-6 flex flex-col flex-grow">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-2">
           <button
@@ -31,9 +30,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children, buttons }) => {
       </div>
 
       {/* Footer - Stays at Bottom */}
-      <div className="sticky bottom-0 left-0 w-full py-3 px-4 bg-gray-100 shadow-md flex justify-end">
-        {buttons}
-      </div>
+      <div className="sticky bottom-0 left-0 w-full py-3 px-4 bg-grey-100 shadow-md flex justify-end"></div>
     </div>
   );
 };

@@ -231,7 +231,6 @@ export const debounce = <T extends (...args: any[]) => any>(
     }, delay);
   };
 };
-
 export const handleFilterQuery = ({
   filters,
   month,
@@ -239,21 +238,38 @@ export const handleFilterQuery = ({
   search,
   startDate,
   endDate,
+  fromDate,
+  untilDate,
+  fromTime,
+  untilTime,
+  location,
 }: {
-  filters: Record<string, string[]>;
+  filters: Record<string, string[] | number[]>;
   month?: number;
   year?: string;
   search?: string;
   startDate?: string;
   endDate?: string;
+  fromDate?: string;
+  untilDate?: string;
+  fromTime?: string;
+  untilTime?: string;
+  location?: string;
 }) => {
   const filterQuery = new URLSearchParams();
   Object.entries(filters).forEach(([key, values]) => {
-    values.forEach((value) => {
-      if (key === "vehicle")
-        return filterQuery.append("vehicleId", value.toString());
-      else return filterQuery.append(key, value);
-    });
+    if (key === "price") {
+      {
+        filterQuery.append("minPrice", values[0].toString());
+        filterQuery.append("maxPrice", values[1].toString());
+      }
+    } else {
+      values.forEach((value) => {
+        if (key === "vehicle")
+          filterQuery.append("vehicleId", value.toString());
+        else filterQuery.append(key, value.toString());
+      });
+    }
   });
 
   if (month) filterQuery.append("month", month.toString());
@@ -261,8 +277,14 @@ export const handleFilterQuery = ({
   if (search) filterQuery.append("search", search.toString());
   if (startDate) filterQuery.append("startDate", startDate.toString());
   if (endDate) filterQuery.append("endDate", endDate.toString());
+  if (fromDate) filterQuery.append("fromDate", fromDate.toString());
+  if (untilDate) filterQuery.append("untilDate", untilDate.toString());
+  if (location) filterQuery.append("location", location.toString());
 
-  return encodeURIComponent(filterQuery.toString());
+  // if (fromTime) filterQuery.append("startDate", fromTime.toString());
+  // if (untilTime) filterQuery.append("endDate", untilTime.toString());
+
+  return filterQuery.toString();
 };
 
 export const handleErrors = (
@@ -280,11 +302,11 @@ export const handleErrors = (
 
   if (error?.message === "Network Error") {
     console.log(error);
-    return toast.error("Network Error");
+    // return toast.error("Network Error");
   }
 
   if (error.response?.status === 500) {
-    return toast.error(error.response?.data?.message);
+    // return toast.error(error.response?.data?.message);
   }
 
   if (ERR_CODE === "USER_ALREADY_EXIST") {

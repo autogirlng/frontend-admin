@@ -17,14 +17,7 @@ const HostOnboarding: React.FC = () => {
 
   return (
     <PageLayout
-      buttons={
-        <CurvedFilledButton
-          onClick={() => router.push("/dashboard/hosts")}
-          title="Continue >"
-          disabled={!isFormValid || !isFormDirty} // ✅ Controlled by state
-        />
-      }
-    >
+      >
       <div className="min-h-screen py-10 flex justify-start">
         <div className="w-full lg:w-[70%] lg:ml-10 rounded-xl transition-all duration-300">
           {/* Title */}

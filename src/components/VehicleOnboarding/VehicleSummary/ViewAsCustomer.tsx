@@ -55,7 +55,8 @@ export default function ViewAsCustomer({ vehicle }: Props) {
         </h2>
 
         {/* car preview */}
-        <div className="flex items-center gap-1 md:gap-7 3xl:gap-[41px]">
+        {/* car preview */}
+        <div className="flex items-center gap-1 md:gap-7 3xl:gap-[41px] overflow-x-auto">
           {vehicleImages.map((image, index) => (
             <Image
               key={index}
@@ -63,7 +64,7 @@ export default function ViewAsCustomer({ vehicle }: Props) {
               alt=""
               width={152}
               height={90}
-              className="w-full h-[44px] sm:h-[90px] rounded-lg sm:rounded-[18px] object-cover"
+              className="w-[152px] h-[44px] sm:h-[90px] rounded-lg sm:rounded-[18px] object-cover shrink-0"
             />
           ))}
         </div>

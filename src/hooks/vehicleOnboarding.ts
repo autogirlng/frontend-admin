@@ -22,7 +22,7 @@ export default function useVehicleOnboarding() {
     queryKey: ["getVehicleById"],
     queryFn: () =>
       http.get<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${vehicleId}`
+        `${ApiRoutes.vehicleOnboarding}/${vehicleId}/`
       ),
     enabled: !!user?.id && !!vehicleId,
     retry: false,

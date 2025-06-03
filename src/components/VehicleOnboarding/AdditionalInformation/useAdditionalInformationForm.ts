@@ -12,6 +12,8 @@ import {
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useRouter } from "next/navigation";
 import { useHttp } from "@/utils/useHttp";
+import { ApiRoutes } from "@/utils/ApiRoutes";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 export default function useAdditionalInformationForm({
   currentStep,
@@ -36,10 +38,11 @@ export default function useAdditionalInformationForm({
     numberOfSeats: `${vehicle?.numberOfSeats || ""}`,
   };
 
+  const { host } = useAppSelector((state) => state.host);
   const saveStep2 = useMutation({
     mutationFn: (values: AdditionalVehicleInformationValues) =>
       http.put<VehicleInformation>(
-        `/api/vehicle-onboarding/step2/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step2/${vehicle?.id}`,
         {
           ...values,
           numberOfSeats: parseInt(values.numberOfSeats),
@@ -54,7 +57,7 @@ export default function useAdditionalInformationForm({
           { ...vehicle, ...data }
         )
       );
-      router.push("/listings");
+      router.push(LocalRoute.fleetPage);
     },
 
     onError: (error: AxiosError<ErrorResponse>) =>
@@ -64,7 +67,7 @@ export default function useAdditionalInformationForm({
   const submitStep2 = useMutation({
     mutationFn: (values: AdditionalVehicleInformationValues) =>
       http.put<VehicleInformation>(
-        `/api/vehicle-onboarding/step2/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step2/${vehicle?.id}`,
         {
           ...values,
           numberOfSeats: parseInt(values.numberOfSeats),

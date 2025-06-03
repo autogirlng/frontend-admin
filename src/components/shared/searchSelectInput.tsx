@@ -6,11 +6,10 @@ import {
   ComboboxOptions,
 } from "@headlessui/react";
 import { Fragment, useState } from "react";
-import Tooltip from "@repo/ui/tooltip";
-import { Spinner } from "@repo/ui/spinner";
+import Tooltip from "./tooltip";
+import { Spinner } from "./spinner";
 import cn from "classnames";
-import Icons from "@repo/ui/icons";
-
+import Icons from "./icons";
 type BankProp = {
   bankId: string;
   baseUssdCode: string;
@@ -89,8 +88,8 @@ const SearchSelectInput = ({
           error
             ? "border border-error-500 focus:border-error-500"
             : variant === "filled"
-              ? "bg-grey-800 text-grey-400 border-none"
-              : "bg-white text-grey-900 border border-grey-300 hover:border-primary-500 focus:border-primary-500 focus:shadow-[0_0_0_4px_#1E93FF1A]",
+            ? "bg-grey-800 text-grey-400 border-none"
+            : "bg-white text-grey-900 border border-grey-300 hover:border-primary-500 focus:border-primary-500 focus:shadow-[0_0_0_4px_#1E93FF1A]",
           className
         )}
       >

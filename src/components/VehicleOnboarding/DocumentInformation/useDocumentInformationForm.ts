@@ -11,6 +11,7 @@ import {
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useRouter } from "next/navigation";
 import { useHttp } from "@/utils/useHttp";
+import { ApiRoutes } from "@/utils/ApiRoutes";
 
 export default function useDocumentInformationForm({
   currentStep,
@@ -25,18 +26,22 @@ export default function useDocumentInformationForm({
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
 
   const initialValues: DocumentVehicleInformationValues = {
-    authorizationLetter: vehicle?.document.authorizationLetter ?? "",
-    insuranceCertificate: vehicle?.document.insuranceCertificate ?? "",
-    maintenanceHistory: vehicle?.document.maintenanceHistory ?? "",
-    proofOfOwnership: vehicle?.document.proofOfOwnership ?? "",
-    vehicleInspectionReport: vehicle?.document.vehicleInspectionReport ?? "",
-    vehicleRegistration: vehicle?.document.vehicleRegistration ?? "",
+    authorizationLetter: vehicle?.document?.authorizationLetter ?? "",
+    insuranceCertificate: vehicle?.document?.insuranceCertificate ?? "",
+    maintenanceHistory: vehicle?.document?.maintenanceHistory ?? "",
+    proofOfOwnership: vehicle?.document?.proofOfOwnership ?? "",
+    vehicleInspectionReport: vehicle?.document?.vehicleInspectionReport ?? "",
+    vehicleRegistration: vehicle?.document?.vehicleRegistration ?? "",
   };
 
+  const { host } = useAppSelector((state) => state.host);
   const saveStep5 = useMutation({
     mutationFn: (formData: FormData) => {
       // Expecting FormData
-      return http.put(`/api/vehicle-onboarding/step5/${vehicle?.id}`, formData);
+      return http.put(
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step5/${vehicle?.id}`,
+        formData
+      );
     },
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 5 Saved", data);
@@ -54,7 +59,10 @@ export default function useDocumentInformationForm({
   const submitStep5 = useMutation({
     mutationFn: (formData: FormData) => {
       // Expecting FormData
-      return http.put(`/api/vehicle-onboarding/step5/${vehicle?.id}`, formData);
+      return http.put(
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step5/${vehicle?.id}`,
+        formData
+      );
     },
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 5 Submitted", data);

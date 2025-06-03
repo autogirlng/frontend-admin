@@ -10,6 +10,7 @@ import { ErrorResponse, VehiclePhotos } from "@/utils/types";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useHttp } from "@/utils/useHttp";
+import { ApiRoutes } from "@/utils/ApiRoutes";
 
 export default function useVehiclePhotosForm({
   setPhotoTipIndex,
@@ -59,9 +60,14 @@ export default function useVehiclePhotosForm({
     console.log(photoViews);
   }, [photoViews]);
 
+  const { host } = useAppSelector((state) => state.host);
+
   const saveStep3 = useMutation({
     mutationFn: (values: FormData) =>
-      http.put(`/api/vehicle-onboarding/step3/${vehicle?.id}`, values),
+      http.put(
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step3/${vehicle?.id}`,
+        values
+      ),
 
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 3 Saved", data);
@@ -78,7 +84,10 @@ export default function useVehiclePhotosForm({
 
   const submitStep3 = useMutation({
     mutationFn: (values: FormData) =>
-      http.put(`/api/vehicle-onboarding/step3/${vehicle?.id}`, values),
+      http.put(
+        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step3/${vehicle?.id}`,
+        values
+      ),
 
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 3 Submitted", data);

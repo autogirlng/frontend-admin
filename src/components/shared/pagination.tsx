@@ -16,6 +16,7 @@ const DOTS = "...";
 const Pagination = ({
   onPageChange,
   totalCount,
+  totalPage,
   siblingCount = 1,
   currentPage,
   pageLimit,
@@ -27,9 +28,10 @@ const Pagination = ({
   currentPage: number;
   pageLimit: number;
   className?: string;
+  totalPage?: number;
 }) => {
   const paginationRange: (number | string)[] = useMemo(() => {
-    const totalPageCount = Math.ceil(totalCount / pageLimit);
+    const totalPageCount = totalPage ?? Math.ceil(totalCount / pageLimit);
 
     // Pages count is determined as siblingCount + firstPage + lastPage + currentPage + 2*DOTS
     const totalPageNumbers = siblingCount + 5;

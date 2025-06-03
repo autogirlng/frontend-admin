@@ -1,7 +1,7 @@
 import cn from "classnames";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { popupNavItemsforNoUser } from "@/utils/data";
 import { getInitialsFromName } from "@/utils/functions";
@@ -13,22 +13,32 @@ import Icons from "@/utils/Icon";
 import NavPopup from "@/components/Navbar/NavPopup";
 import MobileNavItem from "@/components/Navbar/MobileNavItem";
 
-type Props = { user: User | null; userToken: string };
+type Props = {
+  user: User | null;
+  userToken?: string;
+  explorePage?: boolean;
+  children?: ReactNode;
+};
 
-export default function DesktopNav({ user, userToken }: Props) {
+export default function DesktopNav({
+  user,
+  userToken,
+  explorePage,
+  children,
+}: Props) {
   const [sticky, setSticky] = useState<boolean>(false);
 
   useEffect(() => {
     window.addEventListener("scroll", () => {
-      setSticky(window.scrollY > 600);
+      if (!explorePage) setSticky(window.scrollY > 600);
     });
-  }, []);
+  }, [explorePage]);
 
   return (
     <header
       className={cn(
         "hidden md:flex justify-between items-center fixed top-0 left-0 z-[999] w-full px-20 py-5",
-        sticky
+        explorePage || sticky
           ? "bg-white border-b border-grey-200"
           : "bg-[#F9FAFB59] backdrop-blur-xl"
       )}
@@ -40,6 +50,7 @@ export default function DesktopNav({ user, userToken }: Props) {
         width={114}
         height={40}
       />
+      {children}
       <nav className="flex items-center gap-4">
         <Link
           className={cn(
