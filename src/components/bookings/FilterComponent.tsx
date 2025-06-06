@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Filter as FilterIcon, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Filter as FilterIcon, X, ChevronDown, ChevronUp, CalendarDays } from "lucide-react";
 
 interface FilterOption {
   id: string;
@@ -17,11 +17,14 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>("all_time");
   const filterRef = useRef<HTMLDivElement>(null);
 
+
   // Filter period options
   const periodOptions: FilterOption[] = [
-    { id: "all_time", label: "All Time" },
-    { id: "this_month", label: "This Month" },
+    { id: "today", label: "Today" },
+    { id: "yesterday", label: "Yesterday" },
+    { id: "tomorrow", label: "Tomorrow" },
     { id: "this_week", label: "This Week" },
+    { id: "this_month", label: "This Month" },
     { id: "last_30_days", label: "Last 30 Days" },
     { id: "last_90_days", label: "Last 90 Days" },
   ];
@@ -83,31 +86,26 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
       {isFilterOpen && (
         <div
           id="filter-dropdown"
-          className="absolute z-10 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+          className="absolute z-10 mt-2 w-80 bg-white rounded-lg shadow-lg border border-[#dbdfe5] overflow-hidden"
           style={{ top: "calc(100% + 5px)", right: 0 }}
         >
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <div className="flex flex-col  pt-4 px-4">
             <h3
-              className="text-lg font-medium text-gray-800"
-              style={{ fontSize: 16 }}
+              className="text-sm font-semibold text-[#344054]"
+              style={{ fontSize: 15 }}
             >
               Filter By
             </h3>
-            <button
-              onClick={clearAllFilters}
-              className="text-blue-500 hover:text-blue-700 flex items-center text-sm"
-            >
-              Clear all
-              <X size={16} className="ml-1" />
-            </button>
+            <div className="flex justify-between items-center mt-2">
+              <h4 className=" text-sm text-gray-800">Period</h4>
+              <ChevronUp size={18} className="text-gray-500" />
+            </div>
           </div>
+
+
 
           <div className="p-4">
             <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-base font-medium text-gray-800">Period</h4>
-                <ChevronUp size={18} className="text-gray-500" />
-              </div>
 
               <div className="space-y-2">
                 {periodOptions.map((option) => (
@@ -127,6 +125,12 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
                     </label>
                   </div>
                 ))}
+                <p className="text-[13px] mt-2">Custom Date</p>
+
+                <div className="flex justify-between items-center mt-2">
+                  <h4 className=" text-sm text-gray-800">Select Date Range</h4>
+                  <CalendarDays size={20} className="text-gray-500" />
+                </div>
               </div>
             </div>
 
