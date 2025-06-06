@@ -1,4 +1,6 @@
 import { ReactNode } from "react";
+import { StatusBadge } from "./StatusBadge";
+import { Status } from "@/utils/types";
 
 type Props = {
   content: string;

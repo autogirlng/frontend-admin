@@ -9,6 +9,7 @@ import {
 import { Popup } from "@/components/shared/popup";
 import { BookingTableBadge, TransactionBadge } from "@/components/shared/badge";
 import MoreButton from "@/components/shared/moreButton";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 const TableCell = ({
   title,
@@ -46,38 +47,12 @@ const FleetMobileRow = ({ items }: { items: FleetTable }) => {
           <>
             <p className="!text-xs 3xl:!text-base !font-semibold">Actions</p>
             <ul className="space-y-2 *:py-2">
-              <>
-                <li>
-                  {/* <DeclineTrip
-                        openModal={openDeclineModal}
-                        handleModal={() => handleDeclineModal()}
-                        isLoading={declineBooking.isPending}
-                        handleAction={() => declineBooking.mutate()}
-                        trigger={
-                          <button className="!text-xs 3xl:!text-base ">
-                            Decline Trip
-                          </button>
-                        }
-                      /> */}
-                </li>
-                <li>
-                  {/* <AcceptTrip
-                        openModal={openAcceptModal}
-                        handleModal={() => handleAcceptModal()}
-                        isLoading={acceptBooking.isPending}
-                        handleAction={() => acceptBooking.mutate()}
-                        trigger={
-                          <button className="!text-xs 3xl:!text-base ">
-                            Accept Trip
-                          </button>
-                        }
-                      /> */}
-                </li>
-              </>
-
               <li>
-                <Link href={`/bookings/`} className="!text-xs 3xl:!text-base">
-                  View Booking Details
+                <Link
+                  href={`${LocalRoute.vehiclePage}/${items.vehicleId}`}
+                  className="!text-xs 3xl:!text-base"
+                >
+                  View Vehicle
                 </Link>
               </li>
             </ul>

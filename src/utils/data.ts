@@ -40,7 +40,7 @@ export const dashboardNavItems = [
   {
     icon: Icons.ic_host_Admin,
     name: "Host",
-    link: LocalRoute.hostOnboarding,
+    link: LocalRoute.hostPage,
   },
   {
     icon: Icons.ic_support,
@@ -561,6 +561,14 @@ export const vehicleFeaturesOptions: string[] = [
   "WheelchairAccessible",
 ];
 
+export const cityOptions: string[] = [
+  "Abuja",
+  "Accra",
+  "Benin",
+  "Enugu",
+  "Lagos",
+  "Port Harcourt",
+];
 export const citiesOptions: OptionType[] = [
   { value: "Abuja", option: "Abuja" },
   { value: "Accra", option: "Accra" },
@@ -743,7 +751,8 @@ export const vehicleOnboardingTableHeadItems: string[] = [
   "Plate Number",
   "Location",
   "Date Added",
-  "Booking Count",
+  "Customer Rate",
+  "Host Rate",
   "Vehicle Status",
   "Actions",
 ];
@@ -757,6 +766,19 @@ export const membersHeadItems: string[] = [
   "Status",
 ];
 
+export const hostMembersItems: string[] = [
+  "Host ID",
+  "Full Name",
+  "Phone Number",
+  "Vehicles",
+  "Total Bookings",
+  "Total Rides",
+  "Last Login",
+  "Last Booked",
+  "Location",
+  "Status",
+  "Actions",
+];
 export const selectingHostTableHeadItems: string[] = [
   "Host ID",
   "Host",
@@ -878,8 +900,20 @@ export const dashboardStatFilter = [
         value: "all",
       },
       {
-        option: "Month",
+        option: "This Month",
         value: "month",
+      },
+      {
+        option: "This Week",
+        value: "week",
+      },
+      {
+        option: "Last 30 days",
+        value: "Last30Day",
+      },
+      {
+        option: "Last 90 days",
+        value: "Last90Day",
       },
     ],
   },
@@ -911,7 +945,36 @@ export const fleetFilters = [
   { title: "vehicleType", options: vehicleTypesOptions },
 ];
 
-// add type
+export const teamSettingFilters = [
+  {
+    title: "Role",
+    options: [
+      {
+        option: "Super Admin",
+        value: "super admin",
+      },
+      {
+        option: "Admin",
+        value: "admin",
+      },
+      {
+        option: "Customer Support",
+        value: "customer support",
+      },
+      { option: "Finance Manager", value: "finance manager" },
+      { option: "Operation Manager", value: "operation manager" },
+    ],
+  },
+  {
+    title: "Status ",
+    options: [
+      { option: "Active", value: "active" },
+      { option: "Black Listed", value: "blacklisted" },
+      { option: "Deactivated", value: "deactivated" },
+    ],
+  },
+];
+
 export const transactionFilters = [
   {
     title: "type",

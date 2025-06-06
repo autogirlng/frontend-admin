@@ -8,7 +8,7 @@ export default function FleetStats({}: Props) {
   return (
     <div className="flex gap-1.5 overflow-auto">
       <ActivityCard
-        primary
+        tooltip=""
         title="Total Vehicles"
         value={`${data?.totalVehicles || `-`}`}
         isLoading={isLoading}

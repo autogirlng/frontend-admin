@@ -10,6 +10,9 @@ import {
 import { Popup } from "@/components/shared/popup";
 import { BookingTableBadge, TransactionBadge } from "@/components/shared/badge";
 import MoreButton from "@/components/shared/moreButton";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { updateMember } from "@/lib/features/teamMemberSlice";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 const TableCell = ({
   title,
@@ -38,6 +41,14 @@ const TableCell = ({
   </div>
 );
 export default function TeamMobileRow({ items }: { items: Member }) {
+  const { member } = useAppSelector((state) => state.teamMember);
+  const dispatch = useAppDispatch();
+
+  const handleSelectMember = () => {
+    // Update the global host state when this row is selected
+    dispatch(updateMember(items));
+  };
+
   return (
     <div className="space-y-3 pt-5 pb-3 border-b border-grey-300">
       <Popup
@@ -76,8 +87,12 @@ export default function TeamMobileRow({ items }: { items: Member }) {
               </>
 
               <li>
-                <Link href={`/bookings/`} className="!text-xs 3xl:!text-base">
-                  View Booking Details
+                <Link
+                  onClick={handleSelectMember}
+                  href={`${LocalRoute.teamMemberProfilePage}/${items?.id}`}
+                  className="!text-xs 3xl:!text-base"
+                >
+                  View Member
                 </Link>
               </li>
             </ul>

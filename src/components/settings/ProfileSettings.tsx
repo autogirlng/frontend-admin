@@ -4,6 +4,8 @@ import InputField from "../shared/inputField"; // Adjust path as needed
 import PhoneNumberAndCountryField from "../shared/phoneNumberAndCountryField"; // Adjust path as needed
 import { useAppSelector } from "@/lib/hooks";
 import { FullPageSpinner } from "../shared/spinner";
+import { replaceCharactersWithString } from "@/utils/functions";
+import { getCountryCallingCode } from "react-phone-number-input";
 
 const ProfileSettings = () => {
   const { user } = useAppSelector((state) => state.user);
@@ -11,9 +13,7 @@ const ProfileSettings = () => {
   // Initialize state with null/undefined, or default empty strings
   const [firstName, setFirstName] = useState<string | undefined | null>(null);
   const [lastName, setLastName] = useState<string | undefined | null>(null);
-  const [countryCode, setCountryCode] = useState<string | undefined | null>(
-    null
-  );
+  const [countryCode, setCountryCode] = useState<string | undefined | null>();
   const [phoneNumber, setPhoneNumber] = useState<string | undefined | null>(
     null
   );
@@ -25,14 +25,13 @@ const ProfileSettings = () => {
     if (user) {
       setFirstName(user.firstName);
       setLastName(user.lastName);
-      setCountryCode(user.countryCode);
+      setCountryCode(`+${user.countryCode}`);
       setPhoneNumber(user.phoneNumber);
       setRole(user.userRole);
       setEmail(user.email);
     }
   }, [user]); // Dependency array: this effect runs whenever 'user' changes
 
-  // It's good practice to handle loading states or cases where user data might not be present
   if (!user) {
     return <FullPageSpinner />;
   }
@@ -72,21 +71,28 @@ const ProfileSettings = () => {
 
         {/* Phone Number using PhoneNumberAndCountryField */}
         <PhoneNumberAndCountryField
-          label="Phone number"
           inputName="phoneNumber"
+          selectName="country"
           inputId="phoneNumber"
+          selectId="country"
+          label="Phone Number"
           inputPlaceholder="Enter phone number"
-          inputValue={phoneNumber || ""} // Provide a default empty string for display
-          inputOnChange={(value: string) => setPhoneNumber(value)}
+          selectPlaceholder="+234"
+          inputValue={phoneNumber}
+          selectValue={countryCode}
+          inputOnChange={(event) => {
+            const number = replaceCharactersWithString(event.target.value);
+          }}
+          selectOnChange={(value: string) => {
+            const countryCode = `+${getCountryCallingCode(value as any)}`;
+            // setFieldValue("country", value);
+            // setFieldValue("countryCode", countryCode);
+          }}
           inputOnBlur={() => {}}
-          inputDisabled
-          selectName="countryCode"
-          selectId="countryCode"
-          selectPlaceholder="234"
-          selectValue={countryCode || ""} // Provide a default empty string for display
-          selectDisabled
-          selectOnChange={(value: string) => setCountryCode(countryCode)}
           selectOnBlur={() => {}}
+          selectClassname="!w-[170px]"
+          inputDisabled
+          selectDisabled
         />
 
         {/* Role */}
@@ -113,9 +119,9 @@ const ProfileSettings = () => {
             }
             inputClass="pr-[90px]"
           />
-          <span className="text-sm border border-success-500 text-success-500 rounded-lg px-6 py-3">
+          <div className="text-sm mt-5 border border-success-500 text-success-500 rounded-lg px-6 py-3">
             Verified
-          </span>
+          </div>
         </div>
       </div>
     </div>

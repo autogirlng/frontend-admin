@@ -50,7 +50,7 @@ export default function DashboardLayout({
         <>
           <MobileNav user={null} />
           <SideNav />
-          <div className="w-full md:w-[calc(100%-250px)] 2xl:w-[calc(100%-272px)] ml-0 md:ml-[250px] 2xl:ml-[272px] shadow-[12px_4px_100px_0px_#00000012">
+          <div className="w-full md:w-[calc(100%-230px)] 2xl:w-[calc(100%-272px)] ml-0 md:ml-[230px] 2xl:ml-[272px] shadow-[12px_4px_100px_0px_#00000012">
             <TopHeader />
             <div className="px-4 md:px-6 2xl:px-8 bg-white">{children}</div>
           </div>

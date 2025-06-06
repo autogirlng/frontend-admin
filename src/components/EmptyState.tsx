@@ -1,6 +1,8 @@
 import Image from "next/image";
 import cn from "classnames";
 import { ReactNode } from "react";
+import Button from "./shared/button";
+import Icons from "@/utils/Icon";
 
 type Props = {
   title: string;
@@ -8,6 +10,8 @@ type Props = {
   image: string;
   imageSize?: string;
   noBg?: boolean;
+  buttonText?: string;
+  buttonAction?: VoidFunction;
 };
 
 export default function EmptyState({
@@ -16,6 +20,8 @@ export default function EmptyState({
   image,
   imageSize,
   noBg,
+  buttonAction,
+  buttonText,
 }: Props) {
   return (
     <div
@@ -37,6 +43,16 @@ export default function EmptyState({
           <p className="text-base 2xl:text-xl 4xl:text-h6 font-medium">
             {message}
           </p>
+        )}
+        {buttonAction && (
+          <Button
+            onClick={buttonAction}
+            color="primary"
+            className="flex gap-1 justify-center text-sm text-nowrap items-center w-sm max-w-sm  flex-shrink-0"
+          >
+            {Icons.ic_add}
+            {buttonText}
+          </Button>
         )}
       </div>
     </div>

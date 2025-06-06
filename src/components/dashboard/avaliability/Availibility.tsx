@@ -217,7 +217,7 @@ export default function AvailabilityLayout({
             )}
             <div className="flex items-center justify-between gap-3">
               <h5 className="text-sm md:text-h5 3xl:text-h5">
-                {totalCount}+ vehicles available
+                Vehicle Availability {/* {totalCount}+ vehicles available */}
               </h5>
               <button
                 onClick={() => setShowAllFilters(true)}
