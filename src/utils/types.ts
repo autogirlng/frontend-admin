@@ -1,5 +1,7 @@
 import { JSX } from "react";
 import { string } from "yup";
+import { LucideProps } from "lucide-react";
+
 export interface ErrorResponse {
   ERR_CODE: string;
   message: string;
@@ -817,3 +819,31 @@ export interface AddMemberPayload {
 export interface ChangeRolePayload {
   role: string;
 }
+
+// Define the booking data type based on the image content
+export interface Booking {
+  id: string;
+  customerName: string;
+  city: string;
+  bookingType: "Single Day" | "Multi Day";
+  pickupLocation: string;
+  vehicle: string;
+  bookingStatus:
+    | "Paid"
+    | "Unpaid"
+    | "Pending"
+    | "Completed"
+    | "Rejected"
+    | "Cancelled";
+  tripStatus:
+    | "Unconfirmed"
+    | "Confirmed"
+    | "Ongoing"
+    | "Extra Time"
+    | "Cancelled"
+    | "Completed";
+}
+
+export type LucideIconType = React.ForwardRefExoticComponent<
+  Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+>;

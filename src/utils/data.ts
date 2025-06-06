@@ -9,10 +9,12 @@ import {
   TransactionStatus,
   TransactionTableRow,
   TransactionType,
+  Booking
 } from "./types";
 import { BookingTrips } from "../types";
 import { ImageAssets } from "./ImageAssets";
 import { LocalRoute } from "./LocalRoutes";
+
 
 type OptionType = { option: string; value: string };
 
@@ -30,7 +32,7 @@ export const dashboardNavItems = [
   {
     icon: Icons.ic_ticket,
     name: "Bookings",
-    link: LocalRoute.bookingTrips,
+    link: LocalRoute.bookingPage,
   },
   {
     icon: Icons.ic_add,
@@ -1345,3 +1347,107 @@ export const vehicleMakeArray = [
   "zenvo",
   "zagato",
 ];
+
+ // Booking data to match the image
+export const bookings:Booking[] = [
+    {
+      id: "BKG-1234-AB56",
+      customerName: "Chioma Nwosu",
+      city: "Lagos",
+      bookingType: "Single Day",
+      pickupLocation: "1234 Elm Street...",
+      vehicle: "Toyota Corolla",
+      bookingStatus: "Paid",
+      tripStatus: "Unconfirmed",
+    },
+    {
+      id: "BKG-4567-GH12",
+      customerName: "Oluwaseun Ojo",
+      city: "Benin",
+      bookingType: "Multi Day",
+      pickupLocation: "River Plaza very long address and let see if this works",
+      vehicle: "Toyota Camry Muscle",
+      bookingStatus: "Unpaid",
+      tripStatus: "Extra Time",
+    },
+    {
+      id: "BKG-4567-GH12",
+      customerName: "Chukwuemeka Okeke",
+      city: "Enugu",
+      bookingType: "Multi Day",
+      pickupLocation: "Skyline Park...",
+      vehicle: "Toyota Yaris 2007",
+      bookingStatus: "Paid",
+      tripStatus: "Cancelled",
+    },
+    {
+      id: "BKG-5678-IJ34",
+      customerName: "Chigozie Nnamani",
+      city: "Accra",
+      bookingType: "Multi Day",
+      pickupLocation: "Main St. Lot...",
+      vehicle: "Toyota Avensis",
+      bookingStatus: "Paid",
+      tripStatus: "Ongoing",
+    },
+    {
+      id: "BKG-8901-MN78",
+      customerName: "Ezinne Chukwu",
+      city: "Lagos",
+      bookingType: "Multi Day",
+      pickupLocation: "Greenwood Ln...",
+      vehicle: "Nissan Almera",
+      bookingStatus: "Pending",
+      tripStatus: "Confirmed",
+    },
+    {
+      id: "BKG-0123-QR12",
+      customerName: "Oluchi Eze",
+      city: "Benin",
+      bookingType: "Multi Day",
+      pickupLocation: "Westside Rd...",
+      vehicle: "Toyota Hilux",
+      bookingStatus: "Completed",
+      tripStatus: "Extra Time",
+    },
+    {
+      id: "BKG-3456-EF90",
+      customerName: "Chika Ibe",
+      city: "Lagos",
+      bookingType: "Multi Day",
+      pickupLocation: "Oceanview Ave...",
+      vehicle: "Mitsubishi L200",
+      bookingStatus: "Pending",
+      tripStatus: "Completed",
+    },
+    {
+      id: "BKG-4567-GH12",
+      customerName: "Nnamdi Kalu",
+      city: "Benin",
+      bookingType: "Single Day",
+      pickupLocation: "Maple Grove...",
+      vehicle: "Toyota Yaris 2007",
+      bookingStatus: "Rejected",
+      tripStatus: "Cancelled",
+    },
+    {
+      id: "BKG-6789-KL56",
+      customerName: "Obinna Anozie",
+      city: "Accra",
+      bookingType: "Single Day",
+      pickupLocation: "City Hall Sq...",
+      vehicle: "Peugeot 504 Pickup",
+      bookingStatus: "Cancelled",
+      tripStatus: "Completed",
+    },
+    {
+      id: "BKG-3851-ZW76",
+      customerName: "Adebayo Olatunji",
+      city: "Enugu",
+      bookingType: "Multi Day",
+      pickupLocation: "Tech Hub Bld...",
+      vehicle: "Lexus RX 350",
+      bookingStatus: "Completed",
+      tripStatus: "Cancelled",
+    },
+  ];

@@ -2186,14 +2186,14 @@ const Icons = {
         cy="18.0007"
         r="16.6667"
         stroke="#344054"
-        stroke-width="2.5"
+        strokeWidth="2.5"
       />
       <path
         d="M13.9987 10.5L12.4731 12.4503C11.5963 13.5713 11.7576 13.9091 13.1699 13.9091L21.9987 13.9091C24.4346 13.9091 24.6654 15.1876 24.6654 17.3182M21.9987 25.5L23.5243 23.5497C24.4011 22.4287 24.2398 22.0909 22.8275 22.0909H13.9987C11.5628 22.0909 11.332 20.8124 11.332 18.6818"
         stroke="#344054"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   ),
@@ -2208,23 +2208,23 @@ const Icons = {
       <path
         d="M16.6654 18.8613V14.6947C16.6654 13.1233 16.6654 12.3377 16.1772 11.8495C15.689 11.3613 14.9034 11.3613 13.332 11.3613L9.9987 18.8613L6.66536 11.3613C5.09401 11.3613 4.30834 11.3613 3.82019 11.8495C3.33203 12.3377 3.33203 13.1233 3.33203 14.6947V18.8613"
         stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M10.0013 13.027L9.58464 16.3604L10.0013 17.6104L10.418 16.3604L10.0013 13.027ZM10.0013 13.027L9.16797 11.3604H10.8346L10.0013 13.027Z"
         stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M12.9154 5.94434V5.111C12.9154 3.50018 11.6095 2.19434 9.9987 2.19434C8.38786 2.19434 7.08203 3.50018 7.08203 5.111V5.94434C7.08203 7.55517 8.38786 8.86099 9.9987 8.86099C11.6095 8.86099 12.9154 7.55517 12.9154 5.94434Z"
         stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   ),

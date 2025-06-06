@@ -22,9 +22,11 @@ export const LocalRoute = {
   vehicleOnboardingPage: "/dashboard/vehicle-onboarding",
 
   // Dashboard
+  bookingPage: "/dashboard/bookings",
   bookingPerfomance: "/dashboard/booking-perfomance",
   bookingTrips: "/dashboard/trips",
-  bookingPage: "/dashboard/bookings",
+  // bookingTrips: "/dashboard/trips",
+
   // finance
   financePage: "/finance",
   // fleet

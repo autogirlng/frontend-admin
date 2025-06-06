@@ -29,7 +29,7 @@ function BookingPerfomance({}: Props) {
 
     if (date) {
       const formatted = date.toISOString().split("T")[0];
-      router.push(`/${LocalRoute.bookingTrips}/${formatted}`);
+      router.push(`/${LocalRoute.bookingPage}/${formatted}`);
     }
 
     console.log("Selected date:", date);
