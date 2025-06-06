@@ -12,3 +12,27 @@ export interface Booking {
   status: BookingStatus;
   price: number;
 }
+
+export interface IBooking {
+  id: string;
+  customerName: string;
+  city: string;
+  bookingType: "Single Day" | "Multi Day";
+  pickupLocation: string;
+  vehicle: string;
+  bookingStatus:
+  | "Paid"
+  | "Unpaid"
+  | "Pending"
+  | "Completed"
+  | "Rejected"
+  | "Cancelled";
+  
+  tripStatus:
+  | "Unconfirmed"
+  | "Confirmed"
+  | "Ongoing"
+  | "Extra Time"
+  | "Cancelled"
+  | "Completed";
+}
