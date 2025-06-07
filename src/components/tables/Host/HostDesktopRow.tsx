@@ -1,32 +1,34 @@
+// HostDesktopRow.tsx
+"use client"; // Ensure this is a client component
+
 import Link from "next/link";
-import React, { useState } from "react"; // Import useState
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Member } from "@/utils/types";
 import { Popup } from "@/components/shared/popup";
 import MoreButton from "@/components/shared/moreButton";
 import TableCell from "@/components/TableCell";
 import { LocalRoute } from "@/utils/LocalRoutes";
-import BlockUserModal from "./Details/modals/deactivateHostModal";
-// Helper function to get status-based styling for the badge
-const getStatusClasses = (status: string | undefined) => {
-  switch (status?.toLowerCase()) {
-    case "active":
-      return "bg-green-100 text-green-700";
-    case "banned":
-      return "bg-red-100 text-red-700";
-    case "inactive":
-      return "bg-yellow-100 text-yellow-700";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-};
+import BlockUserModal from "./Details/modals/deactivateHostModal"; // Assuming this path is correct
+import UnblockHostModal from "./Details/modals/activateHostModal";
+import { useSendLoginDetails } from "./hooks/useHostHooks";
+import { FullPageSpinner, Spinner } from "@/components/shared/spinner";
 
 export default function HostDesktopRow({ items }: { items: Member }) {
   const hostId = items?.id;
   const hostStatus = items?.status?.toLowerCase();
-
-  // State to control the visibility of the BlockUserModal
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [isUnblockModalOpen, setIsUnblockModalOpen] = useState(false); // New state for unblock modal
+
+  const { mutate: sendLoginDetailsMutation, isPending: isSendingLoginDetails } =
+    useSendLoginDetails();
+
+  // Handler for sending login details
+  const handleSendLoginDetails = () => {
+    if (hostId) {
+      sendLoginDetailsMutation({ hostId });
+    }
+  };
 
   return (
     <tr>
@@ -58,7 +60,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
       <TableCell
         content={
           items?.lastLogin
-            ? format(new Date(items?.lastLogin), "MMM d, h:mma") // Changed MMM d,PPPP h:mma to MMM d, h:mma as per previous fix attempt
+            ? format(new Date(items?.lastLogin), "MMM d, h:mma")
             : "-"
         }
       />
@@ -67,7 +69,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
       <TableCell
         content={
           items?.lastBooked
-            ? format(new Date(items?.lastBooked), "MMM d, h:mma") // Changed MMM d,PPPP h:mma to MMM d, h:mma as per previous fix attempt
+            ? format(new Date(items?.lastBooked), "MMM d, h:mma")
             : "-"
         }
       />
@@ -76,81 +78,92 @@ export default function HostDesktopRow({ items }: { items: Member }) {
       <TableCell content={items?.location ?? "-"} />
 
       {/* Status - Re-applied dynamic styling */}
-      <TableCell
-        content={items?.status}
-        isBadge
-        type="table" // Assuming 'table' is a valid type for TableCell for styling badges
-        className={`${getStatusClasses(
-          items?.status
-        )} px-2 py-1 rounded-full text-xs font-semibold`}
-      />
+      <TableCell content={items?.status} isBadge type="table" />
 
       {/* Actions */}
       <td>
-        <Popup
-          trigger={<MoreButton />}
-          content={
-            <>
-              <p className="!text-xs 3xl:!text-base !font-semibold">Actions</p>
-              <ul className="space-y-2 *:py-2">
-                {/* View User - Always available */}
-                <li>
-                  <Link
-                    href={`${LocalRoute.hostPage}/${hostId}`}
-                    className="!text-xs 3xl:!text-base"
-                  >
-                    View User
-                  </Link>
-                </li>
-
-                {/* Block User - For Active hosts */}
-                {hostStatus === "active" && (
-                  <li>
-                    {/* BlockUserModal will be triggered by this button */}
-                    <BlockUserModal
-                      openModal={isBlockModalOpen}
-                      handleModal={setIsBlockModalOpen}
-                      userId={hostId} // Pass the ID of the current host to the modal
-                      trigger={
-                        <button
-                          onClick={() => setIsBlockModalOpen(true)}
-                          className="!text-xs 3xl:!text-base text-left w-full"
-                          type="button" // Important for accessibility and form submission prevention
-                        >
-                          Block User
-                        </button>
-                      }
-                    />
-                  </li>
-                )}
-
-                {/* Unblock User - For Banned/Blocked hosts */}
-                {(hostStatus === "banned" || hostStatus === "inactive") && (
+        {/* Conditional rendering for MoreButton or Spinner */}
+        {isSendingLoginDetails ? (
+          <div className="flex justify-center items-center h-full">
+            <Spinner />
+          </div>
+        ) : (
+          <Popup
+            trigger={<MoreButton />}
+            content={
+              <>
+                <p className="!text-xs 3xl:!text-base !font-semibold">
+                  Actions
+                </p>
+                <ul className="space-y-2 *:py-2">
+                  {/* View User - Always available */}
                   <li>
                     <Link
-                      href={`/hosts/${hostId}/unblock`} // Example unblock route
+                      href={`${LocalRoute.hostPage}/${hostId}`}
                       className="!text-xs 3xl:!text-base"
                     >
-                      Unblock User
+                      View User
                     </Link>
                   </li>
-                )}
 
-                {/* Resend Logins - Often for inactive or when requested */}
-                {hostStatus !== "active" && (
-                  <li>
-                    <Link
-                      href={`/hosts/${hostId}/resend-logins`} // Example resend logins route
-                      className="!text-xs 3xl:!text-base"
-                    >
-                      Resend Logins
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </>
-          }
-        />
+                  {/* Block User - For Active hosts */}
+                  {hostStatus === "active" && (
+                    <li>
+                      <BlockUserModal
+                        openModal={isBlockModalOpen}
+                        handleModal={setIsBlockModalOpen}
+                        userId={hostId}
+                        trigger={
+                          <button
+                            onClick={() => setIsBlockModalOpen(true)}
+                            className="!text-xs 3xl:!text-base text-left w-full"
+                            type="button"
+                          >
+                            Block User
+                          </button>
+                        }
+                      />
+                    </li>
+                  )}
+
+                  {/* Unblock User - For Banned/Blocked hosts */}
+                  {(hostStatus === "banned" || hostStatus === "inactive") && (
+                    <li>
+                      <UnblockHostModal // Use the new UnblockHostModal
+                        openModal={isUnblockModalOpen}
+                        handleModal={setIsUnblockModalOpen}
+                        userId={hostId}
+                        trigger={
+                          <button
+                            onClick={() => setIsUnblockModalOpen(true)}
+                            className="!text-xs 3xl:!text-base text-left w-full"
+                            type="button"
+                          >
+                            Unblock User
+                          </button>
+                        }
+                      />
+                    </li>
+                  )}
+
+                  {/* Resend Logins - Often for inactive or when requested */}
+                  {hostStatus !== "active" && (
+                    <li>
+                      <button
+                        onClick={handleSendLoginDetails} // Call the new handler
+                        className="!text-xs 3xl:!text-base text-left w-full"
+                        type="button"
+                        disabled={isSendingLoginDetails} // Disable while sending
+                      >
+                        Resend Logins
+                      </button>
+                    </li>
+                  )}
+                </ul>
+              </>
+            }
+          />
+        )}
       </td>
     </tr>
   );

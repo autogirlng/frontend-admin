@@ -32,7 +32,7 @@ export const LocalRoute = {
   // fleet
   fleetPage: "/dashboard/fleet",
   availabilityPage: "/dashboard/booking/new-availability",
-  vehiclePage: "/vehicle/",
+  vehiclePage: "/vehicle",
   // customer
   customersPage: "/customer",
 

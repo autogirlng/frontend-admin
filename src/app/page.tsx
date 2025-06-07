@@ -10,6 +10,7 @@ import Icons from "@/components/shared/icons";
 import { useState } from "react";
 import BookingCarousel from "@/components/dashboard/vehicle-slider/BookingCarousel";
 import MostBookedVehicleCarousel from "@/components/dashboard/vehicle-slider/MostBookedVehiclesCarousel";
+import EmptyState from "@/components/EmptyState";
 
 const HomePage = () => {
   const { isUserLoading } = useAuth();
@@ -27,12 +28,8 @@ const HomePage = () => {
     filters: filters,
   });
 
-  if (isUserLoading || userSliceLoading) {
+  if (isUserLoading || userSliceLoading || isError) {
     return <FullPageSpinner />;
-  }
-
-  if (isError) {
-    return <div>Error loading dashboard data. Please try again later.</div>;
   }
 
   return (

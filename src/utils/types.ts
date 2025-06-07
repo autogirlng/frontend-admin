@@ -397,7 +397,7 @@ export type User = {
   bvnVerified: boolean;
   bio: string | null;
   city: string | null;
-  userRole: "HOST";
+  userRole: "HOST" | "CUSTOMER" | "ADMIN";
   businessLogo: string | null;
   businessName: string | null;
   businessAddress: string | null;
@@ -407,7 +407,15 @@ export type User = {
   updatedAt: string;
   Verification: UserVerification;
   averageRating: number;
+  statistics?: EarningsStatistics;
 };
+
+export interface EarningsStatistics {
+  bookingsCompleted: number;
+  cancelledBookings: number;
+  numberOfCustomers: number;
+  totalRevenue: number;
+}
 
 export interface TripSettings {
   advanceNotice: string;
@@ -481,13 +489,15 @@ export interface FleetStatistics {
 }
 
 export interface HostStatistics {
-  activeHost: number;
-
-  inactiveHost: number;
-  blockedHost: number;
-  totalHost: number;
+  totalHosts: number;
+  activeHosts: number;
+  inactiveHosts: number;
+  blockedHosts: number;
+  onboardingDistribution: {
+    selfOnboarded: number;
+    adminOnboarded: number;
+  };
 }
-
 export interface BookingStatistics {
   totalBookings: number;
   pendingApprovals: number;

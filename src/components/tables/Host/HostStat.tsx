@@ -22,19 +22,19 @@ export default function HostStats({}: Props) {
         error={isError}
         icon={Icons.ic_host_Admin}
         metrics={[
-          { title: "Total Host", value: data?.totalHost || 0 },
+          { title: "Total Host", value: data?.totalHosts || 0 },
           {
             title: "Active Host",
-            value: data?.activeHost || 0,
+            value: data?.activeHosts || 0,
           },
-          { title: "Inactive Host", value: data?.inactiveHost || 0 },
-          { title: "Blocked Host", value: data?.blockedHost || 0 },
+          { title: "Inactive Host", value: data?.inactiveHosts || 0 },
+          { title: "Blocked Host", value: data?.blockedHosts || 0 },
         ]}
         showFilter={false}
       />
       <OnboardingDistribution
-        selfOnboarded={9985}
-        adminOnboarded={3210}
+        selfOnboarded={data.onboardingDistribution?.selfOnboarded || 0}
+        adminOnboarded={data.onboardingDistribution?.adminOnboarded || 0}
         isLoading={isLoading}
       />
     </div>

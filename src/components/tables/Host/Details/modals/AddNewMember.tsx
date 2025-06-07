@@ -13,7 +13,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { getCountryCallingCode } from "libphonenumber-js";
 
-import useAddMember from "../../hooks/useAddMember";
+import useAddMember from "@/components/tables/Team/hooks/useAddMember";
 
 interface AddTeamMemberFormData {
   firstName: string;

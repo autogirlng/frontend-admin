@@ -16,17 +16,22 @@ export const ApiRoutes = {
   notification: "/notifications",
   // HOST
   getAllHost: "/admin/host",
+  getHostDetails: "/admin/host/details",
   getAllHostStat: "/admin/host/metrics",
   hostOnboarding: "/auth/createUser",
+  unblockUser: "/auth/user/activate",
   // DASHBOARD
   getDashboard: "/admin/dashboard",
   // FLEET
+
   getFleet: "/admin/metrics/fleet",
   availability: "/listings",
 
   // SETTINGS
   changeRole: "/admin/role-permissions",
   deactivateMember: "/admin/deactivate-member",
+  // VEHICLE
+  fetchVehicle: "/listings/details",
 };
 
 export const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";

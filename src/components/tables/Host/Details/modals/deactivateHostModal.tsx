@@ -29,24 +29,18 @@ export const useBlockUser = () => {
         blockedReason: payload.reason,
       }
     );
-    return response; // useHttp.post already returns data
+    return response;
   };
 
   return useMutation({
-    mutationFn: blockUserRequest, // Use the new function that uses your http client
+    mutationFn: blockUserRequest,
     onSuccess: () => {
       toast.success("User blocked successfully!");
-      // Invalidate relevant queries to refetch data, e.g., 'hosts' or 'users' list
       queryClient.invalidateQueries({ queryKey: ["hosts"] });
       queryClient.invalidateQueries({ queryKey: ["users"] }); // If you have a general users list
     },
     onError: (error: any) => {
-      // Your useHttp.post already handles errors and shows toasts,
-      // but you can add specific logic here if needed,
-      // or simply rely on the centralized error handling from useHttp.
       console.error("Failed to block user via Tanstack Query:", error);
-      // The toast.error might be redundant if handleErrors in useHttp already shows it.
-      // You might remove it here if useHttp covers all error notifications.
       toast.error(error.message || "Failed to block user.");
     },
   });
@@ -70,8 +64,8 @@ const BlockUserModal = ({
   userId,
 }: BlockUserModalProps) => {
   const {
-    mutate: blockUserMutation, // Rename mutate to avoid confusion
-    isPending, // Corrected from isLoading to isPending
+    mutate: blockUserMutation,
+    isPending,
     isSuccess,
     isError,
   } = useBlockUser();

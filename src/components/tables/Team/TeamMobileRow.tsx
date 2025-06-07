@@ -13,33 +13,8 @@ import MoreButton from "@/components/shared/moreButton";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { updateMember } from "@/lib/features/teamMemberSlice";
 import { LocalRoute } from "@/utils/LocalRoutes";
+import { MobileTableCell } from "@/components/TableCell";
 
-const TableCell = ({
-  title,
-  content,
-  isBadge,
-  type,
-}: {
-  title: string;
-  content: string | ReactNode;
-  isBadge?: boolean;
-  type?: "transaction" | "booking";
-}) => (
-  <div className="text-sm w-full flex gap-5 items-center justify-between">
-    <span className="text-grey-700 w-1/2">{title}</span>
-    <span className="font-semibold text-grey-700 w-1/2 break-all">
-      {isBadge ? (
-        type === "transaction" ? (
-          <TransactionBadge status={content as TransactionStatus} />
-        ) : (
-          <BookingTableBadge status={content as BookingBadgeStatus} />
-        )
-      ) : (
-        content
-      )}
-    </span>
-  </div>
-);
 export default function TeamMobileRow({ items }: { items: Member }) {
   const { member } = useAppSelector((state) => state.teamMember);
   const dispatch = useAppDispatch();
@@ -99,12 +74,15 @@ export default function TeamMobileRow({ items }: { items: Member }) {
           </>
         }
       />
-      <TableCell title="First Name" content={items?.firstName ?? "-"} />
-      <TableCell title="Last Name" content={`${items?.lastName ?? "-"}`} />
-      <TableCell title="Email" content={items?.email ?? "-"} />
+      <MobileTableCell title="First Name" content={items?.firstName ?? "-"} />
+      <MobileTableCell
+        title="Last Name"
+        content={`${items?.lastName ?? "-"}`}
+      />
+      <MobileTableCell title="Email" content={items?.email ?? "-"} />
 
-      <TableCell title="Role" content={items?.role} />
-      <TableCell
+      <MobileTableCell title="Role" content={items?.role} />
+      <MobileTableCell
         title="Last Login"
         content={
           items?.lastLogin
@@ -112,13 +90,13 @@ export default function TeamMobileRow({ items }: { items: Member }) {
             : ""
         }
       />
-      <TableCell
+      <MobileTableCell
         title="Joined"
         content={
           items?.joined ? format(new Date(items?.joined), "MMM d ,yyyy") : ""
         }
       />
-      <TableCell title="Status" content={items?.status} />
+      <MobileTableCell title="Status" content={items?.status} />
     </div>
   );
 }

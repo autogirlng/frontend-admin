@@ -79,7 +79,7 @@ const OnboardingDistribution: FC<OnboardingDistributionProps> = ({
                     #FFA000 ${selfOnboardedDegrees}deg ${
                     selfOnboardedDegrees + adminOnboardedDegrees
                   }deg
-                  )`,
+                    )`,
                 }}
               ></div>
 
@@ -92,7 +92,9 @@ const OnboardingDistribution: FC<OnboardingDistributionProps> = ({
                   top: selfOnboardedLabelPos.top,
                 }}
               >
-                {Math.round(selfOnboardedPercentage)}%
+                {/* Corrected line for selfOnboardedPercentage */}
+                {selfOnboardedPercentage > 0 &&
+                  `${Math.round(selfOnboardedPercentage)}%`}
               </div>
 
               {/* Admin Onboarded Percentage */}
@@ -103,7 +105,9 @@ const OnboardingDistribution: FC<OnboardingDistributionProps> = ({
                   top: adminOnboardedLabelPos.top,
                 }}
               >
-                {Math.round(adminOnboardedPercentage)}%
+                {/* Corrected line for adminOnboardedPercentage */}
+                {adminOnboardedPercentage > 0 &&
+                  `${Math.round(adminOnboardedPercentage)}%`}
               </div>
             </>
           )}

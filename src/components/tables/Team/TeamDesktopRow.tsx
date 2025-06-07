@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { FleetTable, Member } from "@/utils/types";
+import { Member } from "@/utils/types";
 import { Popup } from "@/components/shared/popup";
 import MoreButton from "@/components/shared/moreButton";
 import TableCell from "@/components/TableCell";
@@ -13,7 +13,6 @@ export default function TeamDesktopRow({ items }: { items: Member }) {
   const dispatch = useAppDispatch();
 
   const handleSelectMember = () => {
-    // Update the global host state when this row is selected
     dispatch(updateMember(items));
   };
 

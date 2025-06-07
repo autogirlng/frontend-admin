@@ -146,7 +146,7 @@ export default function AvailabilityLayout({
 
   return (
     <div>
-      <DesktopNav user={user} explorePage>
+      <DesktopNav user={null} explorePage>
         <div className="max-w-[1024px]">
           <SearchBookings
             searchValue={searchValue}

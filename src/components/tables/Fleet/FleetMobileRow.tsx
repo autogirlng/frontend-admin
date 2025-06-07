@@ -10,6 +10,7 @@ import { Popup } from "@/components/shared/popup";
 import { BookingTableBadge, TransactionBadge } from "@/components/shared/badge";
 import MoreButton from "@/components/shared/moreButton";
 import { LocalRoute } from "@/utils/LocalRoutes";
+import { MobileTableCell } from "@/components/TableCell";
 
 const TableCell = ({
   title,
@@ -59,23 +60,26 @@ const FleetMobileRow = ({ items }: { items: FleetTable }) => {
           </>
         }
       />
-      <TableCell
+      <MobileTableCell
         title="Vehicle ID"
         content={items?.vehicleId}
         // className="!text-grey-900 text-wrap !font-medium"
       />
-      <TableCell title="Host" content={items?.host ?? "-"} />
-      <TableCell
+      <MobileTableCell title="Host" content={items?.host ?? "-"} />
+      <MobileTableCell
         title="Make And Model"
         content={`${items?.makeAndModel ?? "-"}`}
       />
-      <TableCell
+      <MobileTableCell
         title="Year"
         content={items?.year ? format(new Date(items?.year), "yyyy") : ""}
       />
-      <TableCell title="Plate Number" content={items?.plateNumber ?? "-"} />
-      <TableCell title="Location" content={items?.location ?? "-"} />{" "}
-      <TableCell
+      <MobileTableCell
+        title="Plate Number"
+        content={items?.plateNumber ?? "-"}
+      />
+      <MobileTableCell title="Location" content={items?.location ?? "-"} />{" "}
+      <MobileTableCell
         title="Date Added"
         content={
           items?.dateCreated
@@ -83,11 +87,11 @@ const FleetMobileRow = ({ items }: { items: FleetTable }) => {
             : ""
         }
       />
-      <TableCell
+      <MobileTableCell
         title="Booking Count"
         content={items.bookingCount.toString() ?? "-"}
       />
-      <TableCell
+      <MobileTableCell
         title="Vehicle Status"
         content={items?.vehicleStatus}
         isBadge
