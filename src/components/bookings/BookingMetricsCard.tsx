@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Info, Plus } from "lucide-react";
 import FilterComponent from "./FilterComponent";
+import Link from "next/link";
 
 interface BookingMetricProps {
   title: string;
@@ -223,15 +224,20 @@ const BookingMetrics: React.FC = () => {
                   <div className="border-t border-[#D0D5DD] my-4"></div>
 
                   <div className="mb-6">
-                    <h3
-                      className="text-lg font-medium text-[#1D2739] mb-1"
-                      style={{ fontSize: 15, fontWeight: "bold" }}
-                    >
-                      Create Booking
-                    </h3>
-                    <p className="text-[#1D2739] mb-2" style={{ fontSize: 12 }}>
-                      Create booking all within the muvment platform.
-                    </p>
+                    <Link href="/dashboard/bookings/new">
+                      <h3
+                        className="text-lg font-medium text-[#1D2739] mb-1"
+                        style={{ fontSize: 15, fontWeight: "bold" }}
+                      >
+                        Create Booking
+                      </h3>
+                      <p
+                        className="text-[#1D2739] mb-2"
+                        style={{ fontSize: 12 }}
+                      >
+                        Create booking all within the muvment platform.
+                      </p>
+                    </Link>
                   </div>
 
                   <div className="border-t border-[#D0D5DD] my-4"></div>

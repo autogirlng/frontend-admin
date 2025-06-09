@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Copy, MoreVertical } from "lucide-react";
 import DottedLines from "../../shared/DottedLines";
+import Link from "next/link";
 
 interface BookingInfoProps {
   bookingId?: string;
@@ -69,7 +70,9 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
                   Mark as completed
                 </button>
                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                  Assign driver
+                  <Link href={`/dashboard/bookings/${bookingId}/assign-driver`}>
+                    Assign Driver
+                  </Link>
                 </button>
                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Download booking summary

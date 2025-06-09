@@ -145,7 +145,7 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
     };
   }, [activeDropdown, showVehicleInfo, showDriverInfo]);
 
-  console.log("HostVehicleInfo rendered");
+  // console.log("HostVehicleInfo rendered");
 
   return (
     <div className="pb-8 text-sm relative">
