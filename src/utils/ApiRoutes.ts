@@ -6,6 +6,7 @@ export const ApiRoutes = {
   resetPassword: "/auth/reset-password",
   getUser: "/user",
   getAllAdmin: "/user/all",
+  getAllAdminTeam: "/team/all",
   addNewMember: "/auth/createUser",
   // VEHICLE ONBOARDING
   vehicleOnboardingTable: "/admin/vehicle-onboarding-list",
@@ -14,12 +15,23 @@ export const ApiRoutes = {
   // FETCH NOTIFICATION
   notification: "/notifications",
   // HOST
-  getAllHost: "/user/all",
+  getAllHost: "/admin/host",
+  getHostDetails: "/admin/host/details",
+  getAllHostStat: "/admin/host/metrics",
+  hostOnboarding: "/auth/createUser",
+  unblockUser: "/auth/user/activate",
   // DASHBOARD
   getDashboard: "/admin/dashboard",
   // FLEET
+
   getFleet: "/admin/metrics/fleet",
   availability: "/listings",
+
+  // SETTINGS
+  changeRole: "/admin/role-permissions",
+  deactivateMember: "/admin/deactivate-member",
+  // VEHICLE
+  fetchVehicle: "/listings/details",
 };
 
 export const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";

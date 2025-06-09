@@ -25,15 +25,15 @@ const Button = ({
   ...rest
 }: ButtonProps) => {
   const btnWidth = fullWidth
-    ? "w-full py-4 !font-semibold text-sm 2xl:text-base"
-    : "w-fit py-4 2xl:py-5 !font-medium text-base md:text-xl 2xl:text-h6";
+    ? "w-full py-3 !font-semibold text-sm 2xl:text-base"
+    : "w-fit py-3 2xl:py-3 !font-medium text-base md:text-xl 2xl:text-h6";
 
   const btnRadius =
     radius === "full"
       ? "rounded-[98px]"
       : radius === "lg"
-        ? "rounded-[32px]"
-        : "rounded-2xl";
+      ? "rounded-[32px]"
+      : "rounded-2xl";
 
   const btnBorder =
     variant === "outlined"
@@ -58,7 +58,7 @@ const Button = ({
     <button
       {...rest}
       className={cn(
-        "px-9 md:px-11 2xl:px-[52px] transition-all duration-300 ease-in-out",
+        "px-6 md:px-8 2xl:px-[40px] transition-all duration-300 ease-in-out",
         btnWidth,
         btnRadius,
         btnBorder,

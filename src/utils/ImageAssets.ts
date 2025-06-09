@@ -11,4 +11,14 @@ export const ImageAssets = {
   logo: "/images/logo/logo.png",
   mobileNav: "/images/logo/mobile_nav_logo.png",
   navLogo: "/images/logo/nav_logo.png",
+  sedan: "/images/vehicles/sedan.png",
+
+  icons: {
+    user: "",
+    errorState: "",
+    emptyReviewState: "/icons/empty_review_state.png",
+    emptyBookingState: "/icons/empty_booking_state.png",
+    emptyTransState: "/icons/empty_trnx_state.png",
+    emptySearchState: "/icons/empty_search_state.png",
+  },
 };
