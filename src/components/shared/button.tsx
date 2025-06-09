@@ -27,8 +27,8 @@ const Button = ({
   ...rest
 }: ButtonProps) => {
   const btnWidth = fullWidth
-    ? "w-full py-4 !font-semibold text-sm 2xl:text-base"
-    : "w-fit py-2 2xl:py-3 !font-medium text-base md:text-xl 2xl:text-h6";
+    ? "w-full py-3 !font-semibold text-sm 2xl:text-base"
+    : "w-fit py-3 2xl:py-3 !font-medium text-base md:text-xl 2xl:text-h6";
 
   const btnRadius = {
     full: "rounded-[98px]",
@@ -62,7 +62,7 @@ const Button = ({
     <button
       {...rest}
       className={cn(
-        "px-6 transition-all duration-300 ease-in-out",
+        "px-6 md:px-8 2xl:px-[40px] transition-all duration-300 ease-in-out",
         btnWidth,
         btnRadius,
         btnStyles[safeVariant][safeColor],

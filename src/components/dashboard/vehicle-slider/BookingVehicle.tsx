@@ -76,7 +76,9 @@ const BookingVehicle = ({
                 height={213} // Slightly reduced height
                 className="w-full object-cover rounded-[24px]"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/images/vehicles/1.png"; // Fallback image
+                  {
+                    Icons.ic_instagram;
+                  }
                 }}
               />
             </SwiperSlide>

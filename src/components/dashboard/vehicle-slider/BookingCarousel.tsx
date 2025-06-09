@@ -4,16 +4,20 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 
-import { useEffect, useRef } from "react";
-import cn from "classnames";
-import Image from "next/image";
+import { useRef } from "react";
+
 import Icons from "@/utils/Icon";
 import { FullPageSpinner } from "@/components/shared/spinner";
 import { VehicleBooking } from "@/types/Dashboard";
 import BookingVehicle from "./BookingVehicle";
+import Link from "next/link";
+import { LocalRoute } from "@/utils/LocalRoutes";
+import EmptyState from "@/components/EmptyState";
+import { ImageAssets } from "@/utils/ImageAssets";
 
 interface Props {
   vehicles: VehicleBooking[];
+  isLoading: Boolean;
 }
 
 const defaultVehicleImages = [
@@ -22,7 +26,7 @@ const defaultVehicleImages = [
   `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/3.png`,
 ];
 
-function BookingCarousel({ vehicles }: Props) {
+function BookingCarousel({ vehicles, isLoading }: Props) {
   const swiperRef = useRef<SwiperRef>(null);
 
   const handleMouseEnter = () => {
@@ -33,21 +37,16 @@ function BookingCarousel({ vehicles }: Props) {
     swiperRef.current?.swiper?.autoplay?.start();
   };
 
-  const isError = false;
-  const isLoading = false;
-
-  useEffect(() => {
-    console.log("vehicles", vehicles);
-  }, [vehicles]);
-
   return (
-    <section className="pt-[45px] md:pt-0 md:pb-[50px]">
+    <section className="mt-2">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-2 bg-[#EDF8FF] w-fit px-4 py-2 rounded-xl text-sm font-medium text-[#1E93FF]">
           {Icons.ic_user}
           <span className="text-grey-900">Recent Bookings</span>
         </div>
-        <span>View All</span>
+        <Link href={LocalRoute.bookingPage}>
+          <span className="text-base text-grey-700 text-lg">View All</span>
+        </Link>
       </div>
       <div className="">
         {isLoading ? (
@@ -78,10 +77,10 @@ function BookingCarousel({ vehicles }: Props) {
                 },
               }}
               loop={true}
-              className="hero-vehicle-swiper !py-8"
+              className="hero-vehicle-swiper !py-4"
             >
               {vehicles.map((vehicle, index) => (
-                <SwiperSlide key={vehicle.id || index} className="!w-auto py-5">
+                <SwiperSlide key={vehicle.id || index} className="!w-auto py-2">
                   <BookingVehicle
                     location={vehicle.vehicle.location}
                     guestName={vehicle.guestName}
@@ -106,18 +105,11 @@ function BookingCarousel({ vehicles }: Props) {
             </Swiper>
           </div>
         ) : (
-          <div>
-            <BookingVehicle
-              vehicleId=""
-              guestName=""
-              location=""
-              hostName="No Vehicle Available"
-              //   location=""
-              //   dailyPrice={0}
-              //   currency="NGN"
-              vehicleImages={defaultVehicleImages}
-            />
-          </div>
+          <EmptyState
+            image={ImageAssets.mailbox}
+            title="No Bookings"
+            message="No bookings yet"
+          />
         )}
       </div>
     </section>

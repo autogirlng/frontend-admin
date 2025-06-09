@@ -12,9 +12,12 @@ import { FullPageSpinner } from "@/components/shared/spinner";
 import { VehicleBooking } from "@/types/Dashboard";
 import BookingVehicle from "./BookingVehicle";
 import MostBookedVehicle from "./MostBookedVehicle";
+import EmptyState from "@/components/EmptyState";
+import { ImageAssets } from "@/utils/ImageAssets";
 
 interface Props {
   vehicles: VehicleBooking[];
+  isLoading: Boolean;
 }
 
 const defaultVehicleImages = [
@@ -23,7 +26,7 @@ const defaultVehicleImages = [
   `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/3.png`,
 ];
 
-function MostBookedVehicleCarousel({ vehicles }: Props) {
+function MostBookedVehicleCarousel({ vehicles, isLoading }: Props) {
   const swiperRef = useRef<SwiperRef>(null);
 
   const handleMouseEnter = () => {
@@ -34,21 +37,13 @@ function MostBookedVehicleCarousel({ vehicles }: Props) {
     swiperRef.current?.swiper?.autoplay?.start();
   };
 
-  const isError = false;
-  const isLoading = false;
-
-  useEffect(() => {
-    console.log("vehicles", vehicles);
-  }, [vehicles]);
-
   return (
-    <section className="pt-[45px] md:pt-0 md:pb-[50px]">
-      <div className="flex justify-between items-center">
+    <section className="pt-[45px] ">
+      <div className="flex justify-between items-center mb-2">
         <div className="flex items-center space-x-2 bg-[#EDF8FF] w-fit px-4 py-2 rounded-xl text-sm font-medium text-[#1E93FF]">
           {Icons.ic_user}
           <span className="text-grey-900">Most Booked Vehicles</span>
         </div>
-        
       </div>
       <div className="">
         {isLoading ? (
@@ -107,18 +102,11 @@ function MostBookedVehicleCarousel({ vehicles }: Props) {
             </Swiper>
           </div>
         ) : (
-          <div>
-            <BookingVehicle
-              vehicleId=""
-              guestName=""
-              location=""
-              hostName="No Vehicle Available"
-              //   location=""
-              //   dailyPrice={0}
-              //   currency="NGN"
-              vehicleImages={defaultVehicleImages}
-            />
-          </div>
+          <EmptyState
+            image={ImageAssets.mailbox}
+            title="No Most  Booked Vehicle"
+            message="No most booked  vehicles yet"
+          />
         )}
       </div>
     </section>
