@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+a {
+  transition: all 0.3s ease-in-out;
+}
+
+a:hover {
+  color: #0673ff;
+}
+
+.Toastify__toast-container {
+  z-index: 9999999999 !important;
+  right: 75px !important;
+}
+.Toastify__toast-theme--light {
+  border: 1px solid #e4e7ec;
+  border-left: 6px solid;
+  border-radius: 4px 0px 0px 4px !important;
+  padding: 12px 16px !important;
+  width: 390px;
+  box-shadow: none !important;
+}
+
+.Toastify__toast-body {
+  padding: 0 12px 0 0 !important;
+  font-family: "__Inter_59dee8";
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #101928;
+}
+
+.Toastify__toast--success {
+  border-left-color: #0aaf24;
+}
+
+.Toastify__toast--error {
+  border-left-color: #cb1a14;
+}
+
+.Toastify__toast-icon {
+  width: 24px !important;
+  height: 24px !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid;
+  margin-inline-end: 12px !important;
+}
+
+.Toastify__toast--success .Toastify__toast-icon {
+  border-color: #b5e3c4;
+  background: #e7f6ec;
+  color: #0aaf24 !important;
+}
+
+.Toastify__toast--error .Toastify__toast-icon {
+  border-color: #f2bcba;
+  background: #fbeae9;
+  color: #cb1a14 !important;
+}
+
+.Toastify__close-button--light {
+  opacity: 1 !important;
+  align-self: center !important;
+  border-left: 1px solid #f0f2f5 !important;
+  padding-left: 12px !important;
+  min-height: 24px !important;
+}
+
+div[data-radix-popper-content-wrapper] {
+  z-index: 999 !important;
+}
+
+div[role="dialog"] {
+  overflow: auto;
+}
+
+.PhoneInputCountry {
+  border-radius: 18px;
+  padding: 16px;
+  height: 56px;
+  background-color: white;
+  border: 1px solid #d0d5dd;
+  font-size: 14px;
+  line-height: 20.3px;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  margin-right: 4px !important;
+}
+.PhoneInputCountry:focus-within {
+  border: 1px solid #0673ff;
+  box-shadow: 0px 0px 0px 4px #1e93ff1a;
+}
+
+.PhoneInputCountryIcon--border,
+.PhoneInputCountrySelect:focus + .PhoneInputCountryIcon--border {
+  box-shadow: none !important;
+}
+.PhoneInputCountryIcon {
+  margin-right: 4px;
+}
+.PhoneInputCountrySelectArrow {
+  border-color: #141b34 !important;
+  width: 10px !important;
+  opacity: 1 !important;
+  height: 10px !important;
+  border-bottom-width: 2px !important;
+  border-right-width: 2px !important;
+  border-radius: 1px;
+}
+
+.vehicle-summary-swiper .swiper-button-prev,
+.vehicle-summary-swiper .swiper-button-next {
+  background-color: #0000009c;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 100%;
+}
+
+.vehicle-summary-swiper .swiper-button-prev:after,
+.vehicle-summary-swiper .swiper-button-next:after {
+  font-size: 10px;
+  color: white;
+  font-weight: 700;
+}
+
+.vehicle-summary-swiper .swiper-pagination-fraction {
+  background: white;
+  width: fit-content;
+  left: 16px;
+  bottom: 14px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.02em;
+  text-align: left;
+  padding: 6px 22px;
+  border-radius: 51px;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+label svg {
+  width: 20px;
+  height: 20px;
+}
+
+.label svg {
+  color: #667185;
+}
+
+.custom-radix-select span.fi,
+.custom-radix-select svg,
+.label svg {
+  width: 1em;
+}
+
+.button_icon svg {
+  width: 1.5em;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media only screen and (min-width: 600px) {
+  .container {
+    max-width: 600px !important;
+  }
+  .custom-radix-select span.fi,
+  .custom-radix-select svg,
+  .label svg {
+    width: 1.1111em;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .container {
+    max-width: 768px !important;
+  }
+  .vehicle-summary-swiper .swiper-button-prev,
+  .vehicle-summary-swiper .swiper-button-next {
+    width: 40px;
+    height: 40px;
+  }
+
+  .vehicle-summary-swiper .swiper-button-prev:after,
+  .vehicle-summary-swiper .swiper-button-next:after {
+    font-size: 12px;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  .container {
+    max-width: 960px !important;
+  }
+}
+
+@media only screen and (min-width: 1240px) {
+  .container {
+    max-width: 1140px !important;
+  }
+}
+
+@media only screen and (min-width: 1400px) {
+  .container {
+    max-width: 1216px !important;
+  }
+}
+
+@media only screen and (min-width: 1600px) {
+  .container {
+    max-width: 1520px !important;
+  }
+  .vehicle-summary-swiper .swiper-pagination-fraction {
+    font-size: 20px;
+    padding: 10px 30px;
+  }
+}
