@@ -21,9 +21,9 @@ interface Props {
 }
 
 const defaultVehicleImages = [
-  "/images/vehicles/1.png",
-  "/images/vehicles/2.png",
-  "/images/vehicles/3.png",
+  `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/1.png`,
+  `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/2.png`,
+  `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/3.png`,
 ];
 
 function MostBookedVehicleCarousel({ vehicles, isLoading }: Props) {

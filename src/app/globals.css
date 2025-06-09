@@ -16,10 +16,123 @@ a:hover {
   color: #0673ff;
 }
 
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* File upload styles */
+.file-upload-container {
+  border: 2px dashed #d0d5dd;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.file-upload-container:hover {
+  border-color: #0673ff;
+}
+
+.file-upload-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Custom checkbox styling */
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.custom-checkbox input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d0d5dd;
+  border-radius: 4px;
+  margin: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.custom-checkbox input[type="checkbox"]:checked {
+  background-color: #0673ff;
+  border-color: #0673ff;
+}
+
+.custom-checkbox input[type="checkbox"]:checked:after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Custom radio button styling */
+.custom-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.custom-radio input[type="radio"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d0d5dd;
+  border-radius: 50%;
+  margin: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.custom-radio input[type="radio"]:checked {
+  border-color: #0673ff;
+}
+
+.custom-radio input[type="radio"]:checked:after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0673ff;
+}
+
 .Toastify__toast-container {
   z-index: 9999999999 !important;
   right: 75px !important;
 }
+
 .Toastify__toast-theme--light {
   border: 1px solid #e4e7ec;
   border-left: 6px solid;
