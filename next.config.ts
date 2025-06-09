@@ -8,6 +8,14 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config: { optimization: { minimize: boolean; }; }, { }: any) => {
+    config.optimization.minimize = false; // This will help us see clearer error messages
+    return config;
+  },
+  experimental: {
+    // Enable more detailed error reporting
+    webpackBuildWorker: false,
+  }
 };
 
-export default nextConfig;
+module.exports = nextConfig; 
