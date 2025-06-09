@@ -11,9 +11,7 @@ const ManageRolesSettingsWidget = () => (
 );
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("Profile"); // State to manage the active tab
-
-  // Function to render content based on the active tab
+  const [activeTab, setActiveTab] = useState("Profile");
   const renderTabContent = () => {
     switch (activeTab) {
       case "Profile":

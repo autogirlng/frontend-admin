@@ -2,10 +2,32 @@ import { JSX } from "react";
 import { string } from "yup";
 import { LucideProps } from "lucide-react";
 
-
 export interface ErrorResponse {
   ERR_CODE: string;
   message: string;
+}
+
+// utils/types.ts (Ensure these types exist in your project)
+
+export interface HostInformation {
+  id?: string; // ID might be returned by the backend after creation, but not used for deciding POST/PUT here
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  country: string;
+  countryCode: string;
+  email: string;
+  cities: string[];
+  isBusiness?: boolean;
+  businessName?: string;
+  businessAddress?: string;
+  businessPhoneNumber?: string;
+  businessCountry?: string;
+  businessCountryCode?: string;
+  businessEmail?: string;
+  onBoardedBy: string;
+  mou?: File | null; // This will be sent as a File, or null if not provided
+  // Add other host-related fields as per your backend
 }
 
 interface PasswordChecks {
@@ -375,7 +397,7 @@ export type User = {
   bvnVerified: boolean;
   bio: string | null;
   city: string | null;
-  userRole: "HOST";
+  userRole: "HOST" | "CUSTOMER" | "ADMIN";
   businessLogo: string | null;
   businessName: string | null;
   businessAddress: string | null;
@@ -385,7 +407,15 @@ export type User = {
   updatedAt: string;
   Verification: UserVerification;
   averageRating: number;
+  statistics?: EarningsStatistics;
 };
+
+export interface EarningsStatistics {
+  bookingsCompleted: number;
+  cancelledBookings: number;
+  numberOfCustomers: number;
+  totalRevenue: number;
+}
 
 export interface TripSettings {
   advanceNotice: string;
@@ -419,6 +449,15 @@ export interface AvailabilityAndPricing {
   outskirtsPrice?: number;
 }
 
+export interface HostOnboardingFormValues {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  country: string;
+  countryCode: string;
+}
+
 // update this
 export interface TopRatedVehicle {
   id: string;
@@ -449,6 +488,16 @@ export interface FleetStatistics {
   suspendedVehicles: number;
 }
 
+export interface HostStatistics {
+  totalHosts: number;
+  activeHosts: number;
+  inactiveHosts: number;
+  blockedHosts: number;
+  onboardingDistribution: {
+    selfOnboarded: number;
+    adminOnboarded: number;
+  };
+}
 export interface BookingStatistics {
   totalBookings: number;
   pendingApprovals: number;
@@ -743,19 +792,23 @@ export type Member = {
   firstName: string;
   lastName: string;
   email: string;
+  totalBooking: number;
+  totalRides: number;
+  lastBooked: string;
+  location: string;
+  vehicles: number;
+  businessName: string;
+  phoneNumber: string;
   role:
     | "Admin"
     | "Customer Support "
     | "Finance Manager"
     | "Operation Manager"
     | string;
-  lastLogin: string; // Could be a Date object, or a string depending on how you store/display it
-  joined: string; // Could be a Date object, or a string
+  lastLogin: string;
+  joined: string;
   status: "Active" | "Inactive" | "Successful";
 };
-
-// src/utils/enums.ts or src/types/roles.ts
-
 export enum UserRole {
   OperationManager = "Operation Manager",
   Admin = "Admin",
@@ -768,10 +821,13 @@ export interface AddMemberPayload {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  countryCode: string; // e.g., "+234"
-  country: string; // e.g., "NG" - ISO country code
+  countryCode: string;
+  country: string;
   email: string;
   userRole: UserRole;
+}
+export interface ChangeRolePayload {
+  role: string;
 }
 
 // Define the booking data type based on the image content
@@ -783,22 +839,21 @@ export interface Booking {
   pickupLocation: string;
   vehicle: string;
   bookingStatus:
-  | "Paid"
-  | "Unpaid"
-  | "Pending"
-  | "Completed"
-  | "Rejected"
-  | "Cancelled";
+    | "Paid"
+    | "Unpaid"
+    | "Pending"
+    | "Completed"
+    | "Rejected"
+    | "Cancelled";
   tripStatus:
-  | "Unconfirmed"
-  | "Confirmed"
-  | "Ongoing"
-  | "Extra Time"
-  | "Cancelled"
-  | "Completed";
+    | "Unconfirmed"
+    | "Confirmed"
+    | "Ongoing"
+    | "Extra Time"
+    | "Cancelled"
+    | "Completed";
 }
 
-
 export type LucideIconType = React.ForwardRefExoticComponent<
-    Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+  Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;

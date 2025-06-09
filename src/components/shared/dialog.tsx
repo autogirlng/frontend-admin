@@ -33,7 +33,7 @@ export const BlurredDialog = ({
             width
           )}
         >
-          <Dialog.Title className="text-grey-800 text-xl 3xl:text-h6 !font-semibold">
+          <Dialog.Title className="text-grey-800 text-center text-xl 3xl:text-h6 !font-semibold">
             {title ? (
               title
             ) : (

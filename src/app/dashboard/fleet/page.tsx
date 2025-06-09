@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-// import { useTable, useSortBy, useFilters } from "react-table";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import Link from "next/link";
 import DashboardSectionTitle from "@/components/shared/DashboardSectionTItle";

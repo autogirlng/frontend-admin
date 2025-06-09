@@ -26,11 +26,10 @@ const steps = [
 ];
 
 export default function VehicleOnboardingPage() {
-  const { isLoading } = useVehicleOnboarding(); // Calls the hook with useSearchParams
+  const { isLoading, data } = useVehicleOnboarding(); // Calls the hook with useSearchParams
+
   const { host } = useAppSelector((state) => state.host);
   const [currentStep, setCurrentStep] = useState<number>(0);
-
-  console.log(host);
 
   const handleCurrentStep = (step: number) => {
     setCurrentStep(step);
