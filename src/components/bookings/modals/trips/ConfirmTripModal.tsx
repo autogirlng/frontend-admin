@@ -1,13 +1,13 @@
-import ModalLayout from "./ModalLayout"
-import { ModalHeader } from "./ModalHeader"
+import ModalLayout from "../ModalLayout"
+import { ModalHeader } from "../ModalHeader"
 import { FileQuestion } from "lucide-react"
-interface CancelTripModalProps {
+interface ConfirmTripModalProps {
     isOpen: boolean;
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 
 }
 
-export const CancelTripModal = ({ isOpen, setIsOpen }: CancelTripModalProps) => {
+export const ConfirmTripModal = ({ isOpen, setIsOpen }: ConfirmTripModalProps) => {
 
     const closeModal = () => {
         setIsOpen(false)
@@ -15,10 +15,10 @@ export const CancelTripModal = ({ isOpen, setIsOpen }: CancelTripModalProps) => 
     return (isOpen && <ModalLayout>
         <ModalHeader
             LucideIcon={FileQuestion}
-            modalContent={`Are you sure you want to cancel this trip? This action cannot be undone.`}
+            modalContent="By confirming this trip you agreed that both the driver and host have been informed and are ready to proceed with the trip today"
             iconBackgroundColor="#f3a218"
             iconColor="white"
-            headerText="Cancel Trip"
+            headerText="Confirm Trip"
         />
 
         <div>
@@ -32,7 +32,7 @@ export const CancelTripModal = ({ isOpen, setIsOpen }: CancelTripModalProps) => 
 
                 className="w-[45%] px-4 py-3 text-sm  my-5 text-white bg-[#0673ff] text-center rounded-2xl  hover:shadow-md transition-all duration-200"
             >
-                Cancle Trip
+                Confirm Trip
             </button>
         </div>
 

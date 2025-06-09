@@ -1388,3 +1388,80 @@ export const bookings:Booking[] = [
       tripStatus: "Cancelled",
     },
   ];
+
+
+  
+  export const newCustomerData = [
+      {
+          customerID: `100001`,
+          firstName: "Alice",
+          lastName: "Smith",
+          email: "alice.smith@example.com",
+          phoneNumber: "+234 8011112222",
+          dateAdded: "1st January, 2023"
+      },
+      {
+          customerID: `100002`,
+          firstName: "Bob",
+          lastName: "Johnson",
+          email: "bob.j@example.com",
+          phoneNumber: "+234 8023334444",
+          dateAdded: "15th February, 2023"
+      },
+      {
+          customerID: `100003`,
+          firstName: "Catherine",
+          lastName: "Davis",
+          email: "cathy.d@example.com",
+          phoneNumber: "+234 8035556666",
+          dateAdded: "10th March, 2023"
+      },
+      {
+          customerID: '100004',
+          firstName: "David",
+          lastName: "Brown",
+          email: "david.b@example.com",
+          phoneNumber: "+234 8047778888",
+          dateAdded: "22nd April, 2023"
+      },
+      {
+          customerID: '100005',
+          firstName: "Eve",
+          lastName: "Wilson",
+          email: "eve.w@example.com",
+          phoneNumber: "+234 8059990000",
+          dateAdded: "5th May, 2023"
+      },
+      {
+          customerID: '100006',
+          firstName: "Frank",
+          lastName: "Miller",
+          email: "frank.m@example.com",
+          phoneNumber: "+234 8061234567",
+          dateAdded: "30th June, 2023"
+      },
+      {
+          customerID: '100007',
+          firstName: "Grace",
+          lastName: "Taylor",
+          email: "grace.t@example.com",
+          phoneNumber: "+234 8077654321",
+          dateAdded: "18th July, 2023"
+      },
+      {
+          customerID: '100008',
+          firstName: "Henry",
+          lastName: "Anderson",
+          email: "henry.a@example.com",
+          phoneNumber: "+234 8089876543",
+          dateAdded: "2nd August, 2023"
+      },
+      {
+          customerID: '100009',
+          firstName: "Ivy",
+          lastName: "Thomas",
+          email: "ivy.t@example.com",
+          phoneNumber: "+234 8091357924",
+          dateAdded: "11th September, 2023"
+      }
+  ];

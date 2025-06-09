@@ -2,10 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
-import { EndTripModal } from "./modals/EndTripModal";
-import { UpdateTripModal } from "./modals/UpdateTripModal";
-import { ConfirmTripModal } from "./modals/ConfirmTripModal";
-import { CancelTripModal } from "./modals/CancelTripModal";
+import { EndTripModal } from "./modals/trips/EndTripModal";
+import { UpdateTripModal } from "./modals/trips/UpdateTripModal";
+import { ConfirmTripModal } from "./modals/trips/ConfirmTripModal";
+import { CancelTripModal } from "./modals/trips/CancelTripModal";
 
 interface ActionComponentProps {
     actionOption: string;

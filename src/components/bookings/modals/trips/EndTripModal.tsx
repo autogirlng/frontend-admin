@@ -2,9 +2,9 @@ import { FileQuestion } from "lucide-react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useState } from "react";
-import ModalLayout from "./ModalLayout";
-import { ModalHeader } from "./ModalHeader";
-import { TimeSelection } from "../TimeSelection";
+import ModalLayout from "../ModalLayout";
+import { ModalHeader } from "../ModalHeader";
+import { TimeSelection } from "../../TimeSelection";
 
 interface IEndTripModal {
     isOpen: boolean;

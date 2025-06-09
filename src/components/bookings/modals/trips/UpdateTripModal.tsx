@@ -1,11 +1,11 @@
 import { FileQuestion, UserIcon, User, ChevronDown, ChevronUp, Search, Plus } from "lucide-react";
-import ModalLayout from "./ModalLayout";
-import { ModalHeader } from "./ModalHeader";
+import ModalLayout from "../ModalLayout";
+import { ModalHeader } from "../ModalHeader";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
-import { TimeSelection } from "../TimeSelection";
+import { TimeSelection } from "../../TimeSelection";
 import { useState, useEffect, useRef } from "react";
-import { DropDown } from "../DropDown";
+import { DropDown } from "../../DropDown";
 
 interface IAddressModal {
     isOpen: boolean;
