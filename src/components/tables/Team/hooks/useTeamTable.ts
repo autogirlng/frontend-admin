@@ -34,9 +34,9 @@ export default function useTeamTable({
 
     queryFn: async () =>
       http.get<teamTable>(
-        `${ApiRoutes.getAllAdminTeam}?${handleFilterQuery({
+        `${ApiRoutes.getAllAdmin}?${handleFilterQuery({
           filters,
-        })}&search=${search}&page=${currentPage}&limit=${pageLimit}`
+        })}&search=${search}&page=${currentPage}&userRole=ADMIN`
       ),
     enabled: !!user?.id,
     retry: false,

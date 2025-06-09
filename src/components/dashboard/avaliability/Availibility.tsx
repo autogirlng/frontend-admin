@@ -20,9 +20,9 @@ import Icons from "@/utils/Icon";
 
 // Default placeholder images
 const placeholderImages = [
-  "/images/vehicles/1.png",
-  "/images/vehicles/2.png",
-  "/images/vehicles/3.png",
+  `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/1.png`,
+  `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/2.png`,
+  `${process.env.NEXT_PUBLIC_BASE_URL || ''}/images/vehicles/3.png`,
 ];
 
 type Props = {
@@ -146,7 +146,7 @@ export default function AvailabilityLayout({
 
   return (
     <div>
-      <DesktopNav user={null} explorePage>
+      <DesktopNav user={user} explorePage>
         <div className="max-w-[1024px]">
           <SearchBookings
             searchValue={searchValue}
@@ -217,7 +217,7 @@ export default function AvailabilityLayout({
             )}
             <div className="flex items-center justify-between gap-3">
               <h5 className="text-sm md:text-h5 3xl:text-h5">
-                Vehicle Availability {/* {totalCount}+ vehicles available */}
+                {totalCount}+ vehicles available
               </h5>
               <button
                 onClick={() => setShowAllFilters(true)}

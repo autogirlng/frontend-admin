@@ -36,7 +36,7 @@ export default function VehicleOnboarding({}: Props) {
     <div className="space-y-8">
       <DashboardSectionTitle icon={Icons.ic_car} title="Vehicle Onboarding" />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <SearchInput
           placeholder="Search By Vehicle ID,Host Name"
           name="bookingsSearch"

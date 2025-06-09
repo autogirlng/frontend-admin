@@ -37,7 +37,7 @@ export default function useSelectHostTable({
 
     queryFn: async () =>
       http.get<selectHostTable>(
-        `${ApiRoutes.getAllHost}?&limit=10&page=${currentPage}`
+        `${ApiRoutes.getAllHost}?&limit=10&page=${currentPage}&userRole=HOST`
       ),
     enabled: !!user?.id,
     retry: false,

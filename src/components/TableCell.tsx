@@ -1,5 +1,14 @@
-import { Status } from "@/utils/types";
-
+import {
+  BookingBadgeStatus,
+  Status,
+  TransactionStatus,
+  VehicleOnboardingStatus,
+} from "@/utils/types";
+import {
+  BookingTableBadge,
+  TransactionBadge,
+  VehicleOnboardingTableBadge,
+} from "@/components/shared/badge";
 import { ReactNode } from "react";
 import { StatusBadge } from "./shared/StatusBadge";
 
@@ -31,26 +40,3 @@ const TableCell = ({ content, className, isBadge, type, icon }: Props) => (
 );
 
 export default TableCell;
-
-export const MobileTableCell = ({
-  title,
-  content,
-  isBadge,
-  type,
-}: {
-  title: string;
-  content: string | ReactNode;
-  isBadge?: boolean;
-  type?: "table" | "regular";
-}) => (
-  <div className="text-sm w-full flex gap-5 items-center justify-between">
-    <span className="text-grey-700 w-1/2">{title}</span>
-    <span className="font-semibold text-grey-700 w-1/2 break-all">
-      {isBadge ? (
-        <StatusBadge status={content as Status} type={type} />
-      ) : (
-        content
-      )}
-    </span>
-  </div>
-);

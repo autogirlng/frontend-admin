@@ -77,9 +77,7 @@ const MostBookedVehicle = ({
                   borderBottomLeftRadius: "24px",
                 }}
                 onError={(e) => {
-                  {
-                    Icons.ic_instagram;
-                  }
+                  (e.target as HTMLImageElement).src = "/images/vehicles/1.png";
                 }}
               />
             </SwiperSlide>

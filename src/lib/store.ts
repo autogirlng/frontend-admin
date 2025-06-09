@@ -4,7 +4,7 @@ import hostReducer from "./features/hostSlice";
 import forgotPasswordReducer from "./features/forgotPasswordSlice";
 import accountSetupReducer from "./features/accountSetupSlice";
 import vehicleOnboardingReducer from "./features/vehicleOnboardingSlice";
-import TeamMemberReducer from "./features/teamMemberSlice";
+
 export const makeStore = () => {
   return configureStore({
     reducer: {
@@ -13,7 +13,6 @@ export const makeStore = () => {
       forgotPassword: forgotPasswordReducer,
       accountSetup: accountSetupReducer,
       vehicleOnboarding: vehicleOnboardingReducer,
-      teamMember: TeamMemberReducer,
     },
   });
 };

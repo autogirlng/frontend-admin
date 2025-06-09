@@ -9,8 +9,6 @@ import {
 import { Popup } from "@/components/shared/popup";
 import { BookingTableBadge, TransactionBadge } from "@/components/shared/badge";
 import MoreButton from "@/components/shared/moreButton";
-import { LocalRoute } from "@/utils/LocalRoutes";
-import { MobileTableCell } from "@/components/TableCell";
 
 const TableCell = ({
   title,
@@ -48,38 +46,61 @@ const FleetMobileRow = ({ items }: { items: FleetTable }) => {
           <>
             <p className="!text-xs 3xl:!text-base !font-semibold">Actions</p>
             <ul className="space-y-2 *:py-2">
+              <>
+                <li>
+                  {/* <DeclineTrip
+                        openModal={openDeclineModal}
+                        handleModal={() => handleDeclineModal()}
+                        isLoading={declineBooking.isPending}
+                        handleAction={() => declineBooking.mutate()}
+                        trigger={
+                          <button className="!text-xs 3xl:!text-base ">
+                            Decline Trip
+                          </button>
+                        }
+                      /> */}
+                </li>
+                <li>
+                  {/* <AcceptTrip
+                        openModal={openAcceptModal}
+                        handleModal={() => handleAcceptModal()}
+                        isLoading={acceptBooking.isPending}
+                        handleAction={() => acceptBooking.mutate()}
+                        trigger={
+                          <button className="!text-xs 3xl:!text-base ">
+                            Accept Trip
+                          </button>
+                        }
+                      /> */}
+                </li>
+              </>
+
               <li>
-                <Link
-                  href={`${LocalRoute.vehiclePage}/${items.vehicleId}`}
-                  className="!text-xs 3xl:!text-base"
-                >
-                  View Vehicle
+                <Link href={`/bookings/`} className="!text-xs 3xl:!text-base">
+                  View Booking Details
                 </Link>
               </li>
             </ul>
           </>
         }
       />
-      <MobileTableCell
+      <TableCell
         title="Vehicle ID"
         content={items?.vehicleId}
         // className="!text-grey-900 text-wrap !font-medium"
       />
-      <MobileTableCell title="Host" content={items?.host ?? "-"} />
-      <MobileTableCell
+      <TableCell title="Host" content={items?.host ?? "-"} />
+      <TableCell
         title="Make And Model"
         content={`${items?.makeAndModel ?? "-"}`}
       />
-      <MobileTableCell
+      <TableCell
         title="Year"
         content={items?.year ? format(new Date(items?.year), "yyyy") : ""}
       />
-      <MobileTableCell
-        title="Plate Number"
-        content={items?.plateNumber ?? "-"}
-      />
-      <MobileTableCell title="Location" content={items?.location ?? "-"} />{" "}
-      <MobileTableCell
+      <TableCell title="Plate Number" content={items?.plateNumber ?? "-"} />
+      <TableCell title="Location" content={items?.location ?? "-"} />{" "}
+      <TableCell
         title="Date Added"
         content={
           items?.dateCreated
@@ -87,11 +108,11 @@ const FleetMobileRow = ({ items }: { items: FleetTable }) => {
             : ""
         }
       />
-      <MobileTableCell
+      <TableCell
         title="Booking Count"
         content={items.bookingCount.toString() ?? "-"}
       />
-      <MobileTableCell
+      <TableCell
         title="Vehicle Status"
         content={items?.vehicleStatus}
         isBadge

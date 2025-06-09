@@ -1,146 +1,98 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { MoreVertical } from "lucide-react";
-import { EndTripModal } from "./modals/EndTripModal";
-import { UpdateTripModal } from "./modals/UpdateTripModal";
-import { ConfirmTripModal } from "./modals/ConfirmTripModal";
-import { CancelTripModal } from "./modals/CancelTripModal";
+import { Booking } from "@/services/bookingService";
 
 interface ActionComponentProps {
-    actionOption: string;
+  booking: Booking;
+  onActionSelect: (action: string) => void;
 }
 
-const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption }) => {
-    const [isActionOpen, setIsActionOpen] = useState(false);
-    const actionRef = useRef<HTMLDivElement>(null);
-    const [isOpen, setIsOpen] = useState<boolean>(false)
-    const [isUpdateTripModalOpen, setIsUpdateTripModalOpen] = useState<boolean>(false);
-    const [isConfirmTripModalOpen, setIsConfirmTripModalOpen] = useState<boolean>(false);
-    const [isCancelTripModalOpen, setIsCancelTripModalOpen] = useState<boolean>(false);
+const ActionComponent = ({ booking, onActionSelect }: ActionComponentProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-
-
-    const actions = {
-        Unconfirmed: ["Confirm", "Update Trip", "View Booking", "Cancel"],
-        Confirmed: ["View booking", "Confirm Booking", "Update Trip", "Cancel"],
-        Cancelled: ["View Booking"],
-        Ongoing: ["View Booking", "End Trip"],
-        ExtraTime: ["View Booking", "End Trip"],
-    }
-
-    enum Action {
-        Unconfirmed = "Unconfirmed",
-        Confirmed = "Confirmed",
-        Cancelled = "Cancelled",
-        Ongoing = "Ongoing",
-        ExtraTime = "ExtraTime",
-
-
-    }
-    const findActions = (action: string) => {
-        switch (action) {
-            case "Unconfirmed":
-                return actions[Action.Unconfirmed];
-            case "Confirmed":
-                return actions[Action.Confirmed];
-            case "Cancelled":
-                return actions[Action.Cancelled];
-            case "Ongoing":
-                return actions[Action.Ongoing];
-            case "Extra Time":
-                return actions[Action.ExtraTime];
-            default:
-                return ["Not available"];
-        }
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     };
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                actionRef.current &&
-                !actionRef.current.contains(event.target as Node)
-            ) {
-                setIsActionOpen(false);
-            }
-        };
+  const getActions = () => {
+    const baseActions = [
+      { id: 'view-details', label: 'View Details' },
+      { id: 'assign-driver', label: 'Assign Driver' },
+      { id: 'contact', label: 'Contact Customer' },
+      { id: 'download-receipt', label: 'Download Receipt' },
+      { id: 'add-notes', label: 'Add Notes' },
+    ];
 
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [actionRef]);
-
-
-    const openModal = (action: string) => {
-        if (action === "End Trip") {
-            setIsOpen(true);
-        }
-        else if (action === "Update Trip") {
-            setIsUpdateTripModalOpen(true)
-        }
-        else if (action === "Confirm") {
-            setIsConfirmTripModalOpen(true)
-        }
-        else if (action === "Cancel") {
-            setIsCancelTripModalOpen(true)
-
-        }
-
+    switch (booking.status) {
+      case 'PENDING':
+        return [
+          ...baseActions,
+          { id: 'approve', label: 'Approve' },
+          { id: 'reject', label: 'Reject' },
+          { id: 'cancel', label: 'Cancel' },
+        ];
+      case 'APPROVED':
+        return [
+          ...baseActions,
+          { id: 'cancel', label: 'Cancel' },
+          { id: 'complete', label: 'Mark as Completed' },
+        ];
+      case 'COMPLETED':
+        return [
+          ...baseActions,
+          { id: 'view-invoice', label: 'View Invoice' },
+        ];
+      case 'CANCELLED':
+        return [
+          ...baseActions,
+          { id: 'view-cancellation', label: 'View Cancellation Details' },
+        ];
+      default:
+        return baseActions;
     }
+  };
 
-    return (
-        <div className="relative" ref={actionRef}>
-            {/* Filter Button */}
-            <button
-                className="text-gray-400 hover:text-gray-600 border-0 focus:outline-none focus:ring-2 focus:ring-gray-100 rounded-full p-2"
-                onClick={() => setIsActionOpen(!isActionOpen)}
-                aria-expanded={isActionOpen}
-                aria-controls="filter-dropdown" >
-                <MoreVertical size={16} />
-            </button>
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="text-gray-600 hover:text-gray-900 focus:outline-none"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      </button>
 
-            {/* Filter Dropdown */}
-            {isActionOpen && (
-                <div
-                    id="filter-dropdown"
-                    className="absolute z-10 mt-2 w-60 bg-white rounded-[10%] shadow-lg border border-[#dbdfe5] overflow-hidden"
-                    style={{ top: "calc(100% + 5px)", right: 0 }}
-                >
-
-                    <div className="p-5">
-                        <div className="">
-                            <div className="flex flex-col items-start">
-                                <h4 className="text-base font-medium mb-1 text-gray-800">Actions</h4>
-
-                                {
-                                    findActions(actionOption).map((value, index) => {
-                                        return <p
-                                            key={index}
-                                            className="my-2 w-full cursor-pointer py-2 rounded hover:bg-[#e0e4e9] text-sm text-start text-gray-700 transition-colors"
-                                            onClick={() => openModal(value)}
-                                        >
-                                            {value}
-                                        </p>
-                                    })
-
-                                }
-
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            )}
-            <EndTripModal isOpen={isOpen} setIsOpen={setIsOpen} />
-            <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} />
-            <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} />
-            <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} />
-
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[9999]">
+          <div className="py-1 flex flex-col" role="menu" aria-orientation="vertical">
+            {getActions().map((action) => (
+              <button
+                key={action.id}
+                onClick={() => {
+                  onActionSelect(action.id);
+                  setIsOpen(false);
+                }}
+                className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full"
+                role="menuitem"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default ActionComponent;

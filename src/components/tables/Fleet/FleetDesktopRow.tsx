@@ -4,7 +4,6 @@ import { FleetTable } from "@/utils/types";
 import { Popup } from "@/components/shared/popup";
 import MoreButton from "@/components/shared/moreButton";
 import TableCell from "@/components/TableCell";
-import { LocalRoute } from "@/utils/LocalRoutes";
 
 const FleetDesktopRow = ({ items }: { items: FleetTable }) => {
   return (
@@ -39,12 +38,43 @@ const FleetDesktopRow = ({ items }: { items: FleetTable }) => {
             <>
               <p className="!text-xs 3xl:!text-base !font-semibold">Actions</p>
               <ul className="space-y-2 *:py-2">
+                <>
+                  <li>
+                    <a>hey</a>
+                    {/* <DeclineTrip
+                          openModal={openDeclineModal}
+                          handleModal={() => handleDeclineModal()}
+                          isLoading={declineBooking.isPending}
+                          handleAction={() => declineBooking.mutate()}
+                          trigger={
+                            <button className="!text-xs 3xl:!text-base ">
+                              Decline Trip
+                            </button>
+                          }
+                        /> */}
+                  </li>
+                  <li>
+                    <a>ho</a>
+                    {/* <AcceptTrip
+                          openModal={openAcceptModal}
+                          handleModal={() => handleAcceptModal()}
+                          isLoading={acceptBooking.isPending}
+                          handleAction={() => acceptBooking.mutate()}
+                          trigger={
+                            <button className="!text-xs 3xl:!text-base ">
+                              Accept Trip
+                            </button>
+                          }
+                        /> */}
+                  </li>
+                </>
+
                 <li>
                   <Link
-                    href={`${LocalRoute.vehiclePage}/${items?.vehicleId}`}
+                    href={`/bookings/${items?.vehicleId}`}
                     className="!text-xs 3xl:!text-base"
                   >
-                    View Vehicle
+                    View Booking Details
                   </Link>
                 </li>
               </ul>

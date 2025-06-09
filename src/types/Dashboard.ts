@@ -90,18 +90,12 @@ export interface VehicleBooking {
   };
 }
 
-type bookingType = {
-  rides: number;
-  naira: number;
-  count: number;
-};
-
 export type BookingData = {
-  // totalBookings: bookingType;
-  ongoing: bookingType;
-  completed: bookingType;
-  cancelled: bookingType;
-  total: bookingType;
+  totalBookings: number;
+  ongoingBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  totalEarnings: number;
 };
 
 export type PlatformUsersData = {
@@ -113,8 +107,8 @@ export type PlatformUsersData = {
 
 export type FleetData = {
   totalVehicles: number;
-  suspendedVehicles: number;
-  activeVehicles: number;
+  adminOnboardedVehicles: number;
+  bookedVehicles: number;
   inactiveVehicles: number;
 };
 

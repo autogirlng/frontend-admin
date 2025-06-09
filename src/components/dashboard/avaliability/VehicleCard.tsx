@@ -12,7 +12,6 @@ import Chip from "@/components/shared/chip";
 import { formatNumberWithCommas, keyAndValueInAChip } from "@/utils/functions";
 import cn from "classnames";
 import Link from "next/link";
-import { LocalRoute } from "@/utils/LocalRoutes";
 
 type Props = {
   vehicleId: string;
@@ -124,7 +123,7 @@ const ExploreVehicleCard = ({
         )}
       >
         <Link
-          href={`${LocalRoute.vehiclePage}/${vehicleId}${
+          href={`/vehicle/details/${vehicleId}${
             fromDate || fromTime || untilDate || untilTime
               ? // || bookingType
                 `?${[

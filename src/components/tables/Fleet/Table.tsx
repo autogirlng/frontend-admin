@@ -1,4 +1,4 @@
-import { FleetTableHeadsItems } from "@/utils/data";
+import { vehicleOnboardingTableHeadItems } from "@/utils/data";
 import { FleetTable } from "@/utils/types";
 import TableHead from "@/components/TableHead";
 import EmptyState from "@/components/EmptyState";
@@ -17,7 +17,7 @@ export default function FleetDataHoldingTable({
   return items.length > 0 ? (
     <div className="overflow-auto">
       <table className="hidden md:block w-full min-w-full divide-y divide-grey-200 border-t border-grey-200 bg-white md:mt-7">
-        <TableHead tableHeadItems={FleetTableHeadsItems} />
+        <TableHead tableHeadItems={vehicleOnboardingTableHeadItems} />
         <tbody className="divide-y divide-grey-200 ">
           {items?.map((item, index) => (
             <VehicleDesktopRow key={index} items={item} />

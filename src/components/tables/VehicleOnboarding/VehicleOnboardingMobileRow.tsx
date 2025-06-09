@@ -1,9 +1,42 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { VehicleOnboardingTable } from "@/utils/types";
+import { ReactNode } from "react";
+import {
+  BookingBadgeStatus,
+  TransactionStatus,
+  VehicleOnboardingTable,
+} from "@/utils/types";
 import { Popup } from "@/components/shared/popup";
+import { BookingTableBadge, TransactionBadge } from "@/components/shared/badge";
 import MoreButton from "@/components/shared/moreButton";
-import { MobileTableCell } from "@/components/TableCell";
+import useVehicleOnboardingTable from "./hooks/useVehicleOnboardingTable";
+
+const TableCell = ({
+  title,
+  content,
+  isBadge,
+  type,
+}: {
+  title: string;
+  content: string | ReactNode;
+  isBadge?: boolean;
+  type?: "transaction" | "booking";
+}) => (
+  <div className="text-sm w-full flex gap-5 items-center justify-between">
+    <span className="text-grey-700 w-1/2">{title}</span>
+    <span className="font-semibold text-grey-700 w-1/2 break-all">
+      {isBadge ? (
+        type === "transaction" ? (
+          <TransactionBadge status={content as TransactionStatus} />
+        ) : (
+          <BookingTableBadge status={content as BookingBadgeStatus} />
+        )
+      ) : (
+        content
+      )}
+    </span>
+  </div>
+);
 
 const VehicleOnboardingMobileRow = ({
   items,
@@ -20,69 +53,49 @@ const VehicleOnboardingMobileRow = ({
             <ul className="space-y-2 *:py-2">
               <>
                 <li>
-                  <Link
-                    href={`/bookings/${items?.vehicleId}`}
-                    className="!text-xs 3xl:!text-base"
-                  >
-                    View Details
-                  </Link>
+                  {/* <DeclineTrip
+                        openModal={openDeclineModal}
+                        handleModal={() => handleDeclineModal()}
+                        isLoading={declineBooking.isPending}
+                        handleAction={() => declineBooking.mutate()}
+                        trigger={
+                          <button className="!text-xs 3xl:!text-base ">
+                            Decline Trip
+                          </button>
+                        }
+                      /> */}
                 </li>
-                {(items?.status === "pending" ||
-                  items?.status === "inReview") && (
-                  <>
-                    <li>
-                      <Link
-                        href={`/bookings/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
-                      >
-                        Approve
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={`/bookings/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
-                      >
-                        Request update
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={`/bookings/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
-                      >
-                        Reject
-                      </Link>
-                    </li>
-                  </>
-                )}
-                {items?.status === "rejected" ||
-                  items?.status === "pending" ||
-                  (items?.status === "inReview" && (
-                    <li>
-                      <Link
-                        href={`/bookings/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
-                      >
-                        Request update
-                      </Link>
-                    </li>
-                  ))}
+                <li>
+                  {/* <AcceptTrip
+                        openModal={openAcceptModal}
+                        handleModal={() => handleAcceptModal()}
+                        isLoading={acceptBooking.isPending}
+                        handleAction={() => acceptBooking.mutate()}
+                        trigger={
+                          <button className="!text-xs 3xl:!text-base ">
+                            Accept Trip
+                          </button>
+                        }
+                      /> */}
+                </li>
               </>
+
+              <li>
+                <Link href={`/bookings/`} className="!text-xs 3xl:!text-base">
+                  View Booking Details
+                </Link>
+              </li>
             </ul>
           </>
         }
       />
-      <MobileTableCell title="Vehicle ID" content={items?.vehicleId} />
-      <MobileTableCell title="Host" content={items.host} />
-      <MobileTableCell title="Location" content={items?.location} />
-      <MobileTableCell
-        title="Make And Model"
-        content={`${items?.makeAndModel}`}
-      />
-      <MobileTableCell title="Vehicle Type" content={items?.vehicleType} />
-      <MobileTableCell title="Year" content={items?.year.toString()} />
-      <MobileTableCell
+      <TableCell title="Vehicle ID" content={items?.vehicleId} />
+      <TableCell title="Host" content={items.host} />
+      <TableCell title="Location" content={items?.location} />
+      <TableCell title="Make And Model" content={`${items?.makeAndModel}`} />
+      <TableCell title="Vehicle Type" content={items?.vehicleType} />
+      <TableCell title="Year" content={items?.year.toString()} />
+      <TableCell
         title="Date Created"
         content={
           items?.dateCreated
@@ -90,13 +103,13 @@ const VehicleOnboardingMobileRow = ({
             : ""
         }
       />
-      <MobileTableCell title="Host Rate" content={items.hostRate} />
-      <MobileTableCell title="Customer Rate" content={items.customerRate} />
-      <MobileTableCell
-        title="Vehicle Status"
+      <TableCell title="Host Rate" content={items.hostRate} />
+      <TableCell title="Customer Rate" content={items.customerRate} />
+      <TableCell
+        title="Status"
         content={items?.status}
         isBadge
-        type="regular"
+        type="booking"
       />
     </div>
   );

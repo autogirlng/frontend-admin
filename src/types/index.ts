@@ -338,7 +338,6 @@ export type User = {
   updatedAt: string;
   Verification: UserVerification;
   averageRating: number;
-  statistics?: EarningsStatistics;
 };
 
 export interface TripSettings {

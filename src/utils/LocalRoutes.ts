@@ -6,16 +6,12 @@ export const LocalRoute = {
   forgotPasswordPage: "/auth/forgot-password",
   otpSentPage: "/auth/otp-sent",
   getUser: "/api/user",
-  deactivateUser: "/user/deactivate",
   // dashboard
   dashboardPage: "/",
   // hosts
-  hostPage: "/host",
-  hostViewAllPage: "/host/view-all",
-  hostSuccessfulOnboarding: "/host/onboarding/successful",
-  hostOnboarding: "/host/onboarding",
-  addNewHostPage: "/host/onboarding",
-
+  hostPage: "/dashboard/hosts",
+  hostOnboarding: "/dashboard/host-onboarding",
+  addNewHostPage: "/dashboard/host-onboarding",
   // vehicle onboarding
   selectHostPage: "/dashboard/onboarding/hosts",
   vehiclesOnboardedPage: "/dashboard/onboarding",
@@ -24,7 +20,6 @@ export const LocalRoute = {
   // Dashboard
   bookingPage: "/dashboard/bookings",
   bookingPerfomance: "/dashboard/booking-perfomance",
-  bookingTrips: "/dashboard/trips",
   // bookingTrips: "/dashboard/trips",
 
   // finance
@@ -32,11 +27,6 @@ export const LocalRoute = {
   // fleet
   fleetPage: "/dashboard/fleet",
   availabilityPage: "/dashboard/booking/new-availability",
-  vehiclePage: "/vehicle",
   // customer
   customersPage: "/customer",
-
-  // SETTINGS
-  settings: "/settings",
-  teamMemberProfilePage: "/settings/team-member",
 };

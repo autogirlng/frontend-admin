@@ -10,9 +10,7 @@ type FileFieldProps = {
   placeholder: string;
   variant?: "outlined" | "filled";
   icon?: ReactNode;
-  // Keep value as string | File for the component's internal state management
-  // but ensure only string is passed to actual input 'value' prop.
-  value?: string | File | null; // Allow null to represent no file
+  value?: string;
   required?: boolean;
   disabled?: boolean;
   error?: string;
@@ -27,12 +25,7 @@ type FileFieldProps = {
   /** Enable file picking */
   filePicker?: boolean;
 
-  // IMPORTANT: Add onChange and onBlur props for Formik compatibility
-  // Formik will pass an event that relates to the HTMLInputElement's type.
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
-
-  /** Called with the File object (if filePicker is true) */
+  /** Called with the File object */
   onFileSelect?: (file: File) => void;
 };
 
@@ -51,28 +44,18 @@ const FileInputField = ({
   className,
   toggleShowPassword,
   filePicker = false,
-  onChange,
-  onBlur,
   onFileSelect,
-  value, // This 'value' can be string (for text) or File (for file input in Formik)
-  ...rest // Capture other props like `name`
+  value,
+  ...rest
 }: FileFieldProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect?.(file); // Custom callback for the File object
+    if (file && onFileSelect) {
+      onFileSelect(file);
     }
-    // Always call Formik's onChange here. Formik expects the DOM event for type="file"
-    // to correctly update its internal state with the File object.
-    onChange?.(e);
   };
-
-  // Determine the display value for the *text input* when filePicker is true.
-  // This value must always be a string.
-  const displayValue =
-    value instanceof File ? value.name : (value as string) || "";
 
   return (
     <div className={cn("w-full space-y-1", className)}>
@@ -97,28 +80,18 @@ const FileInputField = ({
       <div className="relative">
         {filePicker ? (
           <>
-            {/* The actual hidden file input:
-                - `value` should not be controlled with a File object.
-                - It should either be undefined or "" to allow file selection.
-                - Formik manages the File object in its state, not via this input's value prop.
-            */}
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*" // Consider making this prop-configurable
+              accept="image/*"
               className="hidden"
-              onChange={handleFileChange} // Our internal handler that also calls Formik's onChange
-              onBlur={onBlur} // Pass Formik's onBlur directly to the hidden input
-              id={id} // Associate with label
-              value={undefined} // Or `""` to clear it, but typically `undefined` is fine
-              {...rest} // Pass other standard input props like required, disabled
+              onChange={handleFileChange}
             />
-            {/* The visible text input that triggers the file input */}
             <input
               type="text"
               readOnly
               onClick={() => fileInputRef.current?.click()}
-              value={displayValue} // This `value` MUST be a string (filename)
+              value={value || ""}
               placeholder={placeholder}
               className={cn(
                 "cursor-pointer w-full rounded-[18px] p-4 text-sm h-[56px] outline-none",
@@ -129,11 +102,9 @@ const FileInputField = ({
                   ? "bg-grey-800 text-grey-400 border-none"
                   : "bg-white text-grey-900 border border-grey-300 hover:border-primary-500 focus:border-primary-500 focus:shadow-[0_0_0_4px_#1E93FF1A]"
               )}
-              // No onChange/onBlur needed here as it's readOnly and click-only
             />
           </>
         ) : (
-          // Regular text input (not a file picker)
           <input
             type={type || "text"}
             id={id}
@@ -151,10 +122,6 @@ const FileInputField = ({
             autoCorrect="off"
             spellCheck="false"
             autoComplete={`new-${type || "text"}`}
-            // Pass onChange and onBlur directly to the standard input
-            onChange={onChange}
-            onBlur={onBlur}
-            value={value as string} // Explicitly cast to string here
             {...rest}
           />
         )}

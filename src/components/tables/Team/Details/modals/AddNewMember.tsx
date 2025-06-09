@@ -29,7 +29,9 @@ type AddTeamMemberProps = {
   openModal: boolean;
   handleModal: (value: boolean) => void;
   trigger: ReactNode;
-  isLoading: boolean;
+  // onSubmit prop will now trigger the mutation indirectly via the hook
+  // onSubmit: (data: AddTeamMemberFormData) => void; // No longer passed directly
+  isLoading: boolean; // This prop from parent component might still be useful for overall page loading
 };
 
 const AddTeamMember = ({
@@ -61,7 +63,7 @@ const AddTeamMember = ({
       open={openModal}
       onOpenChange={handleModal}
       trigger={trigger}
-      width="max-w-2xl"
+      width="max-w-[900px]"
       title="Add Team Member"
       content={
         <AddTeamMemberContent
@@ -141,7 +143,7 @@ const AddTeamMemberContent = ({
   }, [isMutationSuccess, formik]);
 
   return (
-    <div className="w-full max-w-xl">
+    <div className="w-full max-w-screen-xl">
       <form onSubmit={formik.handleSubmit} className="space-y-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <InputField
@@ -210,7 +212,7 @@ const AddTeamMemberContent = ({
             formik.setFieldTouched("country", true);
             formik.setFieldValue("country", value);
             try {
-              const callingCode = `+${getCountryCallingCode(value as any)}`;
+              const callingCode = `+${getCountryCallingCode(value as any)}`; // `value as any` if getCountryCallingCode expects different type
               formik.setFieldValue("countryCode", callingCode);
             } catch (e) {
               console.error("Error getting country calling code:", e);
@@ -233,14 +235,14 @@ const AddTeamMemberContent = ({
         />
 
         <SelectInput
-          id="userRole"
+          id="role"
           label="Role"
           placeholder="Select role"
           options={roleOptions}
           value={formik.values.userRole}
           onChange={(value) => {
-            formik.setFieldTouched("userRole", true);
-            formik.setFieldValue("userRole", value);
+            formik.setFieldTouched("role", true);
+            formik.setFieldValue("role", value);
           }}
           error={
             formik.touched.userRole && formik.errors.userRole
