@@ -26,7 +26,7 @@ const steps = [
 ];
 
 export default function VehicleOnboardingPage() {
-  const { isLoading, data } = useVehicleOnboarding(); // Calls the hook with useSearchParams
+  const { isLoading, data } = useVehicleOnboarding();
 
   const { host } = useAppSelector((state) => state.host);
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -38,6 +38,8 @@ export default function VehicleOnboardingPage() {
   if (isLoading) {
     return <FullPageSpinner />;
   }
+
+  console.log("Vehicle Onboarding Data:", data);
 
   return (
     // <Suspense> is NOT needed here because this whole component is already "use client"

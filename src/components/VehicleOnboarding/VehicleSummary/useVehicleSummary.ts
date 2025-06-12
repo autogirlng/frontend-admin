@@ -149,7 +149,7 @@ export default function useVehicleSummary({
           { ...vehicle, ...data }
         )
       );
-      router.push(`/vehicle-onboarding/success/${vehicle?.id}`);
+      router.push(`/dashboard/vehicle-onboarding/success/${vehicle?.id}`);
     },
 
     onError: (error: AxiosError<ErrorResponse>) =>

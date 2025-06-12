@@ -47,7 +47,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                     </Link>
                   </li>
                   {(items?.status === "pending" ||
-                    items?.status === "inReview") && (
+                    items?.status === "review") && (
                     <>
                       <li>
                         <Link
@@ -77,7 +77,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                   )}
                   {items?.status === "rejected" ||
                     items?.status === "pending" ||
-                    (items?.status === "inReview" && (
+                    (items?.status === "review" && (
                       <li>
                         <Link
                           href={`/vehicle/${items?.vehicleId}`}

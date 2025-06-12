@@ -28,7 +28,7 @@ const VehicleOnboardingMobileRow = ({
                   </Link>
                 </li>
                 {(items?.status === "pending" ||
-                  items?.status === "inReview") && (
+                  items?.status === "review") && (
                   <>
                     <li>
                       <Link
@@ -58,7 +58,7 @@ const VehicleOnboardingMobileRow = ({
                 )}
                 {items?.status === "rejected" ||
                   items?.status === "pending" ||
-                  (items?.status === "inReview" && (
+                  (items?.status === "review" && (
                     <li>
                       <Link
                         href={`/vehicle/${items?.vehicleId}`}

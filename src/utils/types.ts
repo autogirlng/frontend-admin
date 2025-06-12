@@ -514,7 +514,7 @@ export interface VehicleOnboardingTable {
   dateCreated: string;
   hostRate: string;
   customerRate: string;
-  status: "accepted" | "pending" | "rejected" | "inReview";
+  status: "accepted" | "pending" | "rejected" | "review";
 }
 
 export interface FleetTable {
@@ -549,6 +549,7 @@ export interface HostTable {
   withdrawalAccountVerified: boolean;
   bio: string | null;
   city: string | null;
+  location: string | null;
   userRole: "HOST" | "ADMIN" | "USER"; // Example roles
   isBusiness: boolean;
   businessLogo: string | null;
