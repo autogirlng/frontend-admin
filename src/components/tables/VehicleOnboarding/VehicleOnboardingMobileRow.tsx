@@ -21,7 +21,7 @@ const VehicleOnboardingMobileRow = ({
               <>
                 <li>
                   <Link
-                    href={`/bookings/${items?.vehicleId}`}
+                    href={`/vehicle/${items?.vehicleId}`}
                     className="!text-xs 3xl:!text-base"
                   >
                     View Details
@@ -32,7 +32,7 @@ const VehicleOnboardingMobileRow = ({
                   <>
                     <li>
                       <Link
-                        href={`/bookings/${items?.vehicleId}`}
+                        href={`/vehicle/${items?.vehicleId}`}
                         className="!text-xs 3xl:!text-base"
                       >
                         Approve
@@ -40,7 +40,7 @@ const VehicleOnboardingMobileRow = ({
                     </li>
                     <li>
                       <Link
-                        href={`/bookings/${items?.vehicleId}`}
+                        href={`/vehicle/${items?.vehicleId}`}
                         className="!text-xs 3xl:!text-base"
                       >
                         Request update
@@ -48,7 +48,7 @@ const VehicleOnboardingMobileRow = ({
                     </li>
                     <li>
                       <Link
-                        href={`/bookings/${items?.vehicleId}`}
+                        href={`/vehicle/${items?.vehicleId}`}
                         className="!text-xs 3xl:!text-base"
                       >
                         Reject
@@ -61,7 +61,7 @@ const VehicleOnboardingMobileRow = ({
                   (items?.status === "inReview" && (
                     <li>
                       <Link
-                        href={`/bookings/${items?.vehicleId}`}
+                        href={`/vehicle/${items?.vehicleId}`}
                         className="!text-xs 3xl:!text-base"
                       >
                         Request update

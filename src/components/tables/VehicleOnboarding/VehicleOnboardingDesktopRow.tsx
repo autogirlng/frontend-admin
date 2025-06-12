@@ -40,7 +40,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                 <>
                   <li>
                     <Link
-                      href={`/bookings/${items?.vehicleId}`}
+                      href={`/vehicle/${items?.vehicleId}`}
                       className="!text-xs 3xl:!text-base"
                     >
                       View Details
@@ -51,7 +51,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                     <>
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Approve
@@ -59,7 +59,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                       </li>
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Request update
@@ -67,7 +67,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                       </li>
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Reject
@@ -80,7 +80,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                     (items?.status === "inReview" && (
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Request update
