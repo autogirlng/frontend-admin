@@ -1,5 +1,4 @@
-// VehicleOnboardingPage.tsx (e.g., components/VehicleOnboarding/VehicleOnboardingPage.tsx or similar)
-"use client"; // This is correct, it consumes useVehicleOnboarding which is client-side
+"use client";
 
 import cn from "classnames";
 import BackLink from "@/components/BackLink";
@@ -14,7 +13,7 @@ import { FullPageSpinner } from "@/components/shared/spinner";
 import { useState } from "react"; // Suspense import is removed from here
 import DocumentInformation from "@/components/VehicleOnboarding/DocumentInformation";
 import HostInformationCard from "@/components/cards/HostCard";
-import { LocalRoute } from "@/utils/LocalRoutes";
+// import { LocalRoute } from "@/utils/LocalRoutes";
 import { useAppSelector } from "@/lib/hooks";
 
 const steps = [
@@ -42,7 +41,6 @@ export default function VehicleOnboardingPage() {
   console.log("Vehicle Onboarding Data:", data);
 
   return (
-    // <Suspense> is NOT needed here because this whole component is already "use client"
     <main className="pb-[188px] pt-[52px] md:pt-16 px-8 lg:px-[52px] min-h-screen">
       <div
         className={cn(
@@ -53,7 +51,7 @@ export default function VehicleOnboardingPage() {
         )}
       >
         <div className="space-y-8">
-          <BackLink backLink={LocalRoute.dashboardPage} />
+          <BackLink backLink="/dashboard/onboarding/hosts" />
           <div className="flex flex-col gap-2 md:flex-row justify-between items-center">
             <h2 className="text-h5 md:text-h3 3xl:text-4xl text-black">
               {currentStep === 5 ? "Summary" : "Vehicle Onboarding"}
