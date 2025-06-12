@@ -749,7 +749,7 @@ export const vehicleOnboardingTableHeadItems: string[] = [
   "Host",
   "Make And Model",
   "Year",
-  "Plate Number",
+  "Vehicle Type",
   "Location",
   "Date Added",
   "Customer Rate",
