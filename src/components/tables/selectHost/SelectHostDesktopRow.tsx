@@ -15,12 +15,10 @@ const SelectHostDesktopRow = ({ items }: { items: HostTable }) => {
   return (
     <tr onClick={handleSelectHost} className="cursor-pointer hover:bg-gray-50">
       <TableCell content={items?.id} />
-      <TableCell
-        content={`${items.firstName} ${items?.lastName}\n${items.firstName}`}
-      />
-      <TableCell content={items?.email} />
+      <TableCell content={`${items.firstName} ${items?.lastName}`} />
+      <TableCell content={items?.businessName ?? "-"} />
       <TableCell content={items?.phoneNumber} />
-      <TableCell content={items?.city ?? "-"} />
+      <TableCell content={items?.location ?? "-"} />
 
       {/* Show if this is the currently selected host */}
       {host?.id === items.id && (

@@ -138,8 +138,9 @@ const BookingsTable: React.FC = () => {
             {bookings.map((booking, index) => (
               <tr
                 key={`${booking.id}-${index}`}
-                className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${index === bookings.length - 1 ? "border-b-0" : ""
-                  }`}
+                className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${
+                  index === bookings.length - 1 ? "border-b-0" : ""
+                }`}
               >
                 <td className="px-4 py-4 text-sm font-medium text-gray-900">
                   {booking.id}

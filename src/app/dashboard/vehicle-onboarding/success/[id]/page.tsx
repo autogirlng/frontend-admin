@@ -4,24 +4,14 @@ import { useAppSelector } from "@/lib/hooks";
 import Button from "@/components/shared/button";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import { FullPageSpinner } from "@/components/shared/spinner";
 
 export default function VehicleOnboardingSuccessPage() {
-  const router = useRouter();
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
-  const { id } = useParams<{ id: string }>(); // Explicitly type useParams
-
-  useEffect(() => {
-    if (!id) {
-      router.push("/vehicle-onboarding");
-      return; // Add a return to prevent further execution in this condition
-    }
-    if (vehicle?.id && id !== vehicle.id) {
-      router.push("/listings");
-    }
-  }, [id, router, vehicle?.id]);
+  const pathname = usePathname();
+  const vehicleId = pathname.split("/").pop();
 
   return (
     <Suspense fallback={<FullPageSpinner />}>
@@ -37,7 +27,7 @@ export default function VehicleOnboardingSuccessPage() {
             Your {vehicle?.listingName} has been submitted for review
           </h2>
           <div className="flex flex-col sm:flex-row gap-[18px]">
-            <Link href={`/listings/${vehicle?.id}`}>
+            <Link href={`/vehicle/${vehicleId}`}>
               <Button variant="outlined" className="px-6">
                 View Listing
               </Button>

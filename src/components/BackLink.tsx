@@ -1,15 +1,29 @@
 import { CaretLeft } from "@phosphor-icons/react";
-import Link from "next/link";
-
+import { useRouter } from "next/navigation";
+import React from "react";
 type Props = { backLink: string };
-
 export default function BackLink({ backLink }: Props) {
+  const router = useRouter();
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
-    <div className="flex items-center gap-0.5 text-primary-500 fill-primary-500">
+    <div
+      className="flex items-center gap-0.5 text-primary-500 fill-primary-500 cursor-pointer"
+      onClick={handleGoBack}
+      // Add keyboard accessibility
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          handleGoBack();
+        }
+      }}
+    >
       <CaretLeft size={18} fill="inherit" />
-      <Link href={backLink} className="text-sm 2xl:text-base font-medium">
-        Back
-      </Link>
+      <span className="text-sm 2xl:text-base font-medium">Back</span>
     </div>
   );
 }

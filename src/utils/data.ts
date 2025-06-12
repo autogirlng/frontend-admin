@@ -749,7 +749,7 @@ export const vehicleOnboardingTableHeadItems: string[] = [
   "Host",
   "Make And Model",
   "Year",
-  "Plate Number",
+  "Vehicle Type",
   "Location",
   "Date Added",
   "Customer Rate",
@@ -796,7 +796,7 @@ export const hostMembersItems: string[] = [
 export const selectingHostTableHeadItems: string[] = [
   "Host ID",
   "Host",
-  "Email",
+  "Business name",
   "Phone Number",
   "Location",
   "Selected",

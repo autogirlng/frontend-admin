@@ -37,12 +37,17 @@ export default function useAdditionalInformationForm({
     vehicleColor: vehicle?.vehicleColor || "",
     numberOfSeats: `${vehicle?.numberOfSeats || ""}`,
   };
-
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId.toString() != "") {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
   const saveStep2 = useMutation({
     mutationFn: (values: AdditionalVehicleInformationValues) =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step2/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step2/${vehicle?.id}`,
         {
           ...values,
           numberOfSeats: parseInt(values.numberOfSeats),
@@ -67,7 +72,7 @@ export default function useAdditionalInformationForm({
   const submitStep2 = useMutation({
     mutationFn: (values: AdditionalVehicleInformationValues) =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step2/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step2/${vehicle?.id}`,
         {
           ...values,
           numberOfSeats: parseInt(values.numberOfSeats),
