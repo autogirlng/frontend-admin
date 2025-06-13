@@ -1,4 +1,3 @@
-// VehicleOnboardingPage.tsx
 "use client";
 
 import cn from "classnames";
@@ -9,13 +8,14 @@ import BasicVehicleInformation from "@/components/VehicleOnboarding/BasicInforma
 import VehiclePhotos from "@/components/VehicleOnboarding/VehiclePhotos";
 import VehicleSummary from "@/components/VehicleOnboarding/VehicleSummary";
 import { Stepper } from "@/components/shared/stepper";
-import useVehicleOnboarding from "@/hooks/vehicleOnboarding"; // <-- This hook uses useSearchParams
+import useVehicleOnboarding from "@/hooks/vehicleOnboarding";
 import { FullPageSpinner } from "@/components/shared/spinner";
-import { useState, Suspense } from "react"; // Suspense import is removed from here
+import { useState, Suspense } from "react";
 import DocumentInformation from "@/components/VehicleOnboarding/DocumentInformation";
 import HostInformationCard from "@/components/cards/HostCard";
-import { LocalRoute } from "@/utils/LocalRoutes";
+// import { LocalRoute } from "@/utils/LocalRoutes";
 import { useAppSelector } from "@/lib/hooks";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 const steps = [
   "Basic Details",

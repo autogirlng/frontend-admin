@@ -133,12 +133,17 @@ export default function useVehicleSummary({
       setVehicleImages(mappedVehicleImages);
     }
   }, [vehicle]);
-
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId.toString() != "") {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
   const submitVehicleOnboarding = useMutation({
     mutationFn: () =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/submit-summary/${vehicle?.id}`
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/submit-summary/${vehicle?.id}`
       ),
 
     onSuccess: (data) => {

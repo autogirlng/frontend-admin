@@ -34,11 +34,11 @@ export default function VehicleOnboarding({}: Props) {
 
   return (
     <div className="space-y-8">
-      <DashboardSectionTitle icon={Icons.ic_car} title="Vehicle Onboarding" />
+      <DashboardSectionTitle icon={Icons.ic_car} title="Listings" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchInput
-          placeholder="Search By Vehicle ID,Host Name"
+          placeholder="Search By Vehicle ID, Host Name"
           name="bookingsSearch"
           className="w-full"
           value={search}
@@ -53,13 +53,15 @@ export default function VehicleOnboarding({}: Props) {
             dateEnabled
             onChange={handleFilterChange}
           />
-          <Button
-            color="primary"
-            className="flex gap-1 justify-center text-sm text-nowrap items-center"
-          >
-            {Icons.ic_add}
-            <Link href={LocalRoute.selectHostPage}>Add Vehicle</Link>
-          </Button>
+          <Link href={LocalRoute.selectHostPage}>
+            <Button
+              color="primary"
+              className="flex gap-1 justify-center text-sm text-nowrap items-center"
+            >
+              {Icons.ic_add}
+              Add Vehicle
+            </Button>
+          </Link>
         </div>
       </div>
       <VehicleOnboardingTable filters={filters} search={debouncedSearch} />

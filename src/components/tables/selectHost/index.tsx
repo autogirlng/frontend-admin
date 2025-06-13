@@ -45,13 +45,15 @@ export default function SelectHost({}: Props) {
           }
         />
         <div className="flex items-center gap-3">
-          <Button
-            color="primary"
-            className="flex gap-1 justify-center text-sm text-nowrap items-center"
-          >
-            {Icons.ic_add}
-            <Link href={LocalRoute.selectHostPage}>Add Host</Link>
-          </Button>
+          <Link href={LocalRoute.hostOnboardingPage}>
+            <Button
+              color="primary"
+              className="flex gap-1 justify-center text-sm text-nowrap items-center"
+            >
+              {Icons.ic_add}
+              Add Host
+            </Button>
+          </Link>
         </div>
       </div>
       <SelectHostTable search={debouncedSearch} />
