@@ -60,21 +60,23 @@ export default function VehicleOnboardingPage() {
               <h2 className="text-h5 md:text-h3 3xl:text-4xl text-black">
                 {currentStep === 5 ? "Summary" : "Vehicle Onboarding"}
               </h2>
-              {/* {data != null ? (
-              // <HostInformationCard
-              //   name={`${data?.user?.lastName} ${data.user?.firstName ?? "-"}`}
-              //   email={data?.user?.email ?? "-"}
-              //   businessName={data?.user?.businessName ?? "-"}
-              //   businessLocation={data?.user?.businessAddress ?? "-"}
-              // />
-            ) : ( */}
-              <HostInformationCard
-                name={`${host?.lastName} ${host?.firstName ?? "-"}`}
-                email={host?.email ?? "-"}
-                businessName={host?.businessName ?? "-"}
-                businessLocation={host?.businessAddress ?? "-"}
-              />
-              {/* )} */}
+              {data != null ? (
+                <HostInformationCard
+                  name={`${data?.user?.lastName} ${
+                    data.user?.firstName ?? "-"
+                  }`}
+                  email={data?.user?.email ?? "-"}
+                  businessName={data?.user?.businessName ?? "-"}
+                  businessLocation={data?.user?.businessAddress ?? "-"}
+                />
+              ) : (
+                <HostInformationCard
+                  name={`${host?.lastName} ${host?.firstName ?? "-"}`}
+                  email={host?.email ?? "-"}
+                  businessName={host?.businessName ?? "-"}
+                  businessLocation={host?.businessAddress ?? "-"}
+                />
+              )}
             </div>
           </div>
           <Stepper steps={steps} currentStep={currentStep}>
