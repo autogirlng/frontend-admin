@@ -33,13 +33,18 @@ export default function useDocumentInformationForm({
     vehicleInspectionReport: vehicle?.document?.vehicleInspectionReport ?? "",
     vehicleRegistration: vehicle?.document?.vehicleRegistration ?? "",
   };
-
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId.toString() != "") {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
   const saveStep5 = useMutation({
     mutationFn: (formData: FormData) => {
       // Expecting FormData
       return http.put(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step5/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step5/${vehicle?.id}`,
         formData
       );
     },
@@ -60,7 +65,7 @@ export default function useDocumentInformationForm({
     mutationFn: (formData: FormData) => {
       // Expecting FormData
       return http.put(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step5/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step5/${vehicle?.id}`,
         formData
       );
     },
