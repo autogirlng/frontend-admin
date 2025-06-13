@@ -32,7 +32,7 @@ export default function ListingDetailsHeader({ name, status, id }: Props) {
   return (
     <div className="space-y-5">
       <div className="flex justify-between gap-2">
-        <BackLink backLink="/listings" />
+        <BackLink backLink="/dashboard/onboarding" />
         <div className="flex items-center gap-3">
           <div className="flex lg:hidden items-center justify-center w-10 h-10 rounded-full bg-primary-50 text-primary-500 ">
             {Icons.ic_calendar}

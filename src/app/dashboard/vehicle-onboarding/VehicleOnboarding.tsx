@@ -14,8 +14,9 @@ import { FullPageSpinner } from "@/components/shared/spinner";
 import { useState, Suspense } from "react"; // Suspense import is removed from here
 import DocumentInformation from "@/components/VehicleOnboarding/DocumentInformation";
 import HostInformationCard from "@/components/cards/HostCard";
-import { LocalRoute } from "@/utils/LocalRoutes";
+// import { LocalRoute } from "@/utils/LocalRoutes";
 import { useAppSelector } from "@/lib/hooks";
+import { LocalRoute } from "@/utils/LocalRoutes";
 
 const steps = [
   "Basic Details",

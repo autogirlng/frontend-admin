@@ -17,6 +17,7 @@ export const LocalRoute = {
   addNewHostPage: "/host/onboarding",
 
   // vehicle onboarding
+  hostOnboardingPage: "/host/onboarding?returnUrl=/dashboard/onboarding/hosts",
   selectHostPage: "/dashboard/onboarding/hosts",
   vehiclesOnboardedPage: "/dashboard/onboarding",
   vehicleOnboardingPage: "/dashboard/vehicle-onboarding",
