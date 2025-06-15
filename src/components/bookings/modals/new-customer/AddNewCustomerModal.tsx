@@ -2,14 +2,16 @@ import ModalLayout from "../ModalLayout";
 import * as Yup from 'yup';
 import { useFormik } from "formik"
 import { toast, ToastContainer } from "react-toastify";
+import { useHttp } from "@/utils/useHttp";
 
 interface INewCustomerModal {
     isOpen: boolean;
     closeModal: () => void;
 }
 
-
 export const AddNewCustomerModal = ({ isOpen, closeModal }: INewCustomerModal) => {
+
+    const http = useHttp();
 
     const validationSchema = Yup.object({
         firstName: Yup.string().required('First Name is missing'),
@@ -27,10 +29,26 @@ export const AddNewCustomerModal = ({ isOpen, closeModal }: INewCustomerModal) =
             phoneNumber: 0
         },
         validationSchema: validationSchema,
-        onSubmit: (values) => {
-            console.log('Form submitted with values:', values);
-            toast.success("Customer added successfully!");
-            formik.resetForm()
+        onSubmit: async (values) => {
+
+            try {
+                const request = await http.post<{ message: string }>('/auth/createUser',
+                    {
+                        firstName: values.firstName,
+                        lastName: values.lastName,
+                        phoneNumber: values.phoneNumber,
+                        countryCode: "+234",
+                        country: "NG",
+                        email: values.email,
+                        userRole: "CUSTOMER",
+                        isBusiness: false
+                    }
+                )
+                toast.success(request?.message);
+                formik.resetForm();
+            } catch (err) {
+                toast.error("Could not add customer");
+            }
         },
     });
 

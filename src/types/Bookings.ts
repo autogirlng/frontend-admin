@@ -12,8 +12,6 @@ export interface Booking {
   status: BookingStatus;
   price: number;
 }
-<<<<<<< HEAD
-=======
 export interface HostBookingTable {
   id: string;
   pickupAddress: string;
@@ -23,7 +21,6 @@ export interface HostBookingTable {
   dropOffTime: string;
   RideStatus: string;
 }
->>>>>>> 12b0cb6e5203a188a79510e41dd4dadf1a523a65
 
 export interface IBooking {
   id: string;
@@ -33,23 +30,6 @@ export interface IBooking {
   pickupLocation: string;
   vehicle: string;
   bookingStatus:
-<<<<<<< HEAD
-  | "Paid"
-  | "Unpaid"
-  | "Pending"
-  | "Completed"
-  | "Rejected"
-  | "Cancelled";
-  
-  tripStatus:
-  | "Unconfirmed"
-  | "Confirmed"
-  | "Ongoing"
-  | "Extra Time"
-  | "Cancelled"
-  | "Completed";
-}
-=======
     | "Paid"
     | "Unpaid"
     | "Pending"
@@ -65,4 +45,4 @@ export interface IBooking {
     | "Cancelled"
     | "Completed";
 }
->>>>>>> 12b0cb6e5203a188a79510e41dd4dadf1a523a65
+

@@ -5,9 +5,6 @@ import { BookRideLayout } from "@/components/bookings/book-ride/BookRideLayout";
 
 const BookRide = () => {
 
-
-
-
     return (
         <Suspense fallback={<FullPageSpinner />}>
             <BookRideLayout />
