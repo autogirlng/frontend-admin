@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Info, Plus } from "lucide-react";
+import { useRouter } from 'next/navigation'
+import { Info, Plus, ChevronRight } from "lucide-react";
 import FilterComponent from "./FilterComponent";
 
 interface BookingMetricProps {
@@ -145,6 +146,7 @@ const BookingMetrics: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState("this_month");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const newBookingDropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Filter options
   const filterOptions = [
@@ -222,12 +224,12 @@ const BookingMetrics: React.FC = () => {
                   </h2>
                   <div className="border-t border-[#D0D5DD] my-4"></div>
 
-                  <div className="mb-6">
+                  <div className="mb-6 cursor-pointer" onClick={() => router.push('/dashboard/booking/new-customer')}>
                     <h3
-                      className="text-lg font-medium text-[#1D2739] mb-1"
-                      style={{ fontSize: 15, fontWeight: "bold" }}
+                      className="text-lg font-medium flex flex-row justify-between  text-[#1D2739] mb-1 "
+                      style={{ fontSize: 15, fontWeight: "bold", }}
                     >
-                      Create Booking
+                      <span>Create Booking</span> <ChevronRight />
                     </h3>
                     <p className="text-[#1D2739] mb-2" style={{ fontSize: 12 }}>
                       Create booking all within the muvment platform.

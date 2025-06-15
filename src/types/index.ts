@@ -328,7 +328,7 @@ export type User = {
   bvnVerified: boolean;
   bio: string | null;
   city: string | null;
-  userRole: "HOST";
+  userRole: "HOST" | "CUSTOMER";
   businessLogo: string | null;
   businessName: string | null;
   businessAddress: string | null;
@@ -529,6 +529,25 @@ export interface BookingDetailsInformation {
   // travelCompanions: TravelCompanion[];
 }
 
+export interface BookingPricing  {
+  totalPrice: number,
+  breakdown: {
+    fullDays: number,
+    remainingHours: number,
+    dailyRate: number,
+    extraHoursFee: number,
+    hourlyRate: number,
+  airportPickupFee: number,
+    dailyPrice: number,
+    overtimePrice: number,
+    discountAmount: number,
+    discountPercentage: number
+  },
+  currency: string,
+  unit: string
+
+}
+
 export type Transaction = {
   id: string;
   transactionId: string;
@@ -613,3 +632,10 @@ export type TransactionTableRow = {
   status: string;
   actions: string;
 };
+
+export interface Customers {
+    data: User[],
+    page: number,
+    limit: number,
+    totalCount: number
+}
