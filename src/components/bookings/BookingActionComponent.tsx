@@ -1,112 +1,157 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, AlertTriangle, User, X, Info, AlertCircle } from "lucide-react";
 import { BookingBadgeStatus } from "@/utils/types";
 import { AddressModal } from "./modals/AddressModal";
 import { ConfirmTripModal } from "./modals/ConfirmTripModal";
 import { CancelTripModal } from "./modals/CancelTripModal";
 import { EndTripModal } from "./modals/EndTripModal";
 import { UpdateTripModal } from "./modals/UpdateTripModal";
+import { CancelBookingModal } from "./modals/CancelBookingModal";
+import { FlagAbuseModal } from "./modals/FlagAbuseModal";
+import { RequestInfoModal } from "./modals/RequestInfoModal";
+import { CustomerDetailsModal } from "./modals/CustomerDetailsModal";
+import BookingModalLayout from "./modals/BookingModalLayout";
+import { ModalHeader } from "./modals/ModalHeader";
+import { useHttp } from "@/utils/useHttp";
+import { toast } from "react-toastify";
 
 interface BookingActionComponentProps {
   bookingStatus: BookingBadgeStatus;
-  pickupLocation?: string;
+  pickupLocation: string;
+  bookingId: string;
+  customer?: {
+    name: string;
+    phone: string;
+    email: string;
+    memberSince: string;
+    bookingHistory: {
+      vehicle: string;
+      date: string;
+      status: string;
+    }[];
+  };
 }
 
 const BookingActionComponent: React.FC<BookingActionComponentProps> = ({ 
   bookingStatus,
-  pickupLocation = "No pickup location available"
+  pickupLocation = "No pickup location available",
+  bookingId,
+  customer
 }) => {
-  const [isActionOpen, setIsActionOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isCancelBookingModalOpen, setIsCancelBookingModalOpen] = useState(false);
+  const [isFlagAbuseModalOpen, setIsFlagAbuseModalOpen] = useState(false);
+  const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
+  const [isCustomerDetailsModalOpen, setIsCustomerDetailsModalOpen] = useState(false);
+  const [isStatusChangeModalOpen, setIsStatusChangeModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState("");
   const actionRef = useRef<HTMLDivElement>(null);
+  const http = useHttp();
 
   // Modal states
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isConfirmTripModalOpen, setIsConfirmTripModalOpen] = useState(false);
   const [isCancelTripModalOpen, setIsCancelTripModalOpen] = useState(false);
   const [isEndTripModalOpen, setIsEndTripModalOpen] = useState(false);
   const [isUpdateTripModalOpen, setIsUpdateTripModalOpen] = useState(false);
 
-  // Close dropdown when clicking outside
+  // Add state for selected info
+  const [selectedInfo, setSelectedInfo] = useState<string[]>([]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (actionRef.current && !actionRef.current.contains(event.target as Node)) {
-        setIsActionOpen(false);
+        setIsDropdownOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [actionRef]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const getActions = () => {
-    const commonActions = [
-      { name: "View Details", action: "view_details" },
-      { name: "Contact Customer", action: "contact_customer" },
-      { name: "View Address", action: "view_address" },
-    ];
+  const updateBookingStatus = async (bookingId: string, newStatus: BookingBadgeStatus) => {
+    try {
+      const response = await http.put<{ message: string }>(`/bookings/updateStatus/${bookingId}`, {
+        status: newStatus
+      });
 
-    switch (bookingStatus) {
-      case BookingBadgeStatus.APPROVED:
-        return [
-          ...commonActions,
-          { name: "Assign Driver", action: "assign_driver" },
-          { name: "Download Receipt", action: "download_receipt" },
-          { name: "Add Trip Notes", action: "add_trip_notes" },
-          { name: "Initiate Cancellation", action: "initiate_cancellation" },
-          { name: "Update Trip", action: "update_trip" },
-          { name: "End Trip", action: "end_trip" },
-        ];
-      case BookingBadgeStatus.PENDING:
-        return [
-          ...commonActions,
-          { name: "Approve Booking", action: "approve_booking" },
-          { name: "Reject Booking", action: "reject_booking" },
-          { name: "Escalate", action: "escalate" },
-        ];
-      case BookingBadgeStatus.CANCELLED:
-        return [
-          ...commonActions,
-          { name: "Archive", action: "archive" },
-          { name: "Process Refund", action: "process_refund" },
-        ];
-      case BookingBadgeStatus.COMPLETED:
-        return [
-          ...commonActions,
-          { name: "Download Receipt", action: "download_receipt" },
-          { name: "Add Trip Notes", action: "add_trip_notes" },
-          { name: "Archive", action: "archive" },
-        ];
-      default:
-        return commonActions;
+      if (response) {
+        toast.success(response.message || `Booking status updated to ${newStatus}`);
+      }
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update booking status');
     }
   };
 
+  const handleStatusChange = async (newStatus: BookingBadgeStatus) => {
+    try {
+      await updateBookingStatus(bookingId, newStatus);
+      setIsStatusChangeModalOpen(false);
+    } catch (error) {
+      console.error('Error changing status:', error);
+    }
+  };
+
+  const getActions = () => {
+    const actions = [
+      /*{
+        name: "View Pickup Location",
+        action: "view_address",
+      },*/
+      {
+        name: "Change Status",
+        action: "change_status",
+      },
+      {
+        name: "Flag Abuse",
+        action: "flag_abuse",
+      },
+      /*{
+        name: "Request Info",
+        action: "request_info",
+      },*/
+      {
+        name: "View Customer Details",
+        action: "view_customer",
+      },
+    ];
+
+    if (bookingStatus === BookingBadgeStatus.PENDING) {
+      actions.push({
+        name: "Cancel Booking",
+        action: "cancel_booking",
+      });
+    }
+
+    return actions;
+  };
+
   const handleAction = (action: string) => {
-    setIsActionOpen(false);
+    setIsDropdownOpen(false);
     
     switch (action) {
       case "view_address":
         setIsAddressModalOpen(true);
+        setModalContent("pickup");
         break;
-      case "approve_booking":
-        setIsConfirmTripModalOpen(true);
+      case "change_status":
+        setIsStatusChangeModalOpen(true);
         break;
-      case "initiate_cancellation":
-      case "reject_booking":
-        setIsCancelTripModalOpen(true);
+      case "flag_abuse":
+        setIsFlagAbuseModalOpen(true);
         break;
-      case "end_trip":
-        setIsEndTripModalOpen(true);
+      case "request_info":
+        setIsRequestInfoModalOpen(true);
         break;
-      case "update_trip":
-        setIsUpdateTripModalOpen(true);
+      case "view_customer":
+        setIsCustomerDetailsModalOpen(true);
         break;
-      default:
-        console.log(`Action: ${action} for booking with status: ${bookingStatus}`);
+      case "cancel_booking":
+        setIsCancelBookingModalOpen(true);
+        break;
     }
   };
 
@@ -114,14 +159,14 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
     <div className="relative" ref={actionRef}>
       <button
         className="text-gray-400 hover:text-gray-600 border-0 focus:outline-none focus:ring-2 focus:ring-gray-100 rounded-full p-2"
-        onClick={() => setIsActionOpen(!isActionOpen)}
-        aria-expanded={isActionOpen}
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        aria-expanded={isDropdownOpen}
         aria-controls="booking-action-dropdown"
       >
         <MoreVertical size={16} />
       </button>
 
-      {isActionOpen && (
+      {isDropdownOpen && (
         <div
           id="booking-action-dropdown"
           className="absolute z-10 mt-2 w-60 bg-white rounded-[10%] shadow-lg border border-[#dbdfe5] overflow-hidden"
@@ -134,7 +179,7 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
                 {getActions().map((action, index) => (
                   <p
                     key={index}
-                    className="my-2 w-full cursor-pointer py-2 rounded hover:bg-[#e0e4e9] text-sm text-start text-gray-700 transition-colors"
+                    className="my-2 w-full cursor-pointer py-2 rounded text-sm text-start text-gray-700 transition-colors hover:text-blue-600"
                     onClick={() => handleAction(action.action)}
                   >
                     {action.name}
@@ -146,32 +191,80 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
         </div>
       )}
 
-      {/* Modals */}
       <AddressModal 
         isOpen={isAddressModalOpen} 
-        modalContent={pickupLocation}
+        modalContent={modalContent}
         closeModal={() => setIsAddressModalOpen(false)}
       />
       
-      <ConfirmTripModal 
-        isOpen={isConfirmTripModalOpen}
-        setIsOpen={setIsConfirmTripModalOpen}
+      <CancelBookingModal
+        isOpen={isCancelBookingModalOpen}
+        onClose={() => setIsCancelBookingModalOpen(false)}
+        bookingId={bookingId}
       />
-      
-      <CancelTripModal 
-        isOpen={isCancelTripModalOpen}
-        setIsOpen={setIsCancelTripModalOpen}
+
+      <FlagAbuseModal
+        isOpen={isFlagAbuseModalOpen}
+        onClose={() => setIsFlagAbuseModalOpen(false)}
+        bookingId={bookingId}
       />
-      
-      <EndTripModal 
-        isOpen={isEndTripModalOpen}
-        setIsOpen={setIsEndTripModalOpen}
+
+      <RequestInfoModal
+        isOpen={isRequestInfoModalOpen}
+        onClose={() => setIsRequestInfoModalOpen(false)}
+        onConfirm={(info) => {
+          setSelectedInfo(info);
+          toast.success(`Requested additional information: ${info.join(", ")}`);
+          setIsRequestInfoModalOpen(false);
+        }}
       />
-      
-      <UpdateTripModal 
-        isOpen={isUpdateTripModalOpen}
-        setIsOpen={setIsUpdateTripModalOpen}
+
+      <CustomerDetailsModal
+        isOpen={isCustomerDetailsModalOpen}
+        onClose={() => setIsCustomerDetailsModalOpen(false)}
+        customer={customer || {
+          name: "",
+          phone: "",
+          email: "",
+          memberSince: "2024-01-01",
+          bookingHistory: []
+        }}
       />
+
+      <BookingModalLayout isOpen={isStatusChangeModalOpen}>
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <ModalHeader 
+            LucideIcon={AlertCircle}
+            iconColor="#F3A218"
+            iconBackgroundColor="#FEF3C7"
+            headerText="Change Booking Status"
+            modalContent="Select the new status for this booking"
+          />
+          
+          <div className="mt-6">
+            <div className="grid grid-cols-2 gap-4">
+              {Object.values(BookingBadgeStatus).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusChange(status)}
+                  className="px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={() => setIsStatusChangeModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </BookingModalLayout>
     </div>
   );
 };

@@ -40,7 +40,6 @@ export const useHttp = () => {
     get: async <T>(url: string) => {
       try {
         const response = await http.get<T>(url);
-        console.log(response.data);
         return response.data;
       } catch (error) {
         if (error instanceof AxiosError) {
@@ -70,15 +69,15 @@ export const useHttp = () => {
       }
     },
 
-    put: async <T>(url: string, data?: any) => {
+    put: async <T>(url: string, data?: any): Promise<T> => {
       try {
         const response = await http.put<T>(url, data);
         return response.data;
       } catch (error) {
         if (error instanceof AxiosError) {
-          if (handleAuthError(error)) return;
+          if (handleAuthError(error)) return Promise.reject(error);
           handleErrors(error);
-          throw new Error(error.response?.data.message);
+          throw new Error(error.response?.data.message ?? error.message);
         }
         throw error;
       }
