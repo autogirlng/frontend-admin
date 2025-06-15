@@ -104,12 +104,17 @@ export default function useAvailabilityAndPricingForm({
       outskirtsPrice: parseFloat(values.outskirtsPrice),
     };
   };
-
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId.toString() != "") {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
   const saveStep4 = useMutation({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step4/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step4/${vehicle?.id}`,
 
         values
       ),
@@ -128,7 +133,7 @@ export default function useAvailabilityAndPricingForm({
   const submitStep4 = useMutation({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step4/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step4/${vehicle?.id}`,
 
         values
       ),

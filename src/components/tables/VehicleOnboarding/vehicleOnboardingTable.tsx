@@ -16,6 +16,8 @@ export default function VehicleOnboardingTable({ search, filters }: Props) {
       filters: filters,
     });
 
+  console.log("VehicleOnboardingTable data", data);
+
   return (
     <div>
       {isLoading ? (

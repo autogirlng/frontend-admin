@@ -4,11 +4,11 @@ import { Inter } from "next/font/google";
 import StoreProvider from "./provider/StoreProvider";
 import "./globals.css";
 import ReactQueryClientProvider from "./provider/ReactQueryClientProvider";
+import { ReactNode } from "react";
+import AuthProvider from "./provider/AuthProvider";
+import ToastProvider from "./provider/ToastProvider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { ReactNode } from "react";
-import AuthProvider from "./provider/AuthProvider"; // Import AuthProvider
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -23,8 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <ToastContainer
+      <body className={inter.className}> <ToastContainer
           autoClose={5000}
           hideProgressBar
           newestOnTop
@@ -47,6 +46,7 @@ export default function RootLayout({
           }
           theme="light"
         />
+        <ToastProvider />
         <StoreProvider>
           <ReactQueryClientProvider>
             <AuthProvider>{children}</AuthProvider>

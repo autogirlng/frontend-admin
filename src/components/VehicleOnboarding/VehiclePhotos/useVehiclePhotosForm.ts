@@ -61,11 +61,17 @@ export default function useVehiclePhotosForm({
   }, [photoViews]);
 
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId.toString() != "") {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
 
   const saveStep3 = useMutation({
     mutationFn: (values: FormData) =>
       http.put(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step3/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step3/${vehicle?.id}`,
         values
       ),
 
@@ -85,7 +91,7 @@ export default function useVehiclePhotosForm({
   const submitStep3 = useMutation({
     mutationFn: (values: FormData) =>
       http.put(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step3/${vehicle?.id}`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step3/${vehicle?.id}`,
         values
       ),
 

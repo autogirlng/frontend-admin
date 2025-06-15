@@ -105,10 +105,16 @@ export default function useBasicInformationForm({
   }, [searchAddressQuery, debouncedFetchPlaces]);
 
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId.toString() != "") {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
   const saveStep1 = useMutation({
     mutationFn: (values: BasicVehicleInformationValues) =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step1`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
         {
           ...values,
           hasTracker: values.hasTracker === "yes" ? true : false,
@@ -133,7 +139,7 @@ export default function useBasicInformationForm({
   const submitStep1 = useMutation({
     mutationFn: (values: BasicVehicleInformationValues) =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/step1`,
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
         {
           ...values,
           hasTracker: values.hasTracker === "yes" ? true : false,

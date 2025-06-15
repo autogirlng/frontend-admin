@@ -67,13 +67,15 @@ export default function Fleet({}: Props) {
           </div>
 
           {/* Add Vehicle Button */}
-          <Button
-            color="primary"
-            className="flex gap-1 justify-center text-sm text-nowrap items-center w-full md:w-auto flex-shrink-0"
-          >
-            {Icons.ic_add}
-            <Link href={LocalRoute.selectHostPage}>Add Vehicle</Link>
-          </Button>
+          <Link href={LocalRoute.selectHostPage}>
+            <Button
+              color="primary"
+              className="flex gap-1 justify-center text-sm text-nowrap items-center w-full md:w-auto flex-shrink-0"
+            >
+              {Icons.ic_add}
+              Add Vehicle
+            </Button>
+          </Link>
         </div>
       </div>
       <FleetDataTable filters={filters} search={debouncedSearch} />

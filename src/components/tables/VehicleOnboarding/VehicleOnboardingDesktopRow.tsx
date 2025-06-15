@@ -13,13 +13,13 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
         className="!text-grey-900 text-wrap !font-medium"
       />
       <TableCell className="text-wrap" content={items?.host ?? "-"} />
-      <TableCell className="text-wrap" content={items?.location ?? "-"} />
       <TableCell
         className="text-wrap"
         content={`${items?.makeAndModel ?? "-"}`}
       />
-      <TableCell content={items?.vehicleType ?? "-"} />
       <TableCell content={items?.year?.toString() ?? "-"} />
+      <TableCell content={items?.vehicleType ?? "-"} />
+      <TableCell className="text-wrap" content={items?.location ?? "-"} />
       <TableCell
         content={
           items?.dateCreated
@@ -27,8 +27,8 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
             : "-"
         }
       />
-      <TableCell content={items?.hostRate ?? "-"} />
       <TableCell content={items?.customerRate ?? "-"} />
+      <TableCell content={items?.hostRate ?? "-"} />
       <TableCell content={items?.status} isBadge />
       <td>
         <Popup
@@ -40,18 +40,18 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                 <>
                   <li>
                     <Link
-                      href={`/bookings/${items?.vehicleId}`}
+                      href={`/vehicle/${items?.vehicleId}`}
                       className="!text-xs 3xl:!text-base"
                     >
                       View Details
                     </Link>
                   </li>
                   {(items?.status === "pending" ||
-                    items?.status === "inReview") && (
+                    items?.status === "review") && (
                     <>
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Approve
@@ -59,7 +59,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                       </li>
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Request update
@@ -67,7 +67,7 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                       </li>
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Reject
@@ -77,10 +77,10 @@ const VehicleDesktopRow = ({ items }: { items: VehicleOnboardingTable }) => {
                   )}
                   {items?.status === "rejected" ||
                     items?.status === "pending" ||
-                    (items?.status === "inReview" && (
+                    (items?.status === "review" && (
                       <li>
                         <Link
-                          href={`/bookings/${items?.vehicleId}`}
+                          href={`/vehicle/${items?.vehicleId}`}
                           className="!text-xs 3xl:!text-base"
                         >
                           Request update

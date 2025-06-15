@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ReactNode } from "react";
 import {
   BookingBadgeStatus,
@@ -52,12 +51,12 @@ const SelectHostMobileRow = ({ items }: { items: HostTable }) => {
       <TableCell title="Host ID" content={items?.id} />
       <TableCell
         title="Host"
-        content={`${items.firstName} ${items?.lastName}\n${items.firstName}`}
+        content={`${items.firstName} ${items?.lastName}`}
       />
-      <TableCell title="Email" content={items?.email} />
+      <TableCell title="Business name" content={items?.businessName} />
 
       <TableCell title="Phone Number" content={items?.phoneNumber} />
-      <TableCell title="Location" content={items?.city ?? "-"} />
+      <TableCell title="Location" content={items?.location ?? "-"} />
       {host?.id === items.id && (
         <div className="rounded text-white bg-blue-500">
           <TableCell title="" content="✓" />
