@@ -105,6 +105,7 @@ export default function useBasicInformationForm({
   }, [searchAddressQuery, debouncedFetchPlaces]);
 
   const { host } = useAppSelector((state) => state.host);
+  console.log(host);
   let hostId;
   if (vehicle?.userId.toString() != "") {
     hostId = vehicle?.userId;

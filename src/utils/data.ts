@@ -322,7 +322,6 @@ export const vehicleMakesOptions: OptionType[] = [
   { value: "Volkswagen", option: "Volkswagen" },
   { value: "Volvo", option: "Volvo" },
   { value: "Vauxhall", option: "Vauxhall" },
-  { value: "VinFast", option: "VinFast" },
   { value: "Wiesmann", option: "Wiesmann" },
   { value: "Wuling", option: "Wuling" },
   { value: "Workhorse", option: "Workhorse" },
