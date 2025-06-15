@@ -15,6 +15,7 @@ import { BookingTrips } from "../types";
 import { ImageAssets } from "./ImageAssets";
 import { LocalRoute } from "./LocalRoutes";
 
+
 type OptionType = { option: string; value: string };
 
 export const dashboardNavItems = [
