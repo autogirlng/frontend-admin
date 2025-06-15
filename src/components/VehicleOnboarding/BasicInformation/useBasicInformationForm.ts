@@ -106,7 +106,7 @@ export default function useBasicInformationForm({
 
   const { host } = useAppSelector((state) => state.host);
   let hostId;
-  if (vehicle?.userId.toString() != "") {
+  if (vehicle?.userId) {
     hostId = vehicle?.userId;
   } else {
     hostId = host?.id;

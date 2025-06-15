@@ -12,6 +12,10 @@ import {
 import { daysOfTheWeek } from "./data";
 import Icons from "@/components/shared/icons";
 
+const stripNonNumeric = (value: string): string => {
+  return value.replace(/[^0-9.]/g, ""); // Removes all non-numeric and non-decimal point characters
+};
+
 export const isLengthValid = (password: string): boolean => {
   const isLengthValid = password.length >= 8;
   return isLengthValid;

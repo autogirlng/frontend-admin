@@ -10,7 +10,10 @@ import {
   VehicleInformation,
 } from "@/utils/types";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
+import {
+  clearVehicleState,
+  updateVehicleInformation,
+} from "@/lib/features/vehicleOnboardingSlice";
 import Icons from "@/components/shared/icons";
 import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
@@ -135,20 +138,21 @@ export default function useVehicleSummary({
   }, [vehicle]);
 
   const { host } = useAppSelector((state) => state.host);
+  let hostId;
+  if (vehicle?.userId) {
+    hostId = vehicle?.userId;
+  } else {
+    hostId = host?.id;
+  }
   const submitVehicleOnboarding = useMutation({
     mutationFn: () =>
       http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${host?.id}/submit-summary/${vehicle?.id}`
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/submit-summary/${vehicle?.id}`
       ),
 
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Submitted for Review Successful", data);
-      dispatch(
-        updateVehicleInformation(
-          // @ts-ignore
-          { ...vehicle, ...data }
-        )
-      );
+      dispatch(clearVehicleState());
       router.push(`/dashboard/vehicle-onboarding/success/${vehicle?.id}`);
     },
 
