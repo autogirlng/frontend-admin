@@ -284,7 +284,7 @@ export enum BookingBadgeStatus {
   PENDING = "PENDING",
   CANCELLED = "CANCELLED",
   APPROVED = "APPROVED",
-  COMPLTETED = "COMPLETED",
+  COMPLETED = "COMPLETED",
 }
 
 export enum VehicleOnboardingStatus {

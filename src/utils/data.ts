@@ -872,7 +872,7 @@ export const bookingFilters = [
     title: "status",
     options: [
       { option: "Pending", value: BookingBadgeStatus.PENDING },
-      { option: "Completed", value: BookingBadgeStatus.COMPLTETED },
+      { option: "Completed", value: BookingBadgeStatus.COMPLETED },
       { option: "Approved", value: BookingBadgeStatus.APPROVED },
       { option: "Cancelled", value: BookingBadgeStatus.CANCELLED },
     ],
