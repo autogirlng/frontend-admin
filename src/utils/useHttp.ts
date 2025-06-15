@@ -28,7 +28,7 @@ export const useHttp = () => {
   });
 
   const handleAuthError = (error: AxiosError<ErrorResponse>) => {
-    if (error?.response?.data?.ERR_CODE === "NOT_PERMITTED_REAUTHENICATE") {
+    if (error?.response?.status === 401 || error?.response?.data?.ERR_CODE === "NOT_PERMITTED_REAUTHENICATE") {
       dispatch(clearUser());
       router.push(LocalRoute.login);
       return true;
