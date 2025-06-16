@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 import { LocalRoute } from "@/utils/LocalRoutes";
+import { stripNonNumeric } from "@/utils/formatters";
 
 export default function useAvailabilityAndPricingForm({
   currentStep,
@@ -82,31 +83,31 @@ export default function useAvailabilityAndPricingForm({
           value: parseFloat(values.dailyRate),
           unit: "NGN_KM",
         },
-        extraHoursFee: parseFloat(values.extraHourRate),
-        airportPickupFee: parseFloat(values.airportPickup),
+        extraHoursFee: parseFloat(stripNonNumeric(values.extraHourRate)),
+        airportPickupFee: parseFloat(stripNonNumeric(values.airportPickup)),
         discounts: [
           {
             durationInDays: 3,
-            percentage: parseFloat(values.threeDaysDiscount),
+            percentage: parseFloat(stripNonNumeric(values.threeDaysDiscount)),
           },
           {
             durationInDays: 7,
-            percentage: parseFloat(values.sevenDaysDiscount),
+            percentage: parseFloat(stripNonNumeric(values.sevenDaysDiscount)),
           },
           {
             durationInDays: 30,
-            percentage: parseFloat(values.thirtyDaysDiscount),
+            percentage: parseFloat(stripNonNumeric(values.thirtyDaysDiscount)),
           },
         ],
       },
 
       outskirtsLocation: values.outskirtsLocation,
-      outskirtsPrice: parseFloat(values.outskirtsPrice),
+      outskirtsPrice: parseFloat(stripNonNumeric(values.outskirtsPrice)),
     };
   };
   const { host } = useAppSelector((state) => state.host);
   let hostId;
-  if (vehicle?.userId.toString() != "") {
+  if (vehicle?.userId) {
     hostId = vehicle?.userId;
   } else {
     hostId = host?.id;
