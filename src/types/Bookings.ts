@@ -45,3 +45,4 @@ export interface IBooking {
     | "Cancelled"
     | "Completed";
 }
+
