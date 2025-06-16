@@ -71,6 +71,12 @@ export default function useAvailabilityAndPricingForm({
   };
 
   const mapValuesToApiPayload = (values: AvailabilityAndPricingValues) => {
+    // Helper function to remove commas and parse float
+    const parseNumericValue = (value: string) => {
+      const cleanValue = stripNonNumeric(value).replace(/,/g, "");
+      return parseFloat(cleanValue) || 0;
+    };
+
     return {
       tripSettings: {
         advanceNotice: values.advanceNoticeInDays,
@@ -80,27 +86,26 @@ export default function useAvailabilityAndPricingForm({
       },
       pricing: {
         dailyRate: {
-          value: parseFloat(values.dailyRate),
+          value: parseNumericValue(values.dailyRate),
           unit: "NGN_KM",
         },
-        extraHoursFee: parseFloat(stripNonNumeric(values.extraHourRate)),
-        airportPickupFee: parseFloat(stripNonNumeric(values.airportPickup)),
+        extraHoursFee: parseNumericValue(values.extraHourRate),
+        airportPickupFee: parseNumericValue(values.airportPickup),
         discounts: [
           {
             durationInDays: 3,
-            percentage: parseFloat(stripNonNumeric(values.threeDaysDiscount)),
+            percentage: parseNumericValue(values.threeDaysDiscount),
           },
           {
             durationInDays: 7,
-            percentage: parseFloat(stripNonNumeric(values.sevenDaysDiscount)),
+            percentage: parseNumericValue(values.sevenDaysDiscount),
           },
           {
             durationInDays: 30,
-            percentage: parseFloat(stripNonNumeric(values.thirtyDaysDiscount)),
+            percentage: parseNumericValue(values.thirtyDaysDiscount),
           },
         ],
       },
-
       outskirtsLocation: values.outskirtsLocation,
       outskirtsPrice: parseFloat(stripNonNumeric(values.outskirtsPrice)),
     };

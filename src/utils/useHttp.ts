@@ -28,7 +28,10 @@ export const useHttp = () => {
   });
 
   const handleAuthError = (error: AxiosError<ErrorResponse>) => {
-    if (error?.response?.status === 401 || error?.response?.data?.ERR_CODE === "NOT_PERMITTED_REAUTHENICATE") {
+    if (
+      error?.response?.status === 401 ||
+      error?.response?.data?.ERR_CODE === "NOT_PERMITTED_REAUTHENICATE"
+    ) {
       dispatch(clearUser());
       router.push(LocalRoute.login);
       return true;
@@ -69,18 +72,37 @@ export const useHttp = () => {
       }
     },
 
-    put: async <T>(url: string, data?: any): Promise<T> => {
-      try {
-        const response = await http.put<T>(url, data);
-        return response.data;
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          if (handleAuthError(error)) return Promise.reject(error);
-          handleErrors(error);
-          throw new Error(error.response?.data.message ?? error.message);
+    put: async <T>(
+      url: string,
+      data?: any,
+      retries: number = 2
+    ): Promise<T> => {
+      const makeRequest = async (attempt: number): Promise<T> => {
+        try {
+          const response = await http.put<T>(url, data, {
+            timeout: 30000,
+          });
+          return response.data;
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            if (handleAuthError(error)) return Promise.reject(error);
+            if (
+              (error.code === "ECONNABORTED" || !error.response) &&
+              attempt < retries
+            ) {
+              await new Promise((resolve) =>
+                setTimeout(resolve, 1000 * attempt)
+              );
+              return makeRequest(attempt + 1);
+            }
+            handleErrors(error);
+            throw new Error(error.response?.data.message ?? error.message);
+          }
+          throw error;
         }
-        throw error;
-      }
+      };
+
+      return makeRequest(0);
     },
 
     delete: async <T>(url: string) => {
