@@ -106,11 +106,10 @@ export default function useBasicInformationForm({
 
   const { host } = useAppSelector((state) => state.host);
   console.log(host);
-  let hostId;
-  if (vehicle?.userId.toString() != "") {
-    hostId = vehicle?.userId;
-  } else {
-    hostId = host?.id;
+  let hostId = vehicle?.userId || host?.id;
+  if (!hostId) {
+    console.error("No host ID available");
+    hostId = "";
   }
   const saveStep1 = useMutation({
     mutationFn: (values: BasicVehicleInformationValues) =>
