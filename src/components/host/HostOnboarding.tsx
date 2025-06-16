@@ -45,7 +45,7 @@ export default function HostOnboardingComponent() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col  w-full">
+    <div className="min-h-screen bg-white flex flex-col w-full">
       <div className="w-full mx-auto space-y-5 py-4 px-4 sm:px-6 flex flex-col flex-grow">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-2">
@@ -70,16 +70,11 @@ export default function HostOnboardingComponent() {
             <Formik
               initialValues={hostOnboardingValues}
               onSubmit={async (values, { setSubmitting }) => {
-                console.log(values);
-                const submissionValues = { ...values };
-
                 try {
-                  await hostMutation.mutateAsync(submissionValues);
-                  // On successful submission, handle redirect
+                  await hostMutation.mutateAsync(values);
                   handleSuccessRedirect();
                 } catch (error) {
                   console.error("Submission failed:", error);
-                  // Handle error case if needed
                 } finally {
                   setSubmitting(false);
                 }
@@ -393,7 +388,6 @@ export default function HostOnboardingComponent() {
                     <div className="mt-8 pb-8">
                       <Button
                         type="submit"
-                        // loading={isLoadingOrSubmitting}
                         disabled={isLoadingOrSubmitting || !isValid}
                         className={
                           isValid && !isLoadingOrSubmitting
