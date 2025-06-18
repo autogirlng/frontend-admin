@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 import { LocalRoute } from "@/utils/LocalRoutes";
+import { stripNonNumeric } from "@/utils/formatters";
 
 export default function useAvailabilityAndPricingForm({
   currentStep,
@@ -70,6 +71,12 @@ export default function useAvailabilityAndPricingForm({
   };
 
   const mapValuesToApiPayload = (values: AvailabilityAndPricingValues) => {
+    // Helper function to remove commas and parse float
+    const parseNumericValue = (value: string) => {
+      const cleanValue = stripNonNumeric(value).replace(/,/g, "");
+      return parseFloat(cleanValue) || 0;
+    };
+
     return {
       tripSettings: {
         advanceNotice: values.advanceNoticeInDays,
@@ -79,34 +86,33 @@ export default function useAvailabilityAndPricingForm({
       },
       pricing: {
         dailyRate: {
-          value: parseFloat(values.dailyRate),
+          value: parseNumericValue(values.dailyRate),
           unit: "NGN_KM",
         },
-        extraHoursFee: parseFloat(values.extraHourRate),
-        airportPickupFee: parseFloat(values.airportPickup),
+        extraHoursFee: parseNumericValue(values.extraHourRate),
+        airportPickupFee: parseNumericValue(values.airportPickup),
         discounts: [
           {
             durationInDays: 3,
-            percentage: parseFloat(values.threeDaysDiscount),
+            percentage: parseNumericValue(values.threeDaysDiscount),
           },
           {
             durationInDays: 7,
-            percentage: parseFloat(values.sevenDaysDiscount),
+            percentage: parseNumericValue(values.sevenDaysDiscount),
           },
           {
             durationInDays: 30,
-            percentage: parseFloat(values.thirtyDaysDiscount),
+            percentage: parseNumericValue(values.thirtyDaysDiscount),
           },
         ],
       },
-
       outskirtsLocation: values.outskirtsLocation,
-      outskirtsPrice: parseFloat(values.outskirtsPrice),
+      outskirtsPrice: parseFloat(stripNonNumeric(values.outskirtsPrice)),
     };
   };
   const { host } = useAppSelector((state) => state.host);
   let hostId;
-  if (vehicle?.userId.toString() != "") {
+  if (vehicle?.userId) {
     hostId = vehicle?.userId;
   } else {
     hostId = host?.id;
