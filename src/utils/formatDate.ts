@@ -24,3 +24,12 @@
 
         return `${day}${getOrdinal(day)} ${month} ${year} | ${hours}:${minutes}${ampm}`;
     }
+
+export const hoursBetweenISOStrings = (isoString1:string, isoString2:string ):number => {
+    const startTime = new Date(isoString1);
+    const endTime = new Date(isoString2);
+
+const diffMs = endTime.getTime() - startTime.getTime(); 
+return Math.round(diffMs / (1000 * 60 * 60 * 24)); 
+
+}

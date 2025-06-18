@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import { FullPageSpinner } from "@/components/shared/spinner";
 
 const BookingSummary = () => {
-  return (
-    <Suspense fallback={<FullPageSpinner />}>
-      <BookingSummaryLayout />
-    </Suspense>
-  );
+    return (
+        <Suspense fallback={<FullPageSpinner />}>
+            <BookingSummaryLayout />
+        </Suspense>
+    );
 };
 
 export default BookingSummary;

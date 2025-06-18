@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useHttp } from "@/utils/useHttp";
 import { User } from "@/types";
-
+import { Spinner } from "@/components/shared/spinner";
 
 
 const stops = ['Ikorodu', 'Bagagry', 'Epe', 'Ibeju-Lekki', 'Ojo', 'Alimosho', 'Agege', 'Ajah', 'Agbara', 'Sango', 'Ijede', 'Ikotun', 'Egbeda']
@@ -19,9 +19,11 @@ const BookRideLayout = () => {
     const searchParams = useSearchParams();
     const customerID = searchParams.get('customerID')
     const [customerData, setCustomerData] = useState<User>();
+    const [loadingCustomerData, setLoadingCustomerData] = useState<boolean>(false)
     const router = useRouter()
 
     const fetchCustomerDetails = async (customerID: string) => {
+        setLoadingCustomerData(true)
         const url = `/user/admin/${customerID}`
         try {
             const customer = await http.get<User>(url)
@@ -29,6 +31,8 @@ const BookRideLayout = () => {
         } catch (err) {
             console.log(err)
         }
+        setLoadingCustomerData(false)
+
     }
 
     useEffect(() => {
@@ -86,7 +90,7 @@ const BookRideLayout = () => {
                 dropOffLocation: values.dropOffLocation,
                 dropOffDate: values.dropOffDate,
                 dropOffTime: values.dropOffTime,
-                stops: values.stops.join(','),
+                stops: stops.length === 1 ? stops[0] + "," : values.stops.join(','),
                 extraDetails: values.extraDetails,
                 purposeOfRide: values.purposeOfRide,
                 areaOfUse: values.areaOfUse,
@@ -358,26 +362,27 @@ const BookRideLayout = () => {
                         </div>
                         <div className="w-full lg:w-80 flex flex-col mt-[80px]">
                             {
-                                customerData && (
-                                    <div className="bg-white p-6 rounded-lg shadow-md border border-[#e4e7ec] h-fit">
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Customer Info</h3>
+                                loadingCustomerData ? <div className="flex flex-row justify-center"><Spinner /></div>
+                                    : customerData && (
+                                        <div className="bg-white p-6 rounded-lg shadow-md border border-[#e4e7ec] h-fit">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Customer Info</h3>
 
-                                        <div className="space-y-4">
-                                            <div className="flex flex-row justify-between">
-                                                <p className="text-sm text-gray-500">Name</p>
-                                                <p className="text-base text-gray-800 font-medium">{customerData.firstName}</p>
-                                            </div>
-                                            <div className="flex flex-row justify-between">
-                                                <p className="text-sm text-gray-500">Email</p>
-                                                <p className="text-base text-gray-800 font-medium">{customerData.email}</p>
-                                            </div>
-                                            <div className="flex flex-row justify-between">
-                                                <p className="text-sm text-gray-500">Phone Number</p>
-                                                <p className="text-base text-gray-800 font-medium">{customerData.phoneNumber}</p>
+                                            <div className="space-y-4">
+                                                <div className="flex flex-row justify-between">
+                                                    <p className="text-sm text-gray-500">Name</p>
+                                                    <p className="text-base text-gray-800 font-medium">{customerData.firstName}</p>
+                                                </div>
+                                                <div className="flex flex-row justify-between">
+                                                    <p className="text-sm text-gray-500">Email</p>
+                                                    <p className="text-base text-gray-800 font-medium">{customerData.email}</p>
+                                                </div>
+                                                <div className="flex flex-row justify-between">
+                                                    <p className="text-sm text-gray-500">Phone Number</p>
+                                                    <p className="text-base text-gray-800 font-medium">{customerData.phoneNumber}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )
+                                    )
                             }
 
 

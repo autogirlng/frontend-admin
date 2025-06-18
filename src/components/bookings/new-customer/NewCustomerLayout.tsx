@@ -7,6 +7,7 @@ import { AddNewCustomerModal } from "../modals/new-customer/AddNewCustomerModal"
 import { useHttp } from "@/utils/useHttp";
 import { User, Customers } from "@/types";
 import Image from "next/image";
+import { Spinner } from "@/components/shared/spinner";
 
 
 const NewCustomerLayout = () => {
@@ -78,7 +79,7 @@ const NewCustomerLayout = () => {
                         {
                             loadingCustomersData ?
                                 <div className="flex flex-row items-center justify-center mt-4 ">
-                                    <div className="w-10 h-10 border-4 border-t-transparent border-[#1e93ff] rounded-full animate-spin"></div>
+                                    <Spinner />
                                 </div>
                                 : filteredCustomers.length !== 0 ? <div
                                     className="overflow-x-auto rounded-t-lg border border-[#D0D5DD]"
