@@ -8,6 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useHttp } from "@/utils/useHttp";
+import BookingActionComponent from "./BookingActionComponent";
+import { BookingBadgeStatus } from "@/utils/types";
 
 // Types
 type BookingStatus =
@@ -31,6 +34,10 @@ interface Booking {
   status: BookingStatus;
   bookingChannel: BookingChannelType;
   price: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  memberSince?: string;
+  bookingHistory?: any[];
 }
 
 interface StatusBadgeProps {
@@ -335,6 +342,22 @@ const FilterComponent: React.FC = () => {
   );
 };
 
+// Add this helper for status badge (copy from BookingsTable)
+const renderBookingStatusBadge = (status: string) => {
+  const statusStyles: Record<string, string> = {
+    ACCEPTED: "bg-[#0AAF24] text-white",
+    PENDING: "bg-[#F3A218] text-white",
+    CANCELLED: "bg-[#F83B3B] text-white",
+    APPROVED: "bg-[#0AAF24] text-white",
+    COMPLETED: "bg-[#0673FF] text-white",
+  };
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status] || "bg-gray-200 text-gray-700"}`}>
+      {status}
+    </span>
+  );
+};
+
 // Pagination Component
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
@@ -351,26 +374,27 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex justify-center mt-6 space-x-1">
+    <div className="flex justify-center mt-8 gap-2">
       <button
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
-        className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+        className="px-3 py-2 flex items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         type="button"
         aria-label="Previous page"
       >
-        <ChevronLeft className="h-5 w-5" />
+        <ChevronLeft className="h-5 w-5 text-gray-600" />
       </button>
 
       {getPageNumbers().map((page) => (
         <button
           key={page}
           onClick={() => onPageChange(page)}
-          className={`px-3 py-1 rounded-md ${
-            currentPage === page
-              ? "bg-blue-500 text-white"
-              : "border border-gray-300 hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 rounded-md font-semibold text-base border transition-all duration-150
+            ${page === currentPage
+              ? "text-white border-blue-700 ring-2 ring-blue-500"
+              : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-400"}
+          `}
+          style={page === currentPage ? { backgroundColor: '#2563eb', borderColor: '#1d4ed8', color: '#fff' } : {}}
           type="button"
           aria-current={currentPage === page ? "page" : undefined}
           aria-label={`Page ${page}`}
@@ -382,11 +406,11 @@ const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+        className="px-3 py-2 flex items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         type="button"
         aria-label="Next page"
       >
-        <ChevronRight className="h-5 w-5" />
+        <ChevronRight className="h-5 w-5 text-gray-600" />
       </button>
     </div>
   );
@@ -394,24 +418,47 @@ const Pagination: React.FC<PaginationProps> = ({
 
 // Main Component
 const BookingManagementSystem = () => {
-  const [currentPage, setCurrentPage] = useState<number>(1); // Set to page 3 to match the image
-  const itemsPerPage = 10;
+  const http = useHttp();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Calculate total pages
-  const totalPages = Math.ceil(bookingsData.length / itemsPerPage);
+  const itemsPerPage = 12;
 
-  // Get current page data
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBookings = bookingsData.slice(indexOfFirstItem, indexOfLastItem);
+  const fetchBookings = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await http.get<any>(
+        `/admin/booking/list?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}`
+      );
+      if (response && response.data) {
+        setBookings(response.data);
+        setTotalPages(response.totalPages || 1);
+      } else {
+        setBookings([]);
+        setTotalPages(1);
+        setError("No data received");
+      }
+    } catch (err) {
+      setError("Failed to fetch bookings");
+      setBookings([]);
+      setTotalPages(1);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+    // eslint-disable-next-line
+  }, [currentPage, searchTerm]);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-  };
-
-  const handleAction = (action: string, bookingId: string) => {
-    console.log(`Action: ${action} for booking: ${bookingId}`);
-    // Implement action handling logic here
   };
 
   return (
@@ -430,6 +477,8 @@ const BookingManagementSystem = () => {
               placeholder="Search with Booking ID, or Guest name"
               className="pl-10 pr-4 py-2 w-full rounded-md border border-[#D0D5DD] focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ fontSize: "14px" }}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
 
@@ -460,7 +509,7 @@ const BookingManagementSystem = () => {
                   Booking Type
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  No Of Trips
+                  Duration
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Vehicle
@@ -472,9 +521,6 @@ const BookingManagementSystem = () => {
                   Status
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking Chnl
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -483,65 +529,58 @@ const BookingManagementSystem = () => {
               </tr>
             </thead>
             <tbody>
-              {currentBookings.length > 0 ? (
-                currentBookings.map((booking, index) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={10} className="px-6 py-8 text-center text-gray-500">Loading bookings...</td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={10} className="px-6 py-8 text-center text-red-600">{error}</td>
+                </tr>
+              ) : bookings.length > 0 ? (
+                bookings.map((booking, index) => (
                   <tr
-                    key={`${booking.id}-${index}`}
-                    className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${
-                      index === currentBookings.length - 1 ? "border-b-0" : ""
-                    }`}
+                    key={`${booking.bookingId || booking.id}-${index}`}
+                    className="border-b border-[#D0D5DD] hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      const id = booking.bookingId || booking.id;
+                      if (id) window.location.href = `/dashboard/bookings/${id}`;
+                    }}
                   >
-                    <td className="px-4 py-4 text-sm font-medium text-[#344054]">
-                      {booking.id}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.customerName}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.city}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.bookingType}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.noOfTrips}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.vehicle}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.startDate}
-                    </td>
-                    <td className="px-4 py-4">
-                      <StatusBadge status={booking.status} />
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.bookingChannel}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">
-                      {booking.price}
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <ActionMenu
-                        status={booking.status}
-                        onAction={(action) => handleAction(action, booking.id)}
+                    <td className="px-4 py-4 text-sm font-medium text-[#344054]">{booking.bookingId || booking.id}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.customerName}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.city}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.bookingType}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.duration ? `${booking.duration} days` : ''}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.vehicle}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleDateString() : ''}</td>
+                    <td className="px-4 py-4">{renderBookingStatusBadge(booking.status || booking.bookingStatus)}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.price ? `NGN ${booking.price.toLocaleString()}` : ''}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={e => e.stopPropagation()}>
+                      <BookingActionComponent
+                        bookingStatus={booking.status || booking.bookingStatus}
+                        pickupLocation={booking.city || booking.pickupLocation}
+                        bookingId={booking.bookingId || booking.id}
+                        customer={booking.customer || {
+                          name: booking.customerName || '',
+                          phone: booking.customerPhone || '',
+                          email: booking.customerEmail || '',
+                          memberSince: booking.memberSince || '',
+                          bookingHistory: booking.bookingHistory || []
+                        }}
                       />
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={11}
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    No bookings found
-                  </td>
+                  <td colSpan={10} className="px-6 py-8 text-center text-gray-500">No bookings found.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
     </div>
   );
