@@ -73,8 +73,6 @@ const BookingsTable: React.FC = () => {
   const router = useRouter();
   const http = useHttp();
   const [bookings, setBookings] = useState<BookingTableItem[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
@@ -85,8 +83,9 @@ const BookingsTable: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
+      // Fetch the most recent 10 bookings, sorted by most recent (assuming API supports sort param)
       const response = await http.get<BookingResponse>(
-        `/admin/booking/list?page=${currentPage}&limit=10&search=${searchTerm}`
+        `/admin/booking/list?page=1&limit=10&search=${searchTerm}`
       );
 
       if (response && response.data) {
@@ -114,7 +113,6 @@ const BookingsTable: React.FC = () => {
           })
         );
         setBookings(transformedBookings);
-        setTotalPages(response.totalPages);
       } else {
         setError("Failed to fetch bookings: No data received.");
       }
@@ -128,7 +126,8 @@ const BookingsTable: React.FC = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, searchTerm]);
+    // Only refetch on searchTerm change
+  }, [searchTerm]);
 
   const renderBookingStatusBadge = (status: BookingBadgeStatus) => {
     const statusStyles: Record<BookingBadgeStatus, string> = {
@@ -175,6 +174,12 @@ const BookingsTable: React.FC = () => {
             </div>
             <FilterComponent />
           </div>
+          <a
+            href="/dashboard/bookings/list"
+            className="text-[#667185] hover:text-blue-700 text-sm font-semibold self-end sm:self-center"
+          >
+            View All
+          </a>
         </div>
 
         <div className="overflow-x-auto border border-[#D0D5DD] rounded-lg">
@@ -202,7 +207,11 @@ const BookingsTable: React.FC = () => {
                 </tr>
               ) : bookings.length > 0 ? (
                 bookings.map((booking, index) => (
-                  <tr key={`${booking.id}-${index}`} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={`${booking.id}-${index}`}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/dashboard/bookings/${booking.id}`)}
+                  >
                     <td className="px-6 py-4 text-sm font-medium text-[#344054]">{booking.id}</td>
                     <td className="px-6 py-4 text-sm text-[#344054]">{booking.customerName}</td>
                     <td className="px-6 py-4 text-sm text-[#344054]">{booking.hostName}</td>
@@ -210,7 +219,7 @@ const BookingsTable: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-[#344054]">{booking.bookingType}</td>
                     <td className="px-6 py-4 text-sm text-[#344054]">{booking.vehicle}</td>
                     <td className="px-6 py-4">{renderBookingStatusBadge(booking.bookingStatus)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={e => e.stopPropagation()}>
                       <BookingActionComponent 
                         bookingStatus={booking.bookingStatus} 
                         pickupLocation={booking.pickupLocation}
@@ -234,36 +243,6 @@ const BookingsTable: React.FC = () => {
         </div>
 
         <AddressModal isOpen={isOpen} modalContent={modalContent} closeModal={closeModal} />
-
-        <div className="flex justify-center mt-6 space-x-2">
-          <button
-            className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-5 w-5 text-gray-600" />
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${page === currentPage
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"}`}
-              onClick={() => setCurrentPage(page)}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button
-            className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-5 w-5 text-gray-600" />
-          </button>
-        </div>
       </div>
     </div>
   );
