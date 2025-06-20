@@ -16,29 +16,36 @@ export function useHostOnboarding() {
   const http = useHttp();
   const router = useRouter();
 
-  const mapFormValuesToApiPayload = (
-    values: HostOnboardingFormValues
-  ): Omit<HostInformation, "id"> => {
-    const payload: Omit<HostInformation, "id"> = {
+  const mapFormValuesToApiPayload = (values: HostOnboardingFormValues) => {
+    // Base payload structure matching your API requirements
+    const payload = {
       firstName: values.firstName,
       lastName: values.lastName,
       phoneNumber: values.phoneNumber,
-      country: values.country,
       countryCode: values.countryCode,
+      country: values.country,
       email: values.email,
-      cities: values.outskirtsLocation,
+      userRole: "HOST" as const,
+      cities: values.outskirtsLocation, // Array of selected cities
       onBoardedBy: values.onboardedBy,
     };
 
+    // Add business fields only if operating as business
     if (values.isOperatingAsBusiness) {
-      payload.isBusiness = values.isOperatingAsBusiness;
-      payload.businessName = values.businessName;
-      payload.businessAddress = values.businessAddress;
-      payload.businessPhoneNumber = values.businessNumber;
-      payload.businessEmail = values.businessEmail;
+      return {
+        ...payload,
+        isBusiness: true,
+        businessName: values.businessName,
+        businessAddress: values.businessAddress,
+        businessPhoneNumber: values.businessNumber,
+        businessEmail: values.businessEmail,
+      };
     }
 
-    return payload;
+    return {
+      ...payload,
+      isBusiness: false,
+    };
   };
 
   const hostMutation = useMutation<
@@ -48,43 +55,59 @@ export function useHostOnboarding() {
   >({
     mutationFn: async (values) => {
       const apiPayload = mapFormValuesToApiPayload(values);
-      let requestBody: any;
-      let headers: HeadersInit = { "Content-Type": "application/json" }; // Default to JSON header
 
       // Handle file upload using FormData if 'mou' is a File
       if (values.mou instanceof File) {
         const formData = new FormData();
+
+        // Add all payload fields to FormData
         Object.entries(apiPayload).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            value.forEach((item) => formData.append(key, item));
+            // Handle arrays (cities)
+            value.forEach((item, index) => {
+              formData.append(`${key}[${index}]`, item);
+            });
           } else if (typeof value === "boolean") {
-            formData.append(key, value ? "true" : "false");
+            formData.append(key, value.toString());
           } else if (value !== undefined && value !== null) {
             formData.append(key, value.toString());
           }
         });
+
+        // Add the MOU file
         formData.append("mouDocument", values.mou);
 
-        requestBody = formData;
-        headers = { "Content-Type": "multipart/form-data" };
+        const response = await http.post<HostInformation>(
+          ApiRoutes.hostOnboarding,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        return response!;
       } else {
-        requestBody = apiPayload;
+        // JSON format without file
+        const response = await http.post<HostInformation>(
+          ApiRoutes.hostOnboarding,
+          apiPayload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        return response!;
       }
-
-      const response = await http.post<HostInformation>(
-        ApiRoutes.hostOnboarding,
-        requestBody,
-        { headers }
-      );
-      return response!;
     },
     onSuccess: (data) => {
-      console.log("Host Onboarding successful:", data);
-
-      router.push(LocalRoute.hostSuccessfulOnboarding);
+      // console.log("Host Onboarding successful:", data);
+      toast.success("Host onboarded successfully!");
+      // router.push(LocalRoute.hostSuccessfulOnboarding);
     },
     onError: (error: AxiosError<ErrorResponse>) => {
-      toast.error(error.message);
+      toast.error(error.message || "Host onboarding failed");
       handleErrors(error, "Host Onboarding");
     },
   });
@@ -107,7 +130,6 @@ export function useTeamMembers() {
 
   const { data, isError, isLoading, isSuccess } = useQuery({
     queryKey: ["members", user?.id],
-
     queryFn: async () =>
       http.get<teamTable>(`${ApiRoutes.getAllAdmin}?userRole=ADMIN`),
     enabled: !!user?.id,

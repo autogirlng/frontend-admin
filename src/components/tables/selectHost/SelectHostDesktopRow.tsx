@@ -21,9 +21,11 @@ const SelectHostDesktopRow = ({ items }: { items: HostTable }) => {
       <TableCell content={items?.location ?? "-"} />
 
       {/* Show if this is the currently selected host */}
-      {host?.id === items.id && (
-        <TableCell content="✓" className="text-blue-500" />
-      )}
+
+      <TableCell
+        content={host?.id === items.id ? "✓" : ""}
+        className="text-blue-500"
+      />
     </tr>
   );
 };

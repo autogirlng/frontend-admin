@@ -15,6 +15,7 @@ import { BookingTrips } from "../types";
 import { ImageAssets } from "./ImageAssets";
 import { LocalRoute } from "./LocalRoutes";
 
+
 type OptionType = { option: string; value: string };
 
 export const dashboardNavItems = [
@@ -322,7 +323,6 @@ export const vehicleMakesOptions: OptionType[] = [
   { value: "Volkswagen", option: "Volkswagen" },
   { value: "Volvo", option: "Volvo" },
   { value: "Vauxhall", option: "Vauxhall" },
-  { value: "VinFast", option: "VinFast" },
   { value: "Wiesmann", option: "Wiesmann" },
   { value: "Wuling", option: "Wuling" },
   { value: "Workhorse", option: "Workhorse" },
