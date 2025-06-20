@@ -223,10 +223,10 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
         isOpen={isCustomerDetailsModalOpen}
         onClose={() => setIsCustomerDetailsModalOpen(false)}
         customer={customer || {
-          name: "",
-          phone: "",
-          email: "",
-          memberSince: "2024-01-01",
+          name: '',
+          phone: '',
+          email: '',
+          memberSince: '',
           bookingHistory: []
         }}
       />
