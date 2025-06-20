@@ -11,9 +11,10 @@ import { ListingInformation, User } from '@/utils/types';
 import { BookingPricing } from '@/types';
 import { toast } from "react-toastify";
 import { formatDate, hoursBetweenISOStrings } from '@/utils/formatDate';
+import { Spinner } from '@/components/shared/spinner';
 
 
-interface PaymentPayload {
+interface PaymentData {
     transactionReference: string;
     paymentReference: string;
     merchantName: string;
@@ -59,8 +60,8 @@ interface PaymentPayload {
         userId: string;
         hostId: string;
         version: number;
-        createdAt: string; // ISO Date
-        updatedAt: string; // ISO Date
+        createdAt: string;
+        updatedAt: string;
         travelCompanions: string[];
     };
 };
@@ -111,9 +112,12 @@ const BookingSummaryPaymentLayout = () => {
     const [copy, setCopy] = useState<boolean>(false)
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('')
+    const [loading, setLoading] = useState<boolean>(false)
+    const [creatingTicket, setCreatingTicket] = useState<boolean>(false)
 
 
     const fetchDetails = async () => {
+        setLoading(true)
         const data = await http.get<ListingInformation>(`/vehicle-onboarding/${params.get('selectedVehicleID')}`);
         const startDate = new Date(`${params.get("pickupDate")}T${params.get("pickupTime")}`).toISOString()
         const endDate = new Date(`${params.get("dropOffDate")}T${params.get("dropOffTime")}`).toISOString()
@@ -152,29 +156,30 @@ const BookingSummaryPaymentLayout = () => {
             purposeOfRide: params.get("purposeOfRide") || '',
             secondaryPhoneNumber: "",
             startDate: startDate,
-            redirectUrl: `${process.env.NEXT_PUBLIC_ADMIN_URL}/dashboard/booking/new-customer/book-ride/select-vehicle/booking-summary/payment-confirmation/success`
+            redirectUrl: `${process.env.NEXT_PUBLIC_USER_FRONTEND_URL}/review-booking/success`
         }
 
         setStartDate(startDate)
         setEndDate(endDate)
 
         setBookingData(bookingData);
-
+        setLoading(false)
 
     }
 
     const createPaymentTicket = async () => {
+        setCreatingTicket(true)
         const vehicalAvailable = await http.get<IVehicleAvailable>(`/bookings/check-availability?vehicleId=${params.get("selectedVehicleID")}&startDate=${startDate}&endDate=${endDate}`)
-        console.log(vehicalAvailable)
         if (vehicalAvailable?.isAvailable) {
-            const ticket = await http.post<PaymentPayload>(`/bookings/create/${params.get("selectedVehicleID")}`, bookingData)
+            const ticket = await http.post<PaymentData>(`/bookings/create/${params.get("selectedVehicleID")}`, bookingData)
 
             if (ticket) {
-                setPaymentLink(ticket.checkoutUrl)
+                setPaymentLink(`${process.env.NEXT_PUBLIC_USER_FRONTEND_URL}/review-booking?booking_id=${ticket.booking.id}`)
             }
         } else {
             toast.error("Vehicle not available")
         }
+        setCreatingTicket(false)
     }
 
     const copyPaymentLink = () => {
@@ -200,63 +205,74 @@ const BookingSummaryPaymentLayout = () => {
                     <div className="p-4 text-gray-700">
                         <h2 className='font-bold text-md mb-3'>{vehicle?.listingName}</h2>
                         {images && <Carousel vehicleImages={images} />}
-                        <div className='w-full bg-white flex p-3 flex-col gap-y-2'>
-                            <div className='flex flex-row flex-between justify-between'>
-                                <h2>Duration</h2>
-                                {/* <button className='px-4 py-1 text-sm border cursor-pointer hover:bg-black hover:text-white border-black rounded-full'>Edit Dates</button> */}
-                            </div>
-                            <div className='flex'>
-                                <p className='bg-black text-white rounded-full px-3 text-sm py-1'>
-                                    {hoursBetweenISOStrings(startDate, endDate)}  days
-                                </p>
-                            </div>
 
-                            <div className="text-sm">
-
-                                <div className="flex items-center mb-1 mt-3 ">
-                                    <p className=" text-gray-700 flex items-start">
-                                        <Flag size={20} color={"#0673ff"} />
-                                        <span className="ml-1">Start</span>
-                                    </p>
-                                    <p className="ml-auto text-gray-700">{formatDate(startDate)}</p>
+                        {
+                            loading ? <div className='w-full bg-white flex p-3 flex-col items-center justify-center gap-y-2'><Spinner /></div> : <div className='w-full bg-white flex p-3 flex-col gap-y-2'>
+                                <div className='flex flex-row flex-between justify-between'>
+                                    <h2>Duration</h2>
+                                    {/* <button className='px-4 py-1 text-sm border cursor-pointer hover:bg-black hover:text-white border-black rounded-full'>Edit Dates</button> */}
                                 </div>
-                                <div className="flex items-center">
-
-                                    <p className=" text-gray-700 flex items-start">
-                                        <MapPin size={20} color={"#0aaf24"} />
-                                        <span className="ml-1">Stop</span>
+                                <div className='flex'>
+                                    <p className='bg-black text-white rounded-full px-3 text-sm py-1'>
+                                        {hoursBetweenISOStrings(startDate, endDate)}  days
                                     </p>
-                                    <p className="ml-auto text-gray-700">{formatDate(endDate)}</p>
+                                </div>
+
+                                <div className="text-sm">
+
+                                    <div className="flex items-center mb-1 mt-3 ">
+                                        <p className=" text-gray-700 flex items-start">
+                                            <Flag size={20} color={"#0673ff"} />
+                                            <span className="ml-1">Start</span>
+                                        </p>
+                                        <p className="ml-auto text-gray-700">{formatDate(startDate)}</p>
+                                    </div>
+                                    <div className="flex items-center">
+
+                                        <p className=" text-gray-700 flex items-start">
+                                            <MapPin size={20} color={"#0aaf24"} />
+                                            <span className="ml-1">Stop</span>
+                                        </p>
+                                        <p className="ml-auto text-gray-700">{formatDate(endDate)}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        }
+
                     </div>
                 </div>
 
                 <div className='w-1/2 flex items-center gap-y-2 justify-center flex-col'>
-                    <p className="text-[27px] font-bold text-[#344054]">This is The Last Step</p>
-                    <p className="text-sm text-[#667185]">Pay to confirm booking</p>
-                    <p className='font-bold'>Pay NGN {Number(bookingPrice?.totalPrice.toFixed(2)) || 0}</p>
-
-
                     {
-                        paymentLink.length > 0 ? <div
-                            className="px-4 py-4 text-xs bg-[#edf8ff] rounded-full text-[#0673ff] w-[230px] flex items-center justify-between gap-x-2"
-                        >
-                            <span className="truncate overflow-hidden whitespace-nowrap flex-1">
-                                {paymentLink}
-                            </span>
+                        loading ? <Spinner /> : <>     <p className="text-[27px] font-bold text-[#344054]">This is The Last Step</p>
+                            <p className="text-sm text-[#667185]">Pay to confirm booking</p>
+                            <p className='font-bold'>Pay NGN {Number(bookingPrice?.totalPrice.toFixed(2)) || 0}</p>
 
-                            <button
-                                onClick={copyPaymentLink}
-                                className="bg-[#1e93ff] text-white px-2 py-1 font-bold rounded-full flex items-center gap-x-1">
-                                <Copy className="w-4 h-4" />
-                                {copy ? "Copied!" : "Copy"}
-                            </button>
-                        </div> : <button onClick={createPaymentTicket} className="py-5 px-12 text-xs bg-[#0673ff] rounded-full text-white hover:shadow-md">
-                            Create Payment Ticket
-                        </button>
+
+                            {
+                                paymentLink.length > 0 ? <div
+                                    className="px-4 py-4 text-xs bg-[#edf8ff] rounded-full text-[#0673ff] w-[230px] flex items-center justify-between gap-x-2"
+                                >
+                                    <span className="truncate overflow-hidden whitespace-nowrap flex-1">
+                                        {paymentLink}
+                                    </span>
+
+                                    <button
+                                        onClick={copyPaymentLink}
+                                        className="bg-[#1e93ff] text-white px-2 py-1 font-bold rounded-full flex items-center gap-x-1">
+                                        <Copy className="w-4 h-4" />
+                                        {copy ? "Copied!" : "Copy"}
+                                    </button>
+                                </div> : <button onClick={createPaymentTicket} className="py-5 px-12 text-xs bg-[#0673ff] rounded-full text-white hover:shadow-md">
+
+                                    {creatingTicket ? <Spinner className='text-white' /> : "Create Payment Ticket "}
+
+                                </button>
+                            }</>
+
+
                     }
+
 
                     {/* <button className="border-0 text-xs  mt-2 text-[#0673ff] ">
                         Confirm Payment
