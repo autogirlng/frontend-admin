@@ -565,30 +565,52 @@ export interface HostTable {
   onBoardedBy: string;
   mouDocument: string | null;
 }
+export interface TravelCompanion {
+  id: string;
+  name: string;
+  phoneNumber: string;
+  bookingId: string;
+}
+
 export interface BookingInformation {
   id: string;
   startDate: string;
   endDate: string;
   duration: number;
-  bookingType: BookingType;
+  bookingType: string;
   amount: number;
-  paymentStatus: PaymentBadgeStatus;
-  paymentMethod: "BANK_TRANSFER" | "CARD_PAYMENT" | "CASH"; //check booking status
+  paymentStatus: string;
+  paymentMethod: string;
   rentalAgreement: string | null;
-  bookingStatus: BookingBadgeStatus;
+  bookingStatus: string;
+  isForSelf?: boolean;
   guestName: string;
   guestEmail: string;
   guestPhoneNumber: string;
   pickupLocation: string;
   dropoffLocation: string;
-  emergencyContact: string;
-  vehicle: ListingInformation;
+  emergencyContact?: string | null;
+  userEmail?: string | null;
+  userPhoneNumber?: string | null;
+  userCountry?: string;
+  countryCode?: string;
+  specialInstructions?: string | null;
+  paymentLink?: string | null;
+  outskirtsLocation?: string[];
+  areaOfUse?: string;
+  extraDetails?: string;
+  purposeOfRide?: string;
+  tripPurpose?: string | null;
+  secondaryPhoneNumber?: string;
+  currencyCode: string;
   vehicleId: string;
-  user: User;
   userId: string;
+  hostId?: string;
+  version?: number;
   createdAt: string;
   updatedAt: string;
-  currencyCode: string;
+  vehicle?: ListingInformation;
+  travelCompanions?: TravelCompanion[];
 }
 export interface VehicleInformation {
   id?: string;
