@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Users, MoreVertical, CarFront, X } from "lucide-react";
 import DottedLines from "@/components/shared/DottedLines";
+import { BookingInformation } from "@/utils/types";
 
 interface Trip {
   id: number;
@@ -13,15 +14,7 @@ interface Trip {
 }
 
 interface HostVehicleInfoProps {
-  hostName?: string;
-  hostEmail?: string;
-  hostPhone?: string;
-  vehicleRequested?: string;
-  vehicleMake?: string;
-  vehicleColor?: string;
-  seatingCapacity?: number;
-  trips?: Trip[];
-  additionalRequests?: string[];
+  bookingDetails?: BookingInformation;
 }
 
 interface VehicleInfo {
@@ -38,78 +31,78 @@ interface DriverInfo {
   location: string;
 }
 
-const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
-  hostName = "Oluwaseun Ojo",
-  hostEmail = "chidubem3@gmail.com",
-  hostPhone = "+234 901 7330 902",
-  vehicleRequested = "Toyota Camry 2021",
-  vehicleMake = "Toyota",
-  vehicleColor = "Black",
-  seatingCapacity = 4,
-  trips = [
-    {
-      id: 1,
-      date: "20th June 2025",
-      pickupTime: "6:00AM",
-      pickupLocation: "Toyota Camry 2021",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      date: "21st June 2025",
-      pickupTime: "6:00AM",
-      pickupLocation: "Toyota Camry 2021",
-      status: "Pending",
-    },
-    {
-      id: 3,
-      date: "22nd June 2025",
-      pickupTime: "8:00AM",
-      pickupLocation: "Toyota Camry 2021",
-      status: "Pending",
-    },
-    {
-      id: 4,
-      date: "23rd June 2025",
-      pickupTime: "10:00AM",
-      pickupLocation: "Toyota Camry 2021",
-      status: "Pending",
-    },
-  ],
-  additionalRequests = [
-    "I want a child seat to be provided with the vehicle.",
-    "There is no need for a GPS navigation system.",
-    "No additional driver will be needed in this booking.",
-  ],
-}) => {
+const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [showVehicleInfo, setShowVehicleInfo] = useState<number | null>(null);
   const [showDriverInfo, setShowDriverInfo] = useState<number | null>(null);
 
+  // Generate trips based on booking duration
+  const generateTrips = (): Trip[] => {
+    const trips: Trip[] = [];
+    const startDate = new Date(bookingDetails?.startDate || "");
+    const endDate = new Date(bookingDetails?.endDate || "");
+    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    for (let i = 0; i < duration; i++) {
+      const tripDate = new Date(startDate);
+      tripDate.setDate(startDate.getDate() + i);
+      
+      trips.push({
+        id: i + 1,
+        date: tripDate.toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }),
+        pickupTime: startDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        pickupLocation: bookingDetails?.pickupLocation || "",
+        status: "Pending" as const,
+      });
+    }
+    
+    return trips;
+  };
+
+  const trips = generateTrips();
+
   const vehicleInfo: VehicleInfo = {
-    name: "Toyota Camry 2012",
-    phone: "09017330902",
-    location: "Lagos,Nigeria",
-    image: "/images/vehicle-detail.png",
+    name: bookingDetails?.vehicle?.listingName || "Vehicle Name Not Available",
+    phone: bookingDetails?.vehicle?.userId || "N/A",
+    location: bookingDetails?.vehicle?.location || "Location Not Available",
+    image: bookingDetails?.vehicle?.VehicleImage?.frontView || "/images/vehicle-detail.png",
   };
 
   const driverInfo: DriverInfo = {
-    name: "Christian Madu",
-    email: "christianmadu43@gmail.com",
-    phone: "09017330902",
-    location: "Lagos,Nigeria",
+    name: bookingDetails?.vehicle?.user?.firstName + " " + bookingDetails?.vehicle?.user?.lastName || "Driver Name Not Available",
+    email: bookingDetails?.vehicle?.user?.email || "Email Not Available",
+    phone: bookingDetails?.vehicle?.user?.phoneNumber || "Phone Not Available",
+    location: bookingDetails?.vehicle?.location || "Location Not Available",
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "text-[#F98007]";
-      case "Completed":
-        return "text-success-500";
-      case "Cancelled":
-        return "text-red-500";
+    switch (status?.toUpperCase()) {
+      case "PENDING":
+        return "text-yellow-600 bg-yellow-100";
+      case "CONFIRMED":
+        return "text-blue-600 bg-blue-100";
+      case "ONGOING":
+        return "text-green-600 bg-green-100";
+      case "COMPLETED":
+        return "text-gray-600 bg-gray-100";
+      case "CANCELLED":
+        return "text-red-600 bg-red-100";
+      case "APPROVED":
+        return "text-green-700 bg-green-100";
+      case "ACCEPTED":
+        return "text-blue-700 bg-blue-100";
+      case "PAID":
+        return "text-green-700 bg-green-100";
       default:
-        return "text-gray-500";
+        return "text-gray-600 bg-gray-100";
     }
   };
 
@@ -171,7 +164,9 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
 
         <div className="mb-6">
           <p className="text-xs text-gray-500 mb-2">Host Name</p>
-          <p className="text-base font-semibold text-gray-900">{hostName}</p>
+          <p className="text-base font-semibold text-gray-900">
+            {bookingDetails?.vehicle?.user?.firstName || 'N/A'} {bookingDetails?.vehicle?.user?.lastName || ''}
+          </p>
         </div>
 
         <div>
@@ -179,13 +174,13 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
           <div className="flex flex-wrap gap-8">
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Email: </span>
-              <span className="text-sm text-gray-900">{hostEmail}</span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.user?.email || 'N/A'}</span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">
-                Phone Number:{" "}
+                Phone Number: 
               </span>
-              <span className="text-sm text-gray-900">{hostPhone}</span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.user?.phoneNumber || 'N/A'}</span>
             </div>
           </div>
         </div>
@@ -199,15 +194,15 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
           <h2 className="text-xs text-gray-500 font-medium tracking-wide">
             VEHICLE INFORMATION
           </h2>
-          <button className="text-blue-600 text-sm hover:underline font-medium">
-            View Vehicle
-          </button>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bookingDetails?.vehicle?.status || '')}`}>
+            {bookingDetails?.vehicle?.status || 'N/A'}
+          </span>
         </div>
 
         <div className="mb-6">
-          <p className="text-xs text-gray-500 mb-2">Vehicle Requested</p>
+          <p className="text-xs text-gray-500 mb-2">Vehicle Name</p>
           <p className="text-base font-semibold text-gray-900">
-            {vehicleRequested}
+            {bookingDetails?.vehicle?.listingName || 'N/A'}
           </p>
         </div>
 
@@ -216,22 +211,65 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
           <div className="flex flex-wrap gap-8">
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Make: </span>
-              <span className="text-sm text-gray-900">{vehicleMake}</span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.make || 'N/A'}</span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-              <span className="text-sm text-gray-900 font-medium">
-                Colour:{" "}
-              </span>
-              <span className="text-sm text-gray-900">{vehicleColor}</span>
+              <span className="text-sm text-gray-900 font-medium">Model: </span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.model || 'N/A'}</span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-              <span className="text-sm text-gray-900 font-medium">
-                Seating Capacity:{" "}
-              </span>
-              <span className="text-sm text-gray-900">{seatingCapacity}</span>
+              <span className="text-sm text-gray-900 font-medium">Color: </span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.vehicleColor || 'N/A'}</span>
+            </div>
+            <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+              <span className="text-sm text-gray-900 font-medium">License Plate: </span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.licensePlateNumber || 'N/A'}</span>
+            </div>
+            <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+              <span className="text-sm text-gray-900 font-medium">Year: </span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.yearOfRelease || 'N/A'}</span>
+            </div>
+            <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+              <span className="text-sm text-gray-900 font-medium">Type: </span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.vehicleType || 'N/A'}</span>
+            </div>
+            <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+              <span className="text-sm text-gray-900 font-medium">Seats: </span>
+              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.numberOfSeats || 'N/A'}</span>
             </div>
           </div>
+          {bookingDetails?.vehicle?.features && bookingDetails.vehicle.features.length > 0 && (
+            <div className="mt-4">
+              <span className="text-sm text-gray-900 font-medium">Features: </span>
+              <span className="text-sm text-gray-900">{bookingDetails.vehicle.features.join(", ")}</span>
+            </div>
+          )}
         </div>
+
+        {/* Trip Settings */}
+        {bookingDetails?.vehicle?.tripSettings && (
+          <div className="mt-4">
+            <h3 className="text-xs text-gray-500 font-medium mb-2">Trip Settings</h3>
+            <div className="flex flex-wrap gap-8">
+              <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+                <span className="text-sm text-gray-900 font-medium">Advance Notice: </span>
+                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.advanceNotice || 'N/A'}</span>
+              </div>
+              <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+                <span className="text-sm text-gray-900 font-medium">Max Trip Duration: </span>
+                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.maxTripDuration || 'N/A'}</span>
+              </div>
+              <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+                <span className="text-sm text-gray-900 font-medium">Provide Driver: </span>
+                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.provideDriver ? 'Yes' : 'No'}</span>
+              </div>
+              <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
+                <span className="text-sm text-gray-900 font-medium">Fuel Provided: </span>
+                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.fuelProvided ? 'Yes' : 'No'}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <DottedLines />
@@ -424,7 +462,7 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
                         </div>
                         <div className="flex items-center gap-4">
                           <img
-                            src="/images/vehicle-detail.png"
+                            src={vehicleInfo.image}
                             alt="Vehicle"
                             className="w-20 h-15 object-cover rounded-lg"
                           />
@@ -501,12 +539,24 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
           ADDITIONAL REQUESTS
         </h2>
         <ul className="space-y-2">
-          {additionalRequests.map((request, index) => (
-            <li key={index} className="flex items-start">
-              <span className="text-sm text-[#667185] mr-2">•</span>
-              <span className="text-sm text-[#667185]">{request}</span>
-            </li>
-          ))}
+          <li className="flex items-start">
+            <span className="text-sm text-[#667185] mr-2">•</span>
+            <span className="text-sm text-[#667185]">
+              Booking Type: {bookingDetails?.bookingType}
+            </span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-sm text-[#667185] mr-2">•</span>
+            <span className="text-sm text-[#667185]">
+              Payment Method: {bookingDetails?.paymentMethod}
+            </span>
+          </li>
+          <li className="flex items-start">
+            <span className="text-sm text-[#667185] mr-2">•</span>
+            <span className="text-sm text-[#667185]">
+              Duration: {bookingDetails?.duration} days
+            </span>
+          </li>
         </ul>
       </div>
     </div>
