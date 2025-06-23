@@ -1,10 +1,14 @@
+"use client";
+import { BookingSummaryLayout } from "@/components/bookings/booking-summary/BookingSummaryLayout";
 import { Suspense } from "react";
-import BookingSummary from "./BookingSummaryComponent";
+import { FullPageSpinner } from "@/components/shared/spinner";
 
-export default function page() {
+const BookingSummary = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <BookingSummary />
+    <Suspense fallback={<FullPageSpinner />}>
+      <BookingSummaryLayout />
     </Suspense>
   );
-}
+};
+
+export default BookingSummary;
