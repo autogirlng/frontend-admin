@@ -6,12 +6,14 @@ import { EndTripModal } from "./modals/EndTripModal";
 import { UpdateTripModal } from "./modals/UpdateTripModal";
 import { ConfirmTripModal } from "./modals/ConfirmTripModal";
 import { CancelTripModal } from "./modals/CancelTripModal";
+import { TripBookingItem } from "@/utils/types";
 
 interface ActionComponentProps {
     actionOption: string;
+    trip: TripBookingItem;
 }
 
-const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption }) => {
+const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip }) => {
     const [isActionOpen, setIsActionOpen] = useState(false);
     const actionRef = useRef<HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState<boolean>(false)
@@ -20,35 +22,32 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption }) => {
     const [isCancelTripModalOpen, setIsCancelTripModalOpen] = useState<boolean>(false);
 
 
-
     const actions = {
-        Unconfirmed: ["Confirm", "Update Trip", "View Booking", "Cancel"],
-        Confirmed: ["View booking", "Confirm Booking", "Update Trip", "Cancel"],
-        Cancelled: ["View Booking"],
-        Ongoing: ["View Booking", "End Trip"],
-        ExtraTime: ["View Booking", "End Trip"],
+        unconfirmed: ["Confirm", "Update Trip", "View Booking", "Cancel"],
+        confirmed: ["View booking", "Update Trip", "Cancel"],
+        cancelled: ["View Booking"],
+        ongoing: ["View Booking", "End Trip"],
+        extratime: ["View Booking", "End Trip"],
     }
 
     enum Action {
-        Unconfirmed = "Unconfirmed",
-        Confirmed = "Confirmed",
-        Cancelled = "Cancelled",
-        Ongoing = "Ongoing",
-        ExtraTime = "ExtraTime",
-
-
+        Unconfirmed = "unconfirmed",
+        Confirmed = "confirmed",
+        Cancelled = "cancelled",
+        Ongoing = "ongoing",
+        ExtraTime = "extratime",
     }
     const findActions = (action: string) => {
         switch (action) {
-            case "Unconfirmed":
+            case "unconfirmed":
                 return actions[Action.Unconfirmed];
-            case "Confirmed":
+            case "confirmed":
                 return actions[Action.Confirmed];
-            case "Cancelled":
+            case "cancelled":
                 return actions[Action.Cancelled];
-            case "Ongoing":
+            case "ongoing":
                 return actions[Action.Ongoing];
-            case "Extra Time":
+            case "extratime":
                 return actions[Action.ExtraTime];
             default:
                 return ["Not available"];
@@ -135,9 +134,9 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption }) => {
                 </div>
             )}
             <EndTripModal isOpen={isOpen} setIsOpen={setIsOpen} />
-            <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} />
-            <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} />
-            <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} />
+            <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
+            <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
+            <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />
 
         </div>
     );

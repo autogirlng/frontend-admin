@@ -5,7 +5,7 @@ import { useFormik } from "formik";
 import * as Yup from 'yup';
 import { TimeSelection } from "../../TimeSelection";
 import { useState, useEffect, useRef } from "react";
-import { DropDown } from "../../DropDown";
+// import { DropDown } from "../../DropDown";
 
 interface IAddressModal {
     isOpen: boolean;
@@ -198,7 +198,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
 
                                 {/* Dropdown List (conditionally rendered) */}
 
-                                {isDropdownOpen && (
+                                {/* {isDropdownOpen && (
 
                                     <DropDown
                                         formik={formik}
@@ -210,7 +210,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
                                         handleSelect={handleDriverSelect}
                                         isDriver={true}
                                     />
-                                )}
+                                )} */}
                             </div>
 
                         </div>
@@ -238,7 +238,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
 
                                 {/* Dropdown List (conditionally rendered) */}
 
-                                {isVehicleDropdownOpen && (
+                                {/* {isVehicleDropdownOpen && (
 
                                     <DropDown
                                         formik={formik}
@@ -250,7 +250,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
                                         handleSelect={handleVehicleSelect}
                                         isDriver={false}
                                     />
-                                )}
+                                )} */}
                             </div>
 
                         </div>

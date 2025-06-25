@@ -29,27 +29,18 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
     { id: "last_90_days", label: "Last 90 Days" },
   ];
 
-  // Get selected period label
-  const getSelectedPeriodLabel = () => {
-    const option = periodOptions.find((option) => option.id === selectedPeriod);
-    return option ? option.label : "All Time";
-  };
+
 
   // Handle period selection
   const handlePeriodSelect = (periodId: string) => {
+
     setSelectedPeriod(periodId);
     if (onFilterChange) {
       onFilterChange(periodId);
     }
   };
 
-  // Clear all filters
-  const clearAllFilters = () => {
-    setSelectedPeriod("all_time");
-    if (onFilterChange) {
-      onFilterChange("all_time");
-    }
-  };
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -98,7 +89,7 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
             </h3>
             <div className="flex justify-between items-center mt-2">
               <h4 className=" text-sm text-gray-800">Period</h4>
-              <ChevronUp size={18} className="text-gray-500" />
+              {/* <ChevronUp size={18} className="text-gray-500" /> */}
             </div>
           </div>
 
@@ -134,7 +125,6 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
               </div>
             </div>
 
-            {/* You can add more filter sections here */}
           </div>
         </div>
       )}

@@ -3,7 +3,6 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import BackButton from '@/components/core/button/BackButton';
 import { ProgressBar } from '@/components/bookings/book-ride/ProgressBar';
 import { Flag, MapPin, Copy } from 'lucide-react';
-
 import { Carousel } from '@/components/bookings/Carousel';
 import { useSearchParams } from 'next/navigation';
 import { useHttp } from '@/utils/useHttp';

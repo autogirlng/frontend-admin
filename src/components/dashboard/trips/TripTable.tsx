@@ -186,46 +186,42 @@ export default function TripsTable() {
               </p>
               <div className="flex space-x-2 mt-2">
                 <span
-                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${
-                    row.original.driverAsgn === "Pending"
+                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${row.original.driverAsgn === "Pending"
                       ? "bg-yellow-500"
                       : row.original.driverAsgn === "Assigned"
-                      ? "bg-green-500"
-                      : "bg-gray-500"
-                  }`}
+                        ? "bg-green-500"
+                        : "bg-gray-500"
+                    }`}
                 >
                   Driver: {row.original.driverAsgn}
                 </span>
                 <span
-                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${
-                    row.original.hostAsgn === "Pending"
+                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${row.original.hostAsgn === "Pending"
                       ? "bg-yellow-500"
                       : row.original.hostAsgn === "Assigned"
-                      ? "bg-green-500"
-                      : "bg-gray-500"
-                  }`}
+                        ? "bg-green-500"
+                        : "bg-gray-500"
+                    }`}
                 >
                   Host: {row.original.hostAsgn}
                 </span>
                 <span
-                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${
-                    row.original.paymentStatus === "Pending"
+                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${row.original.paymentStatus === "Pending"
                       ? "bg-yellow-500"
                       : "bg-green-500"
-                  }`}
+                    }`}
                 >
                   Payment: {row.original.paymentStatus}
                 </span>
                 <span
-                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${
-                    row.original.rideStatus === "Pending"
+                  className={`px-2 py-1 text-white rounded-md text-[0.7rem] whitespace-nowrap ${row.original.rideStatus === "Pending"
                       ? "bg-yellow-500"
                       : row.original.rideStatus === "Completed"
-                      ? "bg-green-500"
-                      : row.original.rideStatus === "Canceled"
-                      ? "bg-red-500"
-                      : "bg-gray-500"
-                  }`}
+                        ? "bg-green-500"
+                        : row.original.rideStatus === "Canceled"
+                          ? "bg-red-500"
+                          : "bg-gray-500"
+                    }`}
                 >
                   Ride: {row.original.rideStatus}
                 </span>
@@ -288,11 +284,10 @@ export default function TripsTable() {
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className={`p-2 rounded-md shadow ${
-              table.getCanPreviousPage()
+            className={`p-2 rounded-md shadow ${table.getCanPreviousPage()
                 ? "text-gray-800"
                 : "text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             <FaChevronLeft className="text-sm" />
           </button>
@@ -300,11 +295,10 @@ export default function TripsTable() {
             <button
               key={page}
               onClick={() => table.setPageIndex(page)}
-              className={`px-3 py-1 rounded-md border ${
-                table.getState().pagination.pageIndex === page
+              className={`px-3 py-1 rounded-md border ${table.getState().pagination.pageIndex === page
                   ? "border-blue-500 text-blue-600 font-semibold"
                   : "text-gray-600"
-              }`}
+                }`}
             >
               {page + 1}
             </button>
@@ -312,11 +306,10 @@ export default function TripsTable() {
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className={`p-2 rounded-md shadow ${
-              table.getCanNextPage()
+            className={`p-2 rounded-md shadow ${table.getCanNextPage()
                 ? "text-gray-800"
                 : "text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             <FaChevronRight className="text-sm" />
           </button>

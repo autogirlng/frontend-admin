@@ -859,3 +859,175 @@ export interface Booking {
 export type LucideIconType = React.ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;
+
+
+
+export interface TripBookingResponse {
+  data: TripBookingItem[];
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface TripBookingItem {
+  id: string;
+  bookingId: string;
+  customerName: string;
+  serviceDate: string; // ISO date string
+  bookingType: "SINGLE_DAY" | "MULTI_DAY" | string;
+  pickupLocation: string;
+  vehicle: string;
+  bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
+  tripStatus: "UNCONFIRMED" | "CONFIRMED" | "ONGOING" | "EXTRA_TIME" | "CANCELLED" | "COMPLETED";
+  booking: TripBookingDetails;
+}
+
+export interface TripBookingDetails {
+  id: string;
+  startDate: string;
+  endDate: string;
+  duration: number;
+  bookingType: "SINGLE_DAY" | string;
+  amount: number;
+  paymentStatus: "PENDING" | string;
+  paymentMethod: "ACCOUNT_TRANSFER" | string;
+  rentalAgreement: string | null;
+  bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
+  isForSelf: boolean;
+  guestName: string;
+  guestEmail: string;
+  guestPhoneNumber: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  emergencyContact: string | null;
+  userEmail: string | null;
+  userPhoneNumber: string | null;
+  userCountry: string;
+  countryCode: string;
+  specialInstructions: string | null;
+  paymentLink: string;
+  outskirtsLocation: string[];
+  areaOfUse: string;
+  extraDetails: string;
+  purposeOfRide: string | null;
+  tripPurpose: string | null;
+  secondaryPhoneNumber: string;
+  currencyCode: string;
+  vehicleId: string;
+  userId: string;
+  hostId: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
+export interface Driver {
+          id: string;
+        firstName: string;
+        lastName: string;
+        phoneNumber: string;
+        vehicleId: string;
+        bookingId: string;
+        assignmentDate: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+}
+
+export interface SingleTrip {
+  id: string;
+  bookingId: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  booking: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    duration: number;
+    bookingType: string;
+    amount: number;
+    paymentStatus: string;
+    paymentMethod: string;
+    rentalAgreement: any;
+    bookingStatus: string;
+    isForSelf: boolean;
+    guestName: string;
+    guestEmail: string;
+    guestPhoneNumber: string;
+    pickupLocation: string;
+    dropoffLocation: string;
+    emergencyContact: any;
+    userEmail: any;
+    userPhoneNumber: any;
+    userCountry: string;
+    countryCode: string;
+    specialInstructions: any;
+    paymentLink: string;
+    outskirtsLocation: string[];
+    areaOfUse: string;
+    extraDetails: string;
+    purposeOfRide: any;
+    tripPurpose: any;
+    secondaryPhoneNumber: string;
+    currencyCode: string;
+    vehicleId: string;
+    userId: string;
+    hostId: string;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+    vehicle: {
+      user: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phoneNumber: string;
+        id: string;
+      };
+      AssignedDriver: Driver[];
+      pricing: {
+        dailyRate: {
+          value: number;
+          currency: any;
+          unit: string;
+        };
+        extraHoursFee: number;
+        airportPickupFee: number;
+        hourlyRate: any;
+        discounts: {
+          durationInDays: number;
+          percentage: number;
+        }[];
+      };
+      tripSettings: {
+        advanceNotice: string;
+        maxTripDuration: string;
+        provideDriver: boolean;
+        fuelProvided: boolean;
+      };
+      id: string;
+      listingName: string;
+      location: string;
+      make: string;
+      model: string;
+      yearOfRelease: string;
+      vehicleColor: string;
+      numberOfSeats: number;
+      latitude: any;
+      longitude: any;
+      features: string[];
+    };
+  };
+  notes: {
+    id: string;
+    note: string;
+    tripId: string;
+    authorId: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
+}
+
