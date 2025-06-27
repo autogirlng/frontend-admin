@@ -1463,3 +1463,39 @@ export const bookings: Booking[] = [
     tripStatus: "Cancelled",
   },
 ];
+
+export const TripFilters =  [
+    {
+      title: "Period",
+      options: [
+        {
+          option: "Today",
+          value: "today",
+        },
+        {
+          option: "Yesterday",
+          value: "yesterday",
+        },
+        {
+          option: "Tomorrow",
+          value: "tomorrow",
+        },
+        {
+          option: "This Week",
+          value: "this_week",
+        },
+        {
+          option: "This month",
+          value: "this_month"
+        },
+        {
+          option: "Last 30 days",
+          value: "last_30_days"
+        },
+        {
+          option: "Last 90 days",
+          value: "last_90_days"
+        }
+      ],
+    },
+  ];

@@ -30,7 +30,7 @@ export const TimeSelection = <T extends TimeValues>({ formik }: TimeSelectionPro
                         value={formik.values.hourOne}
                         className={`w-full h-10 ps-3 border border-[#d0d5dd] text-center text-xs font-semibold rounded-lg focus:outline-none transition-all
                flex items-center justify-center ${formik.touched.hourOne && formik.errors.hourOne ? 'border-red-500' : 'border-gray-300'}`}
-                        placeholder="00"
+                        placeholder="0"
                         min="0"
                         max="1"
                     />
@@ -51,7 +51,7 @@ export const TimeSelection = <T extends TimeValues>({ formik }: TimeSelectionPro
                         value={formik.values.hourTwo}
                         className={`w-full h-10 ps-3 border border-[#d0d5dd] text-center text-xs font-semibold rounded-lg focus:outline-none transition-all
                flex items-center justify-center ${formik.touched.hourTwo && formik.errors.hourTwo ? 'border-red-500' : 'border-gray-300'}`}
-                        placeholder="00"
+                        placeholder="0"
                         min="0"
                         max="9"
                     />
@@ -72,7 +72,7 @@ export const TimeSelection = <T extends TimeValues>({ formik }: TimeSelectionPro
                         value={formik.values.minuteOne}
                         className={`w-full h-10 ps-3 border border-[#d0d5dd] text-center text-xs font-semibold rounded-lg focus:outline-none transition-all
                flex items-center justify-center ${formik.touched.minuteOne && formik.errors.minuteOne ? 'border-red-500' : 'border-gray-300'}`}
-                        placeholder="00"
+                        placeholder="0"
                         min="0"
                         max="5"
                     />
@@ -92,7 +92,7 @@ export const TimeSelection = <T extends TimeValues>({ formik }: TimeSelectionPro
                         value={formik.values.minuteTwo}
                         className={`w-full h-10 ps-3 border border-[#d0d5dd] text-center text-xs font-semibold rounded-lg focus:outline-none transition-all
                flex items-center justify-center ${formik.touched.minuteTwo && formik.errors.minuteTwo ? 'border-red-500' : 'border-gray-300'}`}
-                        placeholder="00"
+                        placeholder="0"
                         min="0"
                         max="9"
                     />
