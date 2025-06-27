@@ -32,6 +32,10 @@ export const hoursBetweenISOStrings = (isoString1:string, isoString2:string ):nu
 const diffMs = endTime.getTime() - startTime.getTime(); 
 return Math.round(diffMs / (1000 * 60 * 60 * 24)); 
 
+<<<<<<< HEAD
 }
 
 
+=======
+}
+>>>>>>> fe4d979ac09fb76bc2a0e5a810e0b899f243fd69

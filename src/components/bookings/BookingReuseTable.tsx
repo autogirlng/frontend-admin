@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   ChevronLeft,
@@ -24,7 +24,9 @@ const BookingReuseTable: React.FC = () => {
   const [loadingTrips, setLoadingTrips] = useState<boolean>(false)
   const [filter, setFilter] = useState<Record<string, string[]>>()
   const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>()
-  const baseURL = `/admin/trips`
+  const [pageCount, setPageCount] = useState<{ page: number, totalCount: number }>({ page: 1, totalCount: 1 })
+  const limit = useRef(10)
+  const baseURL = `/admin/trips?page=${pageCount.page}&limit=${limit.current}`
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const currentSearchTerm = e.target.value;
@@ -41,9 +43,11 @@ const BookingReuseTable: React.FC = () => {
   const fetchTrips = async () => {
     setLoadingTrips(true)
     try {
-      const trips = await http.get<TripBookingResponse>(`${baseURL}?search=${searchTerm}`)
+      const trips = await http.get<TripBookingResponse>(`${baseURL}&search=${searchTerm}`)
+
       if (trips) {
         setTrips(trips.data)
+        setPageCount((prev) => ({ ...prev, totalCount: trips.totalCount }))
       }
 
     } catch (error) {
@@ -57,7 +61,7 @@ const BookingReuseTable: React.FC = () => {
     try {
       const periods = filter?.Period
       if (periods && periods.length > 0) {
-        const trips = await http.get<TripBookingResponse>(`${baseURL}?period=${periods[periods.length - 1]}`)
+        const trips = await http.get<TripBookingResponse>(`${baseURL}&period=${periods[periods.length - 1]}`)
         if (trips) {
           setTrips(trips.data)
         }
@@ -93,7 +97,7 @@ const BookingReuseTable: React.FC = () => {
 
   useEffect(() => {
     fetchTrips()
-  }, [searchTerm])
+  }, [searchTerm, pageCount.page])
 
   // Function to render the booking status badge with appropriate color
   const renderBookingStatusBadge = (status: "PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED") => {
@@ -114,6 +118,12 @@ const BookingReuseTable: React.FC = () => {
     );
   };
 
+  const prevPage = () => {
+    setPageCount((prev) => ({ ...prev, page: pageCount.page - 1 }))
+  }
+  const nextPage = () => {
+    setPageCount((prev) => ({ ...prev, page: pageCount.page + 1 }))
+  }
   // Function to render the trip status badge with appropriate color
   const renderTripStatusBadge = (status: "UNCONFIRMED" | "CONFIRMED" | "ONGOING" | "EXTRA_TIME" | "CANCELLED" | "COMPLETED") => {
     const statusStyles = {
@@ -237,7 +247,7 @@ const BookingReuseTable: React.FC = () => {
                         >
                           {trip.pickupLocation}
                           <span className="absolute -top-5 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 border border-[#e4e7ec] p-1 rounded">
-                            <MoveDiagonal className="h-4 w-4 text-gray-500" color="#2584ff" />
+                            <MoveDiagonal className="h-4 w-4" color="#2584ff" />
                           </span>
                         </div>
                       </td>
@@ -265,25 +275,27 @@ const BookingReuseTable: React.FC = () => {
         <AddressModal isOpen={isOpen} modalContent={modalContent} closeModal={closeModal} />
 
         <div className="flex justify-center mt-6 space-x-1">
-          {/* <button className="p-2 rounded-md border border-gray-300 hover:bg-gray-100">
-            <ChevronLeft className="h-5 w-5" />
-          </button> */}
 
-          {/* {[1, 2, 3, 4, 5, 6].map((page) => (
+          <button onClick={prevPage} disabled={pageCount.page == 1} className="p-2 rounded-md border border-gray-300 hover:bg-gray-100">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+
+          {Array.from({ length: Math.ceil(pageCount.totalCount / limit.current) }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
-              className={`px-3 py-1 rounded-md ${page === 3
-                ? "bg-blue-500 text-white"
+              onClick={() => setPageCount((prev) => ({ ...prev, page }))}
+              className={`px-3 py-1 rounded-md ${page === pageCount.page
+                ? "bg-black  text-white"
                 : "border border-gray-300 hover:bg-gray-100"
                 }`}
             >
               {page}
             </button>
-          ))} */}
+          ))}
 
-          {/* <button className="p-2 rounded-md border border-gray-300 hover:bg-gray-100">
+          <button onClick={nextPage} disabled={pageCount.page == Math.ceil(pageCount.totalCount / limit.current)} className="p-2 rounded-md border border-gray-300 hover:bg-gray-100">
             <ChevronRight className="h-5 w-5" />
-          </button> */}
+          </button>
         </div>
       </div>
     </div>
