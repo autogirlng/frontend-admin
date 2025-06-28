@@ -31,7 +31,9 @@ interface DriverInfo {
   location: string;
 }
 
-const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => {
+const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
+  bookingDetails,
+}) => {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [showVehicleInfo, setShowVehicleInfo] = useState<number | null>(null);
   const [showDriverInfo, setShowDriverInfo] = useState<number | null>(null);
@@ -41,29 +43,31 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
     const trips: Trip[] = [];
     const startDate = new Date(bookingDetails?.startDate || "");
     const endDate = new Date(bookingDetails?.endDate || "");
-    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const duration = Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
     for (let i = 0; i < duration; i++) {
       const tripDate = new Date(startDate);
       tripDate.setDate(startDate.getDate() + i);
-      
+
       trips.push({
         id: i + 1,
-        date: tripDate.toLocaleDateString('en-US', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
+        date: tripDate.toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         }),
-        pickupTime: startDate.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
+        pickupTime: startDate.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
         }),
         pickupLocation: bookingDetails?.pickupLocation || "",
         status: "Pending" as const,
       });
     }
-    
+
     return trips;
   };
 
@@ -73,11 +77,16 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
     name: bookingDetails?.vehicle?.listingName || "Vehicle Name Not Available",
     phone: bookingDetails?.vehicle?.userId || "N/A",
     location: bookingDetails?.vehicle?.location || "Location Not Available",
-    image: bookingDetails?.vehicle?.VehicleImage?.frontView || "/images/vehicle-detail.png",
+    image:
+      bookingDetails?.vehicle?.VehicleImage?.frontView ||
+      "/images/vehicle-detail.png",
   };
 
   const driverInfo: DriverInfo = {
-    name: bookingDetails?.vehicle?.user?.firstName + " " + bookingDetails?.vehicle?.user?.lastName || "Driver Name Not Available",
+    name:
+      bookingDetails?.vehicle?.user?.firstName +
+        " " +
+        bookingDetails?.vehicle?.user?.lastName || "Driver Name Not Available",
     email: bookingDetails?.vehicle?.user?.email || "Email Not Available",
     phone: bookingDetails?.vehicle?.user?.phoneNumber || "Phone Not Available",
     location: bookingDetails?.vehicle?.location || "Location Not Available",
@@ -86,21 +95,21 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case "PENDING":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-[#000] bg-[#FFDE59]";
       case "CONFIRMED":
-        return "text-blue-600 bg-blue-100";
+        return "text-primary-600 bg-primary-100";
       case "ONGOING":
-        return "text-green-600 bg-green-100";
+        return "text-success-600 bg-success-100";
       case "COMPLETED":
         return "text-gray-600 bg-gray-100";
       case "CANCELLED":
-        return "text-red-600 bg-red-100";
+        return "text-[#FFDE59] bg-[#FFDE59]";
       case "APPROVED":
-        return "text-green-700 bg-green-100";
+        return "text-success-700 bg-success-100";
       case "ACCEPTED":
-        return "text-blue-700 bg-blue-100";
+        return "text-primary-700 bg-primary-100";
       case "PAID":
-        return "text-green-700 bg-green-100";
+        return "text-success-700 bg-success-100";
       default:
         return "text-gray-600 bg-gray-100";
     }
@@ -165,7 +174,8 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
         <div className="mb-6">
           <p className="text-xs text-gray-500 mb-2">Host Name</p>
           <p className="text-base font-semibold text-gray-900">
-            {bookingDetails?.vehicle?.user?.firstName || 'N/A'} {bookingDetails?.vehicle?.user?.lastName || ''}
+            {bookingDetails?.vehicle?.user?.firstName || "N/A"}{" "}
+            {bookingDetails?.vehicle?.user?.lastName || ""}
           </p>
         </div>
 
@@ -174,13 +184,17 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
           <div className="flex flex-wrap gap-8">
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Email: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.user?.email || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.user?.email || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">
-                Phone Number: 
+                Phone Number:
               </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.user?.phoneNumber || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.user?.phoneNumber || "N/A"}
+              </span>
             </div>
           </div>
         </div>
@@ -194,15 +208,19 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
           <h2 className="text-xs text-gray-500 font-medium tracking-wide">
             VEHICLE INFORMATION
           </h2>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bookingDetails?.vehicle?.status || '')}`}>
-            {bookingDetails?.vehicle?.status || 'N/A'}
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+              bookingDetails?.vehicle?.status || ""
+            )}`}
+          >
+            {bookingDetails?.vehicle?.status || "N/A"}
           </span>
         </div>
 
         <div className="mb-6">
           <p className="text-xs text-gray-500 mb-2">Vehicle Name</p>
           <p className="text-base font-semibold text-gray-900">
-            {bookingDetails?.vehicle?.listingName || 'N/A'}
+            {bookingDetails?.vehicle?.listingName || "N/A"}
           </p>
         </div>
 
@@ -211,61 +229,104 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
           <div className="flex flex-wrap gap-8">
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Make: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.make || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.make || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Model: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.model || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.model || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Color: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.vehicleColor || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.vehicleColor || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-              <span className="text-sm text-gray-900 font-medium">License Plate: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.licensePlateNumber || 'N/A'}</span>
+              <span className="text-sm text-gray-900 font-medium">
+                License Plate:{" "}
+              </span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.licensePlateNumber || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Year: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.yearOfRelease || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.yearOfRelease || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Type: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.vehicleType || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.vehicleType || "N/A"}
+              </span>
             </div>
             <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
               <span className="text-sm text-gray-900 font-medium">Seats: </span>
-              <span className="text-sm text-gray-900">{bookingDetails?.vehicle?.numberOfSeats || 'N/A'}</span>
+              <span className="text-sm text-gray-900">
+                {bookingDetails?.vehicle?.numberOfSeats || "N/A"}
+              </span>
             </div>
           </div>
-          {bookingDetails?.vehicle?.features && bookingDetails.vehicle.features.length > 0 && (
-            <div className="mt-4">
-              <span className="text-sm text-gray-900 font-medium">Features: </span>
-              <span className="text-sm text-gray-900">{bookingDetails.vehicle.features.join(", ")}</span>
-            </div>
-          )}
+          {bookingDetails?.vehicle?.features &&
+            bookingDetails.vehicle.features.length > 0 && (
+              <div className="mt-4">
+                <span className="text-sm text-gray-900 font-medium">
+                  Features:{" "}
+                </span>
+                <span className="text-sm text-gray-900">
+                  {bookingDetails.vehicle.features.join(", ")}
+                </span>
+              </div>
+            )}
         </div>
 
         {/* Trip Settings */}
         {bookingDetails?.vehicle?.tripSettings && (
           <div className="mt-4">
-            <h3 className="text-xs text-gray-500 font-medium mb-2">Trip Settings</h3>
+            <h3 className="text-xs text-gray-500 font-medium mb-2">
+              Trip Settings
+            </h3>
             <div className="flex flex-wrap gap-8">
               <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-                <span className="text-sm text-gray-900 font-medium">Advance Notice: </span>
-                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.advanceNotice || 'N/A'}</span>
+                <span className="text-sm text-gray-900 font-medium">
+                  Advance Notice:{" "}
+                </span>
+                <span className="text-sm text-gray-900">
+                  {bookingDetails.vehicle.tripSettings.advanceNotice || "N/A"}
+                </span>
               </div>
               <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-                <span className="text-sm text-gray-900 font-medium">Max Trip Duration: </span>
-                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.maxTripDuration || 'N/A'}</span>
+                <span className="text-sm text-gray-900 font-medium">
+                  Max Trip Duration:{" "}
+                </span>
+                <span className="text-sm text-gray-900">
+                  {bookingDetails.vehicle.tripSettings.maxTripDuration || "N/A"}
+                </span>
               </div>
               <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-                <span className="text-sm text-gray-900 font-medium">Provide Driver: </span>
-                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.provideDriver ? 'Yes' : 'No'}</span>
+                <span className="text-sm text-gray-900 font-medium">
+                  Provide Driver:{" "}
+                </span>
+                <span className="text-sm text-gray-900">
+                  {bookingDetails.vehicle.tripSettings.provideDriver
+                    ? "Yes"
+                    : "No"}
+                </span>
               </div>
               <div className="min-w-0 bg-[#F7F9FC] p-3 rounded-md shadow-sm">
-                <span className="text-sm text-gray-900 font-medium">Fuel Provided: </span>
-                <span className="text-sm text-gray-900">{bookingDetails.vehicle.tripSettings.fuelProvided ? 'Yes' : 'No'}</span>
+                <span className="text-sm text-gray-900 font-medium">
+                  Fuel Provided:{" "}
+                </span>
+                <span className="text-sm text-gray-900">
+                  {bookingDetails.vehicle.tripSettings.fuelProvided
+                    ? "Yes"
+                    : "No"}
+                </span>
               </div>
             </div>
           </div>
@@ -342,13 +403,13 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({ bookingDetails }) => 
                       <div className="text-xs text-gray-500 mb-1">
                         Ride Status
                       </div>
-                      <div
-                        className={`text-sm font-medium ${getStatusColor(
+                      <span
+                        className={`text-sm font-medium py-1 px-2 rounded-full ${getStatusColor(
                           trip.status
                         )}`}
                       >
                         {trip.status}
-                      </div>
+                      </span>
                     </div>
                   </td>
                   <td className="py-4">

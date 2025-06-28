@@ -1,11 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import FilterComponent from "./FilterComponent";
 import BookingActionComponent from "./BookingActionComponent";
 import { AddressModal } from "./modals/AddressModal";
@@ -44,7 +40,7 @@ interface BookingTableItem {
   bookingType: string;
   pickupLocation: string;
   vehicle: string;
-  bookingStatus: string;
+  bookingStatus: BookingBadgeStatus;
   tripStatus: string;
   createdAt?: string;
   hostName?: string;
@@ -70,26 +66,66 @@ const BookingsTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
+  const [bookings, setBookings] = useState<BookingTableItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useBookings({ page: 1, limit: 10, search: searchTerm }) as { data?: BookingResponse; isLoading: boolean; error?: Error };
+  const { data, isLoading: useBookingsLoading, error: useBookingsError } = useBookings({ page: 1, limit: 10, search: searchTerm }) as { data?: BookingResponse; isLoading: boolean; error?: Error };
 
-  const bookings: BookingTableItem[] = (data?.data ?? []).map((booking: any) => ({
-    id: booking.bookingId,
-    bookingId: booking.bookingId,
-    customerName: booking.customerName,
-    city: booking.city,
-    bookingType: booking.bookingType,
-    pickupLocation: booking.pickupLocation || booking.city,
-    vehicle: booking.vehicle,
-    bookingStatus: booking.status,
-    tripStatus: booking.tripStatus,
-    createdAt: booking.createdAt,
-    hostName: booking.hostName || "-",
-    duration: booking.duration ? `${booking.duration} days` : "-",
-    startDate: booking.startDate ? new Date(booking.startDate).toLocaleDateString() : "-",
-    price: booking.price ? `NGN ${booking.price.toLocaleString()}` : "-",
-    customer: booking.customer || undefined,
-  }));
+  // Fetch bookings when search term changes
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await http.get<BookingResponse>(`/admin/bookings?page=1&limit=10&search=${searchTerm}`);
+        if (response && response.data) {
+          const transformedBookings: BookingTableItem[] = response.data.map(
+            (booking: any) => ({
+              id: booking.bookingId || booking.id,
+              bookingId: booking.bookingId || booking.id,
+              customerName: booking.customerName,
+              hostName: booking.hostName || "N/A",
+              city: booking.city,
+              bookingType: booking.bookingType,
+              pickupLocation: booking.city,
+              vehicle: booking.vehicle,
+              bookingStatus: booking.status as BookingBadgeStatus,
+              tripStatus: "UNCONFIRMED" as TripStatus,
+              duration: booking.duration ? `${booking.duration} days` : undefined,
+              startDate: booking.startDate
+                ? new Date(booking.startDate).toLocaleDateString()
+                : undefined,
+              price: booking.price
+                ? `NGN ${booking.price.toLocaleString()}`
+                : undefined,
+              customer: {
+                name: booking.customerName,
+                phone: "",
+                email: "",
+                memberSince: "2024-01-01",
+                bookingHistory: [],
+              },
+            })
+          );
+          setBookings(transformedBookings);
+        } else {
+          setError("Failed to fetch bookings: No data received.");
+        }
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setError(
+          `Error fetching bookings: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [searchTerm, http]);
 
   const renderBookingStatusBadge = (status: string) => {
     const statusStyles: Record<string, string> = {
@@ -106,7 +142,13 @@ const BookingsTable: React.FC = () => {
       REJECTED: "bg-[#667185] text-white",
     };
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status] || "bg-gray-200 text-gray-700"}`}>{status}</span>
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-medium ${
+          statusStyles[status] || "bg-gray-200 text-gray-700"
+        }`}
+      >
+        {status}
+      </span>
     );
   };
 
@@ -151,65 +193,123 @@ const BookingsTable: React.FC = () => {
           <table className="min-w-full divide-y divide-[#D0D5DD]">
             <thead>
               <tr className="bg-[#F7F9FC]">
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Booking ID
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Host
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  City
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vehicle
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#D0D5DD]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={12} className="px-6 py-8 text-center text-gray-500">Loading bookings...</td>
+                  <td
+                    colSpan={8}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    Loading bookings...
+                  </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={12} className="px-6 py-8 text-center text-red-600">{error.message}</td>
+                  <td
+                    colSpan={8}
+                    className="px-6 py-8 text-center text-red-600"
+                  >
+                    {error}
+                  </td>
                 </tr>
               ) : bookings.length > 0 ? (
                 bookings.map((booking, index) => (
                   <tr
-                    key={`${booking.bookingId}-${index}`}
-                    className="hover:bg-gray-50 transition-colors"
+                    key={`${booking.id}-${index}`}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() =>
+                      router.push(`/dashboard/bookings/${booking.id}`)
+                    }
                   >
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.createdAt ? new Date(booking.createdAt).toLocaleString() : "-"}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-[#344054]">{booking.bookingId}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.customerName}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.hostName || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.city}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.bookingType}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.vehicle}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.duration || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.startDate || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-[#344054]">{booking.price || "-"}</td>
-                    <td className="px-6 py-4">{renderBookingStatusBadge(booking.bookingStatus)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <BookingActionComponent 
-                        bookingStatus={booking.bookingStatus as BookingBadgeStatus}
+                    <td className="px-6 py-4 text-sm font-medium text-[#344054]">
+                      {booking.id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#344054]">
+                      {booking.customerName}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#344054]">
+                      {booking.hostName}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#344054]">
+                      {booking.city}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#344054]">
+                      {booking.bookingType}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#344054]">
+                      {booking.vehicle}
+                    </td>
+                    <td className="px-6 py-4">
+                      {renderBookingStatusBadge(booking.bookingStatus)}
+                    </td>
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <BookingActionComponent
+                        bookingStatus={booking.bookingStatus}
                         pickupLocation={booking.pickupLocation}
-                        bookingId={booking.bookingId}
+                        bookingId={booking.id}
+                        customer={
+                          booking.customer
+                            ? {
+                                ...booking.customer,
+                                memberSince:
+                                  booking.customer.memberSince || "2024-01-01",
+                                bookingHistory:
+                                  booking.customer.bookingHistory || [],
+                              }
+                            : undefined
+                        }
                       />
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={12} className="px-6 py-8 text-center text-gray-500">No bookings found for the current search/filters.</td>
+                  <td
+                    colSpan={8}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No bookings found for the current search/filters.
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
 
-        <AddressModal isOpen={isOpen} modalContent={modalContent} closeModal={closeModal} />
+        <AddressModal
+          isOpen={isOpen}
+          modalContent={modalContent}
+          closeModal={closeModal}
+        />
       </div>
     </div>
   );
