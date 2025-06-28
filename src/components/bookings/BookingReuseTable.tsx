@@ -11,27 +11,52 @@ import {
 import FilterComponent from "./FilterComponent";
 import ActionComponent from "./ActionComponent";
 import { AddressModal } from "./modals/AddressModal";
-import { bookings } from "@/utils/data";
+import useBookings from "@/hooks/useBookings";
 import { Booking } from "@/utils/types";
+import BookingActionComponent from "./BookingActionComponent";
+import { formatDate } from "@/utils/formatDate";
 
 
 const BookingReuseTable: React.FC = () => {
-
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const { data, isLoading, error } = useBookings({ page, limit: 10, search: searchTerm }) as { data?: import("@/hooks/useBookings").BookingResponse; isLoading: boolean; error?: Error };
+  const bookings = (data?.data || []).map((booking: any) => ({
+    id: booking.bookingId,
+    bookingId: booking.bookingId,
+    hostName: booking.hostName,
+    customerName: booking.customerName,
+    city: booking.city,
+    bookingType: booking.bookingType,
+    pickupLocation: booking.city,
+    vehicle: booking.vehicle,
+    bookingStatus: booking.status,
+    tripStatus: booking.tripStatus || "-",
+    duration: booking.duration,
+    startDate: booking.startDate,
+    price: booking.price,
+    createdAt: booking.createdAt,
+  }));
 
   // Function to render the booking status badge with appropriate color
-  const renderBookingStatusBadge = (status: Booking["bookingStatus"]) => {
-    const statusStyles = {
+  const renderBookingStatusBadge = (status: string) => {
+    const statusStyles: Record<string, string> = {
       Paid: "bg-[#0AAF24] text-white",
       Unpaid: "bg-[#101928] text-white",
       Pending: "bg-[#F3A218] text-white",
       Completed: "bg-[#0673FF] text-white",
       Rejected: "bg-[#667185] text-white",
       Cancelled: "bg-[#F83B3B] text-white",
+      APPROVED: "bg-[#0AAF24] text-white",
+      PENDING: "bg-[#F3A218] text-white",
+      CANCELLED: "bg-[#F83B3B] text-white",
+      COMPLETED: "bg-[#0673FF] text-white",
+      REJECTED: "bg-[#667185] text-white",
+      // Add more as needed
     };
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status] || "bg-gray-200 text-gray-700"}`}
       >
         {status}
       </span>
@@ -86,6 +111,8 @@ const BookingReuseTable: React.FC = () => {
               placeholder="Search with Booking ID, or Guest name"
               className="pl-10 pr-4 py-2 w-full rounded-md border border-[#D0D5DD] focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ fontSize: "14px" }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
@@ -102,79 +129,71 @@ const BookingReuseTable: React.FC = () => {
                 className="bg-[#F7F9FC] border-b border-[#D0D5DD]"
                 style={{ height: "60px" }}
               >
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking ID
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer Name
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  City
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking Type
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pickup Location
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vehicle
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking Status
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trip Status
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Type</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Location</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Status</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Trip Status</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {bookings.map((booking, index) => (
-                <tr
-                  key={`${booking.id}-${index}`}
-                  className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${index === bookings.length - 1 ? "border-b-0" : ""
-                    }`}
-                >
-                  <td className="px-4 py-4 text-sm font-medium text-[#344054]">
-                    {booking.id}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#344054]">
-                    {booking.customerName}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#344054]">
-                    {booking.city}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#344054]">
-                    {booking.bookingType}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#344054] cursor-pointer">
-                    <div className="group relative inline-block" onClick={() => openModal(booking.pickupLocation)}>
-                      {booking.pickupLocation}
-                      <span className="absolute -top-5 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 border border-[#e4e7ec] p-1 rounded">
-                        <MoveDiagonal
-                          className="h-4 w-4 text-gray-500"
-                          color="#2584ff"
-                        />
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-[#344054]">
-                    {booking.vehicle}
-                  </td>
-                  <td className="px-4 py-4">
-                    {renderBookingStatusBadge(booking.bookingStatus)}
-                  </td>
-                  <td className="px-4 py-4">
-                    {renderTripStatusBadge(booking.tripStatus)}
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <ActionComponent actionOption={booking.tripStatus} />
-                  </td>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={14} className="px-4 py-8 text-center text-gray-500">Loading bookings...</td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td colSpan={14} className="px-4 py-8 text-center text-red-600">{error.message}</td>
+                </tr>
+              ) : bookings.length > 0 ? (
+                bookings.map((booking, index) => (
+                  <tr
+                    key={`${booking.bookingId}-${index}`}
+                    className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${index === bookings.length - 1 ? "border-b-0" : ""}`}
+                  >
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.createdAt ? formatDate(booking.createdAt) : '-'}</td>
+                    <td className="px-4 py-4 text-sm font-medium text-[#344054]">{booking.bookingId}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.customerName}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.hostName}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.city}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.bookingType}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054] cursor-pointer">
+                      <div className="group relative inline-block" onClick={() => openModal(booking.pickupLocation)}>
+                        {booking.pickupLocation}
+                        <span className="absolute -top-5 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 border border-[#e4e7ec] p-1 rounded">
+                          <MoveDiagonal className="h-4 w-4 text-gray-500" color="#2584ff" />
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.vehicle}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.duration}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.price}</td>
+                    <td className="px-4 py-4">{renderBookingStatusBadge(booking.bookingStatus)}</td>
+                    <td className="px-4 py-4">{renderTripStatusBadge(booking.tripStatus)}</td>
+                    <td className="px-4 py-4 text-center">
+                      <BookingActionComponent 
+                        bookingStatus={booking.bookingStatus}
+                        pickupLocation={booking.pickupLocation}
+                        bookingId={booking.bookingId}
+                      />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={14} className="px-4 py-8 text-center text-gray-500">No bookings found for the current search/filters.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

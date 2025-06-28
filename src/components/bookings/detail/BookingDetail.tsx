@@ -34,28 +34,25 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
     return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
   };
 
-  // Add a color badge function for payment and booking status
-  const getStatusColor = (status: string) => {
-    switch (status?.toUpperCase()) {
-      case "PENDING":
-        return "text-yellow-600 bg-yellow-100";
-      case "CONFIRMED":
-        return "text-blue-600 bg-blue-100";
-      case "ONGOING":
-        return "text-green-600 bg-green-100";
-      case "COMPLETED":
-        return "text-gray-600 bg-gray-100";
-      case "CANCELLED":
-        return "text-red-600 bg-red-100";
-      case "APPROVED":
-        return "text-green-700 bg-green-100";
-      case "ACCEPTED":
-        return "text-blue-700 bg-blue-100";
-      case "PAID":
-        return "text-green-700 bg-green-100";
-      default:
-        return "text-gray-600 bg-gray-100";
-    }
+  // Add a robust badge function for booking status
+  const renderBookingStatusBadge = (status: string) => {
+    const statusStyles: Record<string, string> = {
+      Paid: "bg-[#0AAF24] text-white",
+      Unpaid: "bg-[#101928] text-white",
+      Pending: "bg-[#F3A218] text-white",
+      Completed: "bg-[#0673FF] text-white",
+      Rejected: "bg-[#667185] text-white",
+      Cancelled: "bg-[#F83B3B] text-white",
+      APPROVED: "bg-[#0AAF24] text-white",
+      PENDING: "bg-[#F3A218] text-white",
+      CANCELLED: "bg-[#F83B3B] text-white",
+      COMPLETED: "bg-[#0673FF] text-white",
+      REJECTED: "bg-[#667185] text-white",
+      // Add more as needed
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status] || "bg-gray-200 text-gray-700"}`}>{status}</span>
+    );
   };
 
   return (
@@ -66,9 +63,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
           <h1 className="text-sm font-medium text-gray-900 tracking-wide">
             BOOKING INFORMATION
           </h1>
-          <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(bookingDetails.bookingStatus)}`}>
-            {bookingDetails.bookingStatus}
-          </span>
+          {renderBookingStatusBadge(bookingDetails.bookingStatus)}
         </div>
         <div className="relative">
           <button
@@ -152,9 +147,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
         </div>
         <div>
           <span className="text-sm text-gray-900 font-medium">Payment Status: </span>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(bookingDetails.paymentStatus)}`}>
-            {bookingDetails.paymentStatus}
-          </span>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${bookingDetails.paymentStatus === 'paid' ? 'bg-[#0AAF24] text-white' : 'bg-gray-200 text-gray-700'}`}>{bookingDetails.paymentStatus}</span>
         </div>
       </div>
       <DottedLines />
