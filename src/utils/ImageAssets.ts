@@ -15,7 +15,7 @@ export const ImageAssets = {
 
   icons: {
     user: "",
-    errorState: "",
+    errorState: "/icons/empty_booking_state.png",
     emptyReviewState: "/icons/empty_review_state.png",
     emptyBookingState: "/icons/empty_booking_state.png",
     emptyTransState: "/icons/empty_trnx_state.png",

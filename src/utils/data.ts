@@ -15,7 +15,6 @@ import { BookingTrips } from "../types";
 import { ImageAssets } from "./ImageAssets";
 import { LocalRoute } from "./LocalRoutes";
 
-
 type OptionType = { option: string; value: string };
 
 export const dashboardNavItems = [
@@ -778,6 +777,7 @@ export const membersHeadItems: string[] = [
   "Last Login",
   "Joined",
   "Status",
+  "Actions",
 ];
 
 export const hostMembersItems: string[] = [

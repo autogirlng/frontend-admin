@@ -1,12 +1,6 @@
 "use client";
 import React from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import Link from "next/link";
-import DashboardSectionTitle from "@/components/shared/DashboardSectionTItle";
-import Icons from "@/components/shared/icons";
-import VehicleOnboardingStats from "@/components/tables/VehicleOnboarding/VehicleOnboardingStats";
-import VehicleOnboarding from "@/components/tables/VehicleOnboarding";
-import { LocalRoute } from "@/utils/LocalRoutes";
 import AdminProfileCard from "@/components/settings/AdminProfile";
 import { useAppSelector } from "@/lib/hooks";
 import { Member } from "@/utils/types";

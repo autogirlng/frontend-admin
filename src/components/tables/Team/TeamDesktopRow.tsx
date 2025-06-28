@@ -29,7 +29,7 @@ export default function TeamDesktopRow({ items }: { items: Member }) {
         content={
           items?.lastLogin
             ? format(new Date(items?.lastLogin), "MMM d ,yyyy")
-            : ""
+            : "-"
         }
       />
 
@@ -38,7 +38,7 @@ export default function TeamDesktopRow({ items }: { items: Member }) {
           items?.joined ? format(new Date(items?.joined), "MMM d ,yyyy") : ""
         }
       />
-      <TableCell content={items?.status} />
+      <TableCell content={items?.status} isBadge={true} />
       <td>
         <Popup
           trigger={<MoreButton />}

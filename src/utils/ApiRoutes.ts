@@ -30,6 +30,7 @@ export const ApiRoutes = {
   // SETTINGS
   changeRole: "/admin/role-permissions",
   deactivateMember: "/admin/deactivate-member",
+
   // VEHICLE
   fetchVehicle: "/listings/details",
 };
