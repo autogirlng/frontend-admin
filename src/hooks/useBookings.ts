@@ -7,6 +7,10 @@ export interface UseBookingsParams {
   page?: number;
   limit?: number;
   search?: string;
+  timeFilter?: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  status?: string;
 }
 
 export interface BookingResponse {
@@ -17,15 +21,28 @@ export interface BookingResponse {
   totalPages: number;
 }
 
-export default function useBookings({ page = 1, limit = 10, search = "" }: UseBookingsParams) {
+export default function useBookings({ page = 1, limit = 10, search = "", timeFilter = "all", startDate, endDate, status }: UseBookingsParams) {
   const http = useHttp();
 
   return useQuery<BookingResponse, Error>({
-    queryKey: ["bookings", page, limit, search],
+    queryKey: ["bookings", page, limit, search, timeFilter, startDate, endDate, status],
     queryFn: async () => {
-      const response = await http.get<BookingResponse>(
-        `/admin/booking/list?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`
-      );
+      let url = `/admin/booking/list?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`;
+      if (timeFilter && timeFilter !== 'all') {
+        url += `&timeFilter=${timeFilter}`;
+      } else {
+        url += `&timeFilter=all`;
+      }
+      if (startDate) {
+        url += `&startDate=${encodeURIComponent(startDate.toISOString())}`;
+      }
+      if (endDate) {
+        url += `&endDate=${encodeURIComponent(endDate.toISOString())}`;
+      }
+      if (status) {
+        url += `&status=${status}`;
+      }
+      const response = await http.get<BookingResponse>(url);
       if (!response) throw new Error("No data received from bookings API");
       return response;
     },

@@ -41,7 +41,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case "PENDING":
-        return "text-[#FFDE59] bg-[#FFDE59]";
+        return "text-black bg-[#FFDE59]";
       case "CONFIRMED":
         return "text-primary-600 bg-primary-100";
       case "ONGOING":

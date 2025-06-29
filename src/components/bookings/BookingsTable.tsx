@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import FilterComponent from "./FilterComponent";
 import BookingActionComponent from "./BookingActionComponent";
@@ -8,8 +8,7 @@ import { AddressModal } from "./modals/AddressModal";
 import { BookingBadgeStatus } from "@/utils/types";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { useHttp } from "@/utils/useHttp";
-import useBookings, { BookingResponse } from "@/hooks/useBookings";
+import useBookings from "@/hooks/useBookings";
 
 interface Booking {
   bookingId: string;
@@ -47,6 +46,7 @@ interface BookingTableItem {
   duration?: string;
   startDate?: string;
   price?: string;
+  userId?: string;
   customer?: {
     name: string;
     phone: string;
@@ -62,70 +62,75 @@ interface BookingTableItem {
 
 const BookingsTable: React.FC = () => {
   const router = useRouter();
-  const http = useHttp();
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
-  const [bookings, setBookings] = useState<BookingTableItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("week");
+  const [dateRange, setDateRange] = useState<{ startDate: Date | null, endDate: Date | null }>({ startDate: null, endDate: null });
 
-  const { data, isLoading: useBookingsLoading, error: useBookingsError } = useBookings({ page: 1, limit: 10, search: searchTerm }) as { data?: BookingResponse; isLoading: boolean; error?: Error };
+  // Debounced filter state
+  const [debouncedPeriod, setDebouncedPeriod] = useState(selectedPeriod);
+  const [debouncedDateRange, setDebouncedDateRange] = useState(dateRange);
 
-  // Fetch bookings when search term changes
-  useEffect(() => {
-    const fetchBookings = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await http.get<BookingResponse>(`/admin/bookings?page=1&limit=10&search=${searchTerm}`);
-        if (response && response.data) {
-          const transformedBookings: BookingTableItem[] = response.data.map(
-            (booking: any) => ({
-              id: booking.bookingId || booking.id,
-              bookingId: booking.bookingId || booking.id,
-              customerName: booking.customerName,
-              hostName: booking.hostName || "N/A",
-              city: booking.city,
-              bookingType: booking.bookingType,
-              pickupLocation: booking.city,
-              vehicle: booking.vehicle,
-              bookingStatus: booking.status as BookingBadgeStatus,
-              tripStatus: "UNCONFIRMED" as TripStatus,
-              duration: booking.duration ? `${booking.duration} days` : undefined,
-              startDate: booking.startDate
-                ? new Date(booking.startDate).toLocaleDateString()
-                : undefined,
-              price: booking.price
-                ? `NGN ${booking.price.toLocaleString()}`
-                : undefined,
-              customer: {
-                name: booking.customerName,
-                phone: "",
-                email: "",
-                memberSince: "2024-01-01",
-                bookingHistory: [],
-              },
-            })
-          );
-          setBookings(transformedBookings);
-        } else {
-          setError("Failed to fetch bookings: No data received.");
-        }
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-        setError(
-          `Error fetching bookings: ${
-            err instanceof Error ? err.message : String(err)
-          }`
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Map UI period to allowed API values
+  const mapPeriodToTimeFilter = (period: string) => {
+    switch (period) {
+      case "today":
+        return "day";
+      case "this_week":
+        return "week";
+      case "this_month":
+        return "month";
+      case "last_90_days":
+        return "last_90_days";
+      case "all_time":
+        return "all";
+      default:
+        return period; // fallback for already allowed values
+    }
+  };
 
-    fetchBookings();
-  }, [searchTerm, http]);
+  const { data, isLoading, error } = useBookings({
+    page: 1,
+    limit: 10,
+    search: searchTerm,
+    timeFilter: mapPeriodToTimeFilter(debouncedPeriod),
+    startDate: debouncedDateRange.startDate,
+    endDate: debouncedDateRange.endDate,
+  });
+
+  // Transform the data from useBookings hook
+  const bookings: BookingTableItem[] = useMemo(() => {
+    if (!data?.data) return [];
+    
+    return data.data.map((booking: any) => ({
+      id: booking.bookingId || booking.id,
+      bookingId: booking.bookingId || booking.id,
+      customerName: booking.customerName,
+      hostName: booking.hostName || "N/A",
+      city: booking.city,
+      bookingType: booking.bookingType,
+      pickupLocation: booking.city,
+      vehicle: booking.vehicle,
+      bookingStatus: booking.status as BookingBadgeStatus,
+      tripStatus: "UNCONFIRMED" as TripStatus,
+      duration: booking.duration ? `${booking.duration} days` : undefined,
+      startDate: booking.startDate
+        ? new Date(booking.startDate).toLocaleDateString()
+        : undefined,
+      price: booking.price
+        ? `NGN ${booking.price.toLocaleString()}`
+        : undefined,
+      userId: booking.userId,
+      customer: {
+        name: booking.customerName,
+        phone: "",
+        email: "",
+        memberSince: "2024-01-01",
+        bookingHistory: [],
+      },
+    }));
+  }, [data]);
 
   const renderBookingStatusBadge = (status: string) => {
     const statusStyles: Record<string, string> = {
@@ -179,7 +184,6 @@ const BookingsTable: React.FC = () => {
               />
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
-            <FilterComponent />
           </div>
           <a
             href="/dashboard/bookings/list"
@@ -193,6 +197,9 @@ const BookingsTable: React.FC = () => {
           <table className="min-w-full divide-y divide-[#D0D5DD]">
             <thead>
               <tr className="bg-[#F7F9FC]">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Timestamp
+                </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Booking ID
                 </th>
@@ -223,7 +230,7 @@ const BookingsTable: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     Loading bookings...
@@ -232,10 +239,10 @@ const BookingsTable: React.FC = () => {
               ) : error ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-6 py-8 text-center text-red-600"
                   >
-                    {error}
+                    {error.message || 'An error occurred while fetching bookings'}
                   </td>
                 </tr>
               ) : bookings.length > 0 ? (
@@ -247,6 +254,9 @@ const BookingsTable: React.FC = () => {
                       router.push(`/dashboard/bookings/${booking.id}`)
                     }
                   >
+                    <td className="px-6 py-4 text-sm text-[#344054]">
+                      {booking.startDate ? booking.startDate : ''}
+                    </td>
                     <td className="px-6 py-4 text-sm font-medium text-[#344054]">
                       {booking.id}
                     </td>
@@ -287,6 +297,7 @@ const BookingsTable: React.FC = () => {
                               }
                             : undefined
                         }
+                        userId={booking.userId}
                       />
                     </td>
                   </tr>
@@ -294,7 +305,7 @@ const BookingsTable: React.FC = () => {
               ) : (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     No bookings found for the current search/filters.

@@ -33,13 +33,15 @@ interface BookingActionComponentProps {
       status: string;
     }[];
   };
+  userId?: string;
 }
 
 const BookingActionComponent: React.FC<BookingActionComponentProps> = ({ 
   bookingStatus,
   pickupLocation = "No pickup location available",
   bookingId,
-  customer
+  customer,
+  userId
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -149,8 +151,8 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
         setIsRequestInfoModalOpen(true);
         break;
       case "view_customer":
-        if (customer) {
-          router.push(`/customer/${customer.name.replace(/\s+/g, '-').toLowerCase()}`);
+        if (userId) {
+          router.push(`/customer/${userId}`);
         }
         break;
       case "cancel_booking":
