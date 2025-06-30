@@ -39,7 +39,6 @@ const BookingReuseTable: React.FC = () => {
   }
 
 
-
   const fetchTrips = async () => {
     setLoadingTrips(true)
     try {
@@ -111,7 +110,7 @@ const BookingReuseTable: React.FC = () => {
     };
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status] || "bg-gray-200 text-gray-700"}`}
       >
         {status}
       </span>
@@ -182,7 +181,6 @@ const BookingReuseTable: React.FC = () => {
             onChange={handleFilterChange}
           />
         </div>
-
 
         {
           loadingTrips ? <div className="flex justify-center"> <Spinner /> </div> : <div
@@ -278,7 +276,6 @@ const BookingReuseTable: React.FC = () => {
               </tbody>
             </table>
           </div>}
-
 
         <AddressModal isOpen={isOpen} modalContent={modalContent} closeModal={closeModal} />
 

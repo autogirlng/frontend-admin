@@ -11,6 +11,27 @@ import {
 import { useHttp } from "@/utils/useHttp";
 import BookingActionComponent from "./BookingActionComponent";
 import { BookingBadgeStatus } from "@/utils/types";
+import FilterComponent from "./FilterComponent";
+import { debounce } from "lodash";
+import {
+  isToday,
+  isYesterday,
+  isTomorrow,
+  isThisWeek,
+  isThisMonth,
+  subDays,
+  isWithinInterval,
+  parseISO,
+  isAfter,
+  isBefore,
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  format,
+} from "date-fns";
 
 // Types
 type BookingStatus =
@@ -332,16 +353,6 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ status, onAction }) => {
   );
 };
 
-// FilterComponent (simplified)
-const FilterComponent: React.FC = () => {
-  return (
-    <button className="px-4 py-2 flex items-center gap-2 text-sm rounded-md border border-[#D0D5DD] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-[#344054]">
-      <Filter size={16} />
-      Filter
-    </button>
-  );
-};
-
 // Add this helper for status badge (copy from BookingsTable)
 const renderBookingStatusBadge = (status: string) => {
   const statusStyles: Record<string, string> = {
@@ -425,15 +436,27 @@ const BookingManagementSystem = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterPeriod, setFilterPeriod] = useState<string>("all_time");
+  const [filterDateRange, setFilterDateRange] = useState<{ startDate: Date | null, endDate: Date | null }>({ startDate: null, endDate: null });
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
 
   const itemsPerPage = 12;
 
+  // Move fetchBookings above debouncedFetchBookings
   const fetchBookings = async () => {
     setIsLoading(true);
     setError(null);
     try {
+      let filterQuery = "";
+      // Only send one filter: period or custom date
+      if (filterPeriod === "custom" && filterDateRange.startDate && filterDateRange.endDate) {
+        filterQuery += `&timeFilter=custom&startDate=${filterDateRange.startDate.toISOString()}&endDate=${filterDateRange.endDate.toISOString()}`;
+      } else if (filterPeriod && filterPeriod !== "all_time") {
+        filterQuery += `&timeFilter=${filterPeriod}`;
+      }
       const response = await http.get<any>(
-        `/admin/booking/list?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}`
+        `/admin/booking/list?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}${filterQuery}`
       );
       if (response && response.data) {
         setBookings(response.data);
@@ -452,10 +475,58 @@ const BookingManagementSystem = () => {
     }
   };
 
+  // Debounced search/filter
+  const debouncedFetchBookings = useRef(debounce(fetchBookings, 400)).current;
+
   useEffect(() => {
-    fetchBookings();
-    // eslint-disable-next-line
-  }, [currentPage, searchTerm]);
+    // Responsive: track window width
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    debouncedFetchBookings();
+    return () => {
+      debouncedFetchBookings.cancel();
+    };
+  }, [searchTerm, filterPeriod, filterDateRange, currentPage]);
+
+  // Frontend-side filtering for timestamp/start date
+  useEffect(() => {
+    if (!bookings || filterPeriod === "all_time") {
+      setFilteredBookings(bookings);
+      return;
+    }
+    let filtered = bookings;
+    if (filterPeriod === "today") {
+      filtered = bookings.filter(b => b.startDate && isToday(parseISO(b.startDate)));
+    } else if (filterPeriod === "yesterday") {
+      filtered = bookings.filter(b => b.startDate && isYesterday(parseISO(b.startDate)));
+    } else if (filterPeriod === "tomorrow") {
+      filtered = bookings.filter(b => b.startDate && isTomorrow(parseISO(b.startDate)));
+    } else if (filterPeriod === "this_week") {
+      filtered = bookings.filter(b => b.startDate && isThisWeek(parseISO(b.startDate), { weekStartsOn: 1 }));
+    } else if (filterPeriod === "this_month") {
+      filtered = bookings.filter(b => b.startDate && isThisMonth(parseISO(b.startDate)));
+    } else if (filterPeriod === "last_30_days") {
+      const now = new Date();
+      const from = subDays(now, 30);
+      filtered = bookings.filter(b => b.startDate && isAfter(parseISO(b.startDate), from) && isBefore(parseISO(b.startDate), now));
+    } else if (filterPeriod === "last_90_days") {
+      const now = new Date();
+      const from = subDays(now, 90);
+      filtered = bookings.filter(b => b.startDate && isAfter(parseISO(b.startDate), from) && isBefore(parseISO(b.startDate), now));
+    } else if (filterPeriod === "custom" && filterDateRange.startDate && filterDateRange.endDate) {
+      if (filterDateRange.startDate && filterDateRange.endDate) {
+        filtered = bookings.filter(b => b.startDate && isWithinInterval(parseISO(b.startDate), {
+          start: startOfDay(filterDateRange.startDate as Date),
+          end: endOfDay(filterDateRange.endDate as Date)
+        }));
+      }
+    }
+    setFilteredBookings(filtered);
+  }, [bookings, filterPeriod, filterDateRange]);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -464,68 +535,48 @@ const BookingManagementSystem = () => {
   return (
     <div className="w-full bg-white">
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-6">Booking Management System</h1>
+        <h1 className="text-2xl font-bold mb-6">Booking Management</h1>
 
         {/* Search and Filter Row */}
-        <div className="flex justify-between mb-6 flex-wrap">
-          <div className="relative w-full max-w-md">
+        <div className="flex flex-col md:flex-row md:justify-between mb-6 flex-wrap gap-4">
+          <div className="relative w-full md:max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
               placeholder="Search with Booking ID, or Guest name"
-              className="pl-10 pr-4 py-2 w-full rounded-md border border-[#D0D5DD] focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{ fontSize: "14px" }}
+              className="pl-10 pr-4 py-2 w-full rounded-md border border-[#D0D5DD] focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <FilterComponent />
+          <div className="flex-shrink-0">
+            <FilterComponent
+              onFilterChange={(period, dateRange) => {
+                setFilterPeriod(period);
+                if (dateRange) setFilterDateRange(dateRange);
+              }}
+            />
+          </div>
         </div>
 
-        {/* Table */}
-        <div
-          className="overflow-x-auto"
-          style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
-        >
+        {/* Responsive Table/Card View */}
+        {/* Desktop: Full Table */}
+        <div className="hidden lg:block overflow-x-auto" style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
           <table className="min-w-full">
             <thead>
-              <tr
-                className="bg-[#F7F9FC] border-b border-[#D0D5DD]"
-                style={{ height: "60px" }}
-              >
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking ID
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer Name
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  City
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking Type
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Duration
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vehicle
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Start Date
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+              <tr className="bg-[#F7F9FC] border-b border-[#D0D5DD]" style={{ height: "60px" }}>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Type</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -537,23 +588,19 @@ const BookingManagementSystem = () => {
                 <tr>
                   <td colSpan={10} className="px-6 py-8 text-center text-red-600">{error}</td>
                 </tr>
-              ) : bookings.length > 0 ? (
-                bookings.map((booking, index) => (
+              ) : filteredBookings && filteredBookings.length > 0 ? (
+                filteredBookings.map((booking, index) => (
                   <tr
                     key={`${booking.bookingId || booking.id}-${index}`}
-                    className="border-b border-[#D0D5DD] hover:bg-gray-50 cursor-pointer"
-                    onClick={() => {
-                      const id = booking.bookingId || booking.id;
-                      if (id) window.location.href = `/dashboard/bookings/${id}`;
-                    }}
+                    className="border-b border-[#D0D5DD] hover:bg-gray-50"
                   >
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleString() : ''}</td>
                     <td className="px-4 py-4 text-sm font-medium text-[#344054]">{booking.bookingId || booking.id}</td>
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.customerName}</td>
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.city}</td>
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.bookingType}</td>
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.duration ? `${booking.duration} days` : ''}</td>
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.vehicle}</td>
-                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleDateString() : ''}</td>
                     <td className="px-4 py-4">{renderBookingStatusBadge(booking.status || booking.bookingStatus)}</td>
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.price ? `NGN ${booking.price.toLocaleString()}` : ''}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={e => e.stopPropagation()}>
@@ -579,6 +626,108 @@ const BookingManagementSystem = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Tablet: Simplified Table */}
+        <div className="hidden sm:block lg:hidden overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-[#F7F9FC] border-b border-[#D0D5DD]" style={{ height: "60px" }}>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-8 text-center text-gray-500">Loading bookings...</td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-8 text-center text-red-600">{error}</td>
+                </tr>
+              ) : filteredBookings && filteredBookings.length > 0 ? (
+                filteredBookings.map((booking, index) => (
+                  <tr
+                    key={`tablet-${booking.bookingId || booking.id}-${index}`}
+                    className="border-b border-[#D0D5DD] hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleString() : ''}</td>
+                    <td className="px-4 py-4 text-sm font-medium text-[#344054]">{booking.bookingId || booking.id}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.customerName}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.city}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.vehicle}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleDateString() : ''}</td>
+                    <td className="px-4 py-4">{renderBookingStatusBadge(booking.status || booking.bookingStatus)}</td>
+                    <td className="px-4 py-4 text-sm text-[#344054]">{booking.price ? `NGN ${booking.price.toLocaleString()}` : ''}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={e => e.stopPropagation()}>
+                      <BookingActionComponent
+                        bookingStatus={booking.status || booking.bookingStatus}
+                        pickupLocation={booking.city || booking.pickupLocation}
+                        bookingId={booking.bookingId || booking.id}
+                        customer={booking.customer || {
+                          name: booking.customerName || '',
+                          phone: booking.customerPhone || '',
+                          email: booking.customerEmail || '',
+                          memberSince: booking.memberSince || '',
+                          bookingHistory: booking.bookingHistory || []
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={9} className="px-6 py-8 text-center text-gray-500">No bookings found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile: Card View */}
+        <div className="block sm:hidden">
+          {isLoading ? (
+            <div className="flex justify-center py-8 text-gray-500">Loading bookings...</div>
+          ) : error ? (
+            <div className="flex justify-center py-8 text-red-600">{error}</div>
+          ) : filteredBookings && filteredBookings.length > 0 ? (
+            filteredBookings.map((booking, index) => (
+              <div key={`mobile-${booking.bookingId || booking.id}-${index}`} className="border-b border-[#D0D5DD] p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium text-xs text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleString() : ''}</p>
+                    <p className="font-medium text-sm text-[#344054] mt-1">{booking.bookingId || booking.id}</p>
+                    <p className="text-sm text-[#344054]">{booking.customerName}</p>
+                    <p className="text-sm text-[#344054]">{booking.city}</p>
+                  </div>
+                  <div className="flex flex-col items-end space-y-2">
+                    {renderBookingStatusBadge(booking.status || booking.bookingStatus)}
+                    <p className="text-sm font-medium text-[#344054]">{booking.price ? `NGN ${booking.price.toLocaleString()}` : ''}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm text-[#344054]">
+                    {booking.startDate ? new Date(booking.startDate).toLocaleDateString() : ''} {booking.duration ? `• ${booking.duration} days` : ''}
+                  </p>
+                  <button
+                    className="text-blue-600 flex items-center text-xs"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex justify-center py-8 text-gray-500">No bookings found.</div>
+          )}
         </div>
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       </div>

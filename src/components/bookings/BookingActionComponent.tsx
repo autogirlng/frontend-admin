@@ -16,6 +16,7 @@ import BookingModalLayout from "./modals/BookingModalLayout";
 import { ModalHeader } from "./modals/ModalHeader";
 import { useHttp } from "@/utils/useHttp";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 interface BookingActionComponentProps {
   bookingStatus: BookingBadgeStatus;
@@ -32,13 +33,15 @@ interface BookingActionComponentProps {
       status: string;
     }[];
   };
+  userId?: string;
 }
 
 const BookingActionComponent: React.FC<BookingActionComponentProps> = ({ 
   bookingStatus,
   pickupLocation = "No pickup location available",
   bookingId,
-  customer
+  customer,
+  userId
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -50,6 +53,7 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
   const [modalContent, setModalContent] = useState("");
   const actionRef = useRef<HTMLDivElement>(null);
   const http = useHttp();
+  const router = useRouter();
 
   // Modal states
   const [isConfirmTripModalOpen, setIsConfirmTripModalOpen] = useState(false);
@@ -97,22 +101,15 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
 
   const getActions = () => {
     const actions = [
-      /*{
-        name: "View Pickup Location",
-        action: "view_address",
-      },*/
+      {
+        name: "View Details",
+        action: "view_details",
+      },
       {
         name: "Change Status",
         action: "change_status",
       },
-      {
-        name: "Flag Abuse",
-        action: "flag_abuse",
-      },
-      /*{
-        name: "Request Info",
-        action: "request_info",
-      },*/
+      // { name: "Flag Abuse", action: "flag_abuse" }, // Temporarily removed as per requirements
       {
         name: "View Customer Details",
         action: "view_customer",
@@ -132,6 +129,13 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
   const handleAction = (action: string) => {
     setIsDropdownOpen(false);
     
+    if (action === "view_details") {
+      if (bookingId) {
+        router.push(`/dashboard/bookings/${bookingId}`);
+      }
+      return;
+    }
+    
     switch (action) {
       case "view_address":
         setIsAddressModalOpen(true);
@@ -147,7 +151,9 @@ const BookingActionComponent: React.FC<BookingActionComponentProps> = ({
         setIsRequestInfoModalOpen(true);
         break;
       case "view_customer":
-        setIsCustomerDetailsModalOpen(true);
+        if (userId) {
+          router.push(`/customer/${userId}`);
+        }
         break;
       case "cancel_booking":
         setIsCancelBookingModalOpen(true);
