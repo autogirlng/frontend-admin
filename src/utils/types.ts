@@ -896,7 +896,16 @@ export interface TripBookingItem {
   id: string;
   bookingId: string;
   customerName: string;
-  serviceDate: string; // ISO date string
+  customerPhone:string;
+  driverName:string;
+  driverPhone:string;
+  hostName:string;
+  opsAgentName:string;
+  csAgentName:string;
+  bookedHours:number;
+  pickupState:string;
+  pickupTime:string;
+  serviceDate: string;
   bookingType: "SINGLE_DAY" | "MULTI_DAY" | string;
   pickupLocation: string;
   vehicle: string;
