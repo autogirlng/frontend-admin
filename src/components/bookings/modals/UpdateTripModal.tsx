@@ -264,25 +264,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                                             }
 
                                         </select>
-                                        <select
-                                            id="driverName"
-                                            name="driverName"
-                                            value={formik.values.driverName}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                            className="bg-transparent outline-none text-sm text-gray-800 w-full"
-                                        >
-                                            <option value="" disabled>Select a driver</option>
-                                            {
-                                                drivers?.map((driver, index) => {
 
-                                                    return <option key={index} value={`${driver.firstName} ${driver.lastName}`}>
-                                                        {driver.firstName} {driver.lastName}
-                                                    </option>
-                                                })
-                                            }
-
-                                        </select>
                                     </div>
                                 </div>
                             </div>
