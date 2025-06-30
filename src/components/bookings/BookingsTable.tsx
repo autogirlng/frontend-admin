@@ -249,10 +249,7 @@ const BookingsTable: React.FC = () => {
                 bookings.map((booking, index) => (
                   <tr
                     key={`${booking.id}-${index}`}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() =>
-                      router.push(`/dashboard/bookings/${booking.id}`)
-                    }
+                    className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm text-[#344054]">
                       {booking.startDate ? booking.startDate : ''}

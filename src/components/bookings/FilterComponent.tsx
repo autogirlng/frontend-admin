@@ -2,9 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Filter as FilterIcon, X, ChevronDown, ChevronUp, CalendarDays } from "lucide-react";
-import { DateRange } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
+import DateRangeCalendar from "@/components/shared/calendar";
 
 interface FilterOption {
   id: string;
@@ -130,16 +128,38 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
                 </div>
                 {showDateRange && (
                   <div className="mt-2">
-                    <DateRange
-                      ranges={[{
-                        startDate: dateRange.startDate || new Date(),
-                        endDate: dateRange.endDate || new Date(),
-                        key: 'selection',
-                      }]}
-                      onChange={handleDateRangeChange}
-                      moveRangeOnFirstSelection={false}
-                      editableDateInputs={true}
-                      maxDate={new Date()}
+                    <DateRangeCalendar
+                      title="Select Date Range"
+                      selectRange={true}
+                      value={
+                        dateRange.startDate || dateRange.endDate
+                          ? [dateRange.startDate, dateRange.endDate]
+                          : null
+                      }
+                      onChange={(value) => {
+                        if (Array.isArray(value)) {
+                          setDateRange({ startDate: value[0], endDate: value[1] });
+                          setSelectedPeriod('custom');
+                          if (onFilterChange) {
+                            onFilterChange('custom', { startDate: value[0], endDate: value[1] });
+                          }
+                        } else if (value === null) {
+                          setDateRange({ startDate: null, endDate: null });
+                          setSelectedPeriod('all_time');
+                          if (onFilterChange) {
+                            onFilterChange('all_time', { startDate: null, endDate: null });
+                          }
+                        }
+                      }}
+                      setCalendarValues={(value) => {
+                        if (Array.isArray(value)) {
+                          setDateRange({ startDate: value[0], endDate: value[1] });
+                        } else if (value === null) {
+                          setDateRange({ startDate: null, endDate: null });
+                        }
+                      }}
+                      isOpen={showDateRange}
+                      handleIsOpen={setShowDateRange}
                     />
                   </div>
                 )}

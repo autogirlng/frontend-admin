@@ -443,12 +443,40 @@ const BookingManagementSystem = () => {
 
   const itemsPerPage = 12;
 
+  // Move fetchBookings above debouncedFetchBookings
+  const fetchBookings = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      let filterQuery = "";
+      // Only send one filter: period or custom date
+      if (filterPeriod === "custom" && filterDateRange.startDate && filterDateRange.endDate) {
+        filterQuery += `&timeFilter=custom&startDate=${filterDateRange.startDate.toISOString()}&endDate=${filterDateRange.endDate.toISOString()}`;
+      } else if (filterPeriod && filterPeriod !== "all_time") {
+        filterQuery += `&timeFilter=${filterPeriod}`;
+      }
+      const response = await http.get<any>(
+        `/admin/booking/list?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}${filterQuery}`
+      );
+      if (response && response.data) {
+        setBookings(response.data);
+        setTotalPages(response.totalPages || 1);
+      } else {
+        setBookings([]);
+        setTotalPages(1);
+        setError("No data received");
+      }
+    } catch (err) {
+      setError("Failed to fetch bookings");
+      setBookings([]);
+      setTotalPages(1);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Debounced search/filter
-  const debouncedFetchBookings = useRef(
-    debounce(() => {
-      fetchBookings();
-    }, 500)
-  ).current;
+  const debouncedFetchBookings = useRef(debounce(fetchBookings, 400)).current;
 
   useEffect(() => {
     // Responsive: track window width
@@ -459,8 +487,10 @@ const BookingManagementSystem = () => {
 
   useEffect(() => {
     debouncedFetchBookings();
-    // eslint-disable-next-line
-  }, [currentPage, searchTerm, filterPeriod, filterDateRange]);
+    return () => {
+      debouncedFetchBookings.cancel();
+    };
+  }, [searchTerm, filterPeriod, filterDateRange, currentPage]);
 
   // Frontend-side filtering for timestamp/start date
   useEffect(() => {
@@ -497,37 +527,6 @@ const BookingManagementSystem = () => {
     }
     setFilteredBookings(filtered);
   }, [bookings, filterPeriod, filterDateRange]);
-
-  const fetchBookings = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      let filterQuery = "";
-      // Only send one filter: period or custom date
-      if (filterPeriod === "custom" && filterDateRange.startDate && filterDateRange.endDate) {
-        filterQuery += `&timeFilter=custom&startDate=${filterDateRange.startDate.toISOString()}&endDate=${filterDateRange.endDate.toISOString()}`;
-      } else if (filterPeriod && filterPeriod !== "all_time") {
-        filterQuery += `&timeFilter=${filterPeriod}`;
-      }
-      const response = await http.get<any>(
-        `/admin/booking/list?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}${filterQuery}`
-      );
-      if (response && response.data) {
-        setBookings(response.data);
-        setTotalPages(response.totalPages || 1);
-      } else {
-        setBookings([]);
-        setTotalPages(1);
-        setError("No data received");
-      }
-    } catch (err) {
-      setError("Failed to fetch bookings");
-      setBookings([]);
-      setTotalPages(1);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -593,11 +592,7 @@ const BookingManagementSystem = () => {
                 filteredBookings.map((booking, index) => (
                   <tr
                     key={`${booking.bookingId || booking.id}-${index}`}
-                    className="border-b border-[#D0D5DD] hover:bg-gray-50 cursor-pointer"
-                    onClick={() => {
-                      const id = booking.bookingId || booking.id;
-                      if (id) window.location.href = `/dashboard/bookings/${id}`;
-                    }}
+                    className="border-b border-[#D0D5DD] hover:bg-gray-50"
                   >
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleString() : ''}</td>
                     <td className="px-4 py-4 text-sm font-medium text-[#344054]">{booking.bookingId || booking.id}</td>
@@ -662,11 +657,7 @@ const BookingManagementSystem = () => {
                 filteredBookings.map((booking, index) => (
                   <tr
                     key={`tablet-${booking.bookingId || booking.id}-${index}`}
-                    className="border-b border-[#D0D5DD] hover:bg-gray-50 cursor-pointer"
-                    onClick={() => {
-                      const id = booking.bookingId || booking.id;
-                      if (id) window.location.href = `/dashboard/bookings/${id}`;
-                    }}
+                    className="border-b border-[#D0D5DD] hover:bg-gray-50"
                   >
                     <td className="px-4 py-4 text-sm text-[#344054]">{booking.startDate ? new Date(booking.startDate).toLocaleString() : ''}</td>
                     <td className="px-4 py-4 text-sm font-medium text-[#344054]">{booking.bookingId || booking.id}</td>
@@ -728,10 +719,6 @@ const BookingManagementSystem = () => {
                   </p>
                   <button
                     className="text-blue-600 flex items-center text-xs"
-                    onClick={() => {
-                      const id = booking.bookingId || booking.id;
-                      if (id) window.location.href = `/dashboard/bookings/${id}`;
-                    }}
                   >
                     View Details
                   </button>
