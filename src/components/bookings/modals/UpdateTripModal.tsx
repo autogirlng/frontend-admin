@@ -5,11 +5,12 @@ import { useFormik } from "formik";
 import * as Yup from 'yup';
 import { TimeSelection } from "../TimeSelection";
 import { useState, useEffect, useRef } from "react";
+
 import { TripBookingItem, SingleTrip, Driver } from "@/utils/types";
 import { useHttp } from "@/utils/useHttp";
 import { parse, format, parseISO } from 'date-fns';
 import { Spinner } from "@/components/shared/spinner";
-
+import { useRouter } from "next/navigation";
 interface IAddressModal {
     isOpen: boolean;
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,6 +25,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
         hour: "",
         period: ""
     })
+    const router = useRouter()
 
     const [drivers, setDrivers] = useState<Driver[]>()
     const [loading, setLoading] = useState<boolean>(false)
@@ -67,6 +69,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
         pickupLocation: Yup.string().required('Pickup location is required'),
     });
 
+
     const formik = useFormik({
         enableReinitialize: true,
         initialValues: {
@@ -81,8 +84,10 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
             )?.firstName + " " + drivers?.find(
                 (driver) => driver.status === "ASSIGNED"
             )?.lastName || ""
+
         },
         validationSchema: validationSchema,
+
         onSubmit: async (values) => {
             setLoading(true)
             try {
@@ -101,6 +106,9 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                     driverLastName: values.driverName.split(" ")[1] || "",
                 }
                 await http.put(`/admin/trips/update/${trip.id}`, data)
+                    .then(() => {
+                        window.location.reload()
+                    })
 
 
             } catch (error) {
@@ -116,6 +124,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
 
     // Ref to detect clicks outside the dropdown
     const dropdownRef = useRef(null);
+
 
 
 
@@ -158,6 +167,25 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
     }, [isOpen])
 
 
+    useEffect(() => {
+        const parsed = parseISO(trip.pickupTime);
+
+        const hour = format(parsed, "hh");
+        const minute = format(parsed, "mm");
+        const period = format(parsed, "a");
+
+        setTimeValues({
+            hour,
+            minute,
+            period
+        });
+        fetchAllTripOtherDetails().then(() => {
+            setIsReady(true);
+        });
+
+    }, [isOpen])
+
+
     return (
         <>
             {isOpen && (
@@ -179,18 +207,23 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                             </label>
 
 
+
+
                             <textarea
                                 id="pickupLocation"
                                 name="pickupLocation"
                                 value={formik.values.pickupLocation}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
+
                                 className="w-full p-3 mt-2 border border-[#d0d5dd] rounded-2xl bg-gray-50 text-gray-800 break-words whitespace-pre-wrap"
                                 style={{ minHeight: '100px' }}
                             />
+
                             {formik.touched.pickupLocation && formik.errors.pickupLocation ? (
                                 <div className="text-red-500 text-sm mt-1">{formik.errors.pickupLocation}</div>
                             ) : null}
+
 
                         </div>
                         <div className="text-sm text-start mt-3">
@@ -231,10 +264,12 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                                             }
 
                                         </select>
+
                                     </div>
                                 </div>
                             </div>
                         </div>
+
 
 
 
@@ -252,7 +287,9 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                             >
                                 Update Trip
                                 {loading && <Spinner className="text-white" />}
+                                {loading && <Spinner className="text-white" />}
                             </button>
+
 
                         </div>
 

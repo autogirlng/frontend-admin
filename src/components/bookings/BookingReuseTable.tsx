@@ -202,6 +202,10 @@ const BookingReuseTable: React.FC = () => {
                     Customer Name
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Phone
+                  </th>
+
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
                     Service Date
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
@@ -236,6 +240,10 @@ const BookingReuseTable: React.FC = () => {
                       }`}>
                       <td className="px-4 py-4 text-sm font-medium text-[#344054]"> {trip.booking.id}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.customerName}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.customerPhone}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.pickupState}</td>
+
+
                       <td className="px-4 py-4 text-sm text-nowrap text-[#344054]">{format(trip.serviceDate, "do MMMM yyyy")}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.booking.areaOfUse}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.bookingType}</td>
