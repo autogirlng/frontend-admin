@@ -5,6 +5,7 @@ import { useFormik } from "formik";
 import * as Yup from 'yup';
 import { TimeSelection } from "../TimeSelection";
 import { useState, useEffect, useRef } from "react";
+
 import { TripBookingItem, SingleTrip, Driver } from "@/utils/types";
 import { useHttp } from "@/utils/useHttp";
 import { parse, format, parseISO } from 'date-fns';
@@ -68,6 +69,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
         pickupLocation: Yup.string().required('Pickup location is required'),
     });
 
+
     const formik = useFormik({
         enableReinitialize: true,
         initialValues: {
@@ -82,8 +84,10 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
             )?.firstName + " " + drivers?.find(
                 (driver) => driver.status === "ASSIGNED"
             )?.lastName || ""
+
         },
         validationSchema: validationSchema,
+
         onSubmit: async (values) => {
             setLoading(true)
             try {
@@ -123,6 +127,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
 
 
 
+
     const fetchAllTripOtherDetails = async () => {
         const allTripData = await http.get<SingleTrip>(`admin/trips/getSingle/${trip?.id}`)
         const assignedDriver = allTripData?.booking.vehicle.AssignedDriver
@@ -143,6 +148,25 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+    useEffect(() => {
+        const parsed = parseISO(trip.booking.endDate);
+
+        const hour = format(parsed, "hh");
+        const minute = format(parsed, "mm");
+        const period = format(parsed, "a");
+
+        setTimeValues({
+            hour,
+            minute,
+            period
+        });
+        fetchAllTripOtherDetails().then(() => {
+            setIsReady(true);
+        });
+
+    }, [isOpen])
+
+
     useEffect(() => {
         const parsed = parseISO(trip.pickupTime);
 
@@ -183,18 +207,23 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                             </label>
 
 
+
+
                             <textarea
                                 id="pickupLocation"
                                 name="pickupLocation"
                                 value={formik.values.pickupLocation}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
+
                                 className="w-full p-3 mt-2 border border-[#d0d5dd] rounded-2xl bg-gray-50 text-gray-800 break-words whitespace-pre-wrap"
                                 style={{ minHeight: '100px' }}
                             />
+
                             {formik.touched.pickupLocation && formik.errors.pickupLocation ? (
                                 <div className="text-red-500 text-sm mt-1">{formik.errors.pickupLocation}</div>
                             ) : null}
+
 
                         </div>
                         <div className="text-sm text-start mt-3">
@@ -235,10 +264,30 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                                             }
 
                                         </select>
+                                        <select
+                                            id="driverName"
+                                            name="driverName"
+                                            value={formik.values.driverName}
+                                            onChange={formik.handleChange}
+                                            onBlur={formik.handleBlur}
+                                            className="bg-transparent outline-none text-sm text-gray-800 w-full"
+                                        >
+                                            <option value="" disabled>Select a driver</option>
+                                            {
+                                                drivers?.map((driver, index) => {
+
+                                                    return <option key={index} value={`${driver.firstName} ${driver.lastName}`}>
+                                                        {driver.firstName} {driver.lastName}
+                                                    </option>
+                                                })
+                                            }
+
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
 
 
 
@@ -256,7 +305,9 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                             >
                                 Update Trip
                                 {loading && <Spinner className="text-white" />}
+                                {loading && <Spinner className="text-white" />}
                             </button>
+
 
                         </div>
 

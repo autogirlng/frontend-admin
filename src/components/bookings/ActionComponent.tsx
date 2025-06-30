@@ -36,17 +36,23 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
         Cancelled = "cancelled",
         Ongoing = "ongoing",
         ExtraTime = "extratime",
+
     }
     const findActions = (action: string) => {
         switch (action) {
             case "unconfirmed":
+            case "unconfirmed":
                 return actions[Action.Unconfirmed];
+            case "confirmed":
             case "confirmed":
                 return actions[Action.Confirmed];
             case "cancelled":
+            case "cancelled":
                 return actions[Action.Cancelled];
             case "ongoing":
+            case "ongoing":
                 return actions[Action.Ongoing];
+            case "extratime":
             case "extratime":
                 return actions[Action.ExtraTime];
             default:
@@ -137,6 +143,9 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
                 </div>
             )}
             <EndTripModal isOpen={isOpen} setIsOpen={setIsOpen} />
+            <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
+            <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
+            <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />
             <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
             <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
             <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />
