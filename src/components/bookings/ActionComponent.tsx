@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
 import { EndTripModal } from "./modals/EndTripModal";
@@ -7,6 +5,7 @@ import { UpdateTripModal } from "./modals/UpdateTripModal";
 import { ConfirmTripModal } from "./modals/ConfirmTripModal";
 import { CancelTripModal } from "./modals/CancelTripModal";
 import { TripBookingItem } from "@/utils/types";
+import { useRouter } from "next/navigation";
 
 interface ActionComponentProps {
     actionOption: string;
@@ -17,6 +16,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
     const [isActionOpen, setIsActionOpen] = useState(false);
     const actionRef = useRef<HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState<boolean>(false)
+    const router = useRouter();
     const [isUpdateTripModalOpen, setIsUpdateTripModalOpen] = useState<boolean>(false);
     const [isConfirmTripModalOpen, setIsConfirmTripModalOpen] = useState<boolean>(false);
     const [isCancelTripModalOpen, setIsCancelTripModalOpen] = useState<boolean>(false);
@@ -24,7 +24,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
 
     const actions = {
         unconfirmed: ["Confirm", "Update Trip", "View Booking", "Cancel"],
-        confirmed: ["View booking", "Update Trip", "Cancel"],
+        confirmed: ["View Booking", "Update Trip", "Cancel"],
         cancelled: ["View Booking"],
         ongoing: ["View Booking", "End Trip"],
         extratime: ["View Booking", "End Trip"],
@@ -36,17 +36,23 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
         Cancelled = "cancelled",
         Ongoing = "ongoing",
         ExtraTime = "extratime",
+
     }
     const findActions = (action: string) => {
         switch (action) {
             case "unconfirmed":
+            case "unconfirmed":
                 return actions[Action.Unconfirmed];
+            case "confirmed":
             case "confirmed":
                 return actions[Action.Confirmed];
             case "cancelled":
+            case "cancelled":
                 return actions[Action.Cancelled];
             case "ongoing":
+            case "ongoing":
                 return actions[Action.Ongoing];
+            case "extratime":
             case "extratime":
                 return actions[Action.ExtraTime];
             default:
@@ -86,7 +92,10 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
         else if (action === "Cancel") {
             setIsCancelTripModalOpen(true)
 
+        } else if (action === "View Booking") {
+            router.push(`/dashboard/bookings/${trip.bookingId}`)
         }
+
 
     }
 
@@ -134,6 +143,9 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
                 </div>
             )}
             <EndTripModal isOpen={isOpen} setIsOpen={setIsOpen} />
+            <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
+            <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
+            <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />
             <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
             <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
             <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />

@@ -39,12 +39,11 @@ const BookingReuseTable: React.FC = () => {
   }
 
 
-
   const fetchTrips = async () => {
     setLoadingTrips(true)
     try {
       const trips = await http.get<TripBookingResponse>(`${baseURL}&search=${searchTerm}`)
-
+      console.log(trips)
       if (trips) {
         setTrips(trips.data)
         setPageCount((prev) => ({ ...prev, totalCount: trips.totalCount }))
@@ -111,7 +110,7 @@ const BookingReuseTable: React.FC = () => {
     };
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status] || "bg-gray-200 text-gray-700"}`}
       >
         {status}
       </span>
@@ -183,7 +182,6 @@ const BookingReuseTable: React.FC = () => {
           />
         </div>
 
-
         {
           loadingTrips ? <div className="flex justify-center"> <Spinner /> </div> : <div
             className="overflow-x-auto min-h-screen"
@@ -196,26 +194,61 @@ const BookingReuseTable: React.FC = () => {
                   style={{ height: "60px" }}
                 >
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Service Date
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
                     Booking ID
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
                     Customer Name
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
-                    Service Date
+                    Phone
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
-                    City
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
-                    Booking Type
+                    Pickup State
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
                     Pickup Location
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Pickup Time
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Booked Hours
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Booking Type
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Driver's Name
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Driver's Number
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Vehicle ID
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
                     Vehicle
                   </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Host Name
+                  </th>
+
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    CS Agent
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    Ops Agent
+                  </th>
+
+
+                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
+                    City
+                  </th>
+
+
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 tracking-wider">
                     Booking Status
                   </th>
@@ -234,11 +267,12 @@ const BookingReuseTable: React.FC = () => {
                     return <tr key={`${trip.id}`} className={`border-b border-[#D0D5DD] hover:bg-gray-50
                      ${index === trips.length - 1 ? "border-b-0" : ""
                       }`}>
+                      <td className="px-4 py-4 text-sm text-nowrap text-[#344054]">{format(trip.serviceDate, "do MMMM yyyy")}</td>
+
                       <td className="px-4 py-4 text-sm font-medium text-[#344054]"> {trip.booking.id}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.customerName}</td>
-                      <td className="px-4 py-4 text-sm text-nowrap text-[#344054]">{format(trip.serviceDate, "do MMMM yyyy")}</td>
-                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.booking.areaOfUse}</td>
-                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.bookingType}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.customerPhone}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.pickupState}</td>
                       <td className="px-4 py-4 text-sm text-[#344054] cursor-pointer">
                         <div
                           className="group relative inline-block max-w-[180px] truncate whitespace-nowrap overflow-hidden text-ellipsis"
@@ -251,7 +285,25 @@ const BookingReuseTable: React.FC = () => {
                           </span>
                         </div>
                       </td>
+                      <td className="px-4 py-4 text-sm  whitespace-nowrap text-[#344054]">
+                        {format(new Date(trip.pickupTime), "hh:mm a")}
+                      </td>
+                      <td className="px-4 py-4 text-sm  whitespace-nowrap text-[#344054]">
+                        {trip.bookedHours}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.bookingType}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.driverName}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.driverPhone}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.booking.vehicleId}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.vehicle}</td>
+
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.hostName}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.csAgentName}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.opsAgentName}</td>
+
+
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.booking.areaOfUse}</td>
+
                       <td className="px-4 py-4  first-letter:uppercase lowercase">
                         {renderBookingStatusBadge(trip.booking.bookingStatus)}
                       </td>
@@ -270,7 +322,6 @@ const BookingReuseTable: React.FC = () => {
               </tbody>
             </table>
           </div>}
-
 
         <AddressModal isOpen={isOpen} modalContent={modalContent} closeModal={closeModal} />
 

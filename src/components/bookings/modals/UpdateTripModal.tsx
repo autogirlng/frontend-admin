@@ -1,3 +1,4 @@
+
 import { FileQuestion, UserIcon } from "lucide-react";
 import ModalLayout from "./ModalLayout";
 import { ModalHeader } from "./ModalHeader";
@@ -9,7 +10,7 @@ import { TripBookingItem, SingleTrip, Driver } from "@/utils/types";
 import { useHttp } from "@/utils/useHttp";
 import { parse, format, parseISO } from 'date-fns';
 import { Spinner } from "@/components/shared/spinner";
-
+import { useRouter } from "next/navigation";
 interface IAddressModal {
     isOpen: boolean;
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,6 +25,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
         hour: "",
         period: ""
     })
+    const router = useRouter()
 
     const [drivers, setDrivers] = useState<Driver[]>()
     const [loading, setLoading] = useState<boolean>(false)
@@ -101,6 +103,9 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                     driverLastName: values.driverName.split(" ")[1] || "",
                 }
                 await http.put(`/admin/trips/update/${trip.id}`, data)
+                    .then(() => {
+                        window.location.reload()
+                    })
 
 
             } catch (error) {
@@ -140,7 +145,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
         };
     }, []);
     useEffect(() => {
-        const parsed = parseISO(trip.booking.endDate);
+        const parsed = parseISO(trip.pickupTime);
 
         const hour = format(parsed, "hh");
         const minute = format(parsed, "mm");
