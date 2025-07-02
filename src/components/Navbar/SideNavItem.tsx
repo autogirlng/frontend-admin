@@ -3,11 +3,30 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import cn from "classnames";
 
-type Props = { link: string; name: string; icon: ReactNode };
+type Props = {
+  link: string;
+  name: string;
+  icon: ReactNode;
+  altlink: string;
+  secondaryAltLink: string;
+};
 
-export default function SideNavItem({ link, name, icon }: Props) {
+export default function SideNavItem({
+  link,
+  name,
+  icon,
+  altlink,
+  secondaryAltLink,
+}: Props) {
   const pathname = usePathname();
-  const isActive = pathname === link;
+  const isActive =
+    pathname === link
+      ? true
+      : pathname === altlink
+      ? true
+      : pathname === secondaryAltLink
+      ? true
+      : false;
   return (
     <li>
       <Link
