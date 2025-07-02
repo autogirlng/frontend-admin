@@ -405,7 +405,7 @@ export type User = {
   businessEmail: string | null;
   createdAt: string;
   updatedAt: string;
-  Verification: UserVerification;
+  Verification: UserVerification | null;
   averageRating: number;
   statistics?: EarningsStatistics;
 };

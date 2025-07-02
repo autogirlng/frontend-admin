@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Filter as FilterIcon, X, ChevronDown, ChevronUp, CalendarDays } from "lucide-react";
+import DateRangeCalendar from "@/components/shared/calendar";
 
 interface FilterOption {
   id: string;
@@ -9,14 +10,15 @@ interface FilterOption {
 }
 
 interface FilterProps {
-  onFilterChange?: (selectedPeriod: string) => void;
+  onFilterChange?: (selectedPeriod: string, dateRange?: { startDate: Date | null, endDate: Date | null }) => void;
 }
 
 const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("all_time");
+  const [showDateRange, setShowDateRange] = useState(false);
+  const [dateRange, setDateRange] = useState<{ startDate: Date | null, endDate: Date | null }>({ startDate: null, endDate: null });
   const filterRef = useRef<HTMLDivElement>(null);
-
 
   // Filter period options
   const periodOptions: FilterOption[] = [
@@ -29,18 +31,24 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
     { id: "last_90_days", label: "Last 90 Days" },
   ];
 
-
-
   // Handle period selection
   const handlePeriodSelect = (periodId: string) => {
-
     setSelectedPeriod(periodId);
+    setShowDateRange(false);
     if (onFilterChange) {
       onFilterChange(periodId);
     }
   };
 
-
+  // Handle custom date range selection
+  const handleDateRangeChange = (ranges: any) => {
+    const range = ranges.selection;
+    setDateRange({ startDate: range.startDate, endDate: range.endDate });
+    setSelectedPeriod('custom');
+    if (onFilterChange) {
+      onFilterChange('custom', { startDate: range.startDate, endDate: range.endDate });
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -64,7 +72,7 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
       {/* Filter Button */}
       <button
         className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
-        onClick={() => setIsFilterOpen(!isFilterOpen)}
+        onClick={() => { console.log('Filter button clicked'); setIsFilterOpen(!isFilterOpen); }}
         aria-expanded={isFilterOpen}
         aria-controls="filter-dropdown"
       >
@@ -77,8 +85,8 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
       {isFilterOpen && (
         <div
           id="filter-dropdown"
-          className="absolute z-10 mt-2 w-80 bg-white rounded-lg shadow-lg border border-[#dbdfe5] overflow-hidden"
-          style={{ top: "calc(100% + 5px)", right: 0 }}
+          className="absolute z-50 mt-2 w-80 bg-white rounded-lg shadow-lg border-2 border-red-500 overflow-hidden"
+          style={{ background: '#ffeaea', top: "calc(100% + 5px)", right: 0 }}
         >
           <div className="flex flex-col  pt-4 px-4">
             <h3
@@ -93,11 +101,8 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
             </div>
           </div>
 
-
-
           <div className="p-4">
             <div className="mb-4">
-
               <div className="space-y-2">
                 {periodOptions.map((option) => (
                   <div key={option.id} className="flex items-center">
@@ -117,14 +122,49 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
                   </div>
                 ))}
                 <p className="text-[13px] mt-2">Custom Date</p>
-
                 <div className="flex justify-between items-center mt-2">
                   <h4 className=" text-sm text-gray-800">Select Date Range</h4>
-                  <CalendarDays size={20} className="text-gray-500" />
+                  <CalendarDays size={20} className="text-gray-500 cursor-pointer" onClick={() => setShowDateRange(!showDateRange)} />
                 </div>
+                {showDateRange && (
+                  <div className="mt-2">
+                    <DateRangeCalendar
+                      title="Select Date Range"
+                      selectRange={true}
+                      value={
+                        dateRange.startDate || dateRange.endDate
+                          ? [dateRange.startDate, dateRange.endDate]
+                          : null
+                      }
+                      onChange={(value) => {
+                        if (Array.isArray(value)) {
+                          setDateRange({ startDate: value[0], endDate: value[1] });
+                          setSelectedPeriod('custom');
+                          if (onFilterChange) {
+                            onFilterChange('custom', { startDate: value[0], endDate: value[1] });
+                          }
+                        } else if (value === null) {
+                          setDateRange({ startDate: null, endDate: null });
+                          setSelectedPeriod('all_time');
+                          if (onFilterChange) {
+                            onFilterChange('all_time', { startDate: null, endDate: null });
+                          }
+                        }
+                      }}
+                      setCalendarValues={(value) => {
+                        if (Array.isArray(value)) {
+                          setDateRange({ startDate: value[0], endDate: value[1] });
+                        } else if (value === null) {
+                          setDateRange({ startDate: null, endDate: null });
+                        }
+                      }}
+                      isOpen={showDateRange}
+                      handleIsOpen={setShowDateRange}
+                    />
+                  </div>
+                )}
               </div>
             </div>
-
           </div>
         </div>
       )}

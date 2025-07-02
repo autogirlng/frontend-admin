@@ -177,6 +177,9 @@ const config: Config = {
         "footer-overlay": "url(/images/landing/footer_bg.png)",
         "calculator-overlay": "url(/images/landing/calculator_bg.png)",
       },
+      animation: {
+        spin: "spin 1s linear infinite",
+      },
     },
   },
   plugins: [],
