@@ -67,7 +67,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
 
         <div className="mb-4 mt-4 flex items-center justify-between">
           <Link
-            href={`/vehicles/${vehicle.vehicleId}`}
+            href={`/vehicle/${vehicle.vehicleId}`}
             className=" text-primary-600 hover:underline text-xs font-medium"
             title="View vehicle details"
             rel="noopener noreferrer"
