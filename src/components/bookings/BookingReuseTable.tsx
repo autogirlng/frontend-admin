@@ -294,7 +294,8 @@ const BookingReuseTable: React.FC = () => {
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.bookingType}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.driverName}</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.driverPhone}</td>
-                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.booking.vehicleId}</td>
+                      <td className="px-4 py-4 text-sm text-[#344054]">{trip.vehicleIdentifier
+                      }</td>
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.vehicle}</td>
 
                       <td className="px-4 py-4 text-sm text-[#344054]">{trip.hostName}</td>

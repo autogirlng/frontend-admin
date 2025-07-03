@@ -946,6 +946,7 @@ export interface TripBookingDetails {
   secondaryPhoneNumber: string;
   currencyCode: string;
   vehicleId: string;
+  vehicleIdentifier:string;
   userId: string;
   hostId: string;
   version: number;
