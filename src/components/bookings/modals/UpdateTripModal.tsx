@@ -207,7 +207,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                         </div>
 
                         {/* Driver */}
-                        <div>
+                        {/* <div>
                             <label htmlFor="driverName" className="block text-gray-700 text-sm text-start mt-3">
                                 Driver
                             </label>
@@ -239,7 +239,7 @@ export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
 
 

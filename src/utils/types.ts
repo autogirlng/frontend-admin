@@ -909,6 +909,7 @@ export interface TripBookingItem {
   bookingType: "SINGLE_DAY" | "MULTI_DAY" | string;
   pickupLocation: string;
   vehicle: string;
+  vehicleIdentifier:string;
   bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
   tripStatus: "UNCONFIRMED" | "CONFIRMED" | "ONGOING" | "EXTRA_TIME" | "CANCELLED" | "COMPLETED";
   booking: TripBookingDetails;
