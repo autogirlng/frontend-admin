@@ -15,6 +15,8 @@ import { CustomerDetailsModal } from "@/components/bookings/modals/CustomerDetai
 import { MoreVertical } from "lucide-react";
 import CustomerOnboardingDistribution from "@/components/customer/CustomerOnboardingDistribution";
 import { useRouter } from "next/navigation";
+import useCustomerMetrics, { CustomerMetrics } from "@/hooks/useCustomerMetrics";
+import useCustomerTable from "@/components/bookings/hooks/useCustomerTable";
 
 // Add CustomerData type for metrics
 interface CustomerData {
@@ -27,7 +29,7 @@ interface CustomerData {
   adminOnboardedCustomers: number;
 }
 
-function CustomerStats({ metrics, isLoading }: { metrics: CustomerData | null; isLoading: boolean }) {
+function CustomerStats({ metrics, isLoading }: { metrics: CustomerMetrics | null; isLoading: boolean }) {
   return (
     <div className="flex gap-1.5 overflow-auto mb-6">
       <ActivityCard
@@ -43,14 +45,14 @@ function CustomerStats({ metrics, isLoading }: { metrics: CustomerData | null; i
         className="min-w-[180px] w-full"
       />
       <ActivityCard
-        title="Recently Active"
-        value={metrics ? `${metrics.recentActiveCustomers}` : "-"}
+        title="Inactive Customers"
+        value={metrics ? `${metrics.inactiveCustomers}` : "-"}
         isLoading={isLoading}
         className="min-w-[180px] w-full"
       />
       <ActivityCard
-        title="Completed Bookings"
-        value={metrics ? `${metrics.customersWithCompletedBookings}` : "-"}
+        title="Blocked Customers"
+        value={metrics ? `${metrics.blockedCustomers}` : "-"}
         isLoading={isLoading}
         className="min-w-[180px] w-full"
       />
@@ -60,13 +62,13 @@ function CustomerStats({ metrics, isLoading }: { metrics: CustomerData | null; i
 
 const CustomerPage = () => {
   const [selectedCustomerID, setSelectedCustomerID] = useState<string>("");
-  const [filteredCustomers, setFilteredCustomers] = useState<User[]>([]);
-  const [loadingCustomersData, setLoadingCustomerData] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isAddNewCustomerModalOpen, setIsAddNewCustomerModalOpen] = useState<boolean>(false);
   const http = useHttp();
-  const baseURL = `/user/all?limit=10&page=1&userRole=CUSTOMER&search=${searchTerm}`;
-  const [customerMetrics, setCustomerMetrics] = useState<CustomerData | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10); // Add if you want to support changing page size
+  const { customers: filteredCustomers, totalCount, limit: usedLimit, isLoading: loadingCustomersData, error } = useCustomerTable({ page, limit, search: searchTerm });
+  const { data: customerMetrics, isLoading: metricsLoading } = useCustomerMetrics();
   const [isCustomerDetailsModalOpen, setIsCustomerDetailsModalOpen] = useState(false);
   const [selectedCustomerDetails, setSelectedCustomerDetails] = useState<any>(null);
   const actionRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -75,47 +77,12 @@ const CustomerPage = () => {
 
   const closeAddNewCustomerModal = () => {
     setIsAddNewCustomerModalOpen(false);
-    fetchCustomers(baseURL); // Refresh after adding
+    // fetchCustomers(baseURL); // Refresh after adding
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-
-  const fetchCustomers = async (url: string) => {
-    setLoadingCustomerData(true);
-    try {
-      const customers = await http.get<Customers>(url);
-      if (customers) {
-        setFilteredCustomers(customers.data);
-      }
-    } catch (err) {
-      setFilteredCustomers([]);
-    }
-    setLoadingCustomerData(false);
-  };
-
-  // Fetch customer metrics
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const dashboard = await http.get<any>(ApiRoutes.getDashboard);
-        // Defensive: dashboard.customer may be undefined
-        if (dashboard && dashboard.customer) {
-          setCustomerMetrics(dashboard.customer);
-        }
-      } catch (err) {
-        setCustomerMetrics(null);
-      }
-    };
-    fetchMetrics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    fetchCustomers(baseURL);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -134,6 +101,8 @@ const CustomerPage = () => {
     };
   }, [openActionIndex]);
 
+  // Remove fetchCustomers(baseURL) from closeAddNewCustomerModal
+
   return (
     <DashboardLayout title="Customer" currentPage="Customer">
       <div className="space-y-5 2xl:space-y-[52px] py-8 2xl:py-11">
@@ -148,11 +117,11 @@ const CustomerPage = () => {
             Add New Customer
           </Button>
         </div>
-        <CustomerStats metrics={customerMetrics} isLoading={customerMetrics === null} />
+        <CustomerStats metrics={customerMetrics || null} isLoading={metricsLoading} />
         <CustomerOnboardingDistribution
-          selfOnboardedCustomers={customerMetrics?.selfOnboardedCustomers ?? 0}
-          adminOnboardedCustomers={customerMetrics?.adminOnboardedCustomers ?? 0}
-          isLoading={customerMetrics === null}
+          selfOnboardedCustomers={customerMetrics?.onboardingDistribution.selfOnboarded ?? 0}
+          adminOnboardedCustomers={customerMetrics?.onboardingDistribution.adminOnboarded ?? 0}
+          isLoading={metricsLoading}
         />
         <div className="w-full bg-white">
           <div className="p-4">
@@ -179,12 +148,12 @@ const CustomerPage = () => {
               </Button>
             </div>
             <div className="flex justify-end mb-4">
-              <a
-                href="/customer/view-all"
-                className="text-[#667185] hover:text-blue-700 text-sm font-semibold"
+              <button
+                className="text-[#667185] hover:text-blue-700 text-sm font-semibold bg-transparent border-none cursor-pointer"
+                onClick={() => router.push("/customer/view-all")}
               >
                 View All
-              </a>
+              </button>
             </div>
             {loadingCustomersData ? (
               <div className="flex flex-row items-center justify-center mt-4 ">
@@ -205,52 +174,56 @@ const CustomerPage = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-[#D0D5DD]">
-                    {filteredCustomers.map((customer, index) => (
-                      <tr
-                        key={customer.id}
-                        className={`cursor-pointer ${customer.id === selectedCustomerID ? "bg-[#edf8ff]" : ""} hover:bg-[#edf8ff]`}
-                        onClick={() => setSelectedCustomerID(customer.id)}
-                      >
-                        <td className="px-4 py-4 text-sm font-medium text-[#344054]">{customer.id}</td>
-                        <td className="px-4 py-4 text-sm text-[#344054]">{customer.firstName}</td>
-                        <td className="px-4 py-4 text-sm text-[#344054]">{customer.lastName}</td>
-                        <td className="px-4 py-4 text-sm text-[#344054]">{customer.email}</td>
-                        <td className="px-4 py-4 text-sm text-[#344054]">{customer.phoneNumber}</td>
-                        <td className="px-4 py-4 text-sm text-[#344054]">{customer.createdAt.split("T")[0]}</td>
-                        <td className="px-4 py-4 text-sm text-[#344054]">
-                          <div className="relative" ref={el => { actionRefs.current[index] = el; }}>
-                            <button
-                              className="text-gray-400 hover:text-gray-600 border-0 focus:outline-none focus:ring-2 focus:ring-gray-100 rounded-full p-2"
-                              onClick={() => setOpenActionIndex(openActionIndex === index ? null : index)}
-                              aria-expanded={openActionIndex === index}
-                              aria-controls={`action-dropdown-${index}`}>
-                              <MoreVertical size={18} />
-                            </button>
-                            {openActionIndex === index && (
-                              <div
-                                id={`action-dropdown-${index}`}
-                                className="absolute z-10 mt-2 w-40 bg-white rounded-lg shadow-lg border border-[#dbdfe5] overflow-hidden"
-                                style={{ top: "calc(100% + 5px)", right: 0 }}
-                              >
-                                <div className="p-3">
-                                  <div className="flex flex-col items-start">
-                                    <span
-                                      className="my-2 w-full cursor-pointer py-2 rounded hover:text-blue-600 text-sm text-start text-gray-700 transition-colors"
-                                      onClick={() => {
-                                        router.push(`/customer/${customer.id}`);
-                                        setOpenActionIndex(null);
-                                      }}
-                                    >
-                                      View Details
-                                    </span>
+                    {filteredCustomers
+                      .slice() // copy array
+                      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .slice(0, 10)
+                      .map((customer: any, index: number) => (
+                        <tr
+                          key={customer.id}
+                          className={`cursor-pointer ${customer.id === selectedCustomerID ? "bg-[#edf8ff]" : ""} hover:bg-[#edf8ff]`}
+                          onClick={() => setSelectedCustomerID(customer.id)}
+                        >
+                          <td className="px-4 py-4 text-sm font-medium text-[#344054]">{customer.id}</td>
+                          <td className="px-4 py-4 text-sm text-[#344054]">{customer.firstName}</td>
+                          <td className="px-4 py-4 text-sm text-[#344054]">{customer.lastName}</td>
+                          <td className="px-4 py-4 text-sm text-[#344054]">{customer.email}</td>
+                          <td className="px-4 py-4 text-sm text-[#344054]">{customer.phoneNumber}</td>
+                          <td className="px-4 py-4 text-sm text-[#344054]">{customer.createdAt.split("T")[0]}</td>
+                          <td className="px-4 py-4 text-sm text-[#344054]">
+                            <div className="relative" ref={el => { actionRefs.current[index] = el; }}>
+                              <button
+                                className="text-gray-400 hover:text-gray-600 border-0 focus:outline-none focus:ring-2 focus:ring-gray-100 rounded-full p-2"
+                                onClick={() => setOpenActionIndex(openActionIndex === index ? null : index)}
+                                aria-expanded={openActionIndex === index}
+                                aria-controls={`action-dropdown-${index}`}>
+                                <MoreVertical size={18} />
+                              </button>
+                              {openActionIndex === index && (
+                                <div
+                                  id={`action-dropdown-${index}`}
+                                  className="absolute z-10 mt-2 w-40 bg-white rounded-lg shadow-lg border border-[#dbdfe5] overflow-hidden"
+                                  style={{ top: "calc(100% + 5px)", right: 0 }}
+                                >
+                                  <div className="p-3">
+                                    <div className="flex flex-col items-start">
+                                      <span
+                                        className="my-2 w-full cursor-pointer py-2 rounded hover:text-blue-600 text-sm text-start text-gray-700 transition-colors"
+                                        onClick={() => {
+                                          router.push(`/customer/${customer.id}`);
+                                          setOpenActionIndex(null);
+                                        }}
+                                      >
+                                        View Details
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -267,6 +240,9 @@ const CustomerPage = () => {
                   + Add New Customer
                 </Button>
               </div>
+            )}
+            {filteredCustomers.length !== 0 && (
+              <></>
             )}
           </div>
         </div>

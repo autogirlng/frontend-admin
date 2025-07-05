@@ -166,7 +166,13 @@ const HostVehicleInfo: React.FC<HostVehicleInfoProps> = ({
           <h2 className="text-xs text-gray-500 font-medium tracking-wide">
             HOST INFORMATION
           </h2>
-          <button className="text-blue-600 text-sm hover:underline font-medium">
+          <button className="text-blue-600 text-sm hover:underline font-medium"
+            onClick={() => {
+              if (bookingDetails?.vehicle?.user?.id) {
+                window.location.href = `/host/${bookingDetails.vehicle.user.id}`;
+              }
+            }}
+          >
             View Host
           </button>
         </div>

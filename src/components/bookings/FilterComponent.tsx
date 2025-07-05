@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Filter as FilterIcon, X, ChevronDown, ChevronUp, CalendarDays } from "lucide-react";
-import DateRangeCalendar from "@/components/shared/calendar";
+import { Calendar } from "@/components/ui/calendar";
 
 interface FilterOption {
   id: string;
@@ -16,8 +16,8 @@ interface FilterProps {
 const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("all_time");
-  const [showDateRange, setShowDateRange] = useState(false);
   const [dateRange, setDateRange] = useState<{ startDate: Date | null, endDate: Date | null }>({ startDate: null, endDate: null });
+  const [range, setRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Filter period options
@@ -34,7 +34,8 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
   // Handle period selection
   const handlePeriodSelect = (periodId: string) => {
     setSelectedPeriod(periodId);
-    setShowDateRange(false);
+    setRange({ from: undefined, to: undefined });
+    setDateRange({ startDate: null, endDate: null });
     if (onFilterChange) {
       onFilterChange(periodId);
     }
@@ -68,11 +69,12 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
   }, [filterRef]);
 
   return (
-    <div className="relative" ref={filterRef}>
+    <div className="relative flex flex-row justify-start w-full" ref={filterRef}>
+      {/* Force background color for debugging */}
       {/* Filter Button */}
       <button
-        className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"
-        onClick={() => { console.log('Filter button clicked'); setIsFilterOpen(!isFilterOpen); }}
+        className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors z-50 shadow-lg relative w-auto"
+        onClick={() => { setIsFilterOpen(!isFilterOpen); }}
         aria-expanded={isFilterOpen}
         aria-controls="filter-dropdown"
       >
@@ -85,10 +87,10 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
       {isFilterOpen && (
         <div
           id="filter-dropdown"
-          className="absolute z-50 mt-2 w-80 bg-white rounded-lg shadow-lg border-2 border-red-500 overflow-hidden"
-          style={{ background: '#ffeaea', top: "calc(100% + 5px)", right: 0 }}
+          className="absolute z-50 mt-2 w-full max-w-xs sm:max-w-md md:max-w-md bg-white rounded-lg shadow-lg border border-primary-100 overflow-hidden left-0 sm:left-auto sm:right-0"
+          style={{ top: "calc(100% + 5px)" }}
         >
-          <div className="flex flex-col  pt-4 px-4">
+          <div className="flex flex-col pt-4 px-4">
             <h3
               className="text-sm font-semibold text-[#344054]"
               style={{ fontSize: 15 }}
@@ -97,7 +99,6 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
             </h3>
             <div className="flex justify-between items-center mt-2">
               <h4 className=" text-sm text-gray-800">Period</h4>
-              {/* <ChevronUp size={18} className="text-gray-500" /> */}
             </div>
           </div>
 
@@ -105,64 +106,58 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
             <div className="mb-4">
               <div className="space-y-2">
                 {periodOptions.map((option) => (
-                  <div key={option.id} className="flex items-center">
+                  <div
+                    key={option.id}
+                    className={`flex items-center rounded transition-colors px-1 py-1 ${selectedPeriod === option.id ? 'bg-primary-50 border border-primary-400' : ''}`}
+                  >
                     <input
-                      type="checkbox"
+                      type="radio"
                       id={`period-${option.id}`}
+                      name="period"
                       checked={selectedPeriod === option.id}
                       onChange={() => handlePeriodSelect(option.id)}
-                      className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-5 h-5 accent-primary-500 border-primary-400 rounded-full focus:ring-primary-500"
                     />
                     <label
                       htmlFor={`period-${option.id}`}
-                      className="ml-2 text-sm text-gray-700"
+                      className={`ml-2 text-sm font-medium ${selectedPeriod === option.id ? 'text-primary-700' : 'text-gray-900'}`}
                     >
                       {option.label}
                     </label>
                   </div>
                 ))}
                 <p className="text-[13px] mt-2">Custom Date</p>
-                <div className="flex justify-between items-center mt-2">
-                  <h4 className=" text-sm text-gray-800">Select Date Range</h4>
-                  <CalendarDays size={20} className="text-gray-500 cursor-pointer" onClick={() => setShowDateRange(!showDateRange)} />
-                </div>
-                {showDateRange && (
-                  <div className="mt-2">
-                    <DateRangeCalendar
-                      title="Select Date Range"
-                      selectRange={true}
-                      value={
-                        dateRange.startDate || dateRange.endDate
-                          ? [dateRange.startDate, dateRange.endDate]
-                          : null
+                <div className="flex flex-col mt-2">
+                  <h4 className="text-sm text-gray-800 mb-1">Select Date Range</h4>
+                  <Calendar
+                    mode="range"
+                    selected={range}
+                    onSelect={(selectedRange) => {
+                      setRange(selectedRange as { from: Date | undefined; to: Date | undefined });
+                      if (selectedRange?.from && selectedRange?.to) {
+                        setSelectedPeriod('date_range');
+                        setDateRange({ startDate: selectedRange.from, endDate: selectedRange.to });
+                        if (onFilterChange) {
+                          onFilterChange('date_range', { startDate: selectedRange.from, endDate: selectedRange.to });
+                        }
+                      } else if (!selectedRange?.from && !selectedRange?.to) {
+                        setSelectedPeriod('all_time');
+                        setDateRange({ startDate: null, endDate: null });
+                        if (onFilterChange) {
+                          onFilterChange('all_time', { startDate: null, endDate: null });
+                        }
                       }
-                      onChange={(value) => {
-                        if (Array.isArray(value)) {
-                          setDateRange({ startDate: value[0], endDate: value[1] });
-                          setSelectedPeriod('custom');
-                          if (onFilterChange) {
-                            onFilterChange('custom', { startDate: value[0], endDate: value[1] });
-                          }
-                        } else if (value === null) {
-                          setDateRange({ startDate: null, endDate: null });
-                          setSelectedPeriod('all_time');
-                          if (onFilterChange) {
-                            onFilterChange('all_time', { startDate: null, endDate: null });
-                          }
-                        }
-                      }}
-                      setCalendarValues={(value) => {
-                        if (Array.isArray(value)) {
-                          setDateRange({ startDate: value[0], endDate: value[1] });
-                        } else if (value === null) {
-                          setDateRange({ startDate: null, endDate: null });
-                        }
-                      }}
-                      isOpen={showDateRange}
-                      handleIsOpen={setShowDateRange}
-                    />
-                  </div>
-                )}
+                    }}
+                    numberOfMonths={window.innerWidth < 640 ? 1 : 2}
+                    className="border border-primary-100 rounded-md w-full max-w-full"
+                    classNames={{
+                      day_selected: 'bg-primary-500 text-white shadow-lg border-2 border-primary-600 hover:bg-primary-600 hover:text-white focus:bg-primary-600 focus:text-white',
+                      day_range_start: 'day-range-start bg-primary-500 text-white shadow-lg border-2 border-primary-600',
+                      day_range_end: 'day-range-end bg-primary-500 text-white shadow-lg border-2 border-primary-600',
+                      day_range_middle: 'bg-primary-100 text-primary-900',
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>

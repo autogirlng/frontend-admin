@@ -7,6 +7,7 @@ import { User } from "@/types";
 import { useHttp } from "@/utils/useHttp";
 import { ArrowLeft, MoreVertical } from "lucide-react";
 import BackLink from "@/components/BackLink";
+import { useQuery } from "@tanstack/react-query";
 
 interface CustomerStats {
   referralStats: {
@@ -29,20 +30,30 @@ interface CustomerData extends User {
 
 interface Booking {
   id: string;
-  pickupAddress: string;
-  pickupTime: string;
-  numberOfTrips: number;
-  dropoffAddress: string;
-  dropoffTime: string;
-  rideStatus: 'Active' | 'Inactive' | 'Pending';
+  pickupAddress?: string;
+  pickupLocation?: string;
+  pickupTime?: string;
+  numberOfTrips?: number;
+  dropoffAddress?: string;
+  dropoffLocation?: string;
+  dropoffTime?: string;
+  rideStatus?: string;
+  startDate?: string;
+  endDate?: string;
+  duration?: string;
+  bookingStatus?: string;
 }
 
 interface Review {
   id: string;
-  customerName: string;
-  date: string;
+  user?: {
+    firstName?: string;
+    lastName?: string;
+    profileImage?: string;
+  };
   rating: number;
-  comment: string;
+  createdAt?: string;
+  message?: string;
 }
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -86,47 +97,105 @@ export default function CustomerDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const http = useHttp();
-  const [customer, setCustomer] = useState<CustomerData | null>(null);
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchCustomer() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await http.get<CustomerData>(`/user/admin/${id}`);
-        setCustomer(res ?? null);
-      } catch (err: any) {
-        setError("Failed to fetch customer details");
-      }
-      setLoading(false);
-    }
-    if (id) fetchCustomer();
-  }, [id]);
+  // Types
+  interface CustomerStats {
+    referralStats: {
+      totalReferrals: number;
+      pendingReferrals: number;
+      completedReferrals: number;
+      referralBalance: number;
+    };
+    totalEarnings: number;
+    totalOnboardedVehicles: number;
+    totalCompletedRides: number;
+    walletBalance: number;
+    averageRating: number;
+    topRatedVehicle: any;
+  }
+  interface CustomerData extends User {
+    stats: CustomerStats;
+  }
+  interface Booking {
+    id: string;
+    pickupAddress?: string;
+    pickupLocation?: string;
+    pickupTime?: string;
+    numberOfTrips?: number;
+    dropoffAddress?: string;
+    dropoffLocation?: string;
+    dropoffTime?: string;
+    rideStatus?: string;
+    startDate?: string;
+    endDate?: string;
+    duration?: string;
+    bookingStatus?: string;
+  }
+  interface Review {
+    id: string;
+    user?: {
+      firstName?: string;
+      lastName?: string;
+      profileImage?: string;
+    };
+    rating: number;
+    createdAt?: string;
+    message?: string;
+  }
 
-  useEffect(() => {
-    async function fetchBookingsAndReviews() {
-      if (!id) return;
-      try {
-        // Fetch bookings
-        const bookingsRes = await http.get<any>(`/bookings/user?page=1&limit=10&userId=${id}`);
-        setBookings(bookingsRes?.data || []);
-      } catch (err) {
-        setBookings([]);
-      }
-      try {
-        // Fetch reviews
-        const reviewsRes = await http.get<any>(`/reviews/findoneuser/${id}?page=1&limit=10`);
-        setReviews(reviewsRes?.data || []);
-      } catch (err) {
-        setReviews([]);
-      }
-    }
-    fetchBookingsAndReviews();
-  }, [id]);
+  // Fetch customer details
+  const {
+    data: customer = {} as CustomerData,
+    isLoading: customerLoading,
+    error: customerError,
+  } = useQuery<CustomerData>({
+    queryKey: ["customer-details", id],
+    queryFn: async () => {
+      if (!id) return {} as CustomerData;
+      const res = await http.get<CustomerData>(`/user/admin/${id}`);
+      return res || ({} as CustomerData);
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch bookings
+  const {
+    data: bookings = [],
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  } = useQuery<Booking[]>({
+    queryKey: ["customer-bookings", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const res = await http.get<{ data: Booking[] }>(`/bookings/user?page=1&limit=10`);
+      return res && res.data ? res.data : [];
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch reviews
+  const {
+    data: reviews = [],
+    isLoading: reviewsLoading,
+    error: reviewsError,
+  } = useQuery<Review[]>({
+    queryKey: ["customer-reviews", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const res = await http.get<{ data: Review[] }>(`/reviews/findoneuser/${id}?page=1&limit=10`);
+      return res && res.data ? res.data : [];
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+
+  const loading = customerLoading || bookingsLoading || reviewsLoading;
+  const error = customerError || bookingsError || reviewsError;
 
   if (loading) {
     return (
@@ -141,7 +210,7 @@ export default function CustomerDetailsPage() {
   if (error) {
     return (
       <DashboardLayout title="Customer Details" currentPage="Customer Details">
-        <div className="text-center text-red-600 py-10">{error}</div>
+        <div className="text-center text-red-600 py-10">{error.message}</div>
       </DashboardLayout>
     );
   }
@@ -351,7 +420,7 @@ export default function CustomerDetailsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-grey-100">
-                {bookings.map((booking) => (
+                {bookings.map((booking: Booking, index: number) => (
                   <tr key={booking.id} className="hover:bg-grey-75 transition-colors duration-150">
                     <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                       <div className="text-xs md:text-sm font-medium text-grey-900 max-w-[100px] sm:max-w-[120px] md:max-w-none truncate">
@@ -371,7 +440,7 @@ export default function CustomerDetailsPage() {
                       <div className="text-xs md:text-sm text-grey-900">{booking.endDate ? formatDate(booking.endDate) : ''}</div>
                     </td>
                     <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                      <StatusBadge status={booking.bookingStatus || booking.rideStatus} />
+                      <StatusBadge status={String(booking.bookingStatus || booking.rideStatus)} />
                     </td>
                     <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                       <button className="text-grey-400 hover:text-grey-600 transition-colors duration-150 p-1 rounded-lg hover:bg-grey-100">
@@ -394,16 +463,16 @@ export default function CustomerDetailsPage() {
             <span className="text-grey-900 text-xs md:text-sm">FEEDBACK AND REVIEWS</span>
           </div>
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-            {reviews.map((review) => (
+            {reviews.map((review: Review, index: number) => (
               <div key={review.id} className="border-b border-grey-100 pb-4 md:pb-6 last:border-b-0">
                 <div className="flex items-start space-x-3 md:space-x-4">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full overflow-hidden shadow-sm flex-shrink-0">
                     {review.user?.profileImage ? (
                       <img src={review.user.profileImage} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white font-semibold text-xs md:text-sm">
+                    <div className="w-full h-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white font-semibold text-xs md:text-sm">
                         {review.user?.firstName?.charAt(0)}{review.user?.lastName?.charAt(0)}
-                      </div>
+                    </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
