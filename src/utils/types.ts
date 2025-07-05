@@ -656,6 +656,26 @@ export interface AssignedDriver {
   updatedAt: string;
 }
 
+
+export interface Driver {
+    id: string,
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    email: string,
+    driverImage: null | string,
+    createdAt: string,
+    updatedAt: string
+}
+
+export interface DriverResponse {
+    data: Driver[];
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalCount: number;
+}
+
 export interface EarningsStatistics {
   bookingsCompleted: number;
   cancelledBookings: number;

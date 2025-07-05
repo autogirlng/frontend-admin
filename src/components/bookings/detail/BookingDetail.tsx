@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Copy, MoreVertical } from "lucide-react";
 import DottedLines from "../../shared/DottedLines";
 import { BookingInformation } from "@/utils/types";
@@ -13,6 +13,7 @@ interface BookingInfoProps {
 
 const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [showActions, setShowActions] = useState(false);
 
   // Format dates for display
@@ -96,7 +97,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Mark as completed
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                <button onClick={() => router.push(`${pathname}/assign-driver`)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Assign driver
                 </button>
                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
