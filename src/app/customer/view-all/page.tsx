@@ -7,38 +7,21 @@ import { CustomerDetailsModal } from "@/components/bookings/modals/CustomerDetai
 import { User, Customers } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useRouter } from "next/navigation";
+import useCustomerTable from "@/components/bookings/hooks/useCustomerTable";
 
 type CustomerWithStatus = User & { isActive?: boolean | null };
 
 const CustomerViewAllTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<Customers | null>(null);
+  const [limit, setLimit] = useState(10); // Add if you want to support changing page size
+  const { customers, totalCount, limit: usedLimit, isLoading, error } = useCustomerTable({ page, limit, search: searchTerm });
   const [isCustomerDetailsModalOpen, setIsCustomerDetailsModalOpen] = useState(false);
   const [selectedCustomerDetails, setSelectedCustomerDetails] = useState<any>(null);
   const actionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [openActionIndex, setOpenActionIndex] = useState<number | null>(null);
   const http = useHttp();
   const router = useRouter();
-
-  const fetchCustomers = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await http.get<Customers>(`/user/all?limit=10&page=${page}&userRole=CUSTOMER&search=${searchTerm}`);
-      if (res) setData(res);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch customers");
-    }
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    fetchCustomers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, page]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,9 +40,7 @@ const CustomerViewAllTable: React.FC = () => {
     };
   }, [openActionIndex]);
 
-  const customers: CustomerWithStatus[] = data?.data || [];
-  const totalCount = data?.totalCount || 0;
-  const limit = data?.limit || 10;
+  const customersWithStatus: CustomerWithStatus[] = customers || [];
   const maxPage = Math.max(1, Math.ceil(totalCount / limit));
 
   function renderCustomerRow(customer: CustomerWithStatus, index: number): React.ReactNode {
@@ -70,7 +51,7 @@ const CustomerViewAllTable: React.FC = () => {
         : <span className="px-3 py-1 rounded-full text-xs font-medium bg-grey-200 text-grey-700">Inactive</span>;
     }
     return (
-      <tr key={customer.id} className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${index === customers.length - 1 ? "border-b-0" : ""}`}>
+      <tr key={customer.id} className={`border-b border-[#D0D5DD] hover:bg-gray-50 ${index === customersWithStatus.length - 1 ? "border-b-0" : ""}`}>
         <td className="px-4 py-4 text-sm font-medium text-[#344054]">{customer.id}</td>
         <td className="px-4 py-4 text-sm text-[#344054]">{customer.firstName}</td>
         <td className="px-4 py-4 text-sm text-[#344054]">{customer.lastName}</td>
@@ -161,10 +142,10 @@ const CustomerViewAllTable: React.FC = () => {
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-red-600">{error}</td>
+                    <td colSpan={8} className="px-4 py-8 text-center text-red-600">{error?.message ?? String(error)}</td>
                   </tr>
-                ) : customers.length > 0 ? (
-                  customers.map(renderCustomerRow)
+                ) : customersWithStatus.length > 0 ? (
+                  customersWithStatus.map(renderCustomerRow)
                 ) : (
                   <tr>
                     <td colSpan={8} className="px-4 py-8 text-center text-gray-500">No customers found for the current search/filters.</td>

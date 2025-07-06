@@ -1,3 +1,4 @@
+"use client";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import BookingManagementSystem from "@/components/bookings/BookingManagementSystem";
 

@@ -223,7 +223,14 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
           <h2 className="text-xs text-gray-500 font-medium tracking-wide">
             GUEST INFORMATION
           </h2>
-          <button className="text-primary-600 text-sm hover:underline font-medium">
+          <button className="text-primary-600 text-sm hover:underline font-medium"
+            onClick={() => {
+              const customerId = bookingDetails.userId;
+              if (customerId) {
+                window.location.href = `/customer/${customerId}`;
+              }
+            }}
+          >
             View Customer
           </button>
         </div>
