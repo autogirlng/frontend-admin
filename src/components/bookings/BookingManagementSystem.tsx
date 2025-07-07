@@ -378,12 +378,20 @@ const mapPeriodToTimeFilter = (period: string) => {
   switch (period) {
     case "today":
       return "day";
+    case "yesterday":
+      return "yesterday";
+    case "tomorrow":
+      return "tomorrow";
     case "this_week":
       return "week";
     case "this_month":
       return "month";
+    case "last_30_days":
+      return "last_30_days";
     case "last_90_days":
       return "last_90_days";
+    case "custom_range":
+      return "custom";
     case "all_time":
       return "all";
     default:
@@ -555,8 +563,8 @@ const BookingManagementSystem = () => {
         <h1 className="text-2xl font-bold mb-6">Booking Management</h1>
 
         {/* Search and Filter Row */}
-        <div className="flex flex-col md:flex-row md:justify-between mb-6 flex-wrap gap-4">
-          <div className="relative w-full md:max-w-md">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-6 gap-4 lg:gap-12 lg:px-2">
+          <div className="relative w-full lg:max-w-xl lg:flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
@@ -568,13 +576,15 @@ const BookingManagementSystem = () => {
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex-shrink-0">
-            <FilterComponent
-              onFilterChange={(period, dateRange) => {
-                setFilterPeriod(period);
-                if (dateRange) setFilterDateRange(dateRange);
-              }}
-            />
+          <div className="w-full lg:w-auto flex justify-end lg:flex-1">
+            <div className="min-w-[220px] max-w-xs w-full lg:w-[260px]">
+              <FilterComponent
+                onFilterChange={(period, dateRange) => {
+                  setFilterPeriod(period);
+                  if (dateRange) setFilterDateRange(dateRange);
+                }}
+              />
+            </div>
           </div>
         </div>
 
