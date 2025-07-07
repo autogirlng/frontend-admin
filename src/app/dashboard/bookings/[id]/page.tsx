@@ -10,7 +10,7 @@ import useBookingDetails from "@/hooks/useBookingDetails";
 export default function BookingDetailPage() {
   const params = useParams();
   const bookingId = params.id as string;
-  const { bookingDetails, isLoading, isError } = useBookingDetails(bookingId);
+  const { bookingDetails, assignedDrivers, isLoading, isError } = useBookingDetails(bookingId);
 
   if (isLoading) {
     return (
@@ -34,7 +34,7 @@ export default function BookingDetailPage() {
 
   return (
     <DashboardLayout title="Booking Information" currentPage="Bookings">
-      <BookingInfo bookingDetails={bookingDetails} />
+      <BookingInfo bookingDetails={bookingDetails} assignedDrivers={assignedDrivers} />
       <HostVehicleInfo bookingDetails={bookingDetails} />
       <RejectionNotes />
     </DashboardLayout>

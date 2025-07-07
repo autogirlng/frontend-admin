@@ -9,9 +9,10 @@ import { IoIosArrowRoundBack } from "react-icons/io";
 
 interface BookingInfoProps {
   bookingDetails: BookingInformation;
+  assignedDrivers?: any[];
 }
 
-const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
+const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails, assignedDrivers }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showActions, setShowActions] = useState(false);
@@ -509,6 +510,65 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails }) => {
                     </div>
                   ) : null
               )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {(assignedDrivers && assignedDrivers.length > 0) ? (
+        <>
+          <DottedLines />
+          <div className="mb-10">
+            <h2 className="text-xs text-gray-500 font-medium tracking-wide mb-4">
+              DRIVER DETAILS
+            </h2>
+            {assignedDrivers.map((assignment) => (
+              <div key={assignment.id} className="flex flex-col md:flex-row md:items-center md:gap-6 gap-2 bg-[#F7F9FC] p-3 rounded-md shadow-sm mb-3">
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900 font-medium">Name: </span>
+                  <span className="text-sm text-gray-900">{assignment.driver?.firstName} {assignment.driver?.lastName}</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900 font-medium">Phone: </span>
+                  <span className="text-sm text-gray-900">{assignment.driver?.phoneNumber}</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900 font-medium">Assignment Date: </span>
+                  <span className="text-sm text-gray-900">{assignment.assignmentDate ? new Date(assignment.assignmentDate).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900 font-medium">Status: </span>
+                  <span className="text-sm text-gray-900">{assignment.status}</span>
+                </div>
+                <button
+                  className="text-primary-600 text-sm hover:underline font-medium"
+                  onClick={() => {
+                    window.location.href = `/drivers/${assignment.driverId}`;
+                  }}
+                >
+                  View Driver Details
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <DottedLines />
+          <div className="mb-10">
+            <h2 className="text-xs text-gray-500 font-medium tracking-wide mb-4">
+              DRIVER DETAILS
+            </h2>
+            <div className="bg-[#F7F9FC] p-4 rounded-md text-center text-gray-600 mb-3">
+              No drivers have been assigned to this booking yet.
+            </div>
+            <div className="flex justify-center">
+              <button
+                className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded px-4 py-2 text-sm"
+                onClick={() => window.location.href = `/dashboard/drivers/assign?bookingId=${bookingDetails.id}`}
+              >
+                Assign Driver
+              </button>
             </div>
           </div>
         </>

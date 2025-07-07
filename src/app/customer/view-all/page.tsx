@@ -8,6 +8,8 @@ import { User, Customers } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useRouter } from "next/navigation";
 import useCustomerTable from "@/components/bookings/hooks/useCustomerTable";
+import BlockUserModal from "@/components/tables/Host/Details/modals/deactivateHostModal";
+import UnblockHostModal from "@/components/tables/Host/Details/modals/activateHostModal";
 
 type CustomerWithStatus = User & { isActive?: boolean | null };
 
@@ -22,6 +24,9 @@ const CustomerViewAllTable: React.FC = () => {
   const [openActionIndex, setOpenActionIndex] = useState<number | null>(null);
   const http = useHttp();
   const router = useRouter();
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [isUnblockModalOpen, setIsUnblockModalOpen] = useState(false);
+  const [blockTargetCustomer, setBlockTargetCustomer] = useState<any>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -85,9 +90,54 @@ const CustomerViewAllTable: React.FC = () => {
                     >
                       View Details
                     </span>
+                    {customer.isActive === true && (
+                      <span
+                        className="my-2 w-full cursor-pointer py-2 rounded hover:text-red-600 text-sm text-start text-gray-700 transition-colors"
+                        onClick={() => {
+                          setBlockTargetCustomer(customer);
+                          setIsBlockModalOpen(true);
+                          setOpenActionIndex(null);
+                        }}
+                      >
+                        Block Customer
+                      </span>
+                    )}
+                    {customer.isActive === false && (
+                      <span
+                        className="my-2 w-full cursor-pointer py-2 rounded hover:text-green-600 text-sm text-start text-gray-700 transition-colors"
+                        onClick={() => {
+                          setBlockTargetCustomer(customer);
+                          setIsUnblockModalOpen(true);
+                          setOpenActionIndex(null);
+                        }}
+                      >
+                        Unblock Customer
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
+            )}
+            {/* Block/Unblock Modals */}
+            {blockTargetCustomer && (
+              <>
+                <div className="bg-primary-50 rounded-[32px] p-2 sm:p-0">
+                  <BlockUserModal
+                    openModal={isBlockModalOpen}
+                    handleModal={setIsBlockModalOpen}
+                    userId={blockTargetCustomer.id}
+                    trigger={null}
+                  />
+                </div>
+                <div className="bg-primary-50 rounded-[32px] p-2 sm:p-0">
+                  <UnblockHostModal
+                    openModal={isUnblockModalOpen}
+                    handleModal={setIsUnblockModalOpen}
+                    userId={blockTargetCustomer.id}
+                    trigger={null}
+                  />
+                </div>
+              </>
             )}
           </div>
         </td>

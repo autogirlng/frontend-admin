@@ -17,6 +17,8 @@ import CustomerOnboardingDistribution from "@/components/customer/CustomerOnboar
 import { useRouter } from "next/navigation";
 import useCustomerMetrics, { CustomerMetrics } from "@/hooks/useCustomerMetrics";
 import useCustomerTable from "@/components/bookings/hooks/useCustomerTable";
+import BlockUserModal from "@/components/tables/Host/Details/modals/deactivateHostModal";
+import UnblockHostModal from "@/components/tables/Host/Details/modals/activateHostModal";
 
 // Add CustomerData type for metrics
 interface CustomerData {
@@ -74,6 +76,9 @@ const CustomerPage = () => {
   const actionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [openActionIndex, setOpenActionIndex] = useState<number | null>(null);
   const router = useRouter();
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [isUnblockModalOpen, setIsUnblockModalOpen] = useState(false);
+  const [blockTargetCustomer, setBlockTargetCustomer] = useState<any>(null);
 
   const closeAddNewCustomerModal = () => {
     setIsAddNewCustomerModalOpen(false);
@@ -216,6 +221,30 @@ const CustomerPage = () => {
                                       >
                                         View Details
                                       </span>
+                                      {customer.isActive === true && (
+                                        <span
+                                          className="my-2 w-full cursor-pointer py-2 rounded hover:text-red-600 text-sm text-start text-gray-700 transition-colors"
+                                          onClick={() => {
+                                            setBlockTargetCustomer(customer);
+                                            setIsBlockModalOpen(true);
+                                            setOpenActionIndex(null);
+                                          }}
+                                        >
+                                          Block Customer
+                                        </span>
+                                      )}
+                                      {customer.isActive === false && (
+                                        <span
+                                          className="my-2 w-full cursor-pointer py-2 rounded hover:text-green-600 text-sm text-start text-gray-700 transition-colors"
+                                          onClick={() => {
+                                            setBlockTargetCustomer(customer);
+                                            setIsUnblockModalOpen(true);
+                                            setOpenActionIndex(null);
+                                          }}
+                                        >
+                                          Unblock Customer
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -242,23 +271,45 @@ const CustomerPage = () => {
               </div>
             )}
             {filteredCustomers.length !== 0 && (
-              <></>
+              <>
+                <AddNewCustomerModal isOpen={isAddNewCustomerModalOpen} closeModal={closeAddNewCustomerModal} />
+                <CustomerDetailsModal
+                  isOpen={isCustomerDetailsModalOpen}
+                  onClose={() => setIsCustomerDetailsModalOpen(false)}
+                  title="Customer Details"
+                  customer={selectedCustomerDetails || {
+                    name: "",
+                    phone: "",
+                    email: "",
+                    memberSince: "",
+                    bookingHistory: [],
+                  }}
+                />
+                {/* Block/Unblock Modals */}
+                {blockTargetCustomer && (
+                  <>
+                    <div className="bg-primary-50 rounded-[32px] p-2 sm:p-0">
+                      <BlockUserModal
+                        openModal={isBlockModalOpen}
+                        handleModal={setIsBlockModalOpen}
+                        userId={blockTargetCustomer.id}
+                        trigger={null}
+                      />
+                    </div>
+                    <div className="bg-primary-50 rounded-[32px] p-2 sm:p-0">
+                      <UnblockHostModal
+                        openModal={isUnblockModalOpen}
+                        handleModal={setIsUnblockModalOpen}
+                        userId={blockTargetCustomer.id}
+                        trigger={null}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
-        <AddNewCustomerModal isOpen={isAddNewCustomerModalOpen} closeModal={closeAddNewCustomerModal} />
-        <CustomerDetailsModal
-          isOpen={isCustomerDetailsModalOpen}
-          onClose={() => setIsCustomerDetailsModalOpen(false)}
-          title="Customer Details"
-          customer={selectedCustomerDetails || {
-            name: "",
-            phone: "",
-            email: "",
-            memberSince: "",
-            bookingHistory: [],
-          }}
-        />
       </div>
     </DashboardLayout>
   );
