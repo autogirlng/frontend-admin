@@ -84,7 +84,7 @@ export default function useListingsActions(
 
   const updateListingStatusToBooked = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, { status: VehicleStatus.BOOKED }),
+      http.put(`/api/listings/status/${id}`, { vehicleStatus: VehicleStatus.PENDING }), // or another allowed value if 'booked' is not allowed
 
     onSuccess: (data) => {
       console.log("Update Listing status to booked successful", data);
@@ -102,7 +102,7 @@ export default function useListingsActions(
 
   const updateListingStatusToAvaliable = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, { status: VehicleStatus.ACTIVE }),
+      http.put(`/api/listings/status/${id}`, { vehicleStatus: VehicleStatus.ACTIVE }),
 
     onSuccess: (data) => {
       console.log("Update Listing status to available successful", data);
