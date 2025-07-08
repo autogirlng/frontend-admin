@@ -15,7 +15,6 @@ import { BookingTrips } from "../types";
 import { ImageAssets } from "./ImageAssets";
 import { LocalRoute } from "./LocalRoutes";
 
-
 type OptionType = { option: string; value: string };
 
 export const dashboardNavItems = [
@@ -28,11 +27,14 @@ export const dashboardNavItems = [
     icon: Icons.ic_car,
     name: "Fleet",
     link: LocalRoute.fleetPage,
+    altlink: LocalRoute.availabilityPage,
   },
   {
     icon: Icons.ic_ticket,
     name: "Bookings",
     link: LocalRoute.bookingPage,
+    altlink: LocalRoute.allBookingsTablePage,
+    secondaryAltLink: LocalRoute.bookingsTripTablePage,
   },
   {
     icon: Icons.ic_add,
@@ -1464,38 +1466,38 @@ export const bookings: Booking[] = [
   },
 ];
 
-export const TripFilters =  [
-    {
-      title: "Period",
-      options: [
-        {
-          option: "Today",
-          value: "today",
-        },
-        {
-          option: "Yesterday",
-          value: "yesterday",
-        },
-        {
-          option: "Tomorrow",
-          value: "tomorrow",
-        },
-        {
-          option: "This Week",
-          value: "this_week",
-        },
-        {
-          option: "This month",
-          value: "this_month"
-        },
-        {
-          option: "Last 30 days",
-          value: "last_30_days"
-        },
-        {
-          option: "Last 90 days",
-          value: "last_90_days"
-        }
-      ],
-    },
-  ];
+export const TripFilters = [
+  {
+    title: "Period",
+    options: [
+      {
+        option: "Today",
+        value: "today",
+      },
+      {
+        option: "Yesterday",
+        value: "yesterday",
+      },
+      {
+        option: "Tomorrow",
+        value: "tomorrow",
+      },
+      {
+        option: "This Week",
+        value: "this_week",
+      },
+      {
+        option: "This month",
+        value: "this_month",
+      },
+      {
+        option: "Last 30 days",
+        value: "last_30_days",
+      },
+      {
+        option: "Last 90 days",
+        value: "last_90_days",
+      },
+    ],
+  },
+];

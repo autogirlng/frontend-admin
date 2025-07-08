@@ -8,7 +8,7 @@ import { AddressModal } from "./modals/AddressModal";
 import { BookingBadgeStatus } from "@/utils/types";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import useBookingTable from "./hooks/useBookingTable";
+import useBookings from "@/hooks/useBookings";
 
 interface Booking {
   bookingId: string;
@@ -61,34 +61,16 @@ interface BookingTableItem {
 }
 
 const BookingsTable: React.FC = () => {
-  console.log('📊 BookingsTable - Component mounted at:', new Date().toISOString());
   const router = useRouter();
-  
-  useEffect(() => {
-    return () => {
-      console.log('📊 BookingsTable - Component unmounted at:', new Date().toISOString());
-    };
-  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("all_time");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("week");
   const [dateRange, setDateRange] = useState<{ startDate: Date | null, endDate: Date | null }>({ startDate: null, endDate: null });
 
   // Debounced filter state
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [debouncedPeriod, setDebouncedPeriod] = useState(selectedPeriod);
   const [debouncedDateRange, setDebouncedDateRange] = useState(dateRange);
-
-  // Debounce search/filter state updates (same logic as BookingManagementSystem)
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setDebouncedPeriod(selectedPeriod);
-      setDebouncedDateRange(dateRange);
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [searchTerm, selectedPeriod, dateRange]);
 
   // Map UI period to allowed API values
   const mapPeriodToTimeFilter = (period: string) => {
@@ -108,32 +90,14 @@ const BookingsTable: React.FC = () => {
     }
   };
 
-  // Map status to API status (same logic as BookingManagementSystem)
-  const mapStatusToApiStatus = (status: string) => {
-    const allowed = ["PENDING", "APPROVED", "CANCELLED", "COMPLETED"];
-    return allowed.includes(status) ? status : undefined;
-  };
-
-  const bookingTableParams = {
+  const { data, isLoading, error } = useBookings({
     page: 1,
     limit: 10,
-    search: debouncedSearchTerm,
+    search: searchTerm,
     timeFilter: mapPeriodToTimeFilter(debouncedPeriod),
-    startDate: debouncedDateRange.startDate ? debouncedDateRange.startDate : undefined,
-    endDate: debouncedDateRange.endDate ? debouncedDateRange.endDate : undefined,
-    status: mapStatusToApiStatus(debouncedPeriod) || null,
-  };
-  
-  console.log('📊 BookingsTable - Parameters:', bookingTableParams);
-  console.log('📊 BookingsTable - Debounced values:', { 
-    debouncedSearchTerm, 
-    debouncedPeriod, 
-    debouncedDateRange,
-    mappedTimeFilter: mapPeriodToTimeFilter(debouncedPeriod),
-    mappedStatus: mapStatusToApiStatus(debouncedPeriod) || null
+    startDate: debouncedDateRange.startDate,
+    endDate: debouncedDateRange.endDate,
   });
-  
-  const { data, isLoading, error, isSuccess } = useBookingTable(bookingTableParams);
 
   // Transform the data from useBookings hook
   const bookings: BookingTableItem[] = useMemo(() => {
@@ -263,7 +227,16 @@ const BookingsTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#D0D5DD]">
-              {error ? (
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    Loading bookings...
+                  </td>
+                </tr>
+              ) : error ? (
                 <tr>
                   <td
                     colSpan={9}
@@ -326,7 +299,7 @@ const BookingsTable: React.FC = () => {
                     </td>
                   </tr>
                 ))
-              ) : data && !isLoading ? (
+              ) : (
                 <tr>
                   <td
                     colSpan={9}
@@ -335,7 +308,7 @@ const BookingsTable: React.FC = () => {
                     No bookings found for the current search/filters.
                   </td>
                 </tr>
-              ) : null}
+              )}
             </tbody>
           </table>
         </div>

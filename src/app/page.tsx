@@ -221,7 +221,9 @@ const HomePage = () => {
               title: "Total Bookings",
               tooltip:
                 " Monetized count of all bookings made via the platform.",
-              value: data?.finance?.totalBookings || 0,
+              value: data?.finance?.totalBookings
+                ? `₦${data.finance.totalBookings.toLocaleString()}`
+                : "₦0",
             },
             {
               title: "Total Host Payments",

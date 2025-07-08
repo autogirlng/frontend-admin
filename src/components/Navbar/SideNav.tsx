@@ -25,6 +25,8 @@ export default function SideNav({}: Props) {
               icon={item.icon}
               name={item.name}
               link={item.link}
+              altlink={item.altlink || ""}
+              secondaryAltLink={item.secondaryAltLink || ""}
             />
           ))}
         </ul>
