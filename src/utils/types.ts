@@ -515,6 +515,7 @@ export interface VehicleOnboardingTable {
   hostRate: string;
   customerRate: string;
   status: "accepted" | "pending" | "rejected" | "review";
+  // vehicleStatus: "accepted" | "pending" | "rejected" | "review";
 }
 
 export interface FleetTable {
@@ -656,24 +657,23 @@ export interface AssignedDriver {
   updatedAt: string;
 }
 
-
 export interface Driver {
-    id: string,
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    email: string,
-    driverImage: null | string,
-    createdAt: string,
-    updatedAt: string
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  driverImage: null | string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DriverResponse {
-    data: Driver[];
-    page: number;
-    limit: number;
-    totalPages: number;
-    totalCount: number;
+  data: Driver[];
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalCount: number;
 }
 
 export interface EarningsStatistics {
@@ -902,8 +902,6 @@ export type LucideIconType = React.ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;
 
-
-
 export interface TripBookingResponse {
   data: TripBookingItem[];
   page: number;
@@ -916,22 +914,35 @@ export interface TripBookingItem {
   id: string;
   bookingId: string;
   customerName: string;
-  customerPhone:string;
-  driverName:string;
-  driverPhone:string;
-  hostName:string;
-  opsAgentName:string;
-  csAgentName:string;
-  bookedHours:number;
-  pickupState:string;
-  pickupTime:string;
+  customerPhone: string;
+  driverName: string;
+  driverPhone: string;
+  hostName: string;
+  opsAgentName: string;
+  csAgentName: string;
+  bookedHours: number;
+  pickupState: string;
+  pickupTime: string;
   serviceDate: string;
   bookingType: "SINGLE_DAY" | "MULTI_DAY" | string;
   pickupLocation: string;
   vehicle: string;
-  vehicleIdentifier:string;
-  bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
-  tripStatus: "UNCONFIRMED" | "CONFIRMED" | "ONGOING" | "EXTRA_TIME" | "CANCELLED" | "COMPLETED";
+  vehicleIdentifier: string;
+  bookingStatus:
+    | "PENDING"
+    | "PAID"
+    | "UNPAID"
+    | "PENDING"
+    | "COMPLETED"
+    | "REJECTED"
+    | "CANCELLED";
+  tripStatus:
+    | "UNCONFIRMED"
+    | "CONFIRMED"
+    | "ONGOING"
+    | "EXTRA_TIME"
+    | "CANCELLED"
+    | "COMPLETED";
   booking: TripBookingDetails;
 }
 
@@ -945,7 +956,14 @@ export interface TripBookingDetails {
   paymentStatus: "PENDING" | string;
   paymentMethod: "ACCOUNT_TRANSFER" | string;
   rentalAgreement: string | null;
-  bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
+  bookingStatus:
+    | "PENDING"
+    | "PAID"
+    | "UNPAID"
+    | "PENDING"
+    | "COMPLETED"
+    | "REJECTED"
+    | "CANCELLED";
   isForSelf: boolean;
   guestName: string;
   guestEmail: string;
@@ -974,18 +992,17 @@ export interface TripBookingDetails {
   updatedAt: string;
 }
 
-
 export interface Driver {
-          id: string;
-        firstName: string;
-        lastName: string;
-        phoneNumber: string;
-        vehicleId: string;
-        bookingId: string;
-        assignmentDate: string;
-        status: string;
-        createdAt: string;
-        updatedAt: string;
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  vehicleId: string;
+  bookingId: string;
+  assignmentDate: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SingleTrip {
@@ -1082,4 +1099,3 @@ export interface SingleTrip {
     updatedAt: string;
   }[];
 }
-
