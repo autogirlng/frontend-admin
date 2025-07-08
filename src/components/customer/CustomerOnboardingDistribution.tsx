@@ -25,7 +25,8 @@ const CustomerOnboardingDistribution: FC<CustomerOnboardingDistributionProps> = 
   const selfOnboardedDegrees: number = (selfOnboardedPercentage / 100) * 360;
   const adminOnboardedDegrees: number = (adminOnboardedPercentage / 100) * 360;
 
-  const pieChartRadius = 80;
+  // Match host chart: 160px diameter (w-40 h-40)
+  const pieChartRadius = 80; // 160px diameter
   const labelPlacementRadius = pieChartRadius * 0.6;
 
   const calculateLabelPosition = (startAngle: number, endAngle: number) => {
@@ -55,11 +56,13 @@ const CustomerOnboardingDistribution: FC<CustomerOnboardingDistributionProps> = 
         </div>
       </div>
       <div className="flex flex-col md:flex-row items-center justify-start space-y-6 md:space-y-0 md:space-x-8">
-        <div className="relative w-40 h-40 flex items-center justify-center">
+        {/* Pie Chart / Spinner */}
+        <div className="relative w-40 h-40 flex items-center justify-center rounded-full overflow-hidden">
           {isLoading ? (
             <Spinner />
           ) : (
             <>
+              {/* Pie chart background */}
               <div
                 className="w-full h-full rounded-full"
                 style={{
@@ -68,9 +71,10 @@ const CustomerOnboardingDistribution: FC<CustomerOnboardingDistributionProps> = 
                     #FFA000 ${selfOnboardedDegrees}deg ${
                     selfOnboardedDegrees + adminOnboardedDegrees
                   }deg
-                  )`,
+                    )`,
                 }}
               ></div>
+              {/* Percentage labels positioned at the center of each slice */}
               <div
                 className="absolute text-sm font-bold text-white transform -translate-x-1/2 -translate-y-1/2"
                 style={{
@@ -78,8 +82,7 @@ const CustomerOnboardingDistribution: FC<CustomerOnboardingDistributionProps> = 
                   top: selfOnboardedLabelPos.top,
                 }}
               >
-                {selfOnboardedPercentage > 0 &&
-                  `${Math.round(selfOnboardedPercentage)}%`}
+                {selfOnboardedPercentage > 0 && `${Math.round(selfOnboardedPercentage)}%`}
               </div>
               <div
                 className="absolute text-sm font-bold text-white transform -translate-x-1/2 -translate-y-1/2"
@@ -88,25 +91,27 @@ const CustomerOnboardingDistribution: FC<CustomerOnboardingDistributionProps> = 
                   top: adminOnboardedLabelPos.top,
                 }}
               >
-                {adminOnboardedPercentage > 0 &&
-                  `${Math.round(adminOnboardedPercentage)}%`}
+                {adminOnboardedPercentage > 0 && `${Math.round(adminOnboardedPercentage)}%`}
               </div>
             </>
           )}
         </div>
-        <div className="flex items-center">
-          <span className="w-3 h-3 rounded-full bg-[#0673FF] mr-3"></span>
-          <span className="text-grey-700 text-base mr-8">Self Onboarded Customers</span>
-          <span className="font-semibold text-grey-900 text-base">
-            {isLoading ? "-" : selfOnboardedCustomers.toLocaleString()}
-          </span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-3 h-3 rounded-full bg-[#F3A218] mr-3"></span>
-          <span className="text-grey-700 text-base mr-8">Admin Onboarded Customers</span>
-          <span className="font-semibold text-grey-900 text-base">
-            {isLoading ? "-" : adminOnboardedCustomers.toLocaleString()}
-          </span>
+        {/* Distribution details */}
+        <div className="space-y-3">
+          <div className="flex items-center">
+            <span className="w-3 h-3 rounded-full bg-[#0673FF] mr-3"></span>
+            <span className="text-grey-700 text-base mr-8">Self Onboarded Customers</span>
+            <span className="font-semibold text-grey-900 text-base">
+              {isLoading ? "-" : selfOnboardedCustomers.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-3 h-3 rounded-full bg-[#F3A218] mr-3"></span>
+            <span className="text-grey-700 text-base mr-8">Admin Onboarded Customers</span>
+            <span className="font-semibold text-grey-900 text-base">
+              {isLoading ? "-" : adminOnboardedCustomers.toLocaleString()}
+            </span>
+          </div>
         </div>
       </div>
     </div>
