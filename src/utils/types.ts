@@ -640,7 +640,7 @@ export interface VehicleInformation {
   createdAt: string;
   updatedAt: string;
   user: User;
-  document: DocumentVehicleInformationValues;
+  VehicleDocument: DocumentVehicleInformationValues;
 }
 
 export interface AssignedDriver {

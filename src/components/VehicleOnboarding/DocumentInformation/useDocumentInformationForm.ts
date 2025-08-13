@@ -25,14 +25,20 @@ export default function useDocumentInformationForm({
   const dispatch = useAppDispatch();
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
 
-  console.log(vehicle?.document);
+
   const initialValues: DocumentVehicleInformationValues = {
-    authorizationLetter: vehicle?.document?.authorizationLetter ?? "",
-    insuranceCertificate: vehicle?.document?.insuranceCertificate ?? "",
-    maintenanceHistory: vehicle?.document?.maintenanceHistory ?? "",
-    proofOfOwnership: vehicle?.document?.proofOfOwnership ?? "",
-    vehicleInspectionReport: vehicle?.document?.vehicleInspectionReport ?? "",
-    vehicleRegistration: vehicle?.document?.vehicleRegistration ?? "",
+    authorizationLetter: vehicle?.VehicleDocument
+?.authorizationLetter ?? "",
+    insuranceCertificate: vehicle?.VehicleDocument
+?.insuranceCertificate ?? "",
+    maintenanceHistory: vehicle?.VehicleDocument
+?.maintenanceHistory ?? "",
+    proofOfOwnership: vehicle?.VehicleDocument
+?.proofOfOwnership ?? "",
+    vehicleInspectionReport: vehicle?.VehicleDocument
+?.vehicleInspectionReport ?? "",
+    vehicleRegistration: vehicle?.VehicleDocument
+?.vehicleRegistration ?? "",
   };
   const { host } = useAppSelector((state) => state.host);
   let hostId;

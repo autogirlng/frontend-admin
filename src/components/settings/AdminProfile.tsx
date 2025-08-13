@@ -22,6 +22,8 @@ const AdminProfileCard: React.FC<AdminProfileCardProps> = ({
   const fullName = `${firstName} ${lastName}`;
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
+  
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen p-6 md:p-6 flex items-start justify-center">
@@ -59,11 +61,11 @@ const AdminProfileCard: React.FC<AdminProfileCardProps> = ({
                     "bg-success-500 text-green-400": isActive, // Active status
                   })}
                 ></span>
-                <span className="text-xs text-black">{status}</span>
+                <span className="text-xs text-black ml-2">{status}</span>
               </div>
 
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning-300 text-warning-700">
-                {role} Customer Support
+                {role} 
               </span>
             </div>
           </div>
@@ -75,25 +77,22 @@ const AdminProfileCard: React.FC<AdminProfileCardProps> = ({
             openModal={isChangeModalOpen}
             handleModal={setIsChangeModalOpen}
             trigger={
-              <button className="px-6 py-2.5 rounded-lg text-sm font-medium bg-grey-600 border border-gray-300 text-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 w-full sm:w-auto">
+              <button className="px-6 py-2.5 rounded-lg text-sm font-medium bg-grey-600 border border-grey-300 text-white hover:bg-grey-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 w-full sm:w-auto">
                 Change Role
               </button>
             }
           />
 
           <DeactivateMemberModal
-            openModal={isChangeModalOpen}
-            handleModal={setIsChangeModalOpen}
+            openModal={isDeactivateModalOpen}
+            handleModal={setIsDeactivateModalOpen}
             trigger={
-              <button className="px-6 py-2.5 rounded-lg text-sm font-medium bg-grey-600 border border-gray-300 text-white hover:bg-gray-50   w-full sm:w-auto">
-                Change Role
+              <button className="px-6 py-2.5 rounded-lg text-sm font-medium bg-grey-600 border border-gray-300 text-white hover:bg-grey-50   w-full sm:w-auto">
+              Deactivate Member
               </button>
             }
           />
 
-          <button className="px-6 py-2.5 rounded-lg text-sm font-medium bg-grey-600 text-white hover:bg-red-700   w-full sm:w-auto">
-            Deactivate Admin
-          </button>
         </div>
       </div>
     </div>
