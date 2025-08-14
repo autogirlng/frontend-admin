@@ -26,6 +26,7 @@ import { Plus } from "lucide-react";
 import { RiToggleLine, RiToggleFill } from "react-icons/ri"; // Importing better icons for toggling
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Status } from "@/utils/types";
+import Pagination from "@/components/shared/pagination";
 
 // =============================================================================
 // State Data and Constants
@@ -85,6 +86,7 @@ export default function OutskirtLocationsPage() {
   const updateLocationMutation = useUpdateOutskirtLocation();
   const deleteLocationMutation = useDeleteOutskirtLocation();
   const toggleActiveMutation = useToggleActiveStatus();
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Handlers for the new actions
   const handleDelete = (id: string) => {
@@ -105,7 +107,7 @@ export default function OutskirtLocationsPage() {
   
   // Calculate total pages based on fetched data count (this is a simplified assumption)
   const totalItems = data?.totalCount || 0;
-  const totalPages = Math.ceil(totalItems / limit);
+  const totalPages =data?.totalPages || 1;
 
 
   return (
@@ -216,23 +218,27 @@ export default function OutskirtLocationsPage() {
 
               {/* Simple Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex justify-end items-center space-x-2 mt-4">
-                  <button
-                    onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                    disabled={page === 1}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <span>Page {page} of {totalPages}</span>
-                  <button
-                    onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={page === totalPages}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
+                <Pagination totalCount={data.count}
+                  onPageChange={(page) => setCurrentPage(page)}
+                  currentPage={data.page}
+                  pageLimit={data.totalPages} />
+                // <div className="flex justify-end items-center space-x-2 mt-4">
+                //   <button
+                //     onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                //     disabled={page === 1}
+                //     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
+                //   >
+                //     Previous
+                //   </button>
+                //   <span>Page {page} of {totalPages}</span>
+                //   <button
+                //     onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                //     disabled={page === totalPages}
+                //     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
+                //   >
+                //     Next
+                //   </button>
+                // </div>
               )}
             </div>
           )}

@@ -19,7 +19,11 @@ export type OutskirtLocation = {
 export type PaginatedOutskirtLocationResponse = {
   data: OutskirtLocation[];
   message: string;
-  count: number;
+    count: number;
+    totalPages: number;
+      total: number,
+  page: number,
+  limit: number,
   totalCount: number; // Assuming the API returns a total count for pagination
 };
 
@@ -146,7 +150,7 @@ export const useToggleActiveStatus = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation<MutationResponse, AxiosError, string>({
     mutationFn: async (id) => {
-      const response = await apiClient.patch<MutationResponse>(`${ApiRoutes.outskirtLocations}/${id}/toggle-active`);
+      const response = await apiClient.patch(`${ApiRoutes.outskirtLocations}/${id}/toggle-active`);
       return response.data;
     },
     onSuccess: () => {
