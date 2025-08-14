@@ -22,7 +22,7 @@ import { Spinner } from "@/components/shared/spinner";
 import EmptyState from "@/components/EmptyState";
 import { ImageAssets } from "@/utils/ImageAssets";
 import { toast } from "react-toastify";
-import { Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { RiToggleLine, RiToggleFill } from "react-icons/ri"; // Importing better icons for toggling
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Status } from "@/utils/types";
@@ -107,8 +107,28 @@ export default function OutskirtLocationsPage() {
   
   // Calculate total pages based on fetched data count (this is a simplified assumption)
   const totalItems = data?.totalCount || 0;
-  const totalPages =data?.totalPages || 1;
+  const totalPages = data?.totalPages || 1;
+  
 
+// A function to generate the page numbers to display
+const getPageNumbers = (currentPage: number, totalPages: number) => {
+  const pages = [];
+  const maxPagesToShow = 5; // You can adjust this number
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  return pages;
+};
+
+// ... inside your component
+const pageNumbers = getPageNumbers(page, totalPages);
 
   return (
     <DashboardLayout title="Outskirt Location" currentPage="Outskirt Location">
@@ -218,27 +238,43 @@ export default function OutskirtLocationsPage() {
 
               {/* Simple Pagination Controls */}
               {totalPages > 1 && (
-                <Pagination totalCount={data.count}
-                  onPageChange={(page) => setCurrentPage(page)}
-                  currentPage={data.page}
-                  pageLimit={data.totalPages} />
-                // <div className="flex justify-end items-center space-x-2 mt-4">
-                //   <button
-                //     onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                //     disabled={page === 1}
-                //     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
-                //   >
-                //     Previous
-                //   </button>
-                //   <span>Page {page} of {totalPages}</span>
-                //   <button
-                //     onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                //     disabled={page === totalPages}
-                //     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50"
-                //   >
-                //     Next
-                //   </button>
-                // </div>
+                <div className="flex justify-center items-center">    
+                   <div className="flex items-center space-x-2 mt-4">
+    {/* Previous Page Button */}
+    <button
+      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+      disabled={page === 1}
+      className="flex items-center justify-center p-2 rounded-lg bg-gray-200 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-gray-300"
+      title="Previous Page"
+    >
+      <ChevronLeft size={20} />
+    </button>
+
+    {/* Page Numbers */}
+    {pageNumbers.map((pageNumber) => (
+      <button
+        key={pageNumber}
+        onClick={() => setPage(pageNumber)}
+        className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
+                    ${pageNumber === page ? 'bg-[#0673FF] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+        title={`Page ${pageNumber}`}
+      >
+        {pageNumber}
+      </button>
+    ))}
+
+    {/* Next Page Button */}
+    <button
+      onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+      disabled={page === totalPages}
+      className="flex items-center justify-center p-2 rounded-lg bg-gray-200 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-gray-300"
+      title="Next Page"
+    >
+      <ChevronRight size={20} />
+    </button>
+  </div>
+                </div>
+   
               )}
             </div>
           )}
