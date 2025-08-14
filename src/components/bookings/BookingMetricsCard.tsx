@@ -196,8 +196,8 @@ const BookingMetrics: React.FC = () => {
           Booking Metrics
         </h1>
         <div className="flex flex-wrap w-full sm:w-auto justify-end gap-2">
-          {/* Filter Component */}
-          <FilterComponent />
+          {/* Filter Component 
+          <FilterComponent /> */}
 
           {/* New Booking Button with Dropdown */}
           <div

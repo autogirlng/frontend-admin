@@ -27,11 +27,14 @@ export const dashboardNavItems = [
     icon: Icons.ic_car,
     name: "Fleet",
     link: LocalRoute.fleetPage,
+    altlink: LocalRoute.availabilityPage,
   },
   {
     icon: Icons.ic_ticket,
     name: "Bookings",
     link: LocalRoute.bookingPage,
+    altlink: LocalRoute.allBookingsTablePage,
+    secondaryAltLink: LocalRoute.bookingsTripTablePage,
   },
   {
     icon: Icons.ic_add,
@@ -52,6 +55,11 @@ export const dashboardNavItems = [
     icon: Icons.ic_wallet,
     name: "Finance",
     link: LocalRoute.financePage,
+  },
+    {
+    icon: Icons.ic_location,
+    name: "Outskirt Location",
+    link: LocalRoute.outskirtLocationPage,
   },
 ];
 
@@ -161,22 +169,11 @@ export const yearOfReleaseOptions = Array.from(
 export const vehicleTypesOptions: OptionType[] = [
   { value: "Sedan", option: "Sedan" },
   { value: "SUV", option: "SUV" },
+  { value: 'SedanElectric ', option: 'Sedan Electric' },
+    {value:'SUVElectric ',option:'SUV Electric'},
   { value: "Truck", option: "Truck" },
-  { value: "Sports Car", option: "Sports Car" },
-  { value: "Pickup", option: "Pickup" },
   { value: "Bus", option: "Bus" },
-  { value: "Luxury Vehicle", option: "Luxury Vehicle" },
-  // { value: "Hatchback", option: "Hatchback" },
-  // { value: "Coupe", option: "Coupe" },
-  { value: "Minivan", option: "Minivan" },
-  { value: "Electric vehicle", option: "Electric vehicle" },
-  { value: "Hybrid vehicle", option: "Hybrid vehicle" },
-  { value: "Car", option: "Car" },
-  // { value: "Station wagon", option: "Station wagon" },
-  { value: "Van", option: "Van" },
-  { value: "Off-road vehicle", option: "Off-road vehicle" },
-  // { value: "Motorcycle", option: "Motorcycle" },
-  // { value: "All-terrain vehicle", option: "All-terrain vehicle" },
+ 
 ];
 
 export const vehicleMakesOptions: OptionType[] = [
@@ -622,6 +619,87 @@ export const citiesOptions: OptionType[] = [
   { value: "Port Harcourt", option: "Port Harcourt" },
 ];
 
+export enum State {
+  ABUJA_FCT = "Abuja FCT",
+  ABIA = "Abia",
+  ADAMAWA = "Adamawa",
+  AKWA_IBOM = "Akwa Ibom",
+  ANAMBRA = "Anambra",
+  BAUCHI = "Bauchi",
+  BAYELSA = "Bayelsa",
+  BENUE = "Benue",
+  BORNO = "Borno",
+  CROSS_RIVER = "Cross River",
+  DELTA = "Delta",
+  EBONYI = "Ebonyi",
+  EDO = "Edo",
+  EKITI = "Ekiti",
+  ENUGU = "Enugu",
+  GOMBE = "Gombe",
+  IMO = "Imo",
+  JIGAWA = "Jigawa",
+  KADUNA = "Kaduna",
+  KANO = "Kano",
+  KATSINA = "Katsina",
+  KEBBI = "Kebbi",
+  KOGI = "Kogi",
+  KWARA = "Kwara",
+  LAGOS = "Lagos",
+  NASARAWA = "Nasarawa",
+  NIGER = "Niger",
+  OGUN = "Ogun",
+  ONDO = "Ondo",
+  OSUN = "Osun",
+  OYO = "Oyo",
+  PLATEAU = "Plateau",
+  RIVERS = "Rivers",
+  SOKOTO = "Sokoto",
+  TARABA = "Taraba",
+  YOBE = "Yobe",
+  ZAMFARA = "Zamfara",
+}
+
+// Convert the enum into the desired array format.
+export const stateOptions: OptionType[] = [
+  { value: State.ABUJA_FCT, option: State.ABUJA_FCT },
+  { value: State.ABIA, option: State.ABIA },
+  { value: State.ADAMAWA, option: State.ADAMAWA },
+  { value: State.AKWA_IBOM, option: State.AKWA_IBOM },
+  { value: State.ANAMBRA, option: State.ANAMBRA },
+  { value: State.BAUCHI, option: State.BAUCHI },
+  { value: State.BAYELSA, option: State.BAYELSA },
+  { value: State.BENUE, option: State.BENUE },
+  { value: State.BORNO, option: State.BORNO },
+  { value: State.CROSS_RIVER, option: State.CROSS_RIVER },
+  { value: State.DELTA, option: State.DELTA },
+  { value: State.EBONYI, option: State.EBONYI },
+  { value: State.EDO, option: State.EDO },
+  { value: State.EKITI, option: State.EKITI },
+  { value: State.ENUGU, option: State.ENUGU },
+  { value: State.GOMBE, option: State.GOMBE },
+  { value: State.IMO, option: State.IMO },
+  { value: State.JIGAWA, option: State.JIGAWA },
+  { value: State.KADUNA, option: State.KADUNA },
+  { value: State.KANO, option: State.KANO },
+  { value: State.KATSINA, option: State.KATSINA },
+  { value: State.KEBBI, option: State.KEBBI },
+  { value: State.KOGI, option: State.KOGI },
+  { value: State.KWARA, option: State.KWARA },
+  { value: State.LAGOS, option: State.LAGOS },
+  { value: State.NASARAWA, option: State.NASARAWA },
+  { value: State.NIGER, option: State.NIGER },
+  { value: State.OGUN, option: State.OGUN },
+  { value: State.ONDO, option: State.ONDO },
+  { value: State.OSUN, option: State.OSUN },
+  { value: State.OYO, option: State.OYO },
+  { value: State.PLATEAU, option: State.PLATEAU },
+  { value: State.RIVERS, option: State.RIVERS },
+  { value: State.SOKOTO, option: State.SOKOTO },
+  { value: State.TARABA, option: State.TARABA },
+  { value: State.YOBE, option: State.YOBE },
+  { value: State.ZAMFARA, option: State.ZAMFARA },
+];
+
 export const yesOrNoOptions: OptionType[] = [
   { value: "yes", option: "Yes" },
   { value: "no", option: "No" },
@@ -844,6 +922,7 @@ export const selectingHostTableHeadItems: string[] = [
   "Phone Number",
   "Location",
   "Selected",
+  
 ];
 
 export const transactionTableHeadItems: string[] = [
@@ -1505,5 +1584,41 @@ export const bookings: Booking[] = [
     vehicle: "Lexus RX 350",
     bookingStatus: "Completed",
     tripStatus: "Cancelled",
+  },
+];
+
+export const TripFilters = [
+  {
+    title: "Period",
+    options: [
+      {
+        option: "Today",
+        value: "today",
+      },
+      {
+        option: "Yesterday",
+        value: "yesterday",
+      },
+      {
+        option: "Tomorrow",
+        value: "tomorrow",
+      },
+      {
+        option: "This Week",
+        value: "this_week",
+      },
+      {
+        option: "This month",
+        value: "this_month",
+      },
+      {
+        option: "Last 30 days",
+        value: "last_30_days",
+      },
+      {
+        option: "Last 90 days",
+        value: "last_90_days",
+      },
+    ],
   },
 ];

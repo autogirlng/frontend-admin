@@ -1,19 +1,34 @@
-import { FileQuestion, UserIcon, User, ChevronDown, ChevronUp, Search, Plus } from "lucide-react";
+
+import { FileQuestion, UserIcon } from "lucide-react";
 import ModalLayout from "./ModalLayout";
 import { ModalHeader } from "./ModalHeader";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
 import { TimeSelection } from "../TimeSelection";
 import { useState, useEffect, useRef } from "react";
-import { DropDown } from "../DropDown";
-
+import { TripBookingItem, SingleTrip, Driver } from "@/utils/types";
+import { useHttp } from "@/utils/useHttp";
+import { parse, format, parseISO } from 'date-fns';
+import { Spinner } from "@/components/shared/spinner";
+import { useRouter } from "next/navigation";
 interface IAddressModal {
     isOpen: boolean;
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    trip: TripBookingItem;
 }
 
+export const UpdateTripModal = ({ isOpen, setIsOpen, trip }: IAddressModal) => {
+    const http = useHttp();
+    const [isReady, setIsReady] = useState(false);
+    const [timeValues, setTimeValues] = useState({
+        minute: "",
+        hour: "",
+        period: ""
+    })
+    const router = useRouter()
 
-export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
+    const [drivers, setDrivers] = useState<Driver[]>()
+    const [loading, setLoading] = useState<boolean>(false)
 
     const closeModal = () => {
         setIsOpen(false)
@@ -51,59 +66,69 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
             .required('AM/PM is required')
             .oneOf(['AM', 'PM'], 'Invalid AM/PM value'),
         driverName: Yup.string().required('Driver name is required'),
-        vehicle: Yup.string().required('Vehicle is required'),
         pickupLocation: Yup.string().required('Pickup location is required'),
     });
+
     const formik = useFormik({
+        enableReinitialize: true,
         initialValues: {
-            pickupLocation: "Flat 2B, Block C, Harmony Court Apartments\n15A Fola Osibo Street\nLekki Phase 1\nEti-Osa LGA",
-            hourOne: '',
-            hourTwo: '',
-            minuteOne: '',
-            minuteTwo: '',
-            ampm: 'AM',
-            driverName: 'Chris Madu',
-            vehicle: 'Toyota Corolla 2023',
+            pickupLocation: trip?.pickupLocation || "",
+            hourOne: timeValues.hour[0] || "",
+            hourTwo: timeValues.hour[1] || "",
+            minuteOne: timeValues.minute[0] || "",
+            minuteTwo: timeValues.minute[1] || "",
+            ampm: timeValues.period || '',
+            driverName: drivers?.find(
+                (driver) => driver.status === "ASSIGNED"
+            )?.firstName + " " + drivers?.find(
+                (driver) => driver.status === "ASSIGNED"
+            )?.lastName || ""
         },
         validationSchema: validationSchema,
-        onSubmit: (values) => {
-            console.log('Form submitted with values:', values);
-            // alert('Trip details saved: ' + JSON.stringify(values, null, 2));
+        onSubmit: async (values) => {
+            setLoading(true)
+            try {
+                const time = `${values.hourOne}${values.hourTwo}:${values.minuteOne}${values.minuteTwo}${values.ampm}`;
+                // convert to ISO 24 hour time format
+                const parsed = parse(time, "hh:mma", new Date());
+                const timeValue = format(parsed, "HH:mm");
+                const endDate = trip.booking.endDate.split("T")[0]
+                const combinedDateTimeString = `${endDate}T${timeValue}:00`;
+                const finalISODateTime = parseISO(combinedDateTimeString).toISOString();
+
+                const data = {
+                    pickupLocation: values.pickupLocation,
+                    pickupTime: finalISODateTime,
+                    driverFirstName: values.driverName.split(" ")[0] || "",
+                    driverLastName: values.driverName.split(" ")[1] || "",
+                }
+                await http.put(`/admin/trips/update/${trip.id}`, data)
+                    .then(() => {
+                        window.location.reload()
+                    })
+
+
+            } catch (error) {
+                console.log(error)
+            }
+
+            setLoading(false)
         },
     });
 
-    const allDrivers = [
-        'Amelia Okonkwo',
-        'Benjamin Adeyemi',
-        'Chloe Nwafor',
-        'Daniel Oladipo',
-        'Ella Obiakor',
-        'Femi Adewale',
-        'Grace Chukwu',
-        'Henry Eze',
-        'Ifeoma James',
-        'John Doe',
-        'Chris Madu'
-    ];
-
-    const allVehicles = [
-        "Kia Rio",
-        "Toyota Highlander",
-        "Honda CR-V",
-        "Ford Explorer",
-
-    ]
-
-    // State to control the visibility of the dropdown list
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isVehicleDropdownOpen, setIsVehicleDropdownOpen] = useState(false);
 
 
     // Ref to detect clicks outside the dropdown
     const dropdownRef = useRef(null);
-    const vehicleDropdownRef = useRef(null);
 
 
+
+    const fetchAllTripOtherDetails = async () => {
+        const allTripData = await http.get<SingleTrip>(`admin/trips/getSingle/${trip?.id}`)
+        const assignedDriver = allTripData?.booking.vehicle.AssignedDriver
+        setDrivers(assignedDriver)
+    }
 
     // Effect to handle clicks outside the dropdown to close it
     useEffect(() => {
@@ -119,24 +144,25 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+    useEffect(() => {
+        const parsed = parseISO(trip.pickupTime);
 
-    // Function to toggle the dropdown's visibility
-    const toggleDropdown = () => {
-        setIsDropdownOpen(prev => !prev);
-    };
-    const toggleVehicleDropdown = () => {
-        setIsVehicleDropdownOpen(prev => !prev);
-    };
+        const hour = format(parsed, "hh");
+        const minute = format(parsed, "mm");
+        const period = format(parsed, "a");
 
-    // Function to handle driver selection from the list
-    const handleDriverSelect = (driver: string) => {
-        formik.values.driverName = driver
-        setIsDropdownOpen(false); // Close dropdown after selection
-    };
-    const handleVehicleSelect = (driver: string) => {
-        formik.values.vehicle = driver
-        setIsVehicleDropdownOpen(false); // Close dropdown after selection
-    };
+        setTimeValues({
+            hour,
+            minute,
+            period
+        });
+        fetchAllTripOtherDetails().then(() => {
+            setIsReady(true);
+        });
+
+    }, [isOpen])
+
+
     return (
         <>
             {isOpen && (
@@ -156,16 +182,21 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
                             <label htmlFor="pickupLocation" className="text-start text-sm mt-2">
                                 Pickup Location
                             </label>
-                            <div
+
+
+                            <textarea
                                 id="pickupLocation"
+                                name="pickupLocation"
+                                value={formik.values.pickupLocation}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 className="w-full p-3 mt-2 border border-[#d0d5dd] rounded-2xl bg-gray-50 text-gray-800 break-words whitespace-pre-wrap"
-                                style={{ minHeight: '100px' }} // Give it some height
-                            >
-                                {formik.values.pickupLocation}
-                            </div>
+                                style={{ minHeight: '100px' }}
+                            />
                             {formik.touched.pickupLocation && formik.errors.pickupLocation ? (
                                 <div className="text-red-500 text-sm mt-1">{formik.errors.pickupLocation}</div>
                             ) : null}
+
                         </div>
                         <div className="text-sm text-start mt-3">
                             <label htmlFor="pickupTime" >
@@ -176,88 +207,44 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
                         </div>
 
                         {/* Driver */}
-                        <div>
+                        {/* <div>
                             <label htmlFor="driverName" className="block text-gray-700 text-sm text-start mt-3">
                                 Driver
                             </label>
-                            <div className="relative mb-6" ref={dropdownRef}>
-                                {/* Display area for the selected driver, acts as the dropdown trigger */}
-                                <div
-                                    className="flex items-center justify-between bg-white border border-[#f0f2f5] rounded-xl cursor-pointer shadow-sm hover:shadow-md transition duration-200"
-                                    onClick={toggleDropdown}
-                                >
+                            <div className="relative mb-6">
+                                <div className="flex items-center justify-between bg-white border border-[#f0f2f5] rounded-xl shadow-sm hover:shadow-md transition duration-200">
                                     <div
-                                        id="driverField"
-                                        className="flex items-center bg-[#f0f2f5] border border-[#f0f2f5] text-gray-800 font-sm text-sm py-2 px-2 rounded-lg m-1 shadow-sm whitespace-nowrap"
-                                        aria-readonly="true"
+                                        className="flex items-center bg-[#f0f2f5] border border-[#f0f2f5] text-gray-800 text-sm py-2 px-2 rounded-lg m-1 shadow-sm whitespace-nowrap w-full"
                                     >
                                         <UserIcon size={20} className="mr-2 text-gray-600" />
-                                        {formik.values.driverName}
+                                        <select
+                                            id="driverName"
+                                            name="driverName"
+                                            value={formik.values.driverName}
+                                            onChange={formik.handleChange}
+                                            onBlur={formik.handleBlur}
+                                            className="bg-transparent outline-none text-sm text-gray-800 w-full"
+                                        >
+                                            <option value="" disabled>Select a driver</option>
+                                            {
+                                                drivers?.map((driver, index) => {
+
+                                                    return <option key={index} value={`${driver.firstName} ${driver.lastName}`}>
+                                                        {driver.firstName} {driver.lastName}
+                                                    </option>
+                                                })
+                                            }
+
+                                        </select>
                                     </div>
                                 </div>
-
-                                {/* Dropdown List (conditionally rendered) */}
-
-                                {isDropdownOpen && (
-
-                                    <DropDown
-                                        formik={formik}
-                                        Icon={Search}
-                                        values={allDrivers}
-                                        headerText="Search Drivers"
-                                        setIsDropdownOpen={setIsDropdownOpen}
-                                        drowdownRef={dropdownRef}
-                                        handleSelect={handleDriverSelect}
-                                        isDriver={true}
-                                    />
-                                )}
                             </div>
-
-                        </div>
-
-                        {/* Vehicle */}
-                        <div>
-                            <label htmlFor="vehicle" className="block text-gray-700 text-sm text-start mt-1">
-                                Vehicle
-                            </label>
-                            <div className="relative mb-6" ref={vehicleDropdownRef}>
-                                {/* Display area for the selected driver, acts as the dropdown trigger */}
-                                <div
-                                    className="flex items-center justify-between bg-white border border-[#f0f2f5] rounded-xl cursor-pointer shadow-sm hover:shadow-md transition duration-200"
-                                    onClick={toggleVehicleDropdown}
-                                >
-                                    <div
-                                        id="vehicleField"
-                                        className="flex items-center  text-gray-800 font-sm text-sm py-2 px-2 rounded-lg m-1 shadow-sm whitespace-nowrap"
-                                        aria-readonly="true"
-                                    >
-                                        <UserIcon size={20} className="mr-2 text-gray-600" />
-                                        {formik.values.vehicle}
-                                    </div>
-                                </div>
-
-                                {/* Dropdown List (conditionally rendered) */}
-
-                                {isVehicleDropdownOpen && (
-
-                                    <DropDown
-                                        formik={formik}
-                                        Icon={Search}
-                                        values={allVehicles}
-                                        headerText="Search Vehicles"
-                                        setIsDropdownOpen={setIsVehicleDropdownOpen}
-                                        drowdownRef={vehicleDropdownRef}
-                                        handleSelect={handleVehicleSelect}
-                                        isDriver={false}
-                                    />
-                                )}
-                            </div>
-
-                        </div>
+                        </div> */}
 
 
 
-                        <div>
+
+                        <div className="flex flex-row">
                             <button
                                 className="w-[40%] px-4 py-3 me-[5%] text-sm  my-5 text-[#344054] bg-[#d0d5dd] text-center rounded-2xl  hover:shadow-md transition-all duration-200"
                                 onClick={closeModal}
@@ -265,11 +252,13 @@ export const UpdateTripModal = ({ isOpen, setIsOpen }: IAddressModal) => {
                                 Cancel
                             </button>
                             <button
-
+                                type="submit"
                                 className="w-[45%] px-4 py-3 text-sm  my-5 text-white bg-[#0673ff] text-center rounded-2xl  hover:shadow-md transition-all duration-200"
                             >
                                 Update Trip
+                                {loading && <Spinner className="text-white" />}
                             </button>
+
                         </div>
 
                     </form>

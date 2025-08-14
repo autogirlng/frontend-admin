@@ -370,10 +370,9 @@ export default function HostOnboardingComponent() {
                         label="Attachment (optional)"
                         placeholder="Upload Signed MOU by host"
                         filePicker={true}
-                        onFileSelect={(file: File) => {
-                          setFieldValue("mou", file);
-                          setFieldTouched("mou", true);
-                        }}
+                       onFileSelect={(file) => setFieldValue("mou", file)}
+           
+                   
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.mou}

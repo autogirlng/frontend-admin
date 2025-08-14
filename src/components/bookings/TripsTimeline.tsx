@@ -195,13 +195,13 @@ const TripsTimeline: React.FC = () => {
           <h2 className="text-base sm:text-lg font-medium text-[#344054]">
             Trips Timeline
           </h2>
-          <a
-            href="#"
+          <Link
+            href="/dashboard/bookings/trips"
             className="text-[#667185] hover:text-blue-800 text-xs sm:text-sm"
             style={{ paddingRight: 10 }}
           >
             View All
-          </a>
+          </Link>
         </div>
 
         <div className="relative mb-4">

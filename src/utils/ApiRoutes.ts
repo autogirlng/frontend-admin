@@ -33,6 +33,7 @@ export const ApiRoutes = {
 
   // VEHICLE
   fetchVehicle: "/listings/details",
+  outskirtLocations:'/outskirt-locations'
 };
 
 export const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";

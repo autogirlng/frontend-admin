@@ -24,7 +24,7 @@ export default function VehicleOnboardingSuccessPage() {
             width={100}
           />
           <h2 className=" text-h5 md:text-h3 3xl:text-4xl">
-            Your {vehicle?.listingName} has been submitted for review
+            Your Listing has been submitted for review
           </h2>
           <div className="flex flex-col sm:flex-row gap-[18px]">
             <Link href={`/vehicle/${vehicleId}`}>

@@ -40,6 +40,7 @@ export default function useDocumentInformationForm({
     vehicleRegistration: vehicle?.VehicleDocument
 ?.vehicleRegistration ?? "",
   };
+  console.log('initial values', initialValues);
   const { host } = useAppSelector((state) => state.host);
   let hostId;
   if (vehicle?.userId) {

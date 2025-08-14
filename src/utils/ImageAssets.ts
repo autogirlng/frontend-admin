@@ -6,11 +6,11 @@ export const ImageAssets = {
   vehicleInteriorView: "/images/interior-view.png",
   vehicleOtherView: "/images/other-view.png",
   authBg: "/images/reset-password.png",
-  mailbox: "/images/mailbox.png",
+  mailbox: "/icons/mailbox.png",
   vehicleType: "/images/vehicle-type.png",
-  logo: "/images/logo/logo.png",
-  mobileNav: "/images/logo/mobile_nav_logo.png",
-  navLogo: "/images/logo/nav_logo.png",
+  logo: "/images/muvment_admin.png",
+  mobileNav: "/images/muvment.png",
+  navLogo: "/images/muvment.png",
   sedan: "/images/vehicles/sedan.png",
 
   icons: {
@@ -20,5 +20,6 @@ export const ImageAssets = {
     emptyBookingState: "/icons/empty_booking_state.png",
     emptyTransState: "/icons/empty_trnx_state.png",
     emptySearchState: "/icons/empty_search_state.png",
+    mailBox:"/icons/mailbox.png"
   },
 };

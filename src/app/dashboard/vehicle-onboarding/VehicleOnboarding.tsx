@@ -89,14 +89,14 @@ export default function VehicleOnboardingPage() {
               )}
               {/* upload docs */}
               {currentStep === 1 && (
-                <DocumentInformation
+                <AdditionalInformation
                   steps={steps}
                   currentStep={currentStep}
                   setCurrentStep={handleCurrentStep}
                 />
               )}
             {currentStep === 2 && (
-              <AdditionalInformation
+              <DocumentInformation
                 steps={steps}
                 currentStep={currentStep}
                 setCurrentStep={handleCurrentStep}

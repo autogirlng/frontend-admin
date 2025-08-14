@@ -23,7 +23,7 @@ export default function LoginPage() {
         <h2 className="text-3xl md:text-5xl font-bold text-gray-800 text-left">
           Welcome Back
         </h2>
-        <p className="text-gray-600 text-md text-left mb-6">
+        <p className="text-grey-600 text-md text-left mb-6">
           Log in to pick up where you left off.
         </p>
 

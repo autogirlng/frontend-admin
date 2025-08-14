@@ -49,8 +49,8 @@ export interface VehicleBooking {
   createdAt: string;
   updatedAt: string;
   vehicle: {
-    pricing: any | null; // You might want to define a more specific type for pricing
-    tripSettings: any | null; // You might want to define a more specific type for tripSettings
+    pricing: any | null; 
+    tripSettings: any | null; 
     id: string;
     listingName: string;
     location: string;

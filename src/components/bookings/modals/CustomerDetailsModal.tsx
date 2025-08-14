@@ -17,12 +17,14 @@ interface CustomerDetailsModalProps {
       status: string;
     }[];
   };
+  title?: string;
 }
 
 export const CustomerDetailsModal: React.FC<CustomerDetailsModalProps> = ({
   isOpen,
   onClose,
   customer,
+  title,
 }) => {
   return (
     <BookingModalLayout isOpen={isOpen}>
@@ -31,7 +33,7 @@ export const CustomerDetailsModal: React.FC<CustomerDetailsModalProps> = ({
           LucideIcon={User}
           iconColor="#0AAF24"
           iconBackgroundColor="#DCFCE7"
-          headerText="Customer Details"
+          headerText={title || "Customer Details"}
           modalContent="View customer information and booking history"
         />
         

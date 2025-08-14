@@ -328,7 +328,10 @@ export type User = {
   bvnVerified: boolean;
   bio: string | null;
   city: string | null;
+  cities: string[];
   userRole: "HOST" | "CUSTOMER";
+  isActive: boolean;
+  isBusiness: boolean;
   businessLogo: string | null;
   businessName: string | null;
   businessAddress: string | null;
@@ -336,9 +339,32 @@ export type User = {
   businessEmail: string | null;
   createdAt: string;
   updatedAt: string;
-  Verification: UserVerification;
+  referralCode: string;
+  referredBy: string | null;
+  referralBalance: number;
+  onBoardedBy: string | null;
+  mouDocument: string | null;
+  lastLogin: string | null;
+  isDeleted: boolean;
+  blockedReason: string | null;
+  teamId: string | null;
+  Verification: UserVerification | null;
   averageRating: number;
   statistics?: EarningsStatistics;
+  stats?: {
+    referralStats: {
+      totalReferrals: number;
+      pendingReferrals: number;
+      completedReferrals: number;
+      referralBalance: number;
+    };
+    totalEarnings: number;
+    totalOnboardedVehicles: number;
+    totalCompletedRides: number;
+    walletBalance: number;
+    averageRating: number;
+    topRatedVehicle: any | null;
+  };
 };
 
 export interface TripSettings {

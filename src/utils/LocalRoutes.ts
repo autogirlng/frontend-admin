@@ -21,18 +21,20 @@ export const LocalRoute = {
   selectHostPage: "/dashboard/onboarding/hosts",
   vehiclesOnboardedPage: "/dashboard/onboarding",
   vehicleOnboardingPage: "/dashboard/vehicle-onboarding",
-
+outskirtLocationPage:'/outskirt-location',
   // Dashboard
   bookingPage: "/dashboard/bookings",
   bookingPerfomance: "/dashboard/booking-perfomance",
   bookingTrips: "/dashboard/trips",
+  bookingsTripTablePage: "/dashboard/bookings/trips",
+  allBookingsTablePage: "/dashboard/bookings/list",
   // bookingTrips: "/dashboard/trips",
 
   // finance
   financePage: "/finance",
   // fleet
   fleetPage: "/dashboard/fleet",
-  availabilityPage: "/dashboard/booking/new-availability",
+  availabilityPage: "/dashboard/fleet/availability",
   vehiclePage: "/vehicle",
   // customer
   customersPage: "/customer",
