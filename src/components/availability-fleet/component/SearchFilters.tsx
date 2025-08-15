@@ -16,7 +16,15 @@ const SearchFiltersComponent: React.FC<SearchFiltersProps> = ({
   onSearch,
   loading,
 }) => {
-  const vehicleTypes = ["All", "sedan", "SUV", "truck", "bus"];
+  const vehicleTypes = [
+    "All",
+    "sedan",
+    "SUV",
+    "truck",
+    "bus",
+    "SUVElectric",
+    "SedanElectric",
+  ];
 
   const handleInputChange = (
     field: keyof SearchFilters,
