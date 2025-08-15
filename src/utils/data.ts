@@ -56,7 +56,7 @@ export const dashboardNavItems = [
     name: "Finance",
     link: LocalRoute.financePage,
   },
-    {
+  {
     icon: Icons.ic_location,
     name: "Outskirt Location",
     link: LocalRoute.outskirtLocationPage,
@@ -169,11 +169,10 @@ export const yearOfReleaseOptions = Array.from(
 export const vehicleTypesOptions: OptionType[] = [
   { value: "Sedan", option: "Sedan" },
   { value: "SUV", option: "SUV" },
-  { value: 'SedanElectric ', option: 'Sedan Electric' },
-    {value:'SUVElectric ',option:'SUV Electric'},
+  { value: "SedanElectric", option: "Sedan Electric" },
+  { value: "SUVElectric", option: "SUV Electric" },
   { value: "Truck", option: "Truck" },
   { value: "Bus", option: "Bus" },
- 
 ];
 
 export const vehicleMakesOptions: OptionType[] = [
@@ -922,7 +921,6 @@ export const selectingHostTableHeadItems: string[] = [
   "Phone Number",
   "Location",
   "Selected",
-  
 ];
 
 export const transactionTableHeadItems: string[] = [
