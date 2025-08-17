@@ -8,6 +8,7 @@ export const ApiRoutes = {
   getAllAdmin: "/user/all",
   getAllAdminTeam: "/team/all",
   addNewMember: "/auth/createUser",
+  adminUser:"/user/admin",
   // VEHICLE ONBOARDING
   vehicleOnboardingTable: "/admin/vehicle-onboarding-list",
   vehicleOnboardingStats: "/api",

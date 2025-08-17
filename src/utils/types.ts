@@ -833,6 +833,7 @@ export type DateRange = { startDate: Date | null; endDate: Date | null };
 
 export type Member = {
   id: string;
+  profileImage: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -851,7 +852,7 @@ export type Member = {
     | string;
   lastLogin: string;
   joined: string;
-  status: "Active" | "Inactive" | "Successful";
+  status: "active" | "inactive" | "successful" ;
 };
 export enum UserRole {
   OperationManager = "OPERATION_MANAGER",
@@ -863,6 +864,17 @@ export enum UserRole {
 }
 
 export interface AddMemberPayload {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  countryCode: string;
+  country: string;
+  email: string;
+  userRole: UserRole;
+}
+
+export interface EditMemberPayload {
+  id: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;

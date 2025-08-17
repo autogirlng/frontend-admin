@@ -14,7 +14,7 @@ export const ImageAssets = {
   sedan: "/images/vehicles/sedan.png",
 
   icons: {
-    user: "",
+    user: "/icons/user.png",
     errorState: "/icons/empty_booking_state.png",
     emptyReviewState: "/icons/empty_review_state.png",
     emptyBookingState: "/icons/empty_booking_state.png",

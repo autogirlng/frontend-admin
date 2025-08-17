@@ -26,7 +26,6 @@ export default function useAddMember() {
   const http = useHttp();
   const router = useRouter();
   const dispatch = useAppDispatch(); // If you need to dispatch anything after success
-  const { user } = useAppSelector((state) => state.user); // Assuming auth slice has user info
 
   const addMemberMutation = useMutation({
     mutationFn: async (newMemberData: AddMemberPayload) => 
