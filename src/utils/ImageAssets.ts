@@ -5,7 +5,7 @@ export const ImageAssets = {
   vehicleSideView2: "/images/side-view-2.png",
   vehicleInteriorView: "/images/interior-view.png",
   vehicleOtherView: "/images/other-view.png",
-  authBg: "/images/reset-password.png",
+  authBg: "/images/login_bg.png",
   mailbox: "/icons/mailbox.png",
   vehicleType: "/images/vehicle-type.png",
   logo: "/images/muvment_admin.png",

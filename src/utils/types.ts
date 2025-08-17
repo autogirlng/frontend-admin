@@ -854,11 +854,12 @@ export type Member = {
   status: "Active" | "Inactive" | "Successful";
 };
 export enum UserRole {
-  OperationManager = "Operation Manager",
-  Admin = "Admin",
-  CustomerSupport = "Customer Support",
-  FinanceManager = "Finance Manager",
-  SuperAdmin = "Super Admin",
+  OperationManager = "OPERATION_MANAGER",
+  Admin = "ADMIN",
+  CustomerSupport = "CUSTOMER_SUPPORT",
+  FinanceManager = "FINANCE_MANAGER",
+  // SuperAdmin = "Super Admin",
+  // ADMIN, CUSTOMER_SUPPORT, FINANCE_MANAGER, OPERATION_MANAGER, HOST. CUSTOMER
 }
 
 export interface AddMemberPayload {

@@ -4,12 +4,14 @@ import { useState } from "react";
 import FleetDataHoldingTable from "./Table";
 import TeamDataHoldingTable from "./Table";
 import useTeamTable from "./hooks/useTeamTable";
+import EmptyState from "@/components/EmptyState";
+import { ImageAssets } from "@/utils/ImageAssets";
 type Props = { search?: string; filters?: Record<string, string[]> };
 
 export default function TeamDataTable({ search, filters }: Props) {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const { data, totalCount, isError, pageSize, totalPages, isLoading } =
+  const { data, totalCount, isError, pageSize, totalPages, isLoading ,refetch} =
     useTeamTable({
       currentPage: currentPage,
       pageLimit: 10,
@@ -22,12 +24,11 @@ export default function TeamDataTable({ search, filters }: Props) {
       {isLoading ? (
         <FullPageSpinner />
       ) : isError ? (
-        <p>something went wrong</p>
-      ) : (
+          <EmptyState image={ ImageAssets.icons.errorState} title="An Error Occurred" buttonAction={refetch} buttonText="Try Again" message='Failed to load team members'/> ) : (
         <TeamDataHoldingTable
           items={data}
-          emptyStateTitle="No  Fleet Available "
-          emptyStateMessage="Your Fleet Will Appear Here"
+          emptyStateTitle="No Team Member "
+          emptyStateMessage="Your Team Members  Will Appear Here"
         />
       )}
 

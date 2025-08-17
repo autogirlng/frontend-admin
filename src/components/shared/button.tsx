@@ -1,5 +1,6 @@
 import cn from "classnames";
 import { ReactNode } from "react";
+import { Spinner } from "./spinner";
 
 type ButtonProps = {
   children: ReactNode;
@@ -58,7 +59,7 @@ const Button = ({
     <button
       {...rest}
       className={cn(
-        "px-6 md:px-8 2xl:px-[40px] transition-all duration-300 ease-in-out",
+        "px-6 md:px-8 2xl:px-[40px] flex  justify-center items-center transition-all duration-300 ease-in-out",
         btnWidth,
         btnRadius,
         btnBorder,
@@ -68,7 +69,7 @@ const Button = ({
       )}
       onClick={onClick}
     >
-      {loading ? <p>Loading...</p> : children}
+      {loading ? <Spinner/>: children}
     </button>
   );
 };
