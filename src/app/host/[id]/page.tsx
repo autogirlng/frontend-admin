@@ -19,6 +19,7 @@ import EmptyState from "@/components/EmptyState";
 import { ImageAssets } from "@/utils/ImageAssets";
 import HostProfileCard from "@/components/HostProfileCard";
 import HostBookingsTable from "@/components/tables/HostBookings/Table";
+import BackLink from "@/components/BackLink";
 
 export default function HostDetailsPage() {
   const router = useRouter();
@@ -56,6 +57,7 @@ export default function HostDetailsPage() {
   return (
     <DashboardLayout title="Host" currentPage="Host">
       <div className="space-y-10 2xl:space-y-[52px] py-8 2xl:py-11 ">
+        <BackLink />
         <DashboardSectionTitle icon={Icons.ic_host} title="Host Details" />
 
         <HostProfileCard hostProfile={hostDetails.host} />

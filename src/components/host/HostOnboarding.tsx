@@ -16,9 +16,7 @@ import { FullPageSpinner, Spinner } from "@/components/shared/spinner";
 import SelectInput from "@/components/shared/select";
 import { hostFormValidationSchema } from "@/validators/HostOnboardingSchema";
 import AppSwitch from "@/components/shared/switch";
-
-const outskirtsLocationOptions = ["Lagos", "Accra", "Abuja", "Benin", "Others"];
-
+import { stateOptions } from "@/utils/data"; 
 export default function HostOnboardingComponent() {
   const { hostMutation } = useHostOnboarding();
   const { data: members, isLoading } = useTeamMembers();
@@ -204,10 +202,10 @@ export default function HostOnboardingComponent() {
                           Operating Cities
                         </label>
                         <div className="flex flex-wrap gap-x-4 gap-y-2">
-                          {outskirtsLocationOptions.map((feature) => (
+                          {stateOptions.map((state) => (
                             <GroupCheckBox
-                              key={feature}
-                              feature={feature}
+                              key={state.value}
+                              feature={state.option}
                               checkedValues={values.outskirtsLocation}
                               onChange={(
                                 feature: string,
@@ -216,13 +214,13 @@ export default function HostOnboardingComponent() {
                                 if (isChecked) {
                                   const newValues = [
                                     ...values.outskirtsLocation,
-                                    feature,
+                                    state.value,
                                   ];
                                   setFieldValue("outskirtsLocation", newValues);
                                 } else {
                                   const newValues =
                                     values.outskirtsLocation.filter(
-                                      (value) => value !== feature
+                                      (value) => value !== state.value
                                     );
                                   setFieldValue("outskirtsLocation", newValues);
                                 }
@@ -370,9 +368,7 @@ export default function HostOnboardingComponent() {
                         label="Attachment (optional)"
                         placeholder="Upload Signed MOU by host"
                         filePicker={true}
-                       onFileSelect={(file) => setFieldValue("mou", file)}
-           
-                   
+                        onFileSelect={(file) => setFieldValue("mou", file)}
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.mou}
