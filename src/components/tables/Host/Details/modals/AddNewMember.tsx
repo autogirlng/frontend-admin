@@ -91,7 +91,7 @@ const roleOptions = [
   { value: UserRole.CustomerSupport, option: "Customer Support" },
   { value: UserRole.FinanceManager, option: "Finance Manager" },
   { value: UserRole.OperationManager, option: "Operation Manager" },
-  { value: UserRole.SuperAdmin, option: "Super Admin" },
+  // { value: UserRole.SuperAdmin, option: "Super Admin" },
 ];
 
 // Utility function to replace characters (if still needed, adjust logic)

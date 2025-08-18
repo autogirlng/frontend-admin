@@ -78,7 +78,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
       <TableCell content={items?.location ?? "-"} />
 
       {/* Status - Re-applied dynamic styling */}
-      <TableCell content={items?.status} isBadge type="table" />
+      <TableCell  content={items?.status} isBadge={true} />
 
       {/* Actions */}
       <td>
@@ -107,7 +107,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
                   </li>
 
                   {/* Block User - For Active hosts */}
-                  {hostStatus === "active" && (
+                  {hostStatus.toLowerCase() === "active" && (
                     <li>
                       <BlockUserModal
                         openModal={isBlockModalOpen}
@@ -127,7 +127,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
                   )}
 
                   {/* Unblock User - For Banned/Blocked hosts */}
-                  {(hostStatus === "banned" || hostStatus === "inactive") && (
+                  {(hostStatus.toLowerCase() === "banned" || hostStatus.toLowerCase() === "inactive") && (
                     <li>
                       <UnblockHostModal // Use the new UnblockHostModal
                         openModal={isUnblockModalOpen}
@@ -147,7 +147,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
                   )}
 
                   {/* Resend Logins - Often for inactive or when requested */}
-                  {hostStatus !== "active" && (
+                  {hostStatus.toLowerCase() !== "active" && (
                     <li>
                       <button
                         onClick={handleSendLoginDetails} // Call the new handler
