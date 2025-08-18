@@ -11,6 +11,7 @@ import Icons from "@/utils/Icon";
 import useChangeRole from "../../hooks/useChangeRole";
 import { toast } from "react-toastify"; // Import toast for notifications
 import { FaUser } from "react-icons/fa";
+import { ImageAssets } from "@/utils/ImageAssets";
 
 interface ChangeRoleData {
   userRole: UserRole; // Ensure this matches userRole in payload
@@ -83,7 +84,7 @@ const roleOptions = [
   { value: UserRole.CustomerSupport, option: "Customer Support" },
   { value: UserRole.FinanceManager, option: "Finance Manager" },
   { value: UserRole.OperationManager, option: "Operation Manager" },
-  { value: UserRole.SuperAdmin, option: "Super Admin" },
+  //{ value: UserRole.SuperAdmin, option: "Super Admin" },
 ];
 
 const ChangeRoleContent = ({
@@ -126,7 +127,7 @@ const ChangeRoleContent = ({
             <FaUser className="w-16 h-16 text-gray-400" /> // Adjust size and color as needed
           ) : (
             <Image
-              src={"/images/default-avatar.png"} // Use member.avatar, with a default fallback
+              src={ImageAssets.icons.user} // Use member.avatar, with a default fallback
               alt={`avatar`}
               layout="fill"
               objectFit="cover"

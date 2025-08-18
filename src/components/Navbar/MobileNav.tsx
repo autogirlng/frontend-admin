@@ -55,7 +55,7 @@ export default function MobileNav({ userToken, user }: Props) {
             : "h-0 w-0 translate-x-[100%] invisible"
         )}
       >
-        {userToken || user ? (
+    
           <div className="space-y-6 pb-8">
             <AvatarImage
               image={user?.businessLogo ?? user?.profileImage ?? ""}
@@ -106,20 +106,7 @@ export default function MobileNav({ userToken, user }: Props) {
               ))}
             </ul>
           </div>
-        ) : (
-          <ul className="list-none space-y-3 pb-8">
-            {popupNavItemsforNoUser.map((item, index) => (
-              <MobileNavItem
-                handleClick={() => setOpenNav(false)}
-                key={index}
-                icon={item.icon}
-                name={item.name}
-                link={item.link}
-                className="!py-1.5"
-              />
-            ))}
-          </ul>
-        )}
+      
       </nav>
     </header>
   );

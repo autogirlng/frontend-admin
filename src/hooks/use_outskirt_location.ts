@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 import apiClient from "@/api/APIClient";
 import { AxiosError, AxiosResponse } from "axios";
 import { ApiRoutes } from "@/utils/ApiRoutes";
+import { headers } from "next/headers";
 
 // =============================================================================
 // TYPES
@@ -114,7 +115,7 @@ export const useUpdateOutskirtLocation = (): UseMutationResult<
   return useMutation<MutationResponse, AxiosError, UpdateOutskirtLocationPayload>({
     mutationFn: async (payload) => {
       const { id, ...data } = payload;
-      const response = await apiClient.patch<MutationResponse>(`${ApiRoutes.outskirtLocations}/${id}`, data);
+      const response = await apiClient.post<MutationResponse>(`${ApiRoutes.outskirtLocations}/${id}`, data,);
       return response.data;
     },
     onSuccess: () => {
@@ -150,7 +151,7 @@ export const useToggleActiveStatus = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation<MutationResponse, AxiosError, string>({
     mutationFn: async (id) => {
-      const response = await apiClient.patch(`${ApiRoutes.outskirtLocations}/${id}/toggle-active`);
+      const response = await apiClient.post(`${ApiRoutes.outskirtLocations}/${id}/toggle-active`);
       return response.data;
     },
     onSuccess: () => {

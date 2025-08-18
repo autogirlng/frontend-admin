@@ -17,7 +17,7 @@ export default function ListingDetailsVehicleImages({ vehicleImages }: Props) {
           pauseOnMouseEnter: true,
         }}
         loop={true}
-        className="vehicle-summary-swiper w-full z-[-1]"
+        className="vehicle-summary-swiper w-full"
       >
         {vehicleImages.map((image, index) => (
           <SwiperSlide key={index}>

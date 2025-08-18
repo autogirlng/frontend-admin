@@ -7,14 +7,26 @@ import PhoneNumberAndCountryField from "@/components/shared/phoneNumberAndCountr
 import SelectInput from "@/components/shared/select";
 
 import { UserRole } from "@/utils/types";
-
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { getCountryCallingCode } from "libphonenumber-js";
+import { toast } from "react-toastify";
 
-import useAddMember from "../../hooks/useAddMember";
+import useEditMember from "../../hooks/editTeamMember";
+// Assuming you have a type for your full team member data
+interface TeamMemberData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  countryCode: string;
+  country: string;
+  email: string;
+  userRole: UserRole;
+  // ... other fields
+}
 
-interface AddTeamMemberFormData {
+interface EditTeamMemberFormData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -24,37 +36,36 @@ interface AddTeamMemberFormData {
   userRole: UserRole;
 }
 
-type AddTeamMemberProps = {
+type EditTeamMemberProps = {
   openModal: boolean;
   handleModal: (value: boolean) => void;
   trigger: ReactNode;
-  isLoading: boolean;
+  member: TeamMemberData; // CRITICAL: The data for the member to be edited
 };
 
-const AddTeamMember = ({
+const EditTeamMember = ({
   trigger,
   openModal,
   handleModal,
-  isLoading: parentLoading,
-}: AddTeamMemberProps) => {
-  const { addMember, isLoading, isSuccess } = useAddMember();
+  member,
+}: EditTeamMemberProps) => {
+  const { editMember, isLoading, isSuccess } = useEditMember();
 
   React.useEffect(() => {
     if (isSuccess) {
-      handleModal(false);
+      handleModal(false); // Close modal on success
     }
   }, [isSuccess, handleModal]);
 
-  // WRAP IN useCALLBACK: Prevents `onSubmit` from causing re-renders
   const handleSubmitFormik = React.useCallback(
-    (values: AddTeamMemberFormData) => {
-      const payload: AddTeamMemberFormData = {
+    (values: EditTeamMemberFormData) => {
+      const payload = {
+        id: member.id, // Include the member's ID in the payload
         ...values,
-        userRole: values.userRole,
       };
-      addMember(payload);
+      editMember(payload);
     },
-    [addMember]
+    [member, editMember]
   );
 
   return (
@@ -63,27 +74,31 @@ const AddTeamMember = ({
       onOpenChange={handleModal}
       trigger={trigger}
       width="max-w-2xl"
-      title="Add Team Member"
+      title="Edit Team Member"
       content={
-        // PASSING THE COMPONENT DIRECTLY: This is now safe with React.memo
-        <AddTeamMemberContent
-          handleModal={handleModal}
-          onSubmit={handleSubmitFormik}
-          isLoading={parentLoading || isLoading}
-          isMutationSuccess={isSuccess}
-        />
+        // CONDITIONAL RENDERING: Ensures the form is only rendered when the member data is available.
+        member ? (
+          <EditTeamMemberContent
+            handleModal={handleModal}
+            onSubmit={handleSubmitFormik}
+            isLoading={isLoading}
+            isMutationSuccess={isSuccess}
+            initialData={member}
+          />
+        ) : null
       }
     />
   );
 };
 
-export default AddTeamMember;
+export default EditTeamMember;
 
-type AddTeamMemberContentProps = {
+type EditTeamMemberContentProps = {
   handleModal: (value: boolean) => void;
-  onSubmit: (data: AddTeamMemberFormData) => void;
+  onSubmit: (data: EditTeamMemberFormData) => void;
   isLoading: boolean;
   isMutationSuccess?: boolean;
+  initialData: TeamMemberData; // The data used to pre-fill the form
 };
 
 const roleOptions = [
@@ -97,45 +112,50 @@ const replaceCharactersWithString = (value: string): string => {
   return value.replace(/[^0-9+]/g, "");
 };
 
-// WRAP IN REACT.MEMO: Prevents unnecessary re-renders of the form
-const AddTeamMemberContent = React.memo(
+const EditTeamMemberContent = React.memo(
   ({
     handleModal,
     onSubmit,
     isLoading,
     isMutationSuccess,
-  }: AddTeamMemberContentProps) => {
+    initialData,
+  }: EditTeamMemberContentProps) => {
     const validationSchema = Yup.object({
       firstName: Yup.string().required("First name is required"),
       lastName: Yup.string().required("Last name is required"),
-      email: Yup.string().email("Invalid email address").required("Email is required"),
+      email: Yup.string()
+        .email("Invalid email address")
+        .required("Email is required"),
       phoneNumber: Yup.string().required("Phone number is required"),
       country: Yup.string().required("Country is required"),
       countryCode: Yup.string().required("Country code is required"),
       userRole: Yup.string().required("Role is required"),
     });
 
-    const formik = useFormik<AddTeamMemberFormData>({
+    const formik = useFormik<EditTeamMemberFormData>({
+      // INITIAL VALUES: Form is pre-filled with the existing member's data
       initialValues: {
-        firstName: "",
-        lastName: "",
-        email: "",
-        country: "NG",
-        countryCode: "+234",
-        phoneNumber: "",
-        userRole: UserRole.CustomerSupport,
+        firstName: initialData.firstName,
+        lastName: initialData.lastName,
+        email: initialData.email,
+        country: initialData.country || 'NG',
+        countryCode: initialData.countryCode ?? '+234',
+        phoneNumber: initialData.phoneNumber ,
+        userRole: initialData.userRole,
       },
       validationSchema: validationSchema,
       onSubmit: (values) => {
         onSubmit(values);
       },
+      enableReinitialize: true,
     });
 
     React.useEffect(() => {
+      // Conditionally call resetForm to avoid repeated state updates
       if (isMutationSuccess) {
-        formik.resetForm();
+        formik.resetForm({ values: initialData });
       }
-    }, [isMutationSuccess, formik]);
+    }, [isMutationSuccess, formik, initialData]);
 
     return (
       <div className="w-full max-w-xl">
@@ -263,7 +283,7 @@ const AddTeamMemberContent = React.memo(
               loading={isLoading}
               disabled={isLoading}
             >
-              Add Team Member
+              Save Changes
             </Button>
           </div>
         </form>

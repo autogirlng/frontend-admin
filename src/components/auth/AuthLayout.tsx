@@ -12,7 +12,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
       {/* Left Side - Image Section */}
       <div className="hidden md:flex md:w-1/2 h-screen relative">
         <Image
-          src="/images/auth-bg.jpeg"
+          src={ImageAssets.authBg}
           alt="Car"
           layout="fill"
           objectFit="cover"
