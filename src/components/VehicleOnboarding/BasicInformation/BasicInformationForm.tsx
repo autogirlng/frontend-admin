@@ -144,6 +144,14 @@ const BasicVehicleInformationForm = ({
                           "address",
                           address?.formattedAddress || ""
                         );
+                        setFieldValue(
+                          "latitude",
+                          String(address?.location?.latitude || "")
+                        );
+                        setFieldValue(
+                          "longitude",
+                          String(address?.location?.longitude || "")
+                        );
                       }}
                       className="cursor-pointer hover:bg-primary-75 py-2 px-4 text-sm text-grey-900 rounded-xl"
                     >

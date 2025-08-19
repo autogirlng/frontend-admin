@@ -1,3 +1,5 @@
+// @/components/VehicleOnboarding/BasicInformation/useBasicInformationForm.ts
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -10,11 +12,20 @@ import {
   BasicVehicleInformationValues,
   ErrorResponse,
   VehicleInformation,
-} from "@/utils/types";
+} from "@/utils/types"; // Make sure to add latitude/longitude to this type
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 import { LocalRoute } from "@/utils/LocalRoutes";
+
+// Define a more specific type for Google Places API response
+type GooglePlace = {
+  formattedAddress: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+};
 
 export default function useBasicInformationForm({
   currentStep,
@@ -25,14 +36,11 @@ export default function useBasicInformationForm({
 }) {
   const http = useHttp();
   const router = useRouter();
-
   const dispatch = useAppDispatch();
 
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
   const [searchAddressQuery, setSearchAddressQuery] = useState("");
-  const [googlePlaces, setGooglePlaces] = useState<
-    { formattedAddress: string }[]
-  >([]);
+  const [googlePlaces, setGooglePlaces] = useState<GooglePlace[]>([]); // Use the specific type here
   const [searchAddressError, setSearchAddressError] = useState("");
   const [searchAddressLoading, setSearchAddressLoading] = useState(false);
   const [showAddressList, setShowAddressList] = useState(false);
@@ -41,11 +49,13 @@ export default function useBasicInformationForm({
     listingName: vehicle?.listingName || "",
     location: vehicle?.location || "",
     address: vehicle?.address || "",
+    // Add latitude and longitude to initial values
+    latitude: vehicle?.latitude || "",
+    longitude: vehicle?.longitude || "",
     vehicleType: vehicle?.vehicleType || "",
     make: vehicle?.make || "",
     model: vehicle?.model || "",
     yearOfRelease: vehicle?.yearOfRelease || "",
-
     hasInsurance:
       vehicle?.hasInsurance === undefined || vehicle?.hasInsurance === null
         ? ""
@@ -74,8 +84,9 @@ export default function useBasicInformationForm({
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY,
+            // Add 'places.location' to the field mask to get coordinates
             "X-Goog-FieldMask":
-              "places.displayName,places.formattedAddress,places.priceLevel",
+              "places.displayName,places.formattedAddress,places.location",
           },
         }
       );
@@ -105,12 +116,14 @@ export default function useBasicInformationForm({
   }, [searchAddressQuery, debouncedFetchPlaces]);
 
   const { host } = useAppSelector((state) => state.host);
-  console.log(host);
   let hostId = vehicle?.userId || host?.id;
   if (!hostId) {
     console.error("No host ID available");
     hostId = "";
   }
+
+  // No changes needed for mutations, as they already spread the `values` object.
+  // Latitude and longitude will be included automatically.
   const saveStep1 = useMutation({
     mutationFn: (values: BasicVehicleInformationValues) =>
       http.put<VehicleInformation>(
@@ -122,7 +135,6 @@ export default function useBasicInformationForm({
           ...(vehicle?.id && { id: vehicle.id }),
         }
       ),
-
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Saved", data);
       dispatch(
@@ -131,7 +143,6 @@ export default function useBasicInformationForm({
       );
       router.push(LocalRoute.fleetPage);
     },
-
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 1"),
   });
@@ -147,7 +158,6 @@ export default function useBasicInformationForm({
           ...(vehicle?.id && { id: vehicle.id }),
         }
       ),
-
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Submitted", data);
       dispatch(
@@ -156,7 +166,6 @@ export default function useBasicInformationForm({
       );
       setCurrentStep(currentStep + 1);
     },
-
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 1"),
   });

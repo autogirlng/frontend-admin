@@ -147,6 +147,8 @@ export interface WithdrawalAccountValues {
 
 export interface BasicVehicleInformationValues {
   listingName: string;
+  latitude: string;
+  longitude: string;
   location: string;
   address: string;
   vehicleType: string;
@@ -619,6 +621,8 @@ export interface VehicleInformation {
   location?: string;
   address?: string;
   vehicleType: string;
+  latitude: string;
+  longitude: string;
   make: string;
   model: string;
   yearOfRelease: string;
@@ -852,7 +856,7 @@ export type Member = {
     | string;
   lastLogin: string;
   joined: string;
-  status: "active" | "inactive" | "successful" ;
+  status: "active" | "inactive" | "successful";
 };
 export enum UserRole {
   Admin = "ADMIN",
