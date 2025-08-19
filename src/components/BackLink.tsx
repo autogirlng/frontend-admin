@@ -1,7 +1,7 @@
 import { CaretLeft } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import React from "react";
-type Props = { backLink: string };
+type Props = { backLink?: string };
 export default function BackLink({ backLink }: Props) {
   const router = useRouter();
 

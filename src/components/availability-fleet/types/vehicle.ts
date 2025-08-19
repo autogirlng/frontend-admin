@@ -5,7 +5,13 @@ export interface Vehicle {
   make: string;
   model: string;
   yearOfRelease: string;
-  vehicleType: "sedan" | "SUV" | "truck" | "bus";
+  vehicleType:
+    | "sedan"
+    | "SUV"
+    | "truck"
+    | "bus"
+    | "SUVElectric"
+    | "SedanElectric";
   location: string;
   availability: {
     date: string;

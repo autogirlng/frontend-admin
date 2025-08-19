@@ -6,7 +6,7 @@ type Props = { handleModal: (open: boolean) => void; id?: string };
 const DeactivateListing = ({ handleModal, id }: Props) => {
   const { deactivateListing } = useListingsActions(handleModal,id);
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 z-">
       <h6 className="text-base sm:text-xl 3xl:text-h6 !font-semibold text-grey-800">
         Sure you want to deactivate listing?
       </h6>

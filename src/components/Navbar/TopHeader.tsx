@@ -38,6 +38,20 @@ export default function TopHeader({}: Props) {
     setPopupIsOpen(false);
   }, [pathname]);
 
+  // Use useEffect to add/remove the 'no-scroll' class on the body
+  useEffect(() => {
+    if (popupIsOpen || notificationPopupIsOpen) {
+      document.body.classList.add("no-scroll");
+    } else {
+      document.body.classList.remove("no-scroll");
+    }
+
+    // Cleanup function to remove the class when the component unmounts
+    return () => {
+      document.body.classList.remove("no-scroll");
+    };
+  }, [popupIsOpen, notificationPopupIsOpen]);
+
   return (
     <div className="hidden md:flex w-full md:px-6 2xl:px-8 py-5 items-center justify-between bg-white border-b border-grey-300 shadow-[0_4px_100px_0_#00000012]">
       <h6 className="text-base 2xl:text-h6 text-black">
@@ -45,7 +59,6 @@ export default function TopHeader({}: Props) {
       </h6>
       <div className="flex items-center gap-3">
         <Popup
-          open={true}
           isOpen={notificationPopupIsOpen}
           handleIsOpen={(open: boolean) => setNotificationPopupIsOpen(open)}
           className="!w-[400px] 3xl:!w-[480px]"
@@ -93,7 +106,6 @@ export default function TopHeader({}: Props) {
         </Link>
 
         <Popup
-          open={true}
           isOpen={popupIsOpen}
           handleIsOpen={(open: boolean) => setPopupIsOpen(open)}
           trigger={

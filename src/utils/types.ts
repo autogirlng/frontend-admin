@@ -641,7 +641,7 @@ export interface VehicleInformation {
   createdAt: string;
   updatedAt: string;
   user: User;
-  document: DocumentVehicleInformationValues;
+  VehicleDocument: DocumentVehicleInformationValues;
 }
 
 export interface AssignedDriver {
@@ -833,6 +833,7 @@ export type DateRange = { startDate: Date | null; endDate: Date | null };
 
 export type Member = {
   id: string;
+  profileImage: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -851,17 +852,30 @@ export type Member = {
     | string;
   lastLogin: string;
   joined: string;
-  status: "Active" | "Inactive" | "Successful";
+  status: "active" | "inactive" | "successful" ;
 };
 export enum UserRole {
-  OperationManager = "Operation Manager",
-  Admin = "Admin",
-  CustomerSupport = "Customer Support",
-  FinanceManager = "Finance Manager",
-  SuperAdmin = "Super Admin",
+  Admin = "ADMIN",
+  OperationManager = "OPERATION_MANAGER",
+  CustomerSupport = "CUSTOMER_SUPPORT",
+  FinanceManager = "FINANCE_MANAGER",
+  // SuperAdmin = "Super Admin",
+  // ADMIN, CUSTOMER_SUPPORT, FINANCE_MANAGER, OPERATION_MANAGER, HOST. CUSTOMER
 }
 
 export interface AddMemberPayload {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  countryCode: string;
+  country: string;
+  email: string;
+  userRole: UserRole;
+  isBusiness?: boolean;
+}
+
+export interface EditMemberPayload {
+  id: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;

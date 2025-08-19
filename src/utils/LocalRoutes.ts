@@ -21,7 +21,7 @@ export const LocalRoute = {
   selectHostPage: "/dashboard/onboarding/hosts",
   vehiclesOnboardedPage: "/dashboard/onboarding",
   vehicleOnboardingPage: "/dashboard/vehicle-onboarding",
-
+outskirtLocationPage:'/outskirt-location',
   // Dashboard
   bookingPage: "/dashboard/bookings",
   bookingPerfomance: "/dashboard/booking-perfomance",

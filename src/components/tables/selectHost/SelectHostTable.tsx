@@ -3,6 +3,8 @@ import { FullPageSpinner } from "@/components/shared/spinner";
 import { useState } from "react";
 import useSelectHostTable from "./hooks/useSelectHost";
 import SelectingHostTable from "./Table";
+import { ImageAssets } from "@/utils/ImageAssets";
+import EmptyState from "@/components/EmptyState";
 type Props = { search?: string };
 
 export default function SelectHostTable({ search }: Props) {
@@ -21,7 +23,8 @@ export default function SelectHostTable({ search }: Props) {
       {isLoading ? (
         <FullPageSpinner />
       ) : isError ? (
-        <p>something went wrong</p>
+         <EmptyState title="An Error Occurred" image={ ImageAssets.icons.errorState} />
+  
       ) : (
         <SelectingHostTable
           items={data}

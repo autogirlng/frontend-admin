@@ -2,7 +2,8 @@ import { Formik, Form } from "formik";
 import { StepperNavigation } from "@/components/shared/stepper";
 import { documentVehicleInformationSchema } from "@/utils/validationSchema";
 import useDocumentInformationForm from "./useDocumentInformationForm";
-import FileInputField from "@/components/shared/fileInputField";
+import FileInputField from "@/components/shared/fileInputField"; // Make sure this path is correct
+
 const DocumentInformationForm = ({
   steps,
   currentStep,
@@ -38,7 +39,7 @@ const DocumentInformationForm = ({
         setSubmitting(false);
       }}
     >
-      {({ values, setFieldValue, isValid, isSubmitting }) => (
+      {({ values, setFieldValue, isValid, isSubmitting, handleBlur }) => (
         <Form className="max-w-[800px] w-full space-y-8">
           <FileInputField
             name="proofOfOwnership"
@@ -47,6 +48,7 @@ const DocumentInformationForm = ({
             placeholder="Upload Document"
             filePicker
             onFileSelect={(file) => setFieldValue("proofOfOwnership", file)}
+            onBlur={handleBlur} // Pass Formik's onBlur to update touched state
             info
             tooltipTitle="Proof Of Ownership:"
             tooltipDescription="Upload documents such as vehicle purchase receipts or Certificate of Ownership to verify that you legally own the vehicle."
@@ -59,6 +61,7 @@ const DocumentInformationForm = ({
             placeholder="Upload Document"
             filePicker
             onFileSelect={(file) => setFieldValue("vehicleRegistration", file)}
+            onBlur={handleBlur}
             info
             tooltipTitle="Vehicle Registration Document:"
             tooltipDescription="Provide a document showing that the vehicle is officially registered and recognized by the appropriate authorities."
@@ -71,6 +74,7 @@ const DocumentInformationForm = ({
             placeholder="Upload Document"
             filePicker
             onFileSelect={(file) => setFieldValue("insuranceCertificate", file)}
+            onBlur={handleBlur}
             info
             tooltipTitle="Current Insurance Certificate:"
             tooltipDescription="Submit your current insurance certificate to confirm that the vehicle is insured with valid coverage."
@@ -85,6 +89,7 @@ const DocumentInformationForm = ({
             onFileSelect={(file) =>
               setFieldValue("vehicleInspectionReport", file)
             }
+            onBlur={handleBlur}
             info
             tooltipTitle="Vehicle Inspection Report:"
             tooltipDescription="Attach a report from a certified inspection authority to verify the condition of the vehicle. Providing this helps Muvment ensure your vehicle can serve our users with confidence."
@@ -97,6 +102,7 @@ const DocumentInformationForm = ({
             placeholder="Upload Document"
             filePicker
             onFileSelect={(file) => setFieldValue("maintenanceHistory", file)}
+            onBlur={handleBlur}
             info
             tooltipTitle="Maintenance History:"
             tooltipDescription="Share service and maintenance records to showcase regular upkeep. This helps build trust in your vehicle’s performance for our user experiences."
@@ -109,6 +115,7 @@ const DocumentInformationForm = ({
             placeholder="Upload Document"
             filePicker
             onFileSelect={(file) => setFieldValue("authorizationLetter", file)}
+            onBlur={handleBlur}
             info
             tooltipTitle="Authorization Letter:"
             tooltipDescription="If you are not the owner but have permission to use the vehicle, provide a formal authorization letter granting you permission to manage the vehicle."

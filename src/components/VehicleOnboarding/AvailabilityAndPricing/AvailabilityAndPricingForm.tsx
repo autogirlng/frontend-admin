@@ -16,6 +16,8 @@ import {
 import { availabilityAndPricingSchema } from "@/utils/validationSchema";
 import Tooltip from "@/components/shared/tooltip";
 import { useState } from "react";
+import { useOutskirtLocations } from "./useOutskirtLocation";
+import { Spinner } from "@/components/shared/spinner";
 
 type Props = {
   steps: string[];
@@ -43,6 +45,13 @@ const AvailabilityAndPricingForm = ({
         initialValues.thirtyDaysDiscount
     )
   );
+
+
+  const { 
+    data: outskirtLocations, 
+    isLoading, 
+    error 
+  } = useOutskirtLocations(showOuskirts);
 
   return (
     <Formik
@@ -170,7 +179,7 @@ const AvailabilityAndPricingForm = ({
                 <SelectInput
                   id="driverProvided"
                   label="Will you provide a driver?"
-                  placeholder="1 day"
+                  placeholder="Yes/No"
                   variant="outlined"
                   options={[
                     { value: "yes", option: "Yes" },
@@ -193,7 +202,7 @@ const AvailabilityAndPricingForm = ({
                 <SelectInput
                   id="fuelProvided"
                   label="Will you provide at least 20 liters of fuel?"
-                  placeholder="1 day"
+                  placeholder="Yes/No"
                   variant="outlined"
                   options={[
                     { value: "yes", option: "Yes" },
@@ -300,7 +309,7 @@ const AvailabilityAndPricingForm = ({
                     setFieldValue("threeDaysDiscount", "");
                     setFieldValue("thirtyDaysDiscount", "");
                   }}
-                  className="text-primary-500 font-medium text-sm 3xl:text-xl flex items-center gap-1"
+                  className="text-primary-500 cursor-pointer font-medium text-sm 3xl:text-xl flex items-center gap-1"
                 >
                   {Icons.ic_remove} <span>Remove Discounts</span>
                 </p>
@@ -354,7 +363,7 @@ const AvailabilityAndPricingForm = ({
             )}
           </div>
 
-          <div>
+  <div>
             <div className="flex justify-between gap-3">
               <p className="text-h6 3xl:text-h5 font-medium text-black flex justify-between items-center gap-1">
                 Do you charge extra for outskirt locations?
@@ -373,6 +382,7 @@ const AvailabilityAndPricingForm = ({
                 value={showOuskirts}
                 onChange={(checked) => {
                   setShowOuskirts(checked);
+                  // Clear fields if the switch is turned off
                   if (!checked) {
                     setFieldValue("outskirtsPrice", "");
                     setFieldValue("outskirtsLocation", []);
@@ -405,10 +415,15 @@ const AvailabilityAndPricingForm = ({
                     Uncheck locations you do not want to visit with your vehicle
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-8">
-                    {outskirtsLocationOptions.map((feature) => (
+                    {/* Render different states based on the query status */}
+                    {isLoading && <Spinner/>}
+                    {error && <p className="text-error-500">Failed to load locations.</p>}
+                    
+                    {/* Map over the fetched data from the hook */}
+                    {outskirtLocations?.map((location) => (
                       <GroupCheckBox
-                        key={feature}
-                        feature={feature}
+                        key={location.id}
+                        feature={location.name}
                         checkedValues={values.outskirtsLocation}
                         onChange={(feature: string, isChecked: boolean) => {
                           if (isChecked) {

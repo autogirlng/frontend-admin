@@ -10,6 +10,7 @@ import useBasicInformationForm from "@/components/VehicleOnboarding/BasicInforma
 import { basicVehicleInformationSchema } from "@/utils/validationSchema";
 import {
   citiesOptions,
+  stateOptions,
   vehicleMakesOptions,
   vehicleModelsOptions,
   vehicleTypesOptions,
@@ -94,7 +95,7 @@ const BasicVehicleInformationForm = ({
               label="What city is your vehicle located?"
               placeholder="Select location"
               variant="outlined"
-              options={citiesOptions}
+              options={stateOptions}
               value={values.location}
               onChange={(value: string) => {
                 setFieldTouched("location", true);
@@ -128,7 +129,7 @@ const BasicVehicleInformationForm = ({
             />
             {(searchAddressLoading ||
               (googlePlaces.length > 0 && showAddressList)) && (
-              <ul className="list-none border border-grey-300 rounded-xl py-4 px-2 w-full bg-white border border-grey-200 max-h-[200px] overflow-auto shadow-[-2px_4px_6px_-2px_#10192808,12px_16px_37.4px_-4px_#10192814]">
+              <ul className="list-none border border-grey-300 rounded-xl py-4 px-2 w-full bg-white  max-h-[200px] overflow-auto shadow-[-2px_4px_6px_-2px_#10192808,12px_16px_37.4px_-4px_#10192814]">
                 {searchAddressError ? (
                   <p>{searchAddressError}</p>
                 ) : searchAddressLoading ? (
