@@ -12,7 +12,7 @@ import { LocalRoute } from "@/utils/LocalRoutes";
 import BlockUserModal from "./Details/modals/deactivateHostModal"; // Assuming this path is correct
 import UnblockHostModal from "./Details/modals/activateHostModal";
 import { useSendLoginDetails } from "./hooks/useHostHooks";
-import { FullPageSpinner, Spinner } from "@/components/shared/spinner";
+import {  Spinner } from "@/components/shared/spinner";
 
 export default function HostDesktopRow({ items }: { items: Member }) {
   const hostId = items?.id;

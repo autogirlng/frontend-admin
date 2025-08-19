@@ -1,4 +1,3 @@
-// src/hooks/useAddMember.ts (or wherever you prefer to place your hooks)
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
@@ -12,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { UserRole } from "@/utils/types"; // Import UserRole from your types/enums
 import { toast } from "react-toastify";
 import apiClient from "@/api/APIClient";
+import { queryClient } from "@/api/QueryClient";
 
 interface AddMemberResponse {
   id: string; // Assuming the API returns the ID of the newly created user
@@ -23,19 +23,34 @@ interface AddMemberResponse {
 }
 
 export default function useAddMember() {
-  const http = useHttp();
+  const http = useHttp(); // You can use this instead of apiClient if it's your intended pattern
   const router = useRouter();
   const dispatch = useAppDispatch(); // If you need to dispatch anything after success
 
   const addMemberMutation = useMutation({
-    mutationFn: async (newMemberData: AddMemberPayload) => 
-  
-      apiClient.post<AddMemberResponse>(ApiRoutes.addNewMember, newMemberData),
-    onSuccess: (data) => {
-      toast.success("Team member added successfully!");
+    mutationFn: async (newMemberData: AddMemberPayload) => {
+      // The crucial fix is to RETURN the promise from the API call.
+      // Additionally, using 'await' makes the code clearer.
+      newMemberData.isBusiness = false;
+      const response = await apiClient.post<AddMemberResponse>(
+        ApiRoutes.addNewMember,
+        newMemberData
+      );
+      return response.data; // Return the data from the response to the onSuccess handler
     },
-    onError: (error) => {
-      toast.error(error.message);
+    onSuccess: (data) => {
+      // 'data' here is the response data returned from mutationFn
+      toast.success("Team member added successfully!");
+      // Optionally, you can perform actions like routing or refetching
+      // router.push("/team-members");
+     queryClient.invalidateQueries({ queryKey: ['membersTable'] })
+     },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      // Check if the error is an AxiosError and has a response
+      const errorMessage =
+        error.response?.data?.message ||
+        "An unexpected error occurred. Please try again.";
+      toast.error(errorMessage);
     },
   });
 

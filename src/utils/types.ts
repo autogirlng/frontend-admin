@@ -855,8 +855,8 @@ export type Member = {
   status: "active" | "inactive" | "successful" ;
 };
 export enum UserRole {
-  OperationManager = "OPERATION_MANAGER",
   Admin = "ADMIN",
+  OperationManager = "OPERATION_MANAGER",
   CustomerSupport = "CUSTOMER_SUPPORT",
   FinanceManager = "FINANCE_MANAGER",
   // SuperAdmin = "Super Admin",
@@ -871,6 +871,7 @@ export interface AddMemberPayload {
   country: string;
   email: string;
   userRole: UserRole;
+  isBusiness?: boolean;
 }
 
 export interface EditMemberPayload {

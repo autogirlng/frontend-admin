@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 import apiClient from "@/api/APIClient";
 import { AxiosError, AxiosResponse } from "axios";
 import { ApiRoutes } from "@/utils/ApiRoutes";
-import { headers } from "next/headers";
 
 // =============================================================================
 // TYPES
@@ -77,7 +76,7 @@ export const useOutskirtLocations = (
       return response.data;
     },
     // Query is always enabled now, since "ALL_STATES" is a valid filter
-    enabled: true, 
+    enabled: true,  
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
@@ -115,7 +114,7 @@ export const useUpdateOutskirtLocation = (): UseMutationResult<
   return useMutation<MutationResponse, AxiosError, UpdateOutskirtLocationPayload>({
     mutationFn: async (payload) => {
       const { id, ...data } = payload;
-      const response = await apiClient.post<MutationResponse>(`${ApiRoutes.outskirtLocations}/${id}`, data,);
+      const response = await apiClient.post<MutationResponse>(`${ApiRoutes.outskirtLocations}/update/${id}`, data,);
       return response.data;
     },
     onSuccess: () => {
@@ -133,7 +132,7 @@ export const useDeleteOutskirtLocation = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation<MutationResponse, AxiosError, string>({
     mutationFn: async (id) => {
-      const response = await apiClient.delete<MutationResponse>(`${ApiRoutes.outskirtLocations}/${id}`);
+      const response = await apiClient.post<MutationResponse>(`${ApiRoutes.outskirtLocations}/delete/${id}`);
       return response.data;
     },
     onSuccess: () => {
@@ -151,7 +150,7 @@ export const useToggleActiveStatus = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation<MutationResponse, AxiosError, string>({
     mutationFn: async (id) => {
-      const response = await apiClient.post(`${ApiRoutes.outskirtLocations}/${id}/toggle-active`);
+      const response = await apiClient.post(`${ApiRoutes.outskirtLocations}/toggle-active/${id}/`);
       return response.data;
     },
     onSuccess: () => {
