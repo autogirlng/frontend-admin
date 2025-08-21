@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import ProfileSettings from "./ProfileSettings"; // Ensure this path is correct
 import Team from "../tables/Team";
 import SecuritySettings from "./SecuritySettings";
+import RolePermissionsManager from "./RoleSettings";
 
 const ManageRolesSettingsWidget = () => (
   <div className="bg-white rounded-lg shadow-sm p-8 min-h-[200px] flex items-center justify-center text-grey-500">
@@ -21,7 +22,7 @@ const Settings = () => {
       case "Security":
         return <SecuritySettings />;
       case "Manage Roles":
-        return <ManageRolesSettingsWidget />;
+        return <RolePermissionsManager />;
       default:
         return <ProfileSettings />; // Fallback
     }
@@ -29,7 +30,6 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen font-inter">
-      {/* Navigation Tabs */}
       <nav className="mb-8">
         <ul className="flex space-x-8 md:space-x-32 border-b border-t pt-6 border-grey-200">
           {["Profile", "Team", "Security", "Manage Roles"].map((tab) => (

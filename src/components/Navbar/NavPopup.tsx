@@ -2,7 +2,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { popupNavItems, popupNavItemsHome } from "@/utils/data";
 import { getInitialsFromName } from "@/utils/functions";
-import { useAppSelector } from "@/lib/hooks";
 import { HorizontalDivider } from "../shared/divider";
 import { AvatarImage } from "../shared/avatar";
 import MobileNavItem from "@/components/Navbar/MobileNavItem";

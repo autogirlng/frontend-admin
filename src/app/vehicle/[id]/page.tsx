@@ -61,6 +61,8 @@ export default function VehiclePage() {
     id: id,
   });
 
+  console.log('images', vehicleImages);
+
   useEffect(() => {
     if (!id) {
       router.push(LocalRoute.fleetPage);

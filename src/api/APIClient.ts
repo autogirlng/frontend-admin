@@ -9,7 +9,8 @@ const apiClient = axios.create({
 
 // Optionally add interceptors for auth tokens
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token"); // Adjust based on auth strategy
+  const token = localStorage.getItem("user_token");
+   console.log('token',token);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });

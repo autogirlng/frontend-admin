@@ -152,7 +152,7 @@ export default function HostMobileRow({ items }: { items: Member }) {
       />
       <MobileTableCell title="Location" content={items?.location ?? "-"} />
 
-      <MobileTableCell title="Status" content={items?.status} isBadge />
+      <MobileTableCell title="Status" content={items?.status} isBadge={true} />
     </div>
   );
 }

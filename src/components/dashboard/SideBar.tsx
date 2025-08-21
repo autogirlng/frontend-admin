@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { SvgAsset } from "@/utils/SvgAssets";
 import { LocalRoute } from "@/utils/LocalRoutes";
+import { ImageAssets } from "@/utils/ImageAssets";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle, currentPage }) => {
       >
         {/* Logo and Close Button */}
         <div className="flex justify-between items-center sm:mb-8">
-          <Image src="/images/logo.png" width={130} height={130} alt="Logo" />
+          <Image src={ImageAssets.logo} width={130} height={130} alt="Logo" />
           <button onClick={toggle} className="text-gray-800 sm:hidden">
             <FiX size={26} className="text-black" />
           </button>

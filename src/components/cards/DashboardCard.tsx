@@ -44,7 +44,7 @@ const MetricCard = ({
       </div>
 
       {/* Main Value */}
-      <p className="text-[24px] font-bold text-[#101828]">{value}</p>
+      <p className="text-[15px] font-bold text-[#101828]">{value}</p>
 
       {/* Subtext */}
       {sub && <p className="text-xs text-[#667085]">{sub}</p>}

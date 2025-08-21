@@ -43,7 +43,7 @@ export default function useListingsActions(
   });
 
   const moveListingToDraft = useMutation({
-    mutationFn: () => http.put(`/api/listings/draft/${id}`),
+    mutationFn: () => http.put(`/listings/draft/${id}`),
 
     onSuccess: (data) => {
       console.log("Move Listing to Draft successful", data);
@@ -63,7 +63,7 @@ export default function useListingsActions(
   });
 
   const deleteListing = useMutation({
-    mutationFn: () => http.delete(`/api/listings/${id}`),
+    mutationFn: () => http.delete(`/listings/${id}`),
 
     onSuccess: (data) => {
       console.log("Delete Listing successful", data);
@@ -84,7 +84,7 @@ export default function useListingsActions(
 
   const updateListingStatusToBooked = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, { vehicleStatus: VehicleStatus.PENDING }), // or another allowed value if 'booked' is not allowed
+      http.put(`/listings/status/${id}`, { status: VehicleStatus.BOOKED }),
 
     onSuccess: (data) => {
       console.log("Update Listing status to booked successful", data);
@@ -102,7 +102,7 @@ export default function useListingsActions(
 
   const updateListingStatusToAvaliable = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, { vehicleStatus: VehicleStatus.ACTIVE }),
+      http.put(`/listings/status/${id}`, { status: VehicleStatus.ACTIVE }),
 
     onSuccess: (data) => {
       console.log("Update Listing status to available successful", data);
@@ -121,7 +121,7 @@ export default function useListingsActions(
 
   const updateListingStatusToMaintenance = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, {
+      http.put(`/listings/status/${id}`, {
         status: VehicleStatus.MAINTENANCE,
       }),
 
@@ -141,7 +141,7 @@ export default function useListingsActions(
 
   const updateListingStatusToUnavaliable = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, {
+      http.put(`/listings/status/${id}`, {
         status: VehicleStatus.UNAVAILABLE,
       }),
 

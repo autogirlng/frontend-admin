@@ -1,50 +1,59 @@
-// src/components/tables/Team/Details/modals/AddNewMember.tsx
+// src/components/tables/Team/Details/modals/DeactivateMember.tsx
+
 "use client";
 import React, { ReactNode } from "react";
 import { BlurredDialog } from "@/components/shared/dialog";
 import Button from "@/components/shared/button";
-import SelectInput from "@/components/shared/select";
 import Image from "next/image";
-import { UserRole } from "@/utils/types";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import Icons from "@/utils/Icon";
-import useChangeRole from "../../hooks/useChangeRole";
 import InputField from "@/components/shared/inputField";
 import useDeactivateMember from "../../hooks/useDeactivateMember";
+import { ImageAssets } from "@/utils/ImageAssets";
 
-interface DeactivateMemberData {
-  password: string;
+// Assuming you have a type for your full team member data
+interface TeamMemberData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImage?: string;
 }
 
-type ChangeRolerProps = {
+interface DeactivateMemberData {
+  blockedReason: string;
+}
+
+type DeactivateMemberProps = {
   openModal: boolean;
   handleModal: (value: boolean) => void;
   trigger: ReactNode;
+  member: TeamMemberData; // Now accepting the member object
 };
 
 const DeactivateMemberModal = ({
   trigger,
   openModal,
   handleModal,
-}: ChangeRolerProps) => {
-  const { deactivateMember, isLoading, isSuccess, isError } =
-    useDeactivateMember();
+  member,
+}: DeactivateMemberProps) => {
+  const { deactivateMember, isLoading, isSuccess } = useDeactivateMember();
 
   React.useEffect(() => {
     if (isSuccess) {
-      handleModal(false); // Close modal on success
-      // You might want to reset the form here
+      handleModal(false);
     }
   }, [isSuccess, handleModal]);
 
-  const handleSubmitFormik = (values: DeactivateMemberData) => {
-    const payload: DeactivateMemberData = {
-      ...values,
-      password: values.password,
-    };
-    deactivateMember({ password: payload.password });
-  };
+  const handleSubmitFormik = React.useCallback(
+    (values: DeactivateMemberData) => {
+      deactivateMember({
+        memberId: member.id, // Pass the member's ID
+        blockedReason: values.blockedReason,
+      });
+    },
+    [member, deactivateMember]
+  );
 
   return (
     <BlurredDialog
@@ -52,14 +61,14 @@ const DeactivateMemberModal = ({
       onOpenChange={handleModal}
       trigger={trigger}
       width="max-w-2xl"
-      title="Deactivate Admin "
+      title="Deactivate Team Member"
       content={
         <DeactivateMemberContent
           handleModal={handleModal}
-          // Pass the mutation function as onSubmit
           onSubmit={handleSubmitFormik}
-          isLoading={isLoading} // Combine parent loading with mutation loading
-          isMutationSuccess={isSuccess} // Pass success state to content if needed
+          isLoading={isLoading}
+          isMutationSuccess={isSuccess}
+          member={member} // Pass the member object to the content component
         />
       }
     />
@@ -70,9 +79,10 @@ export default DeactivateMemberModal;
 
 type DeactivateMemberContentProps = {
   handleModal: (value: boolean) => void;
-  onSubmit: (data: DeactivateMemberData) => void; // This is now the hook's mutation trigger
+  onSubmit: (data: DeactivateMemberData) => void;
   isLoading: boolean;
-  isMutationSuccess?: boolean; // Optional: to reset form when mutation succeeds
+  isMutationSuccess?: boolean;
+  member: TeamMemberData;
 };
 
 const DeactivateMemberContent = ({
@@ -80,22 +90,23 @@ const DeactivateMemberContent = ({
   onSubmit,
   isLoading,
   isMutationSuccess,
+  member,
 }: DeactivateMemberContentProps) => {
   const validationSchema = Yup.object({
-    password: Yup.string().required("Password is required"), // Corresponds to userRole in payload
+    blockedReason: Yup.string().required("Reason is required"),
   });
 
   const formik = useFormik<DeactivateMemberData>({
     initialValues: {
-      password: "",
+      blockedReason: "",
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
       onSubmit(values);
     },
+    enableReinitialize: true,
   });
 
-  // Reset form when mutation is successful
   React.useEffect(() => {
     if (isMutationSuccess) {
       formik.resetForm();
@@ -104,35 +115,35 @@ const DeactivateMemberContent = ({
 
   return (
     <div className="w-full max-w-xl">
-      <form onSubmit={formik.handleSubmit} className="space-y-2">
+      <div className="flex flex-col items-center justify-center space-y-4 mb-4">
         <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-orange-500">
-          {/* Use the 'avatar' property from the member object.
-                Provide a fallback if avatar is not present or invalid. */}
           <Image
-            src={"/images/default-avatar.png"} // Use member.avatar, with a default fallback
-            alt={` avatar`}
+            src={member?.profileImage || ImageAssets.icons.user}
+            alt={`${member.firstName} avatar`}
             layout="fill"
             objectFit="cover"
             className="rounded-full"
             priority
-            onError={(e) => {
-              {
-                Icons;
-              }
-            }}
+            onError={(e) => {}} // Handle image loading errors
           />
         </div>
+        <div className="text-center">
+          <h3 className="font-semibold">{`${member.firstName} ${member.lastName}`}</h3>
+          <p className="text-sm text-gray-500">{member.email}</p>
+        </div>
+      </div>
+      <form onSubmit={formik.handleSubmit} className="space-y-2">
         <InputField
-          name="password"
-          id="password"
-          label="Password"
-          placeholder="Enter Your Password "
-          value={formik.values.password}
+          name="blockedReason"
+          id="blockedReason"
+          label="Reason for Deactivation"
+          placeholder="Enter reason for deactivating this member"
+          value={formik.values.blockedReason}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           error={
-            formik.touched.password && formik.errors.password
-              ? formik.errors.password
+            formik.touched.blockedReason && formik.errors.blockedReason
+              ? formik.errors.blockedReason
               : ""
           }
           required
@@ -154,7 +165,7 @@ const DeactivateMemberContent = ({
             loading={isLoading}
             disabled={isLoading}
           >
-            Change Role
+            Deactivate Member
           </Button>
         </div>
       </form>

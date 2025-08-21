@@ -121,9 +121,15 @@ export const withdrawalAccountSchema = object().shape({
 export const basicVehicleInformationSchema = object().shape({
   listingName: string().required("Vehicle name is required"),
   location: string().required("City is required"),
+  latitude: string().required(
+    "Latitude is missing. Please select an address from the list."
+  ),
+  longitude: string().required(
+    "Longitude is missing. Please select an address from the list."
+  ),
   address: string().required("Address is required"),
   vehicleType: string().required("Please select vehicle type"),
-  make: string().required("Please selecm"),
+  make: string().required("Please select vehicle make"),
   model: string().required("Please select vehicle model"),
   yearOfRelease: string().required("Please select year of release"),
   hasInsurance: string().required("Please select insurance status"),

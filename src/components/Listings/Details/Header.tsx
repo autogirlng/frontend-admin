@@ -19,16 +19,23 @@ type Props = {
 
 export default function ListingDetailsHeader({ name, status, id }: Props) {
   const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
-  const [openDeactivateModal, setOpenDeactivateModal] =
-    useState<boolean>(false);
+  const [openDeactivateModal, setOpenDeactivateModal] = useState<boolean>(false);
+  const [openPopup, setOpenPopup] = useState<boolean>(false);
 
   const handleDeleteModal = () => {
     setOpenDeleteModal(!openDeleteModal);
+    setOpenPopup(false); // Close popup when opening modal
   };
 
   const handleDeactivateModal = () => {
     setOpenDeactivateModal(!openDeactivateModal);
+    setOpenPopup(false); // Close popup when opening modal
   };
+
+  const handleEditClick = () => {
+    setOpenPopup(false); // Close popup when navigating
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex justify-between gap-2">
@@ -38,6 +45,8 @@ export default function ListingDetailsHeader({ name, status, id }: Props) {
             {Icons.ic_calendar}
           </div>
           <Popup
+            isOpen={openPopup}
+            handleIsOpen={setOpenPopup}
             trigger={
               <button
                 className={
@@ -57,6 +66,7 @@ export default function ListingDetailsHeader({ name, status, id }: Props) {
                     <Link
                       href={`${LocalRoute.vehicleOnboardingPage}?id=${id}`}
                       className="!text-xs 3xl:!text-base"
+                      onClick={handleEditClick}
                     >
                       Edit listing
                     </Link>
@@ -99,6 +109,7 @@ export default function ListingDetailsHeader({ name, status, id }: Props) {
                     <Link
                       href={`/listings/view-as-customer/${id}`}
                       className="!text-xs 3xl:!text-base "
+                      onClick={handleEditClick}
                     >
                       View as customer
                     </Link>
