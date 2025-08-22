@@ -1,3 +1,4 @@
+// useAvailabilityAndPricingForm.ts
 "use client";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
@@ -34,17 +35,24 @@ export default function useAvailabilityAndPricingForm({
       vehicle.outskirtsLocation.length > 0
   );
 
+  // NEW: State for extreme areas visibility
+  const [showExtremeAreas, setShowExtremeAreas] = useState<boolean>(
+    Array.isArray(vehicle?.extremeAreasLocation) &&
+      vehicle.extremeAreasLocation.length > 0
+  );
+
   const [showDiscounts, setShowDiscounts] = useState<boolean>(
-    Array.isArray(vehicle?.outskirtsLocation) &&
-      vehicle.outskirtsLocation.length > 0
+    !!(
+      vehicle?.pricing?.discounts?.[0]?.percentage ||
+      vehicle?.pricing?.discounts?.[1]?.percentage ||
+      vehicle?.pricing?.discounts?.[2]?.percentage
+    )
   );
 
   const initialValues: AvailabilityAndPricingValues = {
     advanceNoticeInDays: vehicle?.tripSettings?.advanceNotice || "",
     minTripDurationInDays: "1 day",
     maxTripDurationInDays: vehicle?.tripSettings?.maxTripDuration || "",
-    // selfDrive: "",
-
     driverProvided:
       vehicle?.tripSettings?.provideDriver === undefined ||
       vehicle?.tripSettings?.provideDriver === null
@@ -52,7 +60,6 @@ export default function useAvailabilityAndPricingForm({
         : vehicle?.tripSettings?.provideDriver
         ? "yes"
         : "no",
-
     fuelProvided:
       vehicle?.tripSettings?.fuelProvided === undefined ||
       vehicle?.tripSettings?.fuelProvided === null
@@ -68,10 +75,12 @@ export default function useAvailabilityAndPricingForm({
     thirtyDaysDiscount: `${vehicle?.pricing?.discounts[2]?.percentage || ""}`,
     outskirtsLocation: vehicle?.outskirtsLocation || [],
     outskirtsPrice: `${vehicle?.outskirtsPrice || ""}`,
+    // NEW: Add initial values for extreme areas
+    extremeAreasLocation: vehicle?.extremeAreasLocation || [],
+    extremeAreaPrice: `${vehicle?.extremeAreaPrice || ""}`,
   };
 
   const mapValuesToApiPayload = (values: AvailabilityAndPricingValues) => {
-    // Helper function to remove commas and parse float
     const parseNumericValue = (value: string) => {
       const cleanValue = stripNonNumeric(value).replace(/,/g, "");
       return parseFloat(cleanValue) || 0;
@@ -108,6 +117,9 @@ export default function useAvailabilityAndPricingForm({
       },
       outskirtsLocation: values.outskirtsLocation,
       outskirtsPrice: parseFloat(stripNonNumeric(values.outskirtsPrice)),
+      // NEW: Add extreme area fields to the API payload
+      extremeAreasLocation: values.extremeAreasLocation,
+      extremeAreaPrice: parseNumericValue(values.extremeAreaPrice),
     };
   };
   const { host } = useAppSelector((state) => state.host);
@@ -121,18 +133,14 @@ export default function useAvailabilityAndPricingForm({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
         `${ApiRoutes.vehicleOnboarding}/${hostId}/step4/${vehicle?.id}`,
-
         values
       ),
-
     onSuccess: (data) => {
-      console.log("Vehicle Onboarding Step 4 Saved", data);
       dispatch(
         updateVehicleInformation({ ...vehicle, ...data } as VehicleInformation)
       );
       router.push(LocalRoute.fleetPage);
     },
-
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 4"),
   });
@@ -140,12 +148,9 @@ export default function useAvailabilityAndPricingForm({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
         `${ApiRoutes.vehicleOnboarding}/${hostId}/step4/${vehicle?.id}`,
-
         values
       ),
-
     onSuccess: (data) => {
-      console.log("Vehicle Onboarding Step 4 Submitted", data);
       dispatch(
         updateVehicleInformation(
           // @ts-ignore
@@ -154,7 +159,6 @@ export default function useAvailabilityAndPricingForm({
       );
       setCurrentStep(currentStep + 1);
     },
-
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 4"),
   });
@@ -169,5 +173,8 @@ export default function useAvailabilityAndPricingForm({
     setShowOuskirts,
     showDiscounts,
     setShowDiscounts,
+    // NEW: Export extreme area state and setter
+    showExtremeAreas,
+    setShowExtremeAreas,
   };
 }

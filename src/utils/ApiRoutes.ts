@@ -8,7 +8,7 @@ export const ApiRoutes = {
   getAllAdmin: "/user/all",
   getAllAdminTeam: "/team/all",
   addNewMember: "/auth/createUser",
-  adminUser:"/user/admin",
+  adminUser: "/user/admin",
   // VEHICLE ONBOARDING
   vehicleOnboardingTable: "/admin/vehicle-onboarding-list",
   vehicleOnboardingStats: "/api",
@@ -34,7 +34,8 @@ export const ApiRoutes = {
 
   // VEHICLE
   fetchVehicle: "/listings/details",
-  outskirtLocations:'/outskirt-locations'
+  outskirtLocations: "/outskirt-locations",
+  extremeAreas: "/extreme-areas",
 };
 
 export const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";

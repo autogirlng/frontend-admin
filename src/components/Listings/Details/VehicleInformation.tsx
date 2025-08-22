@@ -86,6 +86,12 @@ export default function VehicleInformation({ listingDetails }: Props) {
               listingDetails?.outskirtsPrice || "-"
             )}`}
           />
+          <PricingSection
+            text="Extreme Area"
+            value={`NGN ${formatNumberWithCommas(
+              listingDetails?.extremeAreaPrice || "-"
+            )}`}
+          />
         </div>
       </VehicleDetailsSection>
       <VehicleDetailsSection title="Discounts">
