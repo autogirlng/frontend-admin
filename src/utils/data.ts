@@ -467,6 +467,7 @@ export const vehicleModelsOptions: OptionType[] = [
   { value: "Panda", option: "Panda" },
   { value: "Passat", option: "Passat" },
   { value: "Patriot", option: "Patriot" },
+  { value: "Pardo", option: "Pardo" },
   { value: "Phantom", option: "Phantom" },
   { value: "Pilot", option: "Pilot" },
   { value: "Portofino", option: "Portofino" },
@@ -619,7 +620,7 @@ export const citiesOptions: OptionType[] = [
 ];
 
 export enum State {
-  ABUJA_FCT = "Abuja FCT",
+  ABUJA_FCT = "Abuja_FCT",
   ABIA = "Abia",
   ADAMAWA = "Adamawa",
   AKWA_IBOM = "Akwa Ibom",
