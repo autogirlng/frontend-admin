@@ -620,7 +620,7 @@ export const citiesOptions: OptionType[] = [
 ];
 
 export enum State {
-  ABUJA_FCT = "Abuja_FCT",
+  ABUJA_FCT = "Abuja FCT",
   ABIA = "Abia",
   ADAMAWA = "Adamawa",
   AKWA_IBOM = "Akwa Ibom",
