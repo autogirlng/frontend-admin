@@ -15,4 +15,24 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+export const createCustomer = async (data: {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  countryCode: string;
+  country: string;
+  email: string;
+  userRole: string;
+  isBusiness: boolean;
+  businessLogo: string;
+  businessName: string;
+  businessAddress: string;
+  businessPhoneNumber: string;
+  businessEmail: string;
+  onBoardedBy: string;
+  mouDocument: string;
+}) => {
+  return apiClient.post('/auth/createUser', data);
+};
+
 export default apiClient;

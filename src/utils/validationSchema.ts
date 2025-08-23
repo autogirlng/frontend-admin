@@ -148,16 +148,14 @@ export const addtionalVehicleInformationSchema = object().shape({
 });
 
 export const documentVehicleInformationSchema = object().shape({
-  proofOfOwnership: mixed().required("Proof of ownership is required."),
+  proofOfOwnership: mixed().optional(),
   vehicleRegistration: mixed().required(
     "Vehicle registration document is required."
   ),
   insuranceCertificate: mixed().required("Insurance certificate is required."),
-  vehicleInspectionReport: mixed().required(
-    "Vehicle inspection report is required."
-  ),
+  vehicleInspectionReport: mixed().optional(),
   maintenanceHistory: mixed().optional(),
-  authorizationLetter: mixed().required("Authorization letter is required."),
+  authorizationLetter: mixed().optional(),
 });
 export const vehiclePhotosSchema = object().shape({
   frontView: string().required("Please upload Front view image"),
