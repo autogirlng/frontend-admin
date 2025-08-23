@@ -697,6 +697,7 @@ export const stateOptions: OptionType[] = [
   { value: State.TARABA, option: State.TARABA },
   { value: State.YOBE, option: State.YOBE },
   { value: State.ZAMFARA, option: State.ZAMFARA },
+
 ];
 
 export const yesOrNoOptions: OptionType[] = [
@@ -711,7 +712,6 @@ export const vehicleAvailabilityOptions: OptionType[] = [
   { value: "4 days", option: "4 days" },
   { value: "5 days", option: "5 days" },
   { value: "6 days", option: "6 days" },
-
   { value: "1 week", option: "1 week" },
   { value: "2 weeks", option: "2 weeks" },
   { value: "3 weeks", option: "3 weeks" },

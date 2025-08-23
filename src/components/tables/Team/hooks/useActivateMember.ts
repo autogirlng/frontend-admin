@@ -1,9 +1,8 @@
 // src/components/tables/Team/hooks/useActivateMember.ts
 "use client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHttp } from "@/utils/useHttp";
 import { toast } from "react-toastify";
-import { queryClient } from "@/api/QueryClient";
 
 // Define the payload type, which is just the member ID
 interface ActivatePayload {
@@ -12,6 +11,7 @@ interface ActivatePayload {
 
 export default function useActivateMember() {
   const http = useHttp();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (payload: ActivatePayload) =>
@@ -19,8 +19,10 @@ export default function useActivateMember() {
     onSuccess: () => {
       toast.success("Team member activated successfully!");
       // You can add logic to invalidate queries for the team list
-   queryClient.invalidateQueries({ queryKey: ['membersTable'] })
-    },
+      queryClient.invalidateQueries({ 
+        queryKey: ['membersTable'],
+        exact: false // This ensures all queries starting with 'membersTable' are invalidated
+      });   },
     onError: (error) => {
       toast.error(error.message || "An error occurred during activation.");
     },

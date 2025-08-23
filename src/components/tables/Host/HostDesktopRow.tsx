@@ -38,11 +38,15 @@ export default function HostDesktopRow({ items }: { items: Member }) {
         className="!text-grey-900 text-wrap !font-medium"
       />
 
-      {/* Full name (First Name + Last Name or Business Name) */}
-      <TableCell
-        className="text-wrap"
-        content={`${items?.firstName ?? ""} ${items?.lastName ?? ""}`}
-      />
+      {/* Full name (First Name + Last Name or Business Name) - Clickable */}
+      <td className="px-6 py-[26px] whitespace-nowrap w-fit text-sm text-grey-700 text-wrap">
+        <Link
+          href={`${LocalRoute.hostPage}/${hostId}`}
+          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+        >
+          {`${items?.firstName ?? ""} ${items?.lastName ?? ""}`}
+        </Link>
+      </td>
 
       {/* Phone Number */}
       <TableCell className="text-wrap" content={items?.phoneNumber ?? "-"} />

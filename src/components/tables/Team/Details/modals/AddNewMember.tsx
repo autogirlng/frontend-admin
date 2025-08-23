@@ -131,11 +131,47 @@ const AddTeamMemberContent = React.memo(
       },
     });
 
+    // FIX: Use formik.resetForm directly, not formik in dependency array
     React.useEffect(() => {
       if (isMutationSuccess) {
         formik.resetForm();
       }
-    }, [isMutationSuccess, formik]);
+    }, [isMutationSuccess]); // Removed formik from dependency array
+
+    // Memoize the phone number change handler to prevent re-renders
+    const handlePhoneNumberChange = React.useCallback(
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        const number = replaceCharactersWithString(event.target.value);
+        formik.setFieldTouched("phoneNumber", true);
+        formik.setFieldValue("phoneNumber", number);
+      },
+      [formik.setFieldTouched, formik.setFieldValue]
+    );
+
+    // Memoize the country change handler to prevent re-renders
+    const handleCountryChange = React.useCallback(
+      (value: string) => {
+        formik.setFieldTouched("country", true);
+        formik.setFieldValue("country", value);
+        try {
+          const callingCode = `+${getCountryCallingCode(value as any)}`;
+          formik.setFieldValue("countryCode", callingCode);
+        } catch (e) {
+          console.error("Error getting country calling code:", e);
+          formik.setFieldValue("countryCode", "");
+        }
+      },
+      [formik.setFieldTouched, formik.setFieldValue]
+    );
+
+    // Memoize the role change handler to prevent re-renders
+    const handleRoleChange = React.useCallback(
+      (value: string) => {
+        formik.setFieldTouched("userRole", true);
+        formik.setFieldValue("userRole", value);
+      },
+      [formik.setFieldTouched, formik.setFieldValue]
+    );
 
     return (
       <div className="w-full max-w-xl">
@@ -198,22 +234,8 @@ const AddTeamMemberContent = React.memo(
             selectPlaceholder="+234"
             inputValue={formik.values.phoneNumber}
             selectValue={formik.values.country}
-            inputOnChange={(event) => {
-              const number = replaceCharactersWithString(event.target.value);
-              formik.setFieldTouched("phoneNumber", true);
-              formik.setFieldValue("phoneNumber", number);
-            }}
-            selectOnChange={(value: string) => {
-              formik.setFieldTouched("country", true);
-              formik.setFieldValue("country", value);
-              try {
-                const callingCode = `+${getCountryCallingCode(value as any)}`;
-                formik.setFieldValue("countryCode", callingCode);
-              } catch (e) {
-                console.error("Error getting country calling code:", e);
-                formik.setFieldValue("countryCode", "");
-              }
-            }}
+            inputOnChange={handlePhoneNumberChange}
+            selectOnChange={handleCountryChange}
             inputOnBlur={formik.handleBlur}
             selectOnBlur={formik.handleBlur}
             selectClassname="!w-[130px]"
@@ -235,10 +257,7 @@ const AddTeamMemberContent = React.memo(
             placeholder="Select role"
             options={roleOptions}
             value={formik.values.userRole}
-            onChange={(value) => {
-              formik.setFieldTouched("userRole", true);
-              formik.setFieldValue("userRole", value);
-            }}
+            onChange={handleRoleChange}
             error={
               formik.touched.userRole && formik.errors.userRole
                 ? formik.errors.userRole

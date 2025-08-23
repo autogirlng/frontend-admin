@@ -15,7 +15,6 @@ export interface HostOnboardingFormValues {
   businessCountryCode: string; // New field, conditional (for business phone)
   businessEmail: string; // New field, conditional
   mou: File | null;
-  onboardedBy: string;
 }
 
 export const hostOnboardingValues: HostOnboardingFormValues = {
@@ -34,5 +33,4 @@ export const hostOnboardingValues: HostOnboardingFormValues = {
   businessCountryCode: "",
   businessEmail: "",
   mou: null,
-  onboardedBy: "",
 };

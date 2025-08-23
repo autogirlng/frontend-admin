@@ -31,6 +31,5 @@ export const hostFormValidationSchema = Yup.object().shape({
       is: true,
       then: (schema) => schema.required("Business email is required"),
     }),
-  onboardedBy: Yup.string().required("Onboarded By is required"),
   mou: Yup.mixed().nullable(), // For file uploads, validation might be more complex
 });

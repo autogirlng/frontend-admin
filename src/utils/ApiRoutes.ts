@@ -13,6 +13,7 @@ export const ApiRoutes = {
   vehicleOnboardingTable: "/admin/vehicle-onboarding-list",
   vehicleOnboardingStats: "/api",
   vehicleOnboarding: "/admin/onboard",
+  vehicleOnboardingStatus: "/listings/status",
   // FETCH NOTIFICATION
   notification: "/notifications",
   // HOST
