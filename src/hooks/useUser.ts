@@ -27,7 +27,7 @@ export default function useUser() {
 
   const getUser = useQuery({
     queryKey: ["getUser"],
-    queryFn: () => http.get<User>("/api/user"),
+    queryFn: () => http.get<User>("/user"),
     enabled: !!userToken,
     retry: 1,
   });

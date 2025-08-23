@@ -243,6 +243,8 @@ export interface AvailabilityAndPricingValues {
   thirtyDaysDiscount: string;
   outskirtsLocation: string[];
   outskirtsPrice: string;
+  extremeAreaPrice: string;
+  extremeAreasLocation: string[];
 }
 
 // <================= STATUS =================>// src/utils/types/status.ts
@@ -639,6 +641,8 @@ export interface VehicleInformation {
   pricing: Pricing;
   outskirtsLocation?: string[];
   outskirtsPrice?: number;
+  extremeAreasLocation?: string[];
+  extremeAreaPrice?: number;
   status: ListingStatus;
   vehicleStatus: VehicleStatus;
   userId: string;
@@ -706,6 +710,8 @@ export interface ListingInformation {
   numberOfSeats: number;
   outskirtsLocation?: string[];
   outskirtsPrice?: number;
+  extremeAreasLocation?: string[];
+  extremeAreaPrice?: number;
   status: ListingStatus;
   userId: string;
   createdAt: string;

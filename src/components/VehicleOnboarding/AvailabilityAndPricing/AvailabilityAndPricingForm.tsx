@@ -17,6 +17,7 @@ import { availabilityAndPricingSchema } from "@/utils/validationSchema";
 import Tooltip from "@/components/shared/tooltip";
 import { useState } from "react";
 import { useOutskirtLocations } from "./useOutskirtLocation";
+import { useExtremeAreas } from "./useExtremeAreas";
 import { Spinner } from "@/components/shared/spinner";
 
 type Props = {
@@ -37,6 +38,8 @@ const AvailabilityAndPricingForm = ({
     initialValues,
     showOuskirts,
     setShowOuskirts,
+    showExtremeAreas,
+    setShowExtremeAreas,
   } = useAvailabilityAndPricingForm({ currentStep, setCurrentStep });
   const [showDiscount, setShowDiscount] = useState(
     Boolean(
@@ -46,12 +49,17 @@ const AvailabilityAndPricingForm = ({
     )
   );
 
-
-  const { 
-    data: outskirtLocations, 
-    isLoading, 
-    error 
+  const {
+    data: outskirtLocations,
+    isLoading,
+    error,
   } = useOutskirtLocations(showOuskirts);
+
+  const {
+    data: extremeAreas,
+    isLoading: isExtremeAreasLoading,
+    error: extremeAreasError,
+  } = useExtremeAreas(showExtremeAreas);
 
   return (
     <Formik
@@ -363,7 +371,7 @@ const AvailabilityAndPricingForm = ({
             )}
           </div>
 
-  <div>
+          <div>
             <div className="flex justify-between gap-3">
               <p className="text-h6 3xl:text-h5 font-medium text-black flex justify-between items-center gap-1">
                 Do you charge extra for outskirt locations?
@@ -416,9 +424,13 @@ const AvailabilityAndPricingForm = ({
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-8">
                     {/* Render different states based on the query status */}
-                    {isLoading && <Spinner/>}
-                    {error && <p className="text-error-500">Failed to load locations.</p>}
-                    
+                    {isLoading && <Spinner />}
+                    {error && (
+                      <p className="text-error-500">
+                        Failed to load locations.
+                      </p>
+                    )}
+
                     {/* Map over the fetched data from the hook */}
                     {outskirtLocations?.map((location) => (
                       <GroupCheckBox
@@ -437,6 +449,87 @@ const AvailabilityAndPricingForm = ({
                               (value) => value !== feature
                             );
                             setFieldValue("outskirtsLocation", newValues);
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex justify-between gap-3">
+              <p className="text-h6 3xl:text-h5 font-medium text-black flex justify-between items-center gap-1">
+                Do you charge extra for extreme areas?
+                <Tooltip
+                  title="Do you charge extra for extreme areas?"
+                  description="Specify if you charge an additional fee for trips to locations considered extreme, such as areas with difficult terrain or remote zones."
+                />
+              </p>
+              <AppSwitch
+                id="extremeAreas"
+                name="extremeAreas"
+                value={showExtremeAreas}
+                onChange={(checked) => {
+                  setShowExtremeAreas(checked);
+                  if (!checked) {
+                    setFieldValue("extremeAreaPrice", "");
+                    setFieldValue("extremeAreasLocation", []);
+                  }
+                }}
+              />
+            </div>
+            {showExtremeAreas && (
+              <div className="space-y-8">
+                <OutskirtRow
+                  rateName="extremeAreaPrice"
+                  rateUnit="/day"
+                  regularFeeName="regularFeeExtreme"
+                  guestWillSeeName="guestWillSeeExtreme"
+                  rateValue={values.extremeAreaPrice}
+                  errors={errors}
+                  touched={touched}
+                  handleChange={handleChange}
+                  handleBlur={handleBlur}
+                  dailyRateValue={values.dailyRate}
+                />
+                <div className="space-y-3">
+                  <label
+                    htmlFor="extreme-locations"
+                    className="text-sm block font-medium text-black"
+                  >
+                    Extreme Areas
+                  </label>
+                  <p className="text-sm text-grey-600">
+                    Uncheck locations you do not want to visit with your vehicle
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-8">
+                    {isExtremeAreasLoading && <Spinner />}
+                    {extremeAreasError && (
+                      <p className="text-error-500">
+                        Failed to load extreme areas.
+                      </p>
+                    )}
+                    {extremeAreas?.map((location) => (
+                      <GroupCheckBox
+                        key={location.id}
+                        feature={location.name}
+                        checkedValues={values.extremeAreasLocation}
+                        onChange={(feature: string, isChecked: boolean) => {
+                          if (isChecked) {
+                            const newValues = [
+                              ...values.extremeAreasLocation,
+                              feature,
+                            ];
+                            setFieldValue("extremeAreasLocation", newValues);
+                          } else {
+                            const newValues =
+                              values.extremeAreasLocation.filter(
+                                (value) => value !== feature
+                              );
+                            setFieldValue("extremeAreasLocation", newValues);
                           }
                         }}
                       />
