@@ -38,8 +38,10 @@ export default function useEditMember() {
     onSuccess: (data) => {
       toast.success("Team member updated successfully!");
       // Invalidate the query for the team members list to refetch fresh data
-      queryClient.invalidateQueries({ queryKey: ["membersTable"] });
-    },
+        queryClient.invalidateQueries({ 
+        queryKey: ['membersTable'],
+        exact: false // This ensures all queries starting with 'membersTable' are invalidated
+      }); },
     onError: (error) => {
       toast.error(error.message || "Failed to update team member.");
     },

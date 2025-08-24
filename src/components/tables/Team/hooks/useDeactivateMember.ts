@@ -1,10 +1,9 @@
 // src/hooks/useDeactivateMember.ts
 
 "use client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHttp } from "@/utils/useHttp";
 import { toast } from "react-toastify";
-import { queryClient } from "@/api/QueryClient";
 
 // Define the payload type for clarity
 interface DeactivatePayload {
@@ -14,6 +13,7 @@ interface DeactivatePayload {
 
 export default function useDeactivateMember() {
   const http = useHttp();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (payload: DeactivatePayload) =>
@@ -22,8 +22,11 @@ export default function useDeactivateMember() {
       }),
     onSuccess: (data) => {
       toast.success("Team member deactivated successfully!");
-      // You can also add logic here to invalidate queries for the team list
-      queryClient.invalidateQueries({ queryKey: ['membersTable'] })
+      // Invalidate and refetch table data
+      queryClient.invalidateQueries({ 
+        queryKey: ['membersTable'],
+        exact: false
+      });
     },
     onError: (error) => {
       toast.error(error.message);

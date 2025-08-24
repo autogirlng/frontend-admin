@@ -36,8 +36,8 @@ export const useBlockUser = () => {
     mutationFn: blockUserRequest,
     onSuccess: () => {
       toast.success("User blocked successfully!");
-      queryClient.invalidateQueries({ queryKey: ["hosts"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] }); // If you have a general users list
+      queryClient.invalidateQueries({ queryKey: ["hosttable"] });
+      queryClient.invalidateQueries({ queryKey: ["hostDetails"] });
     },
     onError: (error: any) => {
       console.error("Failed to block user via Tanstack Query:", error);
