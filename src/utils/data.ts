@@ -61,6 +61,11 @@ export const dashboardNavItems = [
     name: "Outskirt Location",
     link: LocalRoute.outskirtLocationPage,
   },
+  {
+    icon: Icons.ic_location,
+    name: "Extreme Areas",
+    link: LocalRoute.extremeAreasPage,
+  },
 ];
 
 export const popupNavItems = [
