@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks"; // Assuming these are your Redux hooks
 import { handleErrors } from "@/utils/functions"; // Utility for error handling
@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { UserRole } from "@/utils/types"; // Import UserRole from your types/enums
 import { toast } from "react-toastify";
 import apiClient from "@/api/APIClient";
-import { queryClient } from "@/api/QueryClient";
 
 interface AddMemberResponse {
   id: string; // Assuming the API returns the ID of the newly created user
@@ -26,6 +25,7 @@ export default function useAddMember() {
   const http = useHttp(); // You can use this instead of apiClient if it's your intended pattern
   const router = useRouter();
   const dispatch = useAppDispatch(); // If you need to dispatch anything after success
+  const queryClient = useQueryClient();
 
   const addMemberMutation = useMutation({
     mutationFn: async (newMemberData: AddMemberPayload) => {
@@ -43,12 +43,15 @@ export default function useAddMember() {
       toast.success("Team member added successfully!");
       // Optionally, you can perform actions like routing or refetching
       // router.push("/team-members");
-     queryClient.invalidateQueries({ queryKey: ['membersTable'] })
-     },
+       queryClient.invalidateQueries({ 
+        queryKey: ['membersTable'],
+        exact: false
+      });
+    },
     onError: (error: AxiosError<ErrorResponse>) => {
       // Check if the error is an AxiosError and has a response
       const errorMessage =
-        error.response?.data?.message ||
+        error.response?.data?.message|| error.response?.data?.ERR_CODE ||
         "An unexpected error occurred. Please try again.";
       toast.error(errorMessage);
     },

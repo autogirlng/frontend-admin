@@ -61,6 +61,11 @@ export const dashboardNavItems = [
     name: "Outskirt Location",
     link: LocalRoute.outskirtLocationPage,
   },
+  {
+    icon: Icons.ic_location,
+    name: "Extreme Areas",
+    link: LocalRoute.extremeAreasPage,
+  },
 ];
 
 export const popupNavItems = [
@@ -406,8 +411,10 @@ export const vehicleModelsOptions: OptionType[] = [
   { value: "Fit", option: "Fit" },
   { value: "Focus", option: "Focus" },
   { value: "Forester", option: "Forester" },
+  { value: "Fortuner", option: "Fortuner" },
   { value: "Formentor", option: "Formentor" },
   { value: "Flying Spur", option: "Flying Spur" },
+  { value: "Geely", option: "Geely" },
   { value: "Genesis G70", option: "Genesis G70" },
   { value: "Genesis G80", option: "Genesis G80" },
   { value: "Genesis G90", option: "Genesis G90" },
@@ -712,7 +719,6 @@ export const vehicleAvailabilityOptions: OptionType[] = [
   { value: "4 days", option: "4 days" },
   { value: "5 days", option: "5 days" },
   { value: "6 days", option: "6 days" },
-
   { value: "1 week", option: "1 week" },
   { value: "2 weeks", option: "2 weeks" },
   { value: "3 weeks", option: "3 weeks" },

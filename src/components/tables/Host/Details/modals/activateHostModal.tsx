@@ -31,8 +31,8 @@ export const useUnblockHost = () => {
     mutationFn: unblockUserRequest,
     onSuccess: () => {
       toast.success("User unblocked successfully!");
-      queryClient.invalidateQueries({ queryKey: ["hosts"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["hosttable"] });
+      queryClient.invalidateQueries({ queryKey: ["hostDetails"] });
     },
     onError: (error: any) => {
       console.error("Failed to unblock user via Tanstack Query:", error);
