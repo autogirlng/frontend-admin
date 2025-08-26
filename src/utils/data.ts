@@ -474,7 +474,7 @@ export const vehicleModelsOptions: OptionType[] = [
   { value: "Panda", option: "Panda" },
   { value: "Passat", option: "Passat" },
   { value: "Patriot", option: "Patriot" },
-  { value: "Pardo", option: "Pardo" },
+  { value: "Prado", option: "Prado" },
   { value: "Phantom", option: "Phantom" },
   { value: "Pilot", option: "Pilot" },
   { value: "Portofino", option: "Portofino" },
