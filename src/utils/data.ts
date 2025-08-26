@@ -411,8 +411,10 @@ export const vehicleModelsOptions: OptionType[] = [
   { value: "Fit", option: "Fit" },
   { value: "Focus", option: "Focus" },
   { value: "Forester", option: "Forester" },
+  { value: "Fortuner", option: "Fortuner" },
   { value: "Formentor", option: "Formentor" },
   { value: "Flying Spur", option: "Flying Spur" },
+  { value: "Geely", option: "Geely" },
   { value: "Genesis G70", option: "Genesis G70" },
   { value: "Genesis G80", option: "Genesis G80" },
   { value: "Genesis G90", option: "Genesis G90" },
@@ -703,7 +705,6 @@ export const stateOptions: OptionType[] = [
   { value: State.TARABA, option: State.TARABA },
   { value: State.YOBE, option: State.YOBE },
   { value: State.ZAMFARA, option: State.ZAMFARA },
-
 ];
 
 export const yesOrNoOptions: OptionType[] = [
