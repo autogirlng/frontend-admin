@@ -18,6 +18,15 @@ import { ApiRoutes } from "@/utils/ApiRoutes";
 import { LocalRoute } from "@/utils/LocalRoutes";
 import { stripNonNumeric } from "@/utils/formatters";
 
+const findBookingPrice = (
+  bookingPrices: { type: string; price: number }[] | undefined,
+  bookingTypeToFind: string
+) => {
+  if (!bookingPrices) return "";
+  const found = bookingPrices.find((p) => p.type === bookingTypeToFind);
+  return found ? `${found.price}` : "";
+};
+
 export default function useAvailabilityAndPricingForm({
   currentStep,
   setCurrentStep,
@@ -28,14 +37,12 @@ export default function useAvailabilityAndPricingForm({
   const http = useHttp();
   const router = useRouter();
   const dispatch = useAppDispatch();
-
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
   const [showOuskirts, setShowOuskirts] = useState<boolean>(
     Array.isArray(vehicle?.outskirtsLocation) &&
       vehicle.outskirtsLocation.length > 0
   );
 
-  // NEW: State for extreme areas visibility
   const [showExtremeAreas, setShowExtremeAreas] = useState<boolean>(
     Array.isArray(vehicle?.extremeAreasLocation) &&
       vehicle.extremeAreasLocation.length > 0
@@ -70,12 +77,27 @@ export default function useAvailabilityAndPricingForm({
     dailyRate: `${vehicle?.pricing?.dailyRate?.value || ""}`,
     extraHourRate: `${vehicle?.pricing?.extraHoursFee || ""}`,
     airportPickup: `${vehicle?.pricing?.airportPickupFee || ""}`,
+    oneHourRate: findBookingPrice(
+      vehicle?.pricing?.bookingTypePrices,
+      "AN_HOUR"
+    ),
+    threeHoursRate: findBookingPrice(
+      vehicle?.pricing?.bookingTypePrices,
+      "THREE_HOURS"
+    ),
+    sixHoursRate: findBookingPrice(
+      vehicle?.pricing?.bookingTypePrices,
+      "SIX_HOURS"
+    ),
+    twelveHoursRate: findBookingPrice(
+      vehicle?.pricing?.bookingTypePrices,
+      "TWELVE_HOURS"
+    ),
     threeDaysDiscount: `${vehicle?.pricing?.discounts[0]?.percentage || ""}`,
     sevenDaysDiscount: `${vehicle?.pricing?.discounts[1]?.percentage || ""}`,
     thirtyDaysDiscount: `${vehicle?.pricing?.discounts[2]?.percentage || ""}`,
     outskirtsLocation: vehicle?.outskirtsLocation || [],
     outskirtsPrice: `${vehicle?.outskirtsPrice || ""}`,
-    // NEW: Add initial values for extreme areas
     extremeAreasLocation: vehicle?.extremeAreasLocation || [],
     extremeAreaPrice: `${vehicle?.extremeAreaPrice || ""}`,
   };
@@ -85,6 +107,33 @@ export default function useAvailabilityAndPricingForm({
       const cleanValue = stripNonNumeric(value).replace(/,/g, "");
       return parseFloat(cleanValue) || 0;
     };
+
+    const bookingTypePrices = [];
+    if (values.oneHourRate) {
+      bookingTypePrices.push({
+        // Fix 1: Change 'type' back to 'bookingType' to match API expectation
+        bookingType: "AN_HOUR",
+        price: parseNumericValue(values.oneHourRate),
+      });
+    }
+    if (values.threeHoursRate) {
+      bookingTypePrices.push({
+        bookingType: "THREE_HOURS",
+        price: parseNumericValue(values.threeHoursRate),
+      });
+    }
+    if (values.sixHoursRate) {
+      bookingTypePrices.push({
+        bookingType: "SIX_HOURS",
+        price: parseNumericValue(values.sixHoursRate),
+      });
+    }
+    if (values.twelveHoursRate) {
+      bookingTypePrices.push({
+        bookingType: "TWELVE_HOURS",
+        price: parseNumericValue(values.twelveHoursRate),
+      });
+    }
 
     return {
       tripSettings: {
@@ -96,6 +145,7 @@ export default function useAvailabilityAndPricingForm({
       pricing: {
         dailyRate: {
           value: parseNumericValue(values.dailyRate),
+          currency: null,
           unit: "NGN_KM",
         },
         extraHoursFee: parseNumericValue(values.extraHourRate),
@@ -114,14 +164,16 @@ export default function useAvailabilityAndPricingForm({
             percentage: parseNumericValue(values.thirtyDaysDiscount),
           },
         ],
+        bookingTypePrices: bookingTypePrices,
       },
       outskirtsLocation: values.outskirtsLocation,
       outskirtsPrice: parseFloat(stripNonNumeric(values.outskirtsPrice)),
-      // NEW: Add extreme area fields to the API payload
       extremeAreasLocation: values.extremeAreasLocation,
       extremeAreaPrice: parseNumericValue(values.extremeAreaPrice),
-    };
+      // Fix 2: Use a type assertion to satisfy TypeScript despite the API inconsistency
+    } as unknown as AvailabilityAndPricing;
   };
+
   const { host } = useAppSelector((state) => state.host);
   let hostId;
   if (vehicle?.userId) {
@@ -129,6 +181,7 @@ export default function useAvailabilityAndPricingForm({
   } else {
     hostId = host?.id;
   }
+
   const saveStep4 = useMutation({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
@@ -136,14 +189,23 @@ export default function useAvailabilityAndPricingForm({
         values
       ),
     onSuccess: (data) => {
+      const updatedVehicleData = {
+        ...vehicle,
+        ...data,
+        pricing: {
+          ...vehicle?.pricing,
+          ...data?.pricing,
+        },
+      };
       dispatch(
-        updateVehicleInformation({ ...vehicle, ...data } as VehicleInformation)
+        updateVehicleInformation(updatedVehicleData as VehicleInformation)
       );
       router.push(LocalRoute.fleetPage);
     },
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 4"),
   });
+
   const submitStep4 = useMutation({
     mutationFn: (values: AvailabilityAndPricing) =>
       http.put<VehicleInformation>(
@@ -151,12 +213,17 @@ export default function useAvailabilityAndPricingForm({
         values
       ),
     onSuccess: (data) => {
-      dispatch(
-        updateVehicleInformation(
+      const updatedVehicleData = {
+        ...vehicle,
+        ...data,
+        pricing: {
           // @ts-ignore
-          { ...vehicle, ...data }
-        )
-      );
+          ...vehicle?.pricing,
+          ...data?.pricing,
+        },
+      };
+      // @ts-ignore
+      dispatch(updateVehicleInformation(updatedVehicleData));
       setCurrentStep(currentStep + 1);
     },
     onError: (error: AxiosError<ErrorResponse>) =>
@@ -173,7 +240,6 @@ export default function useAvailabilityAndPricingForm({
     setShowOuskirts,
     showDiscounts,
     setShowDiscounts,
-    // NEW: Export extreme area state and setter
     showExtremeAreas,
     setShowExtremeAreas,
   };

@@ -238,6 +238,10 @@ export interface AvailabilityAndPricingValues {
   dailyRate: string;
   extraHourRate: string;
   airportPickup: string;
+  oneHourRate?: string;
+  threeHoursRate?: string;
+  sixHoursRate?: string;
+  twelveHoursRate?: string;
   threeDaysDiscount: string;
   sevenDaysDiscount: string;
   thirtyDaysDiscount: string;
@@ -430,6 +434,7 @@ export interface TripSettings {
 
 export interface Rate {
   value: number;
+  currency: string | null;
   unit: string;
 }
 
@@ -444,6 +449,10 @@ export interface Pricing {
   // hourlyRate: Rate;
   airportPickupFee: number;
   discounts: Discount[];
+  bookingTypePrices?: {
+    type: string;
+    price: number;
+  }[];
 }
 
 export interface AvailabilityAndPricing {
