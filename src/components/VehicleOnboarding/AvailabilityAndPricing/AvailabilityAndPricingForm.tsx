@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useOutskirtLocations } from "./useOutskirtLocation";
 import { useExtremeAreas } from "./useExtremeAreas";
 import { Spinner } from "@/components/shared/spinner";
+import PricingRowNew from "./PricingRowNew";
 
 type Props = {
   steps: string[];
@@ -255,6 +256,74 @@ const AvailabilityAndPricingForm = ({
                 handleChange={handleChange}
                 handleBlur={handleBlur}
               />
+              <PricingRowNew
+                title="What is your rate for an hour?"
+                rateLabel="You'll receive"
+                rateName="oneHourRate"
+                ratePlaceholder="NGN0"
+                rateUnit="/hr"
+                serviceFeeName="serviceFeeOneHour"
+                guestWillSeeName="guestWillSeeOneHour"
+                rateValue={values.oneHourRate}
+                tooltipDescription="Set your price for a single-hour booking. This is optional."
+                tooltipTitle="One Hour Rate"
+                errors={errors}
+                touched={touched}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                optional
+              />
+              <PricingRowNew
+                title="What is your rate for 3 hours?"
+                rateLabel="You'll receive"
+                rateName="threeHoursRate"
+                ratePlaceholder="NGN0"
+                rateUnit="/3 hrs"
+                serviceFeeName="serviceFeeThreeHours"
+                guestWillSeeName="guestWillSeeThreeHours"
+                rateValue={values.threeHoursRate}
+                tooltipDescription="Set your price for a three-hour booking. This is optional."
+                tooltipTitle="Three Hour Rate"
+                errors={errors}
+                touched={touched}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                optional
+              />
+              <PricingRowNew
+                title="What is your rate for 6 hours?"
+                rateLabel="You'll receive"
+                rateName="sixHoursRate"
+                ratePlaceholder="NGN0"
+                rateUnit="/6 hrs"
+                serviceFeeName="serviceFeeSixHours"
+                guestWillSeeName="guestWillSeeSixHours"
+                rateValue={values.sixHoursRate}
+                tooltipDescription="Set your price for a six-hour booking. This is optional."
+                tooltipTitle="Six Hour Rate"
+                errors={errors}
+                touched={touched}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                optional
+              />
+              <PricingRowNew
+                title="What is your rate for 12 hours?"
+                rateLabel="You'll receive"
+                rateName="twelveHoursRate"
+                ratePlaceholder="NGN0"
+                rateUnit="/12 hrs"
+                serviceFeeName="serviceFeeTwelveHours"
+                guestWillSeeName="guestWillSeeTwelveHours"
+                rateValue={values.twelveHoursRate}
+                tooltipDescription="Set your price for a twelve-hour booking. This is optional."
+                tooltipTitle="Twelve Hour Rate"
+                errors={errors}
+                touched={touched}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                optional
+              />
               <PricingRow
                 title="What is your extra hourly rate?"
                 rateLabel="You'll receive"
@@ -302,15 +371,15 @@ const AvailabilityAndPricingForm = ({
                 />
               </p>
               {!showDiscount && (
-                <p
+                <button
                   onClick={() => setShowDiscount(true)}
                   className="text-primary-500 font-medium text-sm 3xl:text-xl flex items-center gap-1 "
                 >
                   {Icons.ic_add} <span>Add Discounts</span>
-                </p>
+                </button>
               )}
               {showDiscount && (
-                <p
+                <button
                   onClick={() => {
                     setShowDiscount(false);
                     setFieldValue("sevenDaysDiscount", "");
@@ -320,7 +389,7 @@ const AvailabilityAndPricingForm = ({
                   className="text-primary-500 cursor-pointer font-medium text-sm 3xl:text-xl flex items-center gap-1"
                 >
                   {Icons.ic_remove} <span>Remove Discounts</span>
-                </p>
+                </button>
               )}
             </div>
             {showDiscount && (
