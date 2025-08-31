@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Copy, MoreVertical } from "lucide-react";
+import { AssignAgentModal } from "../modals/AssignAgentModal";
 import DottedLines from "../../shared/DottedLines";
 import { BookingInformation } from "@/utils/types";
 import { IoIosArrowRoundBack } from "react-icons/io";
@@ -16,6 +17,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails, assignedDrive
   const router = useRouter();
   const pathname = usePathname();
   const [showActions, setShowActions] = useState(false);
+  const [isAssignAgentModalOpen, setIsAssignAgentModalOpen] = useState(false);
 
   // Format dates for display
   const formatDate = (dateString: string) => {
@@ -101,6 +103,9 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails, assignedDrive
                 <button onClick={() => router.push(`${pathname}/assign-driver`)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Assign driver
                 </button>
+                <button onClick={() => setIsAssignAgentModalOpen(true)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  Assign agent
+                </button>
                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Download booking summary
                 </button>
@@ -110,6 +115,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails, assignedDrive
               </div>
             </div>
           )}
+          <AssignAgentModal isOpen={isAssignAgentModalOpen} setIsOpen={setIsAssignAgentModalOpen} tripId={bookingDetails.id} />
         </div>
       </div>
 
