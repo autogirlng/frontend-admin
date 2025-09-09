@@ -93,6 +93,10 @@ export default function useAvailabilityAndPricingForm({
       vehicle?.pricing?.bookingTypePrices,
       "TWELVE_HOURS"
     ),
+    twentyFourHoursRate: findBookingPrice(
+      vehicle?.pricing?.bookingTypePrices,
+      "TWENTY_FOUR_HOURS"
+    ),
     threeDaysDiscount: `${vehicle?.pricing?.discounts[0]?.percentage || ""}`,
     sevenDaysDiscount: `${vehicle?.pricing?.discounts[1]?.percentage || ""}`,
     thirtyDaysDiscount: `${vehicle?.pricing?.discounts[2]?.percentage || ""}`,
@@ -132,6 +136,13 @@ export default function useAvailabilityAndPricingForm({
       bookingTypePrices.push({
         bookingType: "TWELVE_HOURS",
         price: parseNumericValue(values.twelveHoursRate),
+      });
+    }
+
+    if (values.twentyFourHoursRate) {
+      bookingTypePrices.push({
+        bookingType: "TWENTY_FOUR_HOURS",
+        price: parseNumericValue(values.twentyFourHoursRate),
       });
     }
 

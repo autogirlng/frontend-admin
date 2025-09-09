@@ -324,6 +324,23 @@ const AvailabilityAndPricingForm = ({
                 handleBlur={handleBlur}
                 optional
               />
+              <PricingRowNew
+                title="What is your rate for 24 hours?"
+                rateLabel="You'll receive"
+                rateName="twentyFourHoursRate"
+                ratePlaceholder="NGN0"
+                rateUnit="/24 hrs"
+                serviceFeeName="serviceFeeTwentyFourHours"
+                guestWillSeeName="guestWillSeeTwentyFourHours"
+                rateValue={values.twentyFourHoursRate}
+                tooltipDescription="Set your price for a twenty-four-hour booking. This is optional."
+                tooltipTitle="Twenty-Four Hour Rate"
+                errors={errors}
+                touched={touched}
+                handleChange={handleChange}
+                handleBlur={handleBlur}
+                optional
+              />
               <PricingRow
                 title="What is your extra hourly rate?"
                 rateLabel="You'll receive"
