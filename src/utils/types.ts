@@ -242,6 +242,7 @@ export interface AvailabilityAndPricingValues {
   threeHoursRate?: string;
   sixHoursRate?: string;
   twelveHoursRate?: string;
+  twentyFourHoursRate?: string;
   threeDaysDiscount: string;
   sevenDaysDiscount: string;
   thirtyDaysDiscount: string;
@@ -626,6 +627,12 @@ export interface BookingInformation {
   vehicle?: ListingInformation;
   travelCompanions?: TravelCompanion[];
 }
+
+export interface GeoJSONPoint {
+  type: "Point";
+  coordinates: [number, number];
+}
+
 export interface VehicleInformation {
   id?: string;
   listingName: string;
@@ -634,6 +641,7 @@ export interface VehicleInformation {
   vehicleType: string;
   latitude: string;
   longitude: string;
+  locationMain?: GeoJSONPoint;
   make: string;
   model: string;
   yearOfRelease: string;

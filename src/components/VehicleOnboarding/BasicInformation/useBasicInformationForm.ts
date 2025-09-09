@@ -12,13 +12,12 @@ import {
   BasicVehicleInformationValues,
   ErrorResponse,
   VehicleInformation,
-} from "@/utils/types"; // Make sure to add latitude/longitude to this type
+} from "@/utils/types";
 import { updateVehicleInformation } from "@/lib/features/vehicleOnboardingSlice";
 import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 import { LocalRoute } from "@/utils/LocalRoutes";
 
-// Define a more specific type for Google Places API response
 type GooglePlace = {
   formattedAddress: string;
   location: {
@@ -40,7 +39,7 @@ export default function useBasicInformationForm({
 
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
   const [searchAddressQuery, setSearchAddressQuery] = useState("");
-  const [googlePlaces, setGooglePlaces] = useState<GooglePlace[]>([]); // Use the specific type here
+  const [googlePlaces, setGooglePlaces] = useState<GooglePlace[]>([]);
   const [searchAddressError, setSearchAddressError] = useState("");
   const [searchAddressLoading, setSearchAddressLoading] = useState(false);
   const [showAddressList, setShowAddressList] = useState(false);
@@ -49,9 +48,8 @@ export default function useBasicInformationForm({
     listingName: vehicle?.listingName || "",
     location: vehicle?.location || "",
     address: vehicle?.address || "",
-    // Add latitude and longitude to initial values
-    latitude: vehicle?.latitude || "",
-    longitude: vehicle?.longitude || "",
+    longitude: vehicle?.locationMain?.coordinates?.[0]?.toString() || "",
+    latitude: vehicle?.locationMain?.coordinates?.[1]?.toString() || "",
     vehicleType: vehicle?.vehicleType || "",
     make: vehicle?.make || "",
     model: vehicle?.model || "",
@@ -84,7 +82,6 @@ export default function useBasicInformationForm({
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY,
-            // Add 'places.location' to the field mask to get coordinates
             "X-Goog-FieldMask":
               "places.displayName,places.formattedAddress,places.location",
           },
@@ -122,19 +119,36 @@ export default function useBasicInformationForm({
     hostId = "";
   }
 
-  // No changes needed for mutations, as they already spread the `values` object.
-  // Latitude and longitude will be included automatically.
+  const createApiPayload = (values: BasicVehicleInformationValues) => {
+    const payload: any = {
+      ...values,
+      hasTracker: values.hasTracker === "yes",
+      hasInsurance: values.hasInsurance === "yes",
+      ...(vehicle?.id && { id: vehicle.id }),
+
+      locationMain: {
+        type: "Point",
+        coordinates: [
+          parseFloat(values.longitude),
+          parseFloat(values.latitude),
+        ],
+      },
+    };
+
+    delete payload.latitude;
+    delete payload.longitude;
+
+    return payload;
+  };
+
   const saveStep1 = useMutation({
-    mutationFn: (values: BasicVehicleInformationValues) =>
-      http.put<VehicleInformation>(
+    mutationFn: (values: BasicVehicleInformationValues) => {
+      const payload = createApiPayload(values);
+      return http.put<VehicleInformation>(
         `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
-        {
-          ...values,
-          hasTracker: values.hasTracker === "yes" ? true : false,
-          hasInsurance: values.hasInsurance === "yes" ? true : false,
-          ...(vehicle?.id && { id: vehicle.id }),
-        }
-      ),
+        payload
+      );
+    },
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Saved", data);
       dispatch(
@@ -148,16 +162,13 @@ export default function useBasicInformationForm({
   });
 
   const submitStep1 = useMutation({
-    mutationFn: (values: BasicVehicleInformationValues) =>
-      http.put<VehicleInformation>(
+    mutationFn: (values: BasicVehicleInformationValues) => {
+      const payload = createApiPayload(values);
+      return http.put<VehicleInformation>(
         `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
-        {
-          ...values,
-          hasTracker: values.hasTracker === "yes" ? true : false,
-          hasInsurance: values.hasInsurance === "yes" ? true : false,
-          ...(vehicle?.id && { id: vehicle.id }),
-        }
-      ),
+        payload
+      );
+    },
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Submitted", data);
       dispatch(
