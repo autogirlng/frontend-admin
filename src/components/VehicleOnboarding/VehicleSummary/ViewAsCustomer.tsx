@@ -128,12 +128,6 @@ export default function ViewAsCustomer({ vehicle }: Props) {
                     />
                   )
               )}
-              <Link
-                href="/"
-                className="block w-full text-primary-500 text-base 3xl:text-xl"
-              >
-                Learn more about our free cancellation
-              </Link>
             </div>
           </div>
 

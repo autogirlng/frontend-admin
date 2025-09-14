@@ -22,6 +22,7 @@ export default function ListingDetailsVehicleAvailability({
     updateListingStatusToMaintenance,
     updateListingStatusToUnavaliable,
     unavailabilityValue,
+    updateOperationalStatus,
     onChangeUnavailability,
   } = useListingsActions(() => {}, id);
 
@@ -52,34 +53,37 @@ export default function ListingDetailsVehicleAvailability({
                 Vehicle Status
               </p>
 
-              <StatusButton
+              {/* <StatusButton
                 status="Booked"
                 active={vehicleStatus === VehicleStatus.BOOKED}
                 onClick={() => updateListingStatusToBooked.mutate()}
                 loading={updateListingStatusToBooked.isPending}
-              />
+              /> */}
               {/* {vehicleStatus === VehicleStatus.MAINTENANCE ? ( */}
 
               <StatusButton
                 status="Available"
                 active={vehicleStatus === VehicleStatus.ACTIVE}
-                onClick={() => updateListingStatusToAvaliable.mutate()}
-                loading={updateListingStatusToAvaliable.isPending}
+                onClick={() =>
+                  updateOperationalStatus.mutate(VehicleStatus.ACTIVE)
+                }
+                loading={updateOperationalStatus.isPending}
               />
-              {/* ) : ( */}
               <StatusButton
                 status="In maintenance"
                 active={vehicleStatus === VehicleStatus.MAINTENANCE}
-                onClick={() => updateListingStatusToMaintenance.mutate()}
-                loading={updateListingStatusToMaintenance.isPending}
+                onClick={() =>
+                  updateOperationalStatus.mutate(VehicleStatus.MAINTENANCE)
+                }
+                loading={updateOperationalStatus.isPending}
               />
-              {/* )} */}
-
               <StatusButton
                 status="Unavailable"
                 active={vehicleStatus === VehicleStatus.UNAVAILABLE}
-                onClick={() => updateListingStatusToUnavaliable.mutate()}
-                loading={updateListingStatusToUnavaliable.isPending}
+                onClick={() =>
+                  updateOperationalStatus.mutate(VehicleStatus.UNAVAILABLE)
+                }
+                loading={updateOperationalStatus.isPending}
                 setUnavailableTime={vehicleStatus === VehicleStatus.UNAVAILABLE}
                 unavailabilityValue={unavailabilityValue}
                 onChangeUnavailability={onChangeUnavailability}
