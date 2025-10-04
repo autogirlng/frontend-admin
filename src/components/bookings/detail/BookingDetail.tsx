@@ -7,6 +7,7 @@ import { AssignAgentModal } from "../modals/AssignAgentModal";
 import DottedLines from "../../shared/DottedLines";
 import { BookingInformation } from "@/utils/types";
 import { IoIosArrowRoundBack } from "react-icons/io";
+import Link from "next/link";
 
 interface BookingInfoProps {
   bookingDetails: BookingInformation;
@@ -546,14 +547,12 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails, assignedDrive
                   <span className="text-sm text-gray-900 font-medium">Status: </span>
                   <span className="text-sm text-gray-900">{assignment.status}</span>
                 </div>
-                <button
+
+                <Link
                   className="text-primary-600 text-sm hover:underline font-medium"
-                  onClick={() => {
-                    window.location.href = `/drivers/${assignment.driverId}`;
-                  }}
-                >
+                  href={`/drivers/${assignment.driverId}`}>
                   View Driver Details
-                </button>
+                </Link>
               </div>
             ))}
           </div>
@@ -569,12 +568,11 @@ const BookingInfo: React.FC<BookingInfoProps> = ({ bookingDetails, assignedDrive
               No drivers have been assigned to this booking yet.
             </div>
             <div className="flex justify-center">
-              <button
-                className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded px-4 py-2 text-sm"
-                onClick={() => window.location.href = `/dashboard/drivers/assign?bookingId=${bookingDetails.id}`}
-              >
+              <Link
+                href={`/dashboard/bookings/${bookingDetails.id}/assign-driver`}
+                className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded px-4 py-2 text-sm">
                 Assign Driver
-              </button>
+              </Link>
             </div>
           </div>
         </>
