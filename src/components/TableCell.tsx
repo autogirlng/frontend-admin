@@ -26,7 +26,8 @@ const TableCell = ({ content, className, isBadge, type, icon }: Props) => (
       <StatusBadge status={content as Status} type={type} />
     ) : (
       content
-    )}
+    )
+    }
   </td>
 );
 

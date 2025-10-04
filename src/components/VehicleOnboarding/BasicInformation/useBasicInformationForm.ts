@@ -1,3 +1,5 @@
+// @/components/VehicleOnboarding/BasicInformation/useBasicInformationForm.ts
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -16,6 +18,14 @@ import { useHttp } from "@/utils/useHttp";
 import { ApiRoutes } from "@/utils/ApiRoutes";
 import { LocalRoute } from "@/utils/LocalRoutes";
 
+type GooglePlace = {
+  formattedAddress: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+};
+
 export default function useBasicInformationForm({
   currentStep,
   setCurrentStep,
@@ -25,14 +35,11 @@ export default function useBasicInformationForm({
 }) {
   const http = useHttp();
   const router = useRouter();
-
   const dispatch = useAppDispatch();
 
   const { vehicle } = useAppSelector((state) => state.vehicleOnboarding);
   const [searchAddressQuery, setSearchAddressQuery] = useState("");
-  const [googlePlaces, setGooglePlaces] = useState<
-    { formattedAddress: string }[]
-  >([]);
+  const [googlePlaces, setGooglePlaces] = useState<GooglePlace[]>([]);
   const [searchAddressError, setSearchAddressError] = useState("");
   const [searchAddressLoading, setSearchAddressLoading] = useState(false);
   const [showAddressList, setShowAddressList] = useState(false);
@@ -41,11 +48,12 @@ export default function useBasicInformationForm({
     listingName: vehicle?.listingName || "",
     location: vehicle?.location || "",
     address: vehicle?.address || "",
+    longitude: vehicle?.locationMain?.coordinates?.[0]?.toString() || "",
+    latitude: vehicle?.locationMain?.coordinates?.[1]?.toString() || "",
     vehicleType: vehicle?.vehicleType || "",
     make: vehicle?.make || "",
     model: vehicle?.model || "",
     yearOfRelease: vehicle?.yearOfRelease || "",
-
     hasInsurance:
       vehicle?.hasInsurance === undefined || vehicle?.hasInsurance === null
         ? ""
@@ -75,7 +83,7 @@ export default function useBasicInformationForm({
             "Content-Type": "application/json",
             "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY,
             "X-Goog-FieldMask":
-              "places.displayName,places.formattedAddress,places.priceLevel",
+              "places.displayName,places.formattedAddress,places.location",
           },
         }
       );
@@ -105,24 +113,42 @@ export default function useBasicInformationForm({
   }, [searchAddressQuery, debouncedFetchPlaces]);
 
   const { host } = useAppSelector((state) => state.host);
-  console.log(host);
   let hostId = vehicle?.userId || host?.id;
   if (!hostId) {
     console.error("No host ID available");
     hostId = "";
   }
-  const saveStep1 = useMutation({
-    mutationFn: (values: BasicVehicleInformationValues) =>
-      http.put<VehicleInformation>(
-        `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
-        {
-          ...values,
-          hasTracker: values.hasTracker === "yes" ? true : false,
-          hasInsurance: values.hasInsurance === "yes" ? true : false,
-          ...(vehicle?.id && { id: vehicle.id }),
-        }
-      ),
 
+  const createApiPayload = (values: BasicVehicleInformationValues) => {
+    const payload: any = {
+      ...values,
+      hasTracker: values.hasTracker === "yes",
+      hasInsurance: values.hasInsurance === "yes",
+      ...(vehicle?.id && { id: vehicle.id }),
+
+      locationMain: {
+        type: "Point",
+        coordinates: [
+          parseFloat(values.longitude),
+          parseFloat(values.latitude),
+        ],
+      },
+    };
+
+    delete payload.latitude;
+    delete payload.longitude;
+
+    return payload;
+  };
+
+  const saveStep1 = useMutation({
+    mutationFn: (values: BasicVehicleInformationValues) => {
+      const payload = createApiPayload(values);
+      return http.put<VehicleInformation>(
+        `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
+        payload
+      );
+    },
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Saved", data);
       dispatch(
@@ -131,23 +157,18 @@ export default function useBasicInformationForm({
       );
       router.push(LocalRoute.fleetPage);
     },
-
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 1"),
   });
 
   const submitStep1 = useMutation({
-    mutationFn: (values: BasicVehicleInformationValues) =>
-      http.put<VehicleInformation>(
+    mutationFn: (values: BasicVehicleInformationValues) => {
+      const payload = createApiPayload(values);
+      return http.put<VehicleInformation>(
         `${ApiRoutes.vehicleOnboarding}/${hostId}/step1`,
-        {
-          ...values,
-          hasTracker: values.hasTracker === "yes" ? true : false,
-          hasInsurance: values.hasInsurance === "yes" ? true : false,
-          ...(vehicle?.id && { id: vehicle.id }),
-        }
-      ),
-
+        payload
+      );
+    },
     onSuccess: (data) => {
       console.log("Vehicle Onboarding Step 1 Submitted", data);
       dispatch(
@@ -156,7 +177,6 @@ export default function useBasicInformationForm({
       );
       setCurrentStep(currentStep + 1);
     },
-
     onError: (error: AxiosError<ErrorResponse>) =>
       handleErrors(error, "Vehicle Onboarding Step 1"),
   });

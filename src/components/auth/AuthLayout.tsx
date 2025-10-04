@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { ImageAssets } from "@/utils/ImageAssets";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
       {/* Left Side - Image Section */}
       <div className="hidden md:flex md:w-1/2 h-screen relative">
         <Image
-          src="/images/auth-bg.jpeg"
+          src={ImageAssets.authBg}
           alt="Car"
           layout="fill"
           objectFit="cover"
@@ -19,7 +20,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
         />
         <div className="absolute inset-0 bg-transparent flex items-start p-6">
           <Image
-            src="/images/muvement-blue.png"
+            src={ImageAssets.logo}
             alt="Muvement Logo"
             width={200}
             height={45}

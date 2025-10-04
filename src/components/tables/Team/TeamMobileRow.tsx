@@ -1,27 +1,156 @@
+"use client";
+import React, { useState } from "react"; // Import useState
 import Link from "next/link";
 import { format } from "date-fns";
-import { ReactNode } from "react";
-import {
-  BookingBadgeStatus,
-  FleetTable,
-  Member,
-  TransactionStatus,
-} from "@/utils/types";
+import { Member } from "@/utils/types";
 import { Popup } from "@/components/shared/popup";
-import { BookingTableBadge, TransactionBadge } from "@/components/shared/badge";
 import MoreButton from "@/components/shared/moreButton";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useAppDispatch } from "@/lib/hooks";
 import { updateMember } from "@/lib/features/teamMemberSlice";
 import { LocalRoute } from "@/utils/LocalRoutes";
 import { MobileTableCell } from "@/components/TableCell";
-
+// Import the modals
+import EditTeamMember from "./Details/modals/EditTeamMember";
+import DeactivateMemberModal from "./Details/modals/DeactivateAdminModal";
+import ActivateMemberModal from "./Details/modals/ActivateMember";
 export default function TeamMobileRow({ items }: { items: Member }) {
-  const { member } = useAppSelector((state) => state.teamMember);
   const dispatch = useAppDispatch();
 
+  // State to control the modals
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
+
   const handleSelectMember = () => {
-    // Update the global host state when this row is selected
     dispatch(updateMember(items));
+  };
+
+  const getPopupContent = (status: "active" | "inactive" | "successful") => {
+    switch (status) {
+      case "active":
+        return (
+          <>
+            <li>
+              <Link
+                onClick={handleSelectMember}
+                href={`${LocalRoute.teamMemberProfilePage}/${items?.id}`}
+                className="!text-xs 3xl:!text-base"
+              >
+                View Member
+              </Link>
+            </li>
+            <li>
+              <EditTeamMember
+                openModal={isEditModalOpen}
+                handleModal={setIsEditModalOpen}
+                member={items as any}
+                trigger={
+                  <div className="!text-xs 3xl:!text-base cursor-pointer">
+                    Edit Member
+                  </div>
+                }
+              />
+            </li>
+            <li>
+              <DeactivateMemberModal
+                member={items}
+                openModal={isDeactivateModalOpen}
+                handleModal={setIsDeactivateModalOpen}
+                trigger={
+                  <div className="!text-xs 3xl:!text-base cursor-pointer">
+                    Disable Member
+                  </div>
+                }
+              />
+            </li>
+          </>
+        );
+
+      case "inactive":
+        return (
+          <>
+            <li>
+              <Link
+                onClick={handleSelectMember}
+                href={`${LocalRoute.teamMemberProfilePage}/${items?.id}`}
+                className="!text-xs 3xl:!text-base"
+              >
+                View Member
+              </Link>
+            </li>
+            {/* <li>
+              <Link
+                href={`/resend-invite/${items?.id}`}
+                className="!text-xs 3xl:!text-base"
+              >
+                Resend Invite
+              </Link>
+            </li> */}
+            <li>
+              <ActivateMemberModal
+                member={items}
+                openModal={isActivateModalOpen}
+                handleModal={setIsActivateModalOpen}
+                trigger={
+                  <div className="!text-xs 3xl:!text-base cursor-pointer">
+                    Activate Member
+                  </div>
+                }
+              />
+            </li>
+            {/* <li>
+              <Link
+                href={`/delete-member/${items?.id}`}
+                className="!text-xs 3xl:!text-base text-error-500"
+              >
+                Delete Member
+              </Link>
+            </li> */}
+          </>
+        );
+
+      case "successful":
+        return (
+          <>
+            <li>
+              <Link
+                onClick={handleSelectMember}
+                href={`${LocalRoute.teamMemberProfilePage}/${items?.id}`}
+                className="!text-xs 3xl:!text-base"
+              >
+                View Member
+              </Link>
+            </li>
+            <li>
+              <EditTeamMember
+                openModal={isEditModalOpen}
+                handleModal={setIsEditModalOpen}
+                member={items as any}
+                trigger={
+                  <div className="!text-xs 3xl:!text-base cursor-pointer">
+                    Edit Member
+                  </div>
+                }
+              />
+            </li>
+            <li>
+              <DeactivateMemberModal
+                member={items}
+                openModal={isDeactivateModalOpen}
+                handleModal={setIsDeactivateModalOpen}
+                trigger={
+                  <div className="!text-xs 3xl:!text-base cursor-pointer">
+                    Disable Member
+                  </div>
+                }
+              />
+            </li>
+          </>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
@@ -32,44 +161,7 @@ export default function TeamMobileRow({ items }: { items: Member }) {
           <>
             <p className="!text-xs 3xl:!text-base !font-semibold">Actions</p>
             <ul className="space-y-2 *:py-2">
-              <>
-                <li>
-                  {/* <DeclineTrip
-                        openModal={openDeclineModal}
-                        handleModal={() => handleDeclineModal()}
-                        isLoading={declineBooking.isPending}
-                        handleAction={() => declineBooking.mutate()}
-                        trigger={
-                          <button className="!text-xs 3xl:!text-base ">
-                            Decline Trip
-                          </button>
-                        }
-                      /> */}
-                </li>
-                <li>
-                  {/* <AcceptTrip
-                        openModal={openAcceptModal}
-                        handleModal={() => handleAcceptModal()}
-                        isLoading={acceptBooking.isPending}
-                        handleAction={() => acceptBooking.mutate()}
-                        trigger={
-                          <button className="!text-xs 3xl:!text-base ">
-                            Accept Trip
-                          </button>
-                        }
-                      /> */}
-                </li>
-              </>
-
-              <li>
-                <Link
-                  onClick={handleSelectMember}
-                  href={`${LocalRoute.teamMemberProfilePage}/${items?.id}`}
-                  className="!text-xs 3xl:!text-base"
-                >
-                  View Member
-                </Link>
-              </li>
+              {getPopupContent(items.status as any)}
             </ul>
           </>
         }
@@ -87,7 +179,7 @@ export default function TeamMobileRow({ items }: { items: Member }) {
         content={
           items?.lastLogin
             ? format(new Date(items?.lastLogin), "MMM d ,yyyy")
-            : ""
+            : "-"
         }
       />
       <MobileTableCell

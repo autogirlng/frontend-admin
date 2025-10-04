@@ -25,7 +25,7 @@ export const BlurredDialog = ({
   <Dialog.Root modal open={open} onOpenChange={onOpenChange}>
     <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
     <Dialog.Portal>
-      <Dialog.Overlay className="bg-[#00000061] backdrop-blur-xl data-[state=open]:animate-overlayShow fixed inset-0" />
+      <Dialog.Overlay className="bg-white/80  backdrop-blur-xl data-[state=open]:animate-overlayShow fixed inset-0" />
       <Dialog.Content className="data-[state=open]:animate-contentShow fixed top-0 left-0 min-h-screen h-full w-full flex justify-center items-center focus:outline-none py-14 px-4 overflow-y-auto">
         <div
           className={cn(
@@ -47,7 +47,7 @@ export const BlurredDialog = ({
             )}
           </Dialog.Title>
           {description && (
-            <Dialog.Description className="text-grey-500 my-5 text-base">
+            <Dialog.Description className="text-grey-500 my-5 z-50 text-base">
               {description}
             </Dialog.Description>
           )}

@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Car, AlertCircle, CheckCircle } from "lucide-react";
 import VehicleCard from "./VehicleCard";
 import SearchFiltersComponent from "./SearchFilters";
 import Pagination from "./Pagination";
+import HourlyAvailabilityModal from "./HourlyAvailabilityModal"; // New Modal Component
 import {
   Vehicle,
   VehicleSearchResponse,
   SearchFilters,
+  HourlyAvailability,
+  VehicleWithHourly,
 } from "../types/vehicle";
 
 const MUVMENT_URL =
@@ -16,29 +19,45 @@ const MUVMENT_URL =
 
 const AvailabilityComponent: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const today = new Date();
-  const sevenDaysLater = new Date();
-  sevenDaysLater.setDate(today.getDate() + 7);
+  // State for the new Hourly Availability Modal
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    vehicle: Vehicle | null;
+    date: string;
+    hourlyData: HourlyAvailability[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    isOpen: false,
+    vehicle: null,
+    date: "",
+    hourlyData: [],
+    loading: false,
+    error: null,
+  });
 
   const formatDate = (date: Date) => date.toISOString().slice(0, 10);
 
+  const today = new Date();
+  const defaultEndDate = new Date();
+  defaultEndDate.setDate(today.getDate() + 6);
+
   const [filters, setFilters] = useState<SearchFilters>({
     startDate: formatDate(today),
-    endDate: formatDate(sevenDaysLater),
+    endDate: formatDate(defaultEndDate),
     search: "",
     page: 1,
     limit: 10,
   });
 
-  const fetchVehicles = async () => {
+  const fetchVehicles = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
       const params = new URLSearchParams({
         startDate: filters.startDate,
@@ -51,64 +70,104 @@ const AvailabilityComponent: React.FC = () => {
       const response = await fetch(
         `${MUVMENT_URL}/admin/avaliability/find?${params}`
       );
-
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
       const data: VehicleSearchResponse = await response.json();
-
       setVehicles(data.data);
       setTotalPages(data.totalPages);
       setTotalCount(data.totalCount);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred while fetching vehicles"
+        err instanceof Error ? err.message : "An unknown error occurred"
       );
-      setVehicles([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchVehicles();
-  }, [filters.page]); // Auto-fetch when page changes
+  }, [fetchVehicles]);
 
   const handleSearch = () => {
-    fetchVehicles();
+    // Reset to page 1 for new searches
+    setFilters((prev) => ({ ...prev, page: 1 }));
+    // The useEffect will then trigger the fetch
   };
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
   };
 
+  const handleDayClick = async (vehicle: Vehicle, date: string) => {
+    setModalState({
+      isOpen: true,
+      vehicle,
+      date,
+      hourlyData: [],
+      loading: true,
+      error: null,
+    });
+
+    try {
+      // FIX: Use 'vehicle.id' instead of 'vehicle.vehicleId'
+      const response = await fetch(
+        `${MUVMENT_URL}/admin/avaliability/${vehicle.id}/by-date?date=${date}`
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch hourly availability. Status: ${response.status}`
+        );
+      }
+
+      const vehicleWithHourlyData: VehicleWithHourly = await response.json();
+
+      const hourlyData = vehicleWithHourlyData.availability;
+
+      setModalState((prev) => ({ ...prev, hourlyData, loading: false }));
+    } catch (err) {
+      setModalState((prev) => ({
+        ...prev,
+        loading: false,
+        error: err instanceof Error ? err.message : "An unknown error occurred",
+      }));
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalState({
+      isOpen: false,
+      vehicle: null,
+      date: "",
+      hourlyData: [],
+      loading: false,
+      error: null,
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-3">
-            <div className="bg-primary-600 p-2 rounded-lg">
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center space-x-4">
+            <div className="bg-primary-600 p-3 rounded-xl shadow-md">
               <Car className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                 Vehicle Availability
               </h1>
-              <p className="text-gray-600">
-                Find and book available vehicles for your dates
+              <p className="text-gray-500 mt-1">
+                View daily and hourly vehicle schedules at a glance.
               </p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Filters */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <SearchFiltersComponent
           filters={filters}
           onFiltersChange={setFilters}
@@ -116,150 +175,80 @@ const AvailabilityComponent: React.FC = () => {
           loading={loading}
         />
 
-        {/* Results Summary */}
         {!loading && !error && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">
-                  Found <span className="font-semibold">{totalCount}</span>{" "}
-                  vehicles
-                  {filters.search && (
-                    <span>
-                      {" "}
-                      matching "
-                      <span className="font-medium">{filters.search}</span>"
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="text-sm text-gray-500">
-                Page {filters.page} of {totalPages}
-              </div>
+          <div className="mb-6 px-2 flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-2 text-gray-700">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span>
+                Showing <span className="font-semibold">{vehicles.length}</span>{" "}
+                of <span className="font-semibold">{totalCount}</span> results
+              </span>
+            </div>
+            <div className="text-gray-500">
+              Page {filters.page} of {totalPages}
             </div>
           </div>
         )}
 
-        {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <span className="text-red-800 font-medium">
-                Error loading vehicles
-              </span>
-            </div>
-            <p className="text-red-700 mt-1">{error}</p>
+          <div
+            className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 rounded-md"
+            role="alert"
+          >
+            <p className="font-bold flex items-center">
+              <AlertCircle className="mr-2" />
+              Error
+            </p>
+            <p>{error}</p>
             <button
-              onClick={handleSearch}
-              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              onClick={fetchVehicles}
+              className="mt-3 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
             >
               Try Again
             </button>
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, index) => (
+            {/* Skeleton Loader */}
+            {[...Array(6)].map((_, i) => (
               <div
-                key={index}
-                className="bg-white rounded-xl shadow-lg border"
-                style={{
-                  borderColor: "#f3f4f6", // border-gray-100
-                  padding: "1.5rem",
-                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                }}
+                key={i}
+                className="bg-white p-6 rounded-xl shadow-md border border-gray-100 animate-pulse"
               >
-                <div className="flex items-center space-x-3 mb-4">
-                  <div
-                    style={{
-                      width: "3rem",
-                      height: "3rem",
-                      backgroundColor: "#e5e7eb", // bg-gray-200
-                      borderRadius: "9999px",
-                    }}
-                  ></div>
-                  <div className="flex-1">
-                    <div
-                      style={{
-                        height: "1rem",
-                        backgroundColor: "#e5e7eb", // bg-gray-200
-                        borderRadius: "0.5rem",
-                        width: "75%",
-                        marginBottom: "0.5rem",
-                      }}
-                    ></div>
-                    <div
-                      style={{
-                        height: "0.75rem",
-                        backgroundColor: "#e5e7eb", // bg-gray-200
-                        borderRadius: "0.5rem",
-                        width: "50%",
-                      }}
-                    ></div>
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.75rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "0.75rem",
-                      backgroundColor: "#e5e7eb", // bg-gray-200
-                      borderRadius: "0.5rem",
-                    }}
-                  ></div>
-                  <div
-                    style={{
-                      height: "0.75rem",
-                      backgroundColor: "#e5e7eb", // bg-gray-200
-                      borderRadius: "0.5rem",
-                      width: "83.333333%",
-                    }}
-                  ></div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                      gap: "0.25rem",
-                      marginTop: "1rem",
-                    }}
-                  >
-                    {[...Array(7)].map((_, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          width: "2rem",
-                          height: "2rem",
-                          backgroundColor: "#e5e7eb", // bg-gray-200
-                          borderRadius: "0.5rem",
-                        }}
-                      ></div>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-7 gap-1 mt-6">
+                  {[...Array(7)].map((_, j) => (
+                    <div
+                      key={j}
+                      className="w-full h-8 bg-gray-200 rounded-md"
+                    ></div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Vehicle Grid */}
         {!loading && !error && vehicles.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vehicles.map((vehicle) => (
-                <VehicleCard key={vehicle.vehicleId} vehicle={vehicle} />
+                <VehicleCard
+                  key={vehicle.id}
+                  vehicle={vehicle}
+                  onDayClick={(date) => handleDayClick(vehicle, date)}
+                />
               ))}
             </div>
 
-            {/* Pagination */}
             <Pagination
               currentPage={filters.page}
               totalPages={totalPages}
@@ -268,29 +257,29 @@ const AvailabilityComponent: React.FC = () => {
           </>
         )}
 
-        {/* Empty State */}
         {!loading && !error && vehicles.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-16 bg-white rounded-lg shadow-md border">
             <Car className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No vehicles found
+            <h3 className="text-xl font-semibold text-gray-800">
+              No Vehicles Found
             </h3>
-            <p className="text-gray-600 mb-4">
-              Try adjusting your search criteria or date range to find available
-              vehicles.
+            <p className="text-gray-500 mt-2">
+              Try adjusting your search filters or date range.
             </p>
-            <button
-              onClick={() => {
-                setFilters((prev) => ({ ...prev, search: "", page: 1 }));
-                handleSearch();
-              }}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Clear Filters
-            </button>
           </div>
         )}
       </main>
+
+      {/* Render the Modal */}
+      <HourlyAvailabilityModal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        vehicle={modalState.vehicle}
+        date={modalState.date}
+        hourlyData={modalState.hourlyData}
+        loading={modalState.loading}
+        error={modalState.error}
+      />
     </div>
   );
 };

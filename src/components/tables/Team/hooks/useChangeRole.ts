@@ -1,7 +1,7 @@
 // src/hooks/useAddMember.ts (or wherever you prefer to place your hooks)
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks"; // Assuming these are your Redux hooks
 import { handleErrors } from "@/utils/functions"; // Utility for error handling
@@ -29,12 +29,17 @@ export default function useChangeRole() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.user); // Assuming auth slice has user info
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (changeRole: ChangeRolePayload) =>
       http.put<ChangeRoleResponse>(ApiRoutes.changeRole, changeRole),
     onSuccess: (data) => {
-      toast.success("Team member added successfully!");
+      toast.success("Role changed successfully!");
+      queryClient.invalidateQueries({ 
+        queryKey: ['membersTable'],
+        exact: false
+      });
     },
     onError: (error) => {
       toast.error(error.message);

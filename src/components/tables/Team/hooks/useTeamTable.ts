@@ -28,10 +28,8 @@ export default function useTeamTable({
 }) {
   const http = useHttp();
   const { user } = useAppSelector((state) => state.user);
-
-  const { data, isError, isLoading, isSuccess } = useQuery({
-    queryKey: ["membersTable", user?.id, currentPage, search, filters],
-
+  const { data, isError, isLoading, isSuccess,refetch } = useQuery({
+    queryKey: ["membersTable",currentPage, search, filters],
     queryFn: async () =>
       http.get<teamTable>(
         `${ApiRoutes.getAllAdminTeam}?${handleFilterQuery({
@@ -41,12 +39,12 @@ export default function useTeamTable({
     enabled: !!user?.id,
     retry: false,
   });
-
   return {
     data: data?.data || [],
     isError,
     isLoading,
     isSuccess,
+    refetch,
     totalCount: data?.total || 0,
     pageSize: data?.pageSize || 0,
     totalPages: data?.totalPages || 0,

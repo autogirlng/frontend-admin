@@ -43,7 +43,7 @@ export default function useListingsActions(
   });
 
   const moveListingToDraft = useMutation({
-    mutationFn: () => http.put(`/api/listings/draft/${id}`),
+    mutationFn: () => http.put(`/listings/draft/${id}`),
 
     onSuccess: (data) => {
       console.log("Move Listing to Draft successful", data);
@@ -63,7 +63,7 @@ export default function useListingsActions(
   });
 
   const deleteListing = useMutation({
-    mutationFn: () => http.delete(`/api/listings/${id}`),
+    mutationFn: () => http.delete(`/listings/${id}`),
 
     onSuccess: (data) => {
       console.log("Delete Listing successful", data);
@@ -84,7 +84,7 @@ export default function useListingsActions(
 
   const updateListingStatusToBooked = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, { status: VehicleStatus.BOOKED }),
+      http.put(`/listings/status/${id}`, { status: VehicleStatus.BOOKED }),
 
     onSuccess: (data) => {
       console.log("Update Listing status to booked successful", data);
@@ -102,7 +102,7 @@ export default function useListingsActions(
 
   const updateListingStatusToAvaliable = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, { status: VehicleStatus.ACTIVE }),
+      http.put(`/listings/status/${id}`, { status: VehicleStatus.ACTIVE }),
 
     onSuccess: (data) => {
       console.log("Update Listing status to available successful", data);
@@ -121,7 +121,7 @@ export default function useListingsActions(
 
   const updateListingStatusToMaintenance = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, {
+      http.put(`/listings/status/${id}`, {
         status: VehicleStatus.MAINTENANCE,
       }),
 
@@ -141,7 +141,7 @@ export default function useListingsActions(
 
   const updateListingStatusToUnavaliable = useMutation({
     mutationFn: () =>
-      http.put(`/api/listings/status/${id}`, {
+      http.put(`/listings/status/${id}`, {
         status: VehicleStatus.UNAVAILABLE,
       }),
 
@@ -159,6 +159,22 @@ export default function useListingsActions(
       handleErrors(error, "Update Listing status"),
   });
 
+  const updateOperationalStatus = useMutation({
+    mutationFn: (newStatus: VehicleStatus) =>
+      http.put(`/listings/operational-status/${id}`, {
+        vehicleStatus: newStatus,
+      }),
+
+    onSuccess: (data) => {
+      console.log("Update operational status successful", data);
+      queryClient.invalidateQueries({ queryKey: listingsByIdQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["getListings"] });
+    },
+
+    onError: (error: AxiosError<ErrorResponse>) =>
+      handleErrors(error, "Update operational status"),
+  });
+
   return {
     deactivateListing,
     deleteListing,
@@ -167,6 +183,7 @@ export default function useListingsActions(
     updateListingStatusToAvaliable,
     updateListingStatusToMaintenance,
     updateListingStatusToUnavaliable,
+    updateOperationalStatus,
     unavailabilityValue,
     onChangeUnavailability,
   };

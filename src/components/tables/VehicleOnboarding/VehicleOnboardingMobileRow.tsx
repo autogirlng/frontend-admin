@@ -5,11 +5,19 @@ import { Popup } from "@/components/shared/popup";
 import MoreButton from "@/components/shared/moreButton";
 import { MobileTableCell } from "@/components/TableCell";
 
+interface VehicleOnboardingMobileRowProps {
+  items: VehicleOnboardingTable;
+  onApprove: (vehicle: VehicleOnboardingTable) => void;
+  onReject: (vehicle: VehicleOnboardingTable) => void;
+  onRequestUpdate: (vehicle: VehicleOnboardingTable) => void;
+}
+
 const VehicleOnboardingMobileRow = ({
   items,
-}: {
-  items: VehicleOnboardingTable;
-}) => {
+  onApprove,
+  onReject,
+  onRequestUpdate,
+}: VehicleOnboardingMobileRowProps) => {
   return (
     <div className="space-y-3 pt-5 pb-3 border-b border-grey-300">
       <Popup
@@ -31,43 +39,41 @@ const VehicleOnboardingMobileRow = ({
                   items?.status === "review") && (
                   <>
                     <li>
-                      <Link
-                        href={`/vehicle/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
+                      <button
+                        onClick={() => onApprove(items)}
+                        className="!text-xs 3xl:!text-base text-left w-full hover:text-primary-500 transition-colors"
                       >
                         Approve
-                      </Link>
+                      </button>
                     </li>
                     <li>
-                      <Link
-                        href={`/vehicle/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
+                      <button
+                        onClick={() => onRequestUpdate(items)}
+                        className="!text-xs 3xl:!text-base text-left w-full hover:text-primary-500 transition-colors"
                       >
                         Request update
-                      </Link>
+                      </button>
                     </li>
                     <li>
-                      <Link
-                        href={`/vehicle/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
+                      <button
+                        onClick={() => onReject(items)}
+                        className="!text-xs 3xl:!text-base text-left w-full hover:text-error-500 transition-colors"
                       >
                         Reject
-                      </Link>
+                      </button>
                     </li>
                   </>
                 )}
-                {items?.status === "rejected" ||
-                  items?.status === "pending" ||
-                  (items?.status === "review" && (
-                    <li>
-                      <Link
-                        href={`/vehicle/${items?.vehicleId}`}
-                        className="!text-xs 3xl:!text-base"
-                      >
-                        Request update
-                      </Link>
-                    </li>
-                  ))}
+                {items?.status === "rejected" && (
+                  <li>
+                    <button
+                      onClick={() => onRequestUpdate(items)}
+                      className="!text-xs 3xl:!text-base text-left w-full hover:text-primary-500 transition-colors"
+                    >
+                      Request update
+                    </button>
+                  </li>
+                )}
               </>
             </ul>
           </>

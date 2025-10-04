@@ -27,7 +27,7 @@ export function useHostOnboarding() {
       email: values.email,
       userRole: "HOST" as const,
       cities: values.outskirtsLocation, // Array of selected cities
-      onBoardedBy: values.onboardedBy,
+      // onBoardedBy: values.onboardedBy,
     };
 
     // Add business fields only if operating as business

@@ -12,7 +12,7 @@ import { LocalRoute } from "@/utils/LocalRoutes";
 import BlockUserModal from "./Details/modals/deactivateHostModal"; // Assuming this path is correct
 import UnblockHostModal from "./Details/modals/activateHostModal";
 import { useSendLoginDetails } from "./hooks/useHostHooks";
-import { FullPageSpinner, Spinner } from "@/components/shared/spinner";
+import {  Spinner } from "@/components/shared/spinner";
 
 export default function HostDesktopRow({ items }: { items: Member }) {
   const hostId = items?.id;
@@ -38,11 +38,15 @@ export default function HostDesktopRow({ items }: { items: Member }) {
         className="!text-grey-900 text-wrap !font-medium"
       />
 
-      {/* Full name (First Name + Last Name or Business Name) */}
-      <TableCell
-        className="text-wrap"
-        content={`${items?.firstName ?? ""} ${items?.lastName ?? ""}`}
-      />
+      {/* Full name (First Name + Last Name or Business Name) - Clickable */}
+      <td className="px-6 py-[26px] whitespace-nowrap w-fit text-sm text-grey-700 text-wrap">
+        <Link
+          href={`${LocalRoute.hostPage}/${hostId}`}
+          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+        >
+          {`${items?.firstName ?? ""} ${items?.lastName ?? ""}`}
+        </Link>
+      </td>
 
       {/* Phone Number */}
       <TableCell className="text-wrap" content={items?.phoneNumber ?? "-"} />
@@ -78,7 +82,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
       <TableCell content={items?.location ?? "-"} />
 
       {/* Status - Re-applied dynamic styling */}
-      <TableCell content={items?.status} isBadge type="table" />
+      <TableCell  content={items?.status} isBadge={true} />
 
       {/* Actions */}
       <td>
@@ -107,7 +111,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
                   </li>
 
                   {/* Block User - For Active hosts */}
-                  {hostStatus === "active" && (
+                  {hostStatus.toLowerCase() === "active" && (
                     <li>
                       <BlockUserModal
                         openModal={isBlockModalOpen}
@@ -127,7 +131,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
                   )}
 
                   {/* Unblock User - For Banned/Blocked hosts */}
-                  {(hostStatus === "banned" || hostStatus === "inactive") && (
+                  {(hostStatus.toLowerCase() === "banned" || hostStatus.toLowerCase() === "inactive") && (
                     <li>
                       <UnblockHostModal // Use the new UnblockHostModal
                         openModal={isUnblockModalOpen}
@@ -147,7 +151,7 @@ export default function HostDesktopRow({ items }: { items: Member }) {
                   )}
 
                   {/* Resend Logins - Often for inactive or when requested */}
-                  {hostStatus !== "active" && (
+                  {hostStatus.toLowerCase() !== "active" && (
                     <li>
                       <button
                         onClick={handleSendLoginDetails} // Call the new handler

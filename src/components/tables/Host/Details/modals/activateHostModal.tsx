@@ -17,13 +17,12 @@ interface UnblockUserPayload {
 
 export const useUnblockHost = () => {
   const queryClient = useQueryClient();
-  const { put } = useHttp(); // Assuming unblock is a PUT request
+  const { put } = useHttp();
 
   const unblockUserRequest = async (payload: UnblockUserPayload) => {
+    // Use the correct endpoint for unblocking
     const response = await put(
-      `${ApiRoutes.unblockUser}/${payload.userId}/`
-      // For unblocking, you typically don't need a reason in the payload.
-      // If your API requires a specific payload for unblocking, add it here.
+      `/user/activate/${payload.userId}`
     );
     return response;
   };
@@ -31,14 +30,13 @@ export const useUnblockHost = () => {
   return useMutation({
     mutationFn: unblockUserRequest,
     onSuccess: () => {
-      toast.success("Host unblocked successfully!");
-      // Invalidate queries to refetch the updated status of hosts/users
-      queryClient.invalidateQueries({ queryKey: ["hosts"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] }); // If applicable
+      toast.success("User unblocked successfully!");
+      queryClient.invalidateQueries({ queryKey: ["hosttable"] });
+      queryClient.invalidateQueries({ queryKey: ["hostDetails"] });
     },
     onError: (error: any) => {
-      console.error("Failed to unblock host via Tanstack Query:", error);
-      toast.error(error.message || "Failed to unblock host.");
+      console.error("Failed to unblock user via Tanstack Query:", error);
+      toast.error(error.message || "Failed to unblock user.");
     },
   });
 };
@@ -87,11 +85,13 @@ const UnblockHostModal = ({
       width="max-w-xl"
       title="Unblock This Host"
       content={
-        <UnblockHostContent
-          handleModal={handleModal}
-          onConfirm={handleUnblock}
-          isPending={isPending}
-        />
+        <div className="bg-grey-50 rounded-2xl p-8">
+          <UnblockHostContent
+            handleModal={handleModal}
+            onConfirm={handleUnblock}
+            isPending={isPending}
+          />
+        </div>
       }
     />
   );

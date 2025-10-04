@@ -5,6 +5,7 @@ import { UpdateTripModal } from "./modals/UpdateTripModal";
 import { ConfirmTripModal } from "./modals/ConfirmTripModal";
 import { CancelTripModal } from "./modals/CancelTripModal";
 import { TripBookingItem } from "@/utils/types";
+import { AssignAgentModal } from "./modals/AssignAgentModal";
 import { useRouter } from "next/navigation";
 
 interface ActionComponentProps {
@@ -23,12 +24,13 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
 
 
     const actions = {
-        unconfirmed: ["Confirm", "Update Trip", "View Booking", "Cancel"],
-        confirmed: ["View Booking", "Update Trip", "Cancel"],
-        cancelled: ["View Booking"],
-        ongoing: ["View Booking", "End Trip"],
-        extratime: ["View Booking", "End Trip"],
+        unconfirmed: ["Confirm", "Update Trip", "View Booking", "Cancel", "Assign Agent"],
+        confirmed: ["View Booking", "Update Trip", "Cancel", "Assign Agent"],
+        cancelled: ["View Booking", "Assign Agent"],
+        ongoing: ["View Booking", "End Trip", "Assign Agent"],
+        extratime: ["View Booking", "End Trip", "Assign Agent"],
     }
+    const [isAssignAgentModalOpen, setIsAssignAgentModalOpen] = useState<boolean>(false);
 
     enum Action {
         Unconfirmed = "unconfirmed",
@@ -91,12 +93,11 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
         }
         else if (action === "Cancel") {
             setIsCancelTripModalOpen(true)
-
         } else if (action === "View Booking") {
             router.push(`/dashboard/bookings/${trip.bookingId}`)
+        } else if (action === "Assign Agent") {
+            setIsAssignAgentModalOpen(true);
         }
-
-
     }
 
     return (
@@ -146,9 +147,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({ actionOption, trip })
             <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
             <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
             <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />
-            <UpdateTripModal isOpen={isUpdateTripModalOpen} setIsOpen={setIsUpdateTripModalOpen} trip={trip} />
-            <ConfirmTripModal isOpen={isConfirmTripModalOpen} setIsOpen={setIsConfirmTripModalOpen} tripId={trip.id} />
-            <CancelTripModal isOpen={isCancelTripModalOpen} setIsOpen={setIsCancelTripModalOpen} tripId={trip.id} />
+            <AssignAgentModal isOpen={isAssignAgentModalOpen} setIsOpen={setIsAssignAgentModalOpen} tripId={trip.id} />
 
         </div>
     );

@@ -24,7 +24,7 @@ export const useBlockUser = () => {
     // Use the post method from your custom http client
     // Your useHttp.post already handles try/catch and error propagation
     const response = await put(
-      `${LocalRoute.deactivateUser}/${payload.userId}/`,
+      `/user/deactivate/${payload.userId}`,
       {
         blockedReason: payload.reason,
       }
@@ -36,8 +36,8 @@ export const useBlockUser = () => {
     mutationFn: blockUserRequest,
     onSuccess: () => {
       toast.success("User blocked successfully!");
-      queryClient.invalidateQueries({ queryKey: ["hosts"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] }); // If you have a general users list
+      queryClient.invalidateQueries({ queryKey: ["hosttable"] });
+      queryClient.invalidateQueries({ queryKey: ["hostDetails"] });
     },
     onError: (error: any) => {
       console.error("Failed to block user via Tanstack Query:", error);
@@ -92,12 +92,14 @@ const BlockUserModal = ({
       width="max-w-xl" // Adjusted width to match image
       title="Block This User"
       content={
-        <BlockUserContent
-          handleModal={handleModal}
-          onSubmit={handleSubmitFormik}
-          isPending={isPending} // Pass isPending down to content
-          isMutationSuccess={isSuccess}
-        />
+        <div className="bg-grey-50 rounded-2xl p-8">
+          <BlockUserContent
+            handleModal={handleModal}
+            onSubmit={handleSubmitFormik}
+            isPending={isPending} // Pass isPending down to content
+            isMutationSuccess={isSuccess}
+          />
+        </div>
       }
     />
   );

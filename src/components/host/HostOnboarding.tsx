@@ -16,21 +16,15 @@ import { FullPageSpinner, Spinner } from "@/components/shared/spinner";
 import SelectInput from "@/components/shared/select";
 import { hostFormValidationSchema } from "@/validators/HostOnboardingSchema";
 import AppSwitch from "@/components/shared/switch";
-
-const outskirtsLocationOptions = ["Lagos", "Accra", "Abuja", "Benin", "Others"];
-
+import { stateOptions } from "@/utils/data";
 export default function HostOnboardingComponent() {
   const { hostMutation } = useHostOnboarding();
   const { data: members, isLoading } = useTeamMembers();
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const returnUrl = searchParams.get("returnUrl");
-
-  const onboardedByOptions = (members || []).map((member) => ({
-    value: member.email,
-    option: ` ${member.firstName} ${member.lastName}`,
-  }));
 
   const handleSuccessRedirect = () => {
     if (returnUrl === "/dashboard/onboarding/hosts") {
@@ -204,33 +198,60 @@ export default function HostOnboardingComponent() {
                           Operating Cities
                         </label>
                         <div className="flex flex-wrap gap-x-4 gap-y-2">
-                          {outskirtsLocationOptions.map((feature) => (
-                            <GroupCheckBox
-                              key={feature}
-                              feature={feature}
-                              checkedValues={values.outskirtsLocation}
-                              onChange={(
-                                feature: string,
-                                isChecked: boolean
-                              ) => {
-                                if (isChecked) {
-                                  const newValues = [
-                                    ...values.outskirtsLocation,
-                                    feature,
-                                  ];
-                                  setFieldValue("outskirtsLocation", newValues);
-                                } else {
-                                  const newValues =
-                                    values.outskirtsLocation.filter(
-                                      (value) => value !== feature
+                          {stateOptions.map((state) => {
+                            // Create a processed version of the checked values for comparison
+                            const processedCheckedValues =
+                              values.outskirtsLocation.map((value) =>
+                                value.replace(/\s+/g, "")
+                              );
+
+                            return (
+                              <GroupCheckBox
+                                key={state.value}
+                                feature={state.option}
+                                checkedValues={processedCheckedValues}
+                                onChange={(
+                                  feature: string,
+                                  isChecked: boolean
+                                ) => {
+                                  // The feature parameter has spaces removed by GroupCheckBox
+                                  // We need to find the original state value that matches
+                                  const originalStateValue = stateOptions.find(
+                                    (s) =>
+                                      s.option.replace(/\s+/g, "") === feature
+                                  )?.value;
+
+                                  if (isChecked && originalStateValue) {
+                                    const newValues = [
+                                      ...values.outskirtsLocation,
+                                      originalStateValue,
+                                    ];
+                                    setFieldValue(
+                                      "outskirtsLocation",
+                                      newValues
                                     );
-                                  setFieldValue("outskirtsLocation", newValues);
-                                }
-                                setFieldTouched("outskirtsLocation", true);
-                              }}
-                            />
-                          ))}
+                                  } else if (!isChecked && originalStateValue) {
+                                    const newValues =
+                                      values.outskirtsLocation.filter(
+                                        (value) => value !== originalStateValue
+                                      );
+                                    setFieldValue(
+                                      "outskirtsLocation",
+                                      newValues
+                                    );
+                                  }
+                                  setFieldTouched("outskirtsLocation", true);
+                                }}
+                              />
+                            );
+                          })}
                         </div>
+                        {errors.outskirtsLocation &&
+                          touched.outskirtsLocation && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {errors.outskirtsLocation as string}
+                            </p>
+                          )}
                       </div>
 
                       <div className="flex items-center space-x-2 pt-2">
@@ -348,32 +369,14 @@ export default function HostOnboardingComponent() {
                       <h3 className="text-xl font-semibold text-gray-800">
                         Additional Details
                       </h3>
-                      <SelectInput
-                        id="onboardedBy"
-                        label="Onboarded By"
-                        placeholder="Select team member"
-                        options={onboardedByOptions}
-                        value={values.onboardedBy}
-                        onChange={(value) => {
-                          setFieldTouched("onboardedBy", true);
-                          setFieldValue("onboardedBy", value);
-                        }}
-                        error={
-                          touched.onboardedBy && errors.onboardedBy
-                            ? (errors.onboardedBy as string)
-                            : ""
-                        }
-                      />
+
                       <FileInputField
                         id="mou"
                         name="mou"
                         label="Attachment (optional)"
                         placeholder="Upload Signed MOU by host"
                         filePicker={true}
-                        onFileSelect={(file: File) => {
-                          setFieldValue("mou", file);
-                          setFieldTouched("mou", true);
-                        }}
+                        onFileSelect={(file) => setFieldValue("mou", file)}
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.mou}

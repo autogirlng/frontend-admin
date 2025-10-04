@@ -121,9 +121,15 @@ export const withdrawalAccountSchema = object().shape({
 export const basicVehicleInformationSchema = object().shape({
   listingName: string().required("Vehicle name is required"),
   location: string().required("City is required"),
+  latitude: string().required(
+    "Latitude is missing. Please select an address from the list."
+  ),
+  longitude: string().required(
+    "Longitude is missing. Please select an address from the list."
+  ),
   address: string().required("Address is required"),
   vehicleType: string().required("Please select vehicle type"),
-  make: string().required("Please selecm"),
+  make: string().required("Please select vehicle make"),
   model: string().required("Please select vehicle model"),
   yearOfRelease: string().required("Please select year of release"),
   hasInsurance: string().required("Please select insurance status"),
@@ -142,16 +148,14 @@ export const addtionalVehicleInformationSchema = object().shape({
 });
 
 export const documentVehicleInformationSchema = object().shape({
-  proofOfOwnership: mixed().required("Proof of ownership is required."),
+  proofOfOwnership: mixed().optional(),
   vehicleRegistration: mixed().required(
     "Vehicle registration document is required."
   ),
   insuranceCertificate: mixed().required("Insurance certificate is required."),
-  vehicleInspectionReport: mixed().required(
-    "Vehicle inspection report is required."
-  ),
+  vehicleInspectionReport: mixed().optional(),
   maintenanceHistory: mixed().optional(),
-  authorizationLetter: mixed().required("Authorization letter is required."),
+  authorizationLetter: mixed().optional(),
 });
 export const vehiclePhotosSchema = object().shape({
   frontView: string().required("Please upload Front view image"),

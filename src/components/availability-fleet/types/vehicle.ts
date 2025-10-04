@@ -1,20 +1,32 @@
+// types/vehicle.ts
+
+export interface DailyAvailability {
+  date: string;
+  status: "available" | "not-available";
+}
+
+export interface HourlyAvailability {
+  time: string;
+  status: "available" | "not-available";
+}
+
 export interface Vehicle {
-  vehicleId: string;
-  vehicleIdentifier: string;
+  id: string;
   listingName: string;
   make: string;
   model: string;
   yearOfRelease: string;
-  vehicleType: "sedan" | "SUV" | "truck" | "bus";
+  vehicleType: string;
   location: string;
-  availability: {
-    date: string;
-    status: "available" | "unavailable";
-  }[];
+  availability: DailyAvailability[];
 }
 
-export interface VehicleSearchResponse {
-  data: Vehicle[];
+export interface VehicleWithHourly extends Omit<Vehicle, "availability"> {
+  availability: HourlyAvailability[];
+}
+
+export interface VehicleSearchResponse<T = Vehicle> {
+  data: T[];
   page: number;
   limit: number;
   totalPages: number;

@@ -1,4 +1,3 @@
-// src/components/tables/Team/Details/modals/AddNewMember.tsx
 "use client";
 import React, { ReactNode } from "react";
 import { BlurredDialog } from "@/components/shared/dialog";
@@ -10,6 +9,9 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import Icons from "@/utils/Icon";
 import useChangeRole from "../../hooks/useChangeRole";
+import { toast } from "react-toastify"; // Import toast for notifications
+import { FaUser } from "react-icons/fa";
+import { ImageAssets } from "@/utils/ImageAssets";
 
 interface ChangeRoleData {
   userRole: UserRole; // Ensure this matches userRole in payload
@@ -24,11 +26,20 @@ type ChangeRolerProps = {
 const ChangeRole = ({ trigger, openModal, handleModal }: ChangeRolerProps) => {
   const { changeRole, isLoading, isSuccess, isError } = useChangeRole();
 
+  // Effect to handle success: close modal and show success toast
   React.useEffect(() => {
     if (isSuccess) {
       handleModal(false);
+      toast.success("User role updated successfully!");
     }
   }, [isSuccess, handleModal]);
+
+  // Effect to handle errors: show error toast
+  React.useEffect(() => {
+    if (isError) {
+      toast.error("Failed to update user role. Please try again.");
+    }
+  }, [isError]);
 
   const handleSubmitFormik = (values: ChangeRoleData) => {
     const payload: ChangeRoleData = {
@@ -73,7 +84,7 @@ const roleOptions = [
   { value: UserRole.CustomerSupport, option: "Customer Support" },
   { value: UserRole.FinanceManager, option: "Finance Manager" },
   { value: UserRole.OperationManager, option: "Operation Manager" },
-  { value: UserRole.SuperAdmin, option: "Super Admin" },
+  //{ value: UserRole.SuperAdmin, option: "Super Admin" },
 ];
 
 const ChangeRoleContent = ({
@@ -82,8 +93,11 @@ const ChangeRoleContent = ({
   isLoading,
   isMutationSuccess,
 }: ChangeRoleContentProps) => {
+  // State to manage image loading error
+  const [imageError, setImageError] = React.useState(false);
+
   const validationSchema = Yup.object({
-    role: Yup.string().required("Role is required"), // Corresponds to userRole in payload
+    userRole: Yup.string().required("Role is required"), // Corresponds to userRole in payload
   });
 
   const formik = useFormik<ChangeRoleData>({
@@ -96,32 +110,32 @@ const ChangeRoleContent = ({
     },
   });
 
-  // Reset form when mutation is successful
+  // Reset form and image error state when mutation is successful
   React.useEffect(() => {
     if (isMutationSuccess) {
       formik.resetForm();
+      setImageError(false); // Reset image error state on success
     }
   }, [isMutationSuccess, formik]);
 
   return (
     <div className="w-full max-w-xl">
       <form onSubmit={formik.handleSubmit} className="space-y-2">
-        <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-orange-500">
-          {/* Use the 'avatar' property from the member object.
-                Provide a fallback if avatar is not present or invalid. */}
-          <Image
-            src={"/images/default-avatar.png"} // Use member.avatar, with a default fallback
-            alt={` avatar`}
-            layout="fill"
-            objectFit="cover"
-            className="rounded-full"
-            priority
-            onError={(e) => {
-              {
-                Icons;
-              }
-            }}
-          />
+        <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-orange-500 flex items-center justify-center">
+          {imageError ? (
+            // Render user icon if image fails to load
+            <FaUser className="w-16 h-16 text-gray-400" /> // Adjust size and color as needed
+          ) : (
+            <Image
+              src={ImageAssets.icons.user} // Use member.avatar, with a default fallback
+              alt={`avatar`}
+              layout="fill"
+              objectFit="cover"
+              className="rounded-full"
+              priority
+              onError={() => setImageError(true)} // Set imageError to true on error
+            />
+          )}
         </div>
         <SelectInput
           id="userRole"

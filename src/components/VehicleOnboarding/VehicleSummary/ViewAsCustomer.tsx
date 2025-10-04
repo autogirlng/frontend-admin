@@ -128,12 +128,6 @@ export default function ViewAsCustomer({ vehicle }: Props) {
                     />
                   )
               )}
-              <Link
-                href="/"
-                className="block w-full text-primary-500 text-base 3xl:text-xl"
-              >
-                Learn more about our free cancellation
-              </Link>
             </div>
           </div>
 
@@ -154,20 +148,42 @@ export default function ViewAsCustomer({ vehicle }: Props) {
           </div>
 
           {/* outskirt locations */}
-          <div className="space-y-5">
-            <SectionTitle text="Outskirt Locations" />
-            <div className="flex flex-wrap gap-y-8 gap-x-[18px]">
-              {vehicle?.outskirtsLocation?.map((location, index) => (
-                <p
-                  key={index}
-                  className="text-sm md:text-base 3xl:text-xl !font-medium text-black flex items-center gap-[14px] w-[170px]"
-                >
-                  {Icons.ic_location}
-                  <span>{location}</span>
-                </p>
-              ))}
-            </div>
-          </div>
+          {vehicle?.outskirtsLocation &&
+            vehicle.outskirtsLocation.length > 0 && (
+              <div className="space-y-5">
+                <SectionTitle text="Outskirt Locations" />
+                <div className="flex flex-wrap gap-y-8 gap-x-[18px]">
+                  {vehicle?.outskirtsLocation?.map((location, index) => (
+                    <p
+                      key={index}
+                      className="text-sm md:text-base 3xl:text-xl !font-medium text-black flex items-center gap-[14px] w-[170px]"
+                    >
+                      {Icons.ic_location}
+                      <span>{location}</span>
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          {/*  Extreme Areas Section */}
+          {vehicle?.extremeAreasLocation &&
+            vehicle.extremeAreasLocation.length > 0 && (
+              <div className="space-y-5">
+                <SectionTitle text="Extreme Areas" />
+                <div className="flex flex-wrap gap-y-8 gap-x-[18px]">
+                  {vehicle?.extremeAreasLocation?.map((location, index) => (
+                    <p
+                      key={index}
+                      className="text-sm md:text-base 3xl:text-xl !font-medium text-black flex items-center gap-[14px] w-[170px]"
+                    >
+                      {Icons.ic_location}
+                      <span>{location}</span>
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
         </div>
 
         {/* pricing */}

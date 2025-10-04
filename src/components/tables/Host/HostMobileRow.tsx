@@ -119,7 +119,14 @@ export default function HostMobileRow({ items }: { items: Member }) {
       <MobileTableCell title="Host ID" content={items?.id ?? "-"} />
       <MobileTableCell
         title="Full Name"
-        content={`${items?.firstName ?? "-"} ${items?.lastName ?? "-"}`}
+        content={
+          <Link
+            href={`${LocalRoute.hostPage}/${hostId}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+          >
+            {`${items?.firstName ?? "-"} ${items?.lastName ?? "-"}`}
+          </Link>
+        }
       />
 
       <MobileTableCell
@@ -152,7 +159,7 @@ export default function HostMobileRow({ items }: { items: Member }) {
       />
       <MobileTableCell title="Location" content={items?.location ?? "-"} />
 
-      <MobileTableCell title="Status" content={items?.status} isBadge />
+      <MobileTableCell title="Status" content={items?.status} isBadge={true} />
     </div>
   );
 }

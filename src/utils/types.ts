@@ -147,6 +147,8 @@ export interface WithdrawalAccountValues {
 
 export interface BasicVehicleInformationValues {
   listingName: string;
+  latitude: string;
+  longitude: string;
   location: string;
   address: string;
   vehicleType: string;
@@ -236,11 +238,18 @@ export interface AvailabilityAndPricingValues {
   dailyRate: string;
   extraHourRate: string;
   airportPickup: string;
+  oneHourRate?: string;
+  threeHoursRate?: string;
+  sixHoursRate?: string;
+  twelveHoursRate?: string;
+  twentyFourHoursRate?: string;
   threeDaysDiscount: string;
   sevenDaysDiscount: string;
   thirtyDaysDiscount: string;
   outskirtsLocation: string[];
   outskirtsPrice: string;
+  extremeAreaPrice: string;
+  extremeAreasLocation: string[];
 }
 
 // <================= STATUS =================>// src/utils/types/status.ts
@@ -426,6 +435,7 @@ export interface TripSettings {
 
 export interface Rate {
   value: number;
+  currency: string | null;
   unit: string;
 }
 
@@ -440,6 +450,10 @@ export interface Pricing {
   // hourlyRate: Rate;
   airportPickupFee: number;
   discounts: Discount[];
+  bookingTypePrices?: {
+    type: string;
+    price: number;
+  }[];
 }
 
 export interface AvailabilityAndPricing {
@@ -515,6 +529,7 @@ export interface VehicleOnboardingTable {
   hostRate: string;
   customerRate: string;
   status: "accepted" | "pending" | "rejected" | "review";
+  // vehicleStatus: "accepted" | "pending" | "rejected" | "review";
 }
 
 export interface FleetTable {
@@ -612,12 +627,21 @@ export interface BookingInformation {
   vehicle?: ListingInformation;
   travelCompanions?: TravelCompanion[];
 }
+
+export interface GeoJSONPoint {
+  type: "Point";
+  coordinates: [number, number];
+}
+
 export interface VehicleInformation {
   id?: string;
   listingName: string;
   location?: string;
   address?: string;
   vehicleType: string;
+  latitude: string;
+  longitude: string;
+  locationMain?: GeoJSONPoint;
   make: string;
   model: string;
   yearOfRelease: string;
@@ -634,13 +658,15 @@ export interface VehicleInformation {
   pricing: Pricing;
   outskirtsLocation?: string[];
   outskirtsPrice?: number;
+  extremeAreasLocation?: string[];
+  extremeAreaPrice?: number;
   status: ListingStatus;
   vehicleStatus: VehicleStatus;
   userId: string;
   createdAt: string;
   updatedAt: string;
   user: User;
-  document: DocumentVehicleInformationValues;
+  VehicleDocument: DocumentVehicleInformationValues;
 }
 
 export interface AssignedDriver {
@@ -656,24 +682,23 @@ export interface AssignedDriver {
   updatedAt: string;
 }
 
-
 export interface Driver {
-    id: string,
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    email: string,
-    driverImage: null | string,
-    createdAt: string,
-    updatedAt: string
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  driverImage: null | string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DriverResponse {
-    data: Driver[];
-    page: number;
-    limit: number;
-    totalPages: number;
-    totalCount: number;
+  data: Driver[];
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalCount: number;
 }
 
 export interface EarningsStatistics {
@@ -702,6 +727,8 @@ export interface ListingInformation {
   numberOfSeats: number;
   outskirtsLocation?: string[];
   outskirtsPrice?: number;
+  extremeAreasLocation?: string[];
+  extremeAreaPrice?: number;
   status: ListingStatus;
   userId: string;
   createdAt: string;
@@ -833,6 +860,7 @@ export type DateRange = { startDate: Date | null; endDate: Date | null };
 
 export type Member = {
   id: string;
+  profileImage: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -851,17 +879,30 @@ export type Member = {
     | string;
   lastLogin: string;
   joined: string;
-  status: "Active" | "Inactive" | "Successful";
+  status: "active" | "inactive" | "successful";
 };
 export enum UserRole {
-  OperationManager = "Operation Manager",
-  Admin = "Admin",
-  CustomerSupport = "Customer Support",
-  FinanceManager = "Finance Manager",
-  SuperAdmin = "Super Admin",
+  Admin = "ADMIN",
+  OperationManager = "OPERATION_MANAGER",
+  CustomerSupport = "CUSTOMER_SUPPORT",
+  FinanceManager = "FINANCE_MANAGER",
+  // SuperAdmin = "Super Admin",
+  // ADMIN, CUSTOMER_SUPPORT, FINANCE_MANAGER, OPERATION_MANAGER, HOST. CUSTOMER
 }
 
 export interface AddMemberPayload {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  countryCode: string;
+  country: string;
+  email: string;
+  userRole: UserRole;
+  isBusiness?: boolean;
+}
+
+export interface EditMemberPayload {
+  id: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -902,8 +943,6 @@ export type LucideIconType = React.ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;
 
-
-
 export interface TripBookingResponse {
   data: TripBookingItem[];
   page: number;
@@ -916,22 +955,35 @@ export interface TripBookingItem {
   id: string;
   bookingId: string;
   customerName: string;
-  customerPhone:string;
-  driverName:string;
-  driverPhone:string;
-  hostName:string;
-  opsAgentName:string;
-  csAgentName:string;
-  bookedHours:number;
-  pickupState:string;
-  pickupTime:string;
+  customerPhone: string;
+  driverName: string;
+  driverPhone: string;
+  hostName: string;
+  opsAgentName: string;
+  csAgentName: string;
+  bookedHours: number;
+  pickupState: string;
+  pickupTime: string;
   serviceDate: string;
   bookingType: "SINGLE_DAY" | "MULTI_DAY" | string;
   pickupLocation: string;
   vehicle: string;
-  vehicleIdentifier:string;
-  bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
-  tripStatus: "UNCONFIRMED" | "CONFIRMED" | "ONGOING" | "EXTRA_TIME" | "CANCELLED" | "COMPLETED";
+  vehicleIdentifier: string;
+  bookingStatus:
+    | "PENDING"
+    | "PAID"
+    | "UNPAID"
+    | "PENDING"
+    | "COMPLETED"
+    | "REJECTED"
+    | "CANCELLED";
+  tripStatus:
+    | "UNCONFIRMED"
+    | "CONFIRMED"
+    | "ONGOING"
+    | "EXTRA_TIME"
+    | "CANCELLED"
+    | "COMPLETED";
   booking: TripBookingDetails;
 }
 
@@ -945,7 +997,14 @@ export interface TripBookingDetails {
   paymentStatus: "PENDING" | string;
   paymentMethod: "ACCOUNT_TRANSFER" | string;
   rentalAgreement: string | null;
-  bookingStatus: "PENDING" |"PAID" | "UNPAID" | "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
+  bookingStatus:
+    | "PENDING"
+    | "PAID"
+    | "UNPAID"
+    | "PENDING"
+    | "COMPLETED"
+    | "REJECTED"
+    | "CANCELLED";
   isForSelf: boolean;
   guestName: string;
   guestEmail: string;
@@ -974,18 +1033,17 @@ export interface TripBookingDetails {
   updatedAt: string;
 }
 
-
 export interface Driver {
-          id: string;
-        firstName: string;
-        lastName: string;
-        phoneNumber: string;
-        vehicleId: string;
-        bookingId: string;
-        assignmentDate: string;
-        status: string;
-        createdAt: string;
-        updatedAt: string;
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  vehicleId: string;
+  bookingId: string;
+  assignmentDate: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SingleTrip {
@@ -1082,4 +1140,3 @@ export interface SingleTrip {
     updatedAt: string;
   }[];
 }
-
