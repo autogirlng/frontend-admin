@@ -1,14 +1,5 @@
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import BookingMetrics from "@/components/bookings/BookingMetricsCard";
-import TripsTimeline from "@/components/bookings/TripsTimeline";
-import BookingsTable from "@/components/bookings/BookingsTable";
+import Booking from "@/components/dashboard/bookings-management/Booking";
 
-export default function DashboardPage() {
-  return (
-    <DashboardLayout title="Booking" currentPage="Bookings">
-      <BookingMetrics />
-      <TripsTimeline />
-      <BookingsTable />
-    </DashboardLayout>
-  );
+export default function BookingPage() {
+  return <Booking />;
 }

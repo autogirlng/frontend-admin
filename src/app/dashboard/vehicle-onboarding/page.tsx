@@ -1,11 +1,5 @@
-import { Suspense } from "react";
-import { FullPageSpinner } from "@/components/shared/spinner";
-import VehicleOnboardingPage from "./VehicleOnboarding";
+import VehicleOnboarding from "@/components/dashboard/vehicle-onboarding/VehicleOnboarding";
 
-export default function VehicleOnboardingRoutePage() {
-  return (
-    <Suspense fallback={<FullPageSpinner />}>
-      <VehicleOnboardingPage />
-    </Suspense>
-  );
+export default function VehicleOnboardingPage() {
+  return <VehicleOnboarding />;
 }
