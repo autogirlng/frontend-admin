@@ -1,23 +1,13 @@
 import SockJS from "sockjs-client";
-// Use Client instead of CompatClient/Stomp
 import { Client, IFrame, StompSubscription, IMessage } from "@stomp/stompjs";
+import { NotificationItem } from "@/components/notifications/types";
 
-// Define the shape of a notification
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  createdAt: string; // Assuming ISO string
-  read: boolean;
-  // Add any other fields your backend sends
-}
-
-// Type for the callback function
-export type NotificationCallback = (notification: Notification) => void;
+export type NotificationCallback = (notification: NotificationItem) => void;
 
 class NotificationWebSocketService {
   private client: Client | null = null;
   private subscriptions: StompSubscription[] = [];
+  private userId: string | null = null;
   private token: string | null = null;
   private onNotificationCallback: NotificationCallback | null = null;
   private wsUrl: string;
@@ -32,60 +22,93 @@ class NotificationWebSocketService {
   }
 
   /**
-   * Activate the WebSocket connection
+   * Activate the WebSocket connection with userId
    */
-  activate(jwtToken: string, onNotification: NotificationCallback) {
-    // Prevent multiple activations if already active or connecting
-    if (this.client?.active || !jwtToken) {
-      console.log(
-        `WebSocket already active or no token provided. State: ${this.client?.state}`
-      );
+  activate(
+    userId: string,
+    jwtToken: string,
+    onNotification: NotificationCallback
+  ) {
+    console.log("🎯 activate() called");
+    console.log("👤 userId:", userId);
+    console.log("🔑 token:", jwtToken ? "present" : "missing");
+
+    // ✅ Store userId and callback
+    this.userId = userId;
+    this.onNotificationCallback = onNotification;
+    console.log("✅ Callback registered:", !!this.onNotificationCallback);
+
+    // If client is already active with same user, just update callback
+    if (this.client?.active && this.userId === userId) {
+      console.log("ℹ️ Client already active for same user, callback updated");
+      return;
+    }
+
+    // If we need to reconnect for different user, disconnect first
+    if (this.client?.active && this.userId !== userId) {
+      console.log("🔄 Different user detected, reconnecting...");
+      this.deactivate();
+    }
+
+    if (!jwtToken || !userId) {
+      console.log("❌ Missing token or userId, cannot activate.");
       return;
     }
 
     this.token = jwtToken;
-    this.onNotificationCallback = onNotification;
-    this.isExplicitlyDisconnected = false; // Allow auto-reconnect
+    this.isExplicitlyDisconnected = false;
 
     console.log("🚀 Initializing WebSocket client...");
 
     this.client = new Client({
-      // Provide a factory function for SockJS
       webSocketFactory: () => new SockJS(this.wsUrl),
       connectHeaders: {
         Authorization: `Bearer ${this.token}`,
       },
-      // Configure reconnection delay (in ms)
       reconnectDelay: 5000,
-      // Heartbeat (optional but recommended)
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      // Debugging (optional)
       debug: (str) => {
         // console.log('STOMP DEBUG:', str);
       },
 
       onConnect: (frame: IFrame) => {
         console.log("✅ WebSocket Connected:", frame.command);
-        // Subscribe to personal notification queue
+
+        // ✅ Subscribe using userId in the path
+        const destination = `/user/${this.userId}/queue/notifications`;
+        console.log("📡 Subscribing to:", destination);
+
         const subscription = this.client!.subscribe(
-          "/user/queue/notifications",
+          destination,
           (message: IMessage) => {
+            console.log("📬 RAW MESSAGE RECEIVED FROM WEBSOCKET!");
+            console.log("📬 Message body:", message.body);
+
             try {
-              const notification: Notification = JSON.parse(message.body);
-              console.log("📬 Received notification:", notification);
+              const notification: NotificationItem = JSON.parse(message.body);
+              console.log("📬 Parsed notification:", notification);
+
+              // ✅ Call the callback
               if (this.onNotificationCallback) {
+                console.log("✅ Calling notification callback NOW!");
                 this.onNotificationCallback(notification);
+                console.log("✅ Callback executed successfully");
+              } else {
+                console.error("❌ NO CALLBACK REGISTERED!");
               }
             } catch (e) {
-              console.error("Error parsing notification:", e);
+              console.error("❌ Error parsing notification:", e);
+              console.error("❌ Raw message was:", message.body);
             }
-          },
-          {
-            /* Optional subscription headers */
           }
         );
+
         this.subscriptions.push(subscription);
+        console.log(
+          "✅ Subscription established successfully to:",
+          destination
+        );
       },
 
       onStompError: (frame: IFrame) => {
@@ -95,25 +118,21 @@ class NotificationWebSocketService {
 
       onWebSocketError: (event: Event) => {
         console.error("❌ WebSocket error:", event);
-        // Reconnect will be attempted automatically by the library due to reconnectDelay
       },
 
       onDisconnect: (frame: IFrame) => {
         console.log("🔌 WebSocket disconnected.", frame.command);
-        this.subscriptions = []; // Clear subscriptions on disconnect
-        // Only log reconnect attempt if it wasn't an explicit disconnect
+        this.subscriptions = [];
         if (!this.isExplicitlyDisconnected) {
           console.log("🔁 Will attempt to reconnect automatically...");
         }
       },
 
-      // Handle issues during SockJS connection phase
       beforeConnect: () => {
-        console.log("Attempting to connect SockJS...");
+        console.log("⏳ Attempting to connect SockJS...");
       },
     });
 
-    // Activate the client
     this.client.activate();
   }
 
@@ -121,45 +140,46 @@ class NotificationWebSocketService {
    * Deactivate the connection explicitly
    */
   deactivate() {
-    console.log("Attempting explicit disconnect...");
-    this.isExplicitlyDisconnected = true; // Prevent auto-reconnect attempts after this
+    console.log("🛑 Attempting explicit disconnect...");
+    this.isExplicitlyDisconnected = true;
+    this.userId = null;
     this.token = null;
     this.onNotificationCallback = null;
 
     if (this.client) {
-      // Unsubscribe doesn't seem necessary with client.deactivate() but included for safety
       this.subscriptions.forEach((sub) => {
         try {
           sub.unsubscribe();
         } catch (e) {
-          console.warn("Error unsubscribing:", e);
+          console.warn("⚠️ Error unsubscribing:", e);
         }
       });
       this.subscriptions = [];
 
       try {
-        this.client.deactivate(); // This handles closing the connection
+        this.client.deactivate();
         console.log("🚪 Deactivation initiated.");
       } catch (e) {
-        console.error("Error during deactivation:", e);
+        console.error("❌ Error during deactivation:", e);
       }
-      this.client = null; // Clear the client instance
+      this.client = null;
     } else {
-      console.log("Client already null, no need to deactivate.");
+      console.log("ℹ️ Client already null, no need to deactivate.");
     }
   }
 
   /**
-   * Mark notification as read (optional)
+   * Mark notification as read
    */
   markAsRead(notificationId: string) {
     if (this.client && this.client.active) {
       this.client.publish({
-        destination: "/app/notification/read", // Your backend endpoint
-        body: JSON.stringify({ id: notificationId }),
+        destination: "/app/notification/read",
+        body: notificationId,
       });
+      console.log("✓ Sent mark as read for:", notificationId);
     } else {
-      console.warn("Cannot mark as read: WebSocket not connected/active.");
+      console.warn("⚠️ Cannot mark as read: WebSocket not connected/active.");
     }
   }
 }

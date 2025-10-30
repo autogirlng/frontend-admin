@@ -1,8 +1,9 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Menu, Bell, Search, LogOut, MessageCircle } from "lucide-react";
-import { useNotifications } from "@/context/NotificationContext";
+import { Menu, Search, LogOut, MessageCircle } from "lucide-react";
+// ✅ Import the new popover
+import { NotificationPopover } from "@/components/notifications/NotificationPopover"; // Adjust path
 
 interface HeaderProps {
   setSidebarOpen: (isOpen: boolean) => void;
@@ -10,7 +11,8 @@ interface HeaderProps {
 
 const Header = ({ setSidebarOpen }: HeaderProps) => {
   const { data: session } = useSession();
-  const { unreadCount } = useNotifications();
+  // 🛑 The 'unreadCount' is now managed inside the popover
+  // const { unreadCount } = useNotifications();
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
@@ -18,8 +20,6 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
 
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-[#ccc]">
-      {" "}
-      {/* Added border */}
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         <div className="flex-1 flex items-center">
           <button
@@ -52,19 +52,10 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
           {/* Messages Button (Example) */}
           <button className="relative p-2 text-gray-600 hover:text-[#0096FF] hover:bg-gray-100 rounded-full">
             <MessageCircle size={24} />
-            {/* Optional: Add a count badge for messages */}
           </button>
 
-          {/* Notifications Button */}
-          <button className="relative p-2 text-gray-600 hover:text-[#0096FF] hover:bg-gray-100 rounded-full">
-            {/* 3. DISPLAY UNREAD COUNT */}
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold ring-2 ring-white">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-            <Bell size={24} />
-          </button>
+          {/* ✅ Replace the old button with the new component */}
+          <NotificationPopover />
 
           {/* Logout Button */}
           <button
