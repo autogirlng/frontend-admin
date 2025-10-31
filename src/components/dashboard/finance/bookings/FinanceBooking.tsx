@@ -42,6 +42,12 @@ const enumToOptions = (e: object): Option[] =>
 
 const bookingStatusOptions: Option[] = enumToOptions(BookingStatus);
 
+// ✅ NEW: Options for the new filter
+const paymentMethodOptions: Option[] = [
+  { id: "ONLINE", name: "Online" },
+  { id: "OFFLINE", name: "Offline" },
+];
+
 export default function FinanceBookingsPage() {
   const router = useRouter();
 
@@ -52,8 +58,10 @@ export default function FinanceBookingsPage() {
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
+  // ✅ UPDATED filters state
   const [filters, setFilters] = useState({
     bookingStatus: null as string | null,
+    paymentMethod: null as string | null, // ✅ ADDED
     dateRange: null as DateRange | null,
   });
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -70,6 +78,7 @@ export default function FinanceBookingsPage() {
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
     searchTerm: debouncedSearchTerm,
+    paymentMethod: filters.paymentMethod, // ✅ ADDED
   });
 
   const confirmPaymentMutation = useConfirmOfflinePayment();
@@ -79,9 +88,13 @@ export default function FinanceBookingsPage() {
   const totalPages = paginatedData?.totalPages || 0;
 
   // --- Event Handlers ---
-  const handleFilterChange = (key: "bookingStatus", value: string | null) => {
+  // ✅ UPDATED to be generic
+  const handleFilterChange = (
+    key: "bookingStatus" | "paymentMethod",
+    value: string | null
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(0);
+    setCurrentPage(0); // Reset to first page on filter change
   };
 
   const handleDateChange = (dateRange: DateRange | undefined) => {
@@ -89,9 +102,11 @@ export default function FinanceBookingsPage() {
     setCurrentPage(0);
   };
 
+  // ✅ UPDATED clearFilters
   const clearFilters = () => {
     setFilters({
       bookingStatus: null,
+      paymentMethod: null, // ✅ ADDED
       dateRange: null,
     });
     setSearchTerm("");
@@ -116,6 +131,7 @@ export default function FinanceBookingsPage() {
   };
 
   // --- Table Column Definitions ---
+  // ✅ UPDATED getBookingActions
   const getBookingActions = (booking: Booking): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
@@ -128,8 +144,11 @@ export default function FinanceBookingsPage() {
       },
     ];
 
-    // ✅ Conditionally add the "Confirm Payment" action
-    if (booking.bookingStatus === BookingStatus.PENDING_PAYMENT) {
+    // ✅ UPDATED: Now checks for OFFLINE payment method
+    if (
+      booking.bookingStatus === BookingStatus.PENDING_PAYMENT &&
+      booking.paymentMethod === "OFFLINE"
+    ) {
       actions.push({
         label: "Confirm Offline Payment",
         icon: CheckCircle,
@@ -183,6 +202,22 @@ export default function FinanceBookingsPage() {
         <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
       ),
     },
+    // ✅ NEW Column
+    {
+      header: "Payment",
+      accessorKey: "paymentMethod",
+      cell: (item) => (
+        <span
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+            item.paymentMethod === "ONLINE"
+              ? "bg-blue-100 text-blue-800"
+              : "bg-gray-100 text-gray-800"
+          }`}
+        >
+          {item.paymentMethod}
+        </span>
+      ),
+    },
     {
       header: "Booking Status",
       accessorKey: "bookingStatus",
@@ -202,7 +237,7 @@ export default function FinanceBookingsPage() {
     },
     {
       header: "Actions",
-      accessorKey: "actions" as keyof Booking,
+      accessorKey: "actions" as keyof Booking, // Use type assertion
       cell: (item) => <ActionMenu actions={getBookingActions(item)} />,
     },
   ];
@@ -227,7 +262,8 @@ export default function FinanceBookingsPage() {
             <Filter className="h-5 w-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* ✅ UPDATED grid classes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -259,6 +295,24 @@ export default function FinanceBookingsPage() {
               }
               onChange={(option) =>
                 handleFilterChange("bookingStatus", option.id)
+              }
+            />
+            {/* ✅ NEW Select for Payment Method */}
+            <Select
+              label="Payment Method"
+              hideLabel
+              placeholder="All Payment Methods"
+              options={paymentMethodOptions}
+              selected={
+                filters.paymentMethod
+                  ? {
+                      id: filters.paymentMethod,
+                      name: filters.paymentMethod,
+                    }
+                  : null
+              }
+              onChange={(option) =>
+                handleFilterChange("paymentMethod", option.id)
               }
             />
             <DatePickerWithRange

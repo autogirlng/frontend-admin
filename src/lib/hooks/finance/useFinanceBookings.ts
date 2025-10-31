@@ -4,7 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
-import { apiClient } from "@/lib/apiClient"; // Adjust path
+import { apiClient } from "@/lib/apiClient";
 import {
   Booking,
   PaginatedResponse,
@@ -13,16 +13,25 @@ import {
 // Query Key
 export const BOOKINGS_QUERY_KEY = "financeBookings";
 
+// 1. Get Bookings
 export interface BookingFilters {
   page: number;
   bookingStatus: string | null;
   startDate: Date | null;
   endDate: Date | null;
   searchTerm: string;
+  paymentMethod: string | null; // ✅ ADDED
 }
 
 export function useGetFinanceBookings(filters: BookingFilters) {
-  const { page, bookingStatus, startDate, endDate, searchTerm } = filters;
+  const {
+    page,
+    bookingStatus,
+    startDate,
+    endDate,
+    searchTerm,
+    paymentMethod, // ✅ ADDED
+  } = filters;
 
   return useQuery<PaginatedResponse<Booking>>({
     queryKey: [
@@ -32,6 +41,7 @@ export function useGetFinanceBookings(filters: BookingFilters) {
       startDate,
       endDate,
       searchTerm,
+      paymentMethod, // ✅ ADDED
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -43,6 +53,7 @@ export function useGetFinanceBookings(filters: BookingFilters) {
         params.append("startDate", format(startDate, "yyyy-MM-dd"));
       if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));
       if (searchTerm) params.append("searchTerm", searchTerm);
+      if (paymentMethod) params.append("paymentMethod", paymentMethod); // ✅ ADDED
 
       const endpoint = `/bookings?${params.toString()}`;
       return apiClient.get<PaginatedResponse<Booking>>(endpoint);
@@ -51,7 +62,7 @@ export function useGetFinanceBookings(filters: BookingFilters) {
   });
 }
 
-// 2. Confirm Offline Payment
+// 2. Confirm Offline Payment (Unchanged)
 export function useConfirmOfflinePayment() {
   const queryClient = useQueryClient();
 
@@ -63,16 +74,12 @@ export function useConfirmOfflinePayment() {
       ),
     onSuccess: () => {
       toast.success("Offline payment confirmed. Booking is now active.");
-      // Invalidate the bookings list to refetch
       queryClient.invalidateQueries({
         queryKey: [BOOKINGS_QUERY_KEY],
         exact: false,
       });
     },
-    // ✅ UPDATED onError block:
     onError: (error: Error) => {
-      // This now directly uses the 'message' from the error object,
-      // which should contain the string from the error response's "data" field.
       toast.error(error.message || "Failed to confirm payment.");
     },
   });

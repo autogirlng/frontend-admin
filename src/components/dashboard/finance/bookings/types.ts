@@ -1,6 +1,3 @@
-// app/dashboard/finance/bookings/types.ts
-
-// The paginated response structure
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -9,12 +6,12 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// A single booking object from the GET /bookings response
 export interface Booking {
   bookingId: string;
-  bookingStatus: string; // Will match one of the BookingStatus enum keys
+  bookingStatus: string;
+  paymentMethod: string;
   createdAt: string;
-  firstSegmentStarts: string;
+  firstSegmentStarts: string | null;
   customerName: string;
   vehicleId: string;
   vehicleName: string;
@@ -23,7 +20,6 @@ export interface Booking {
   hostName: string;
 }
 
-// Enums for filters
 export enum BookingStatus {
   PENDING_PAYMENT = "PENDING_PAYMENT",
   CONFIRMED = "CONFIRMED",
