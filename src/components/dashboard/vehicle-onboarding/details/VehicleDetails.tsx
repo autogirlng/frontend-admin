@@ -277,9 +277,9 @@ export default function VehicleDetailPage() {
               {vehicle.photos.length > 0 && (
                 <div className="p-4 bg-gray-50 border-t border-gray-200">
                   <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                    {vehicle.photos.map((photo, key) => (
+                    {vehicle.photos.map((photo, index) => (
                       <div
-                        key={key}
+                        key={`${photo.cloudinaryPublicId}-${index}`}
                         className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-[#0096FF] transition-colors cursor-pointer"
                       >
                         <img
