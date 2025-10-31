@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   Palette,
@@ -13,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import React from "react";
+import CustomBack from "../generic/CustomBack";
 
 interface SetupItem {
   title: string;
@@ -88,6 +91,7 @@ const setupItems: SetupItem[] = [
 export default function SetupPage() {
   return (
     <main className="py-3 max-w-8xl mx-auto">
+      <CustomBack />
       <h1 className="text-3xl font-bold text-gray-900 mb-2">
         Autogirl&apos;s Workspace Setup
       </h1>

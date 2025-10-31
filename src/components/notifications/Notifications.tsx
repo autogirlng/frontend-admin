@@ -86,9 +86,9 @@ export default function NotificationsPage() {
           href={notification.actionUrl}
           key={notification.id}
           passHref
-          legacyBehavior
+          className="block cursor-pointer"
         >
-          <a className="block cursor-pointer">{content}</a>
+          {content}
         </Link>
       );
     }
