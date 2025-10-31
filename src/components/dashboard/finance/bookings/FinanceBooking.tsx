@@ -27,6 +27,7 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
+import CustomBack from "@/components/generic/CustomBack";
 
 // Helper to format currency
 const formatPrice = (price: number) => {
@@ -245,6 +246,7 @@ export default function FinanceBookingsPage() {
   return (
     <>
       <Toaster position="top-right" />
+      <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
         <div className="mb-8">

@@ -1,10 +1,301 @@
+// app/dashboard/finance/payments/page.tsx
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { Toaster } from "react-hot-toast";
+import { AlertCircle, Eye, Filter, Search, Ticket } from "lucide-react";
+
+// Hooks
+import { useGetPayments } from "@/lib/hooks/finance/usePayments";
+import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
+
+// Reusable Components
+import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
+import { PaginationControls } from "@/components/generic/ui/PaginationControls";
+import Select, { Option } from "@/components/generic/ui/Select";
+import { DatePickerWithRange } from "../availability/DatePickerWithRange";
+import TextInput from "@/components/generic/ui/TextInput";
+import CustomLoader from "@/components/generic/CustomLoader";
+import Button from "@/components/generic/ui/Button";
+import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
+import { PaymentDetailModal } from "./PaymentDetailModal";
+import { Payment, PaymentStatus } from "./types";
 import Link from "next/link";
 
-export default function Finance() {
+// Helper to format currency
+const formatPrice = (price: number) => {
+  return `₦${price.toLocaleString()}`;
+};
+
+// Helper function to convert enums to <Select> options
+const enumToOptions = (e: object): Option[] =>
+  Object.entries(e).map(([key, value]) => ({
+    id: value,
+    name: key.replace(/_/g, " "),
+  }));
+
+const paymentStatusOptions: Option[] = enumToOptions(PaymentStatus);
+
+export default function PaymentsPage() {
+  const router = useRouter();
+
+  // --- State Management ---
+  const [currentPage, setCurrentPage] = useState(0);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
+    null
+  );
+
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    paymentStatus: null as string | null,
+    dateRange: null as DateRange | null,
+  });
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // --- API Hooks ---
+  const {
+    data: paginatedData,
+    isLoading,
+    isError,
+    isPlaceholderData,
+  } = useGetPayments({
+    page: currentPage,
+    paymentStatus: filters.paymentStatus,
+    startDate: filters.dateRange?.from || null,
+    endDate: filters.dateRange?.to || null,
+    searchTerm: debouncedSearchTerm,
+  });
+
+  // --- Derived Data ---
+  const payments = paginatedData?.content || [];
+  const totalPages = paginatedData?.totalPages || 0;
+
+  // --- Event Handlers ---
+  const handleFilterChange = (key: "paymentStatus", value: string | null) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(0);
+  };
+
+  const handleDateChange = (dateRange: DateRange | undefined) => {
+    setFilters((prev) => ({ ...prev, dateRange: dateRange || null }));
+    setCurrentPage(0);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      paymentStatus: null,
+      dateRange: null,
+    });
+    setSearchTerm("");
+    setCurrentPage(0);
+  };
+
+  const closeModal = () => {
+    setSelectedPaymentId(null);
+  };
+
+  // --- Table Column Definitions ---
+  const getPaymentActions = (payment: Payment): ActionMenuItem[] => [
+    {
+      label: "View Details",
+      icon: Eye,
+      onClick: () => setSelectedPaymentId(payment.id),
+    },
+    {
+      label: "View Booking",
+      icon: Ticket, // You'd add a real icon here
+      onClick: () => {
+        router.push(`/dashboard/bookings/${payment.bookingId}`);
+      },
+    },
+  ];
+
+  const columns: ColumnDefinition<Payment>[] = [
+    {
+      header: "Booking ID",
+      accessorKey: "bookingId",
+      cell: (item) => (
+        <span className="font-mono text-sm">
+          {item.bookingId.split("-")[0]}...
+        </span>
+      ),
+    },
+    {
+      header: "Vehicle",
+      accessorKey: "vehicleName",
+      cell: (item) => (
+        <div>
+          <div className="font-medium text-gray-900">{item.vehicleName}</div>
+          <div className="text-gray-500">{item.vehicleIdentifier}</div>
+        </div>
+      ),
+    },
+    {
+      header: "Reference",
+      accessorKey: "transactionReference",
+    },
+    {
+      header: "Amount",
+      accessorKey: "totalPayable",
+      cell: (item) => (
+        <span className="font-semibold">{formatPrice(item.totalPayable)}</span>
+      ),
+    },
+    {
+      header: "Provider",
+      accessorKey: "paymentProvider",
+    },
+    {
+      header: "Status",
+      accessorKey: "paymentStatus",
+      cell: (item) => (
+        <span
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+            item.paymentStatus === "SUCCESSFUL"
+              ? "bg-green-100 text-green-800"
+              : item.paymentStatus === "PENDING"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {item.paymentStatus.replace(/_/g, " ")}
+        </span>
+      ),
+    },
+    {
+      header: "Date",
+      accessorKey: "createdAt",
+      cell: (item) => format(new Date(item.createdAt), "MMM d, yyyy"),
+    },
+    {
+      header: "Actions",
+      accessorKey: "id",
+      cell: (item) => <ActionMenu actions={getPaymentActions(item)} />,
+    },
+  ];
+
   return (
-    <div>
-      <h1>Finance page</h1>
-      <Link href="/dashboard/finance/bookings">Finance Booking</Link>
-    </div>
+    <>
+      <Toaster position="top-right" />
+      <main className="py-3 max-w-8xl mx-auto">
+        {/* --- Header --- */}
+        <div className="flex items-center justify-between mb-8 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
+            <p className="text-lg text-gray-600 mt-1">
+              View and manage all payments on the platform.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/finance/bookings"
+            className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]"
+          >
+            View Bookings
+          </Link>
+        </div>
+
+        {/* --- Filter Section --- */}
+        <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="h-5 w-5 text-gray-600" />
+            <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <TextInput
+                label="Search"
+                id="search"
+                hideLabel
+                type="text"
+                placeholder="Search by Reference, Booking ID, etc."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+                style={{ paddingLeft: 35 }}
+              />
+            </div>
+            <Select
+              label="Payment Status"
+              hideLabel
+              placeholder="All Payment Statuses"
+              options={paymentStatusOptions}
+              selected={
+                filters.paymentStatus
+                  ? {
+                      id: filters.paymentStatus,
+                      name: filters.paymentStatus.replace(/_/g, " "),
+                    }
+                  : null
+              }
+              onChange={(option) =>
+                handleFilterChange("paymentStatus", option.id)
+              }
+            />
+            <DatePickerWithRange
+              date={filters.dateRange || undefined}
+              setDate={handleDateChange}
+            />
+          </div>
+          <Button
+            variant="secondary"
+            className="w-auto px-4 mt-4"
+            onClick={clearFilters}
+          >
+            Clear Filters
+          </Button>
+        </div>
+
+        {/* --- Table Display --- */}
+        {isLoading && !paginatedData && <CustomLoader />}
+        {isError && (
+          <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="h-8 w-8" />
+            <span className="font-semibold">Failed to load payments.</span>
+          </div>
+        )}
+        {!isLoading && !isError && payments.length === 0 && (
+          <div className="flex justify-center p-10 text-gray-500">
+            <p>No payments found for the selected filters.</p>
+          </div>
+        )}
+
+        {!isError && (payments.length > 0 || isLoading) && (
+          <div
+            className={`${
+              isPlaceholderData ? "opacity-50" : ""
+            } transition-opacity`}
+          >
+            <CustomTable
+              data={payments}
+              columns={columns}
+              getUniqueRowId={(item) => item.id}
+            />
+          </div>
+        )}
+
+        {/* --- Pagination --- */}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          isLoading={isPlaceholderData}
+        />
+      </main>
+
+      {/* --- Modals --- */}
+      {selectedPaymentId && (
+        <PaymentDetailModal
+          paymentId={selectedPaymentId}
+          onClose={closeModal}
+        />
+      )}
+    </>
   );
 }
