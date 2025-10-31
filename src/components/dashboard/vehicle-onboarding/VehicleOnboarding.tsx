@@ -30,6 +30,7 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import { ApproveVehicleModal } from "./ApproveVehicleModal";
 import Button from "@/components/generic/ui/Button";
 import { AddVehicleModal } from "./AddVehicleModal";
+import { useRouter } from "next/navigation";
 
 // --- Define Status Options for Filtering ---
 const statusOptions: Option[] = [
@@ -52,6 +53,7 @@ const formatStatus = (status: VehicleStatus) => {
 };
 
 export default function VehicleOnboarding() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
@@ -136,8 +138,8 @@ export default function VehicleOnboarding() {
       label: "View Details",
       icon: View,
       onClick: () => {
-        toast.success(`Navigating to details for ${vehicle.name}`);
-        // router.push(`/admin/vehicle-onboarding/${vehicle.id}`);
+        toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
+        router.push(`/dashboard/vehicle-onboarding/${vehicle.id}`);
       },
     });
 
