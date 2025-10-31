@@ -3,7 +3,10 @@
 import Header from "@/components/generic/Header";
 import Sidebar from "@/components/generic/Sidebar";
 import { NotificationProvider } from "@/context/NotificationContext";
-import { useState } from "react";
+import { useIdleTimer } from "@/lib/hooks/useIdleTimer";
+import { signOut } from "next-auth/react";
+import { useCallback, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +14,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const handleIdle = useCallback(() => {
+    toast.error("You have been logged out due to inactivity.");
+
+    signOut({ callbackUrl: "/login" });
+  }, []);
+
+  useIdleTimer({ onIdle: handleIdle, idleTime: 6000 });
 
   return (
     <div className="flex h-screen">
