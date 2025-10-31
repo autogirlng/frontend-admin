@@ -14,9 +14,7 @@ import {
   LogOut,
   CarFront,
   PanelLeft,
-  Wrench,
   Users,
-  Workflow,
   Car,
   Ticket,
   Plane,
@@ -67,8 +65,6 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     { name: "Customers", href: "/dashboard/customers", icon: Users },
     { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
     { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
-    { name: "Autogirl Affairs", href: "/dashboard/autogirl", icon: Workflow },
-    { name: "Configurations", href: "/dashboard/set-up", icon: Wrench },
   ];
 
   const settingsLink = {
