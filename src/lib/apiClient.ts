@@ -109,6 +109,28 @@ export const apiClient = {
     return handleResponse(response);
   },
 
+  patchFormData: async <T>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<T> => {
+    const session = await getSession();
+    const headers: Record<string, string> = {}; // No 'Content-Type'
+
+    if (session?.user?.accessToken) {
+      headers["Authorization"] = `Bearer ${session.user.accessToken}`;
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+      {
+        method: "PATCH", // Use PATCH method
+        headers,
+        body: formData,
+      }
+    );
+    return handleResponse(response);
+  },
+
   postFormData: async <T>(endpoint: string, formData: FormData): Promise<T> => {
     const session = await getSession();
     const headers: Record<string, string> = {}; // No 'Content-Type'
