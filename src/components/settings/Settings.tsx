@@ -9,6 +9,7 @@ import {
   Briefcase,
   CreditCard,
   Bell,
+  Activity,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -63,12 +64,12 @@ export default function SettingsPage() {
             iconBgColor="bg-sky-100"
           />
 
-          {/* 5. Billing (Suggested) */}
+          {/* 5. Audit Trail (Suggested) */}
           <SettingsCard
-            href="/dashboard/settings/billing"
-            icon={CreditCard}
-            title="Billing & Payments"
-            description="Manage payment methods, view invoices, and subscription details."
+            href="/dashboard/settings/audit-trails"
+            icon={Activity}
+            title="Audit Trail"
+            description="View activities on the platform."
             iconBgColor="bg-yellow-100"
           />
 
