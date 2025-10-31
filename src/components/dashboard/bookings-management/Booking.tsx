@@ -16,6 +16,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // --- Helper Functions & Constants ---
 
@@ -57,6 +58,7 @@ function formatDate(dateString: string) {
 
 // --- Main Page Component ---
 export default function BookingsPage() {
+  const router = useRouter();
   // --- Filter State ---
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
@@ -103,8 +105,10 @@ export default function BookingsPage() {
       {
         label: "View Booking",
         icon: View,
-        onClick: () => toast.success(`Viewing booking ${booking.bookingId}`),
-        // Example: router.push(`/admin/bookings/${booking.bookingId}`)
+        onClick: () => {
+          toast.success(`Viewing ${booking.customerName} bookings`);
+          router.push(`/dashboard/bookings/${booking.bookingId}`);
+        },
       },
     ];
 
