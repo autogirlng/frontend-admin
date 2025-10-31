@@ -17,6 +17,7 @@ import {
   PauseCircle,
   Play,
   Plus,
+  Edit,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -135,11 +136,20 @@ export default function VehicleOnboarding() {
 
     // All statuses can be viewed
     actions.push({
-      label: "View Details",
+      label: "View Vehicle",
       icon: View,
       onClick: () => {
         toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
         router.push(`/dashboard/vehicle-onboarding/${vehicle.id}`);
+      },
+    });
+
+    actions.push({
+      label: "Edit Vehicle",
+      icon: Edit,
+      onClick: () => {
+        toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
+        router.push(`/dashboard/onboarding?id=${vehicle.id}`);
       },
     });
 
