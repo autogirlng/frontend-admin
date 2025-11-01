@@ -27,6 +27,8 @@ import {
   Search,
   CheckCircle,
   Download,
+  Plus,
+  X,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -36,6 +38,8 @@ import {
   VehicleSearchFilters,
 } from "@/lib/hooks/booking-management/useBookingCreation";
 import { formatPrice } from "@/lib/utils/price-format";
+import { useRouter } from "next/navigation";
+import CustomBack from "@/components/generic/CustomBack";
 
 type Step = "search" | "results" | "details" | "confirm" | "success";
 
@@ -50,17 +54,22 @@ const initialFilters: Omit<VehicleSearchFilters, "page"> = {
   // other optional filters default to undefined
 };
 
-// Initial state for booking details
-const initialBookingDetails: Partial<BookingSegmentPayload> = {
+// Initial state for ONE segment
+const initialBookingDetails: Partial<BookingSegmentPayload> & {
+  pickupCoords: { latitude: number; longitude: number } | null;
+  dropoffCoords: { latitude: number; longitude: number } | null;
+} = {
   startDate: "",
   startTime: "",
   pickupLocationString: "",
   dropoffLocationString: "",
-  bookingTypeId: "", // Ensure this is initialized
+  bookingTypeId: "",
+  pickupCoords: null, // Store coords per segment
+  dropoffCoords: null, // Store coords per segment
 };
 
 const channelOptions: Option[] = [
-  { id: "WEBSITE", name: "Website" },
+  // { id: "WEBSITE", name: "Website" },
   { id: "WHATSAPP", name: "WhatsApp" },
   { id: "INSTAGRAM", name: "Instagram" },
   { id: "TELEGRAM", name: "Telegram" },
@@ -69,25 +78,32 @@ const channelOptions: Option[] = [
 ];
 
 export default function CreateBookingPage() {
+  const router = useRouter(); // Initialize router
   const [step, setStep] = useState<Step>("search");
   const [filters, setFilters] =
     useState<Omit<VehicleSearchFilters, "page">>(initialFilters);
-  const [pickupCoords, setPickupCoords] = useState<{
+
+  // These are for the search form
+  const [searchPickupCoords, setSearchPickupCoords] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<{
+  const [searchDropoffCoords, setSearchDropoffCoords] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
+
   const [searchPage, setSearchPage] = useState(0);
   const [runSearch, setRunSearch] = useState(false);
 
   const [selectedVehicle, setSelectedVehicle] =
     useState<VehicleSearchResult | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<
-    Partial<BookingSegmentPayload>
-  >(initialBookingDetails);
+
+  // State now holds an array of segments
+  const [segments, setSegments] = useState<(typeof initialBookingDetails)[]>([
+    { ...initialBookingDetails },
+  ]);
+
   const [calculationResult, setCalculationResult] =
     useState<CalculateBookingResponse | null>(null);
   const [guestDetails, setGuestDetails] = useState({
@@ -113,8 +129,8 @@ export default function CreateBookingPage() {
 
   const searchFilters: VehicleSearchFilters = {
     ...filters,
-    latitude: pickupCoords?.latitude,
-    longitude: pickupCoords?.longitude,
+    latitude: searchPickupCoords?.latitude,
+    longitude: searchPickupCoords?.longitude,
     page: searchPage,
   };
 
@@ -167,12 +183,56 @@ export default function CreateBookingPage() {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleBookingDetailChange = (
-    field: keyof typeof bookingDetails,
+  // Handler to update a field in a specific segment
+  const handleSegmentChange = (
+    index: number,
+    field: keyof (typeof segments)[0],
     value: any
   ) => {
-    setBookingDetails((prev) => ({ ...prev, [field]: value }));
+    setSegments((prev) =>
+      prev.map((segment, i) =>
+        i === index ? { ...segment, [field]: value } : segment
+      )
+    );
   };
+
+  // Handler to update coordinates in a specific segment
+  const handleSegmentLocationSelect = (
+    index: number,
+    type: "pickup" | "dropoff",
+    coords: { latitude: number; longitude: number } | null
+  ) => {
+    setSegments((prev) =>
+      prev.map((segment, i) => {
+        if (i !== index) return segment;
+        if (type === "pickup") {
+          return { ...segment, pickupCoords: coords };
+        } else {
+          return { ...segment, dropoffCoords: coords };
+        }
+      })
+    );
+  };
+
+  // Handlers to add/remove segments
+  const addSegment = () => {
+    const lastSegment = segments[segments.length - 1];
+    setSegments((prev) => [
+      ...prev,
+      {
+        ...initialBookingDetails,
+        // Pre-fill next segment with previous segment's dropoff
+        pickupLocationString: lastSegment.dropoffLocationString,
+        pickupCoords: lastSegment.dropoffCoords,
+        startDate: lastSegment.startDate, // Default to same start date
+      },
+    ]);
+  };
+
+  const removeSegment = (index: number) => {
+    setSegments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleGuestDetailChange = (
     field: keyof typeof guestDetails,
     value: any
@@ -182,7 +242,7 @@ export default function CreateBookingPage() {
 
   const executeSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!pickupCoords) {
+    if (!searchPickupCoords) {
       toast.error("Please select a valid pickup location.");
       return;
     }
@@ -198,45 +258,58 @@ export default function CreateBookingPage() {
   const handleSelectVehicle = (vehicle: VehicleSearchResult) => {
     setSelectedVehicle(vehicle);
     setCalculationResult(null);
-    setBookingDetails({
-      startDate: filters.startDate,
-      startTime: "", // Reset time
-      pickupLocationString: filters.pickupLocationString,
-      dropoffLocationString: filters.dropoffLocationString,
-      bookingTypeId: "", // Reset booking type
-    });
+    // Reset segments array
+    setSegments([
+      {
+        ...initialBookingDetails,
+        startDate: filters.startDate,
+        pickupLocationString: filters.pickupLocationString,
+        dropoffLocationString: filters.dropoffLocationString,
+        pickupCoords: searchPickupCoords,
+        dropoffCoords: searchDropoffCoords,
+      },
+    ]);
     setStep("details");
   };
 
   const handleCalculatePrice = (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !selectedVehicle ||
-      !pickupCoords ||
-      !dropoffCoords ||
-      !bookingDetails.bookingTypeId ||
-      !bookingDetails.startDate ||
-      !bookingDetails.startTime
-    ) {
-      toast.error("Please fill in all required booking details.");
-      return;
-    }
+    if (!selectedVehicle) return;
 
-    const segmentPayload: BookingSegmentPayload = {
-      bookingTypeId: bookingDetails.bookingTypeId,
-      startDate: bookingDetails.startDate,
-      startTime: bookingDetails.startTime + ":00",
-      pickupLatitude: pickupCoords.latitude,
-      pickupLongitude: pickupCoords.longitude,
-      dropoffLatitude: dropoffCoords.latitude,
-      dropoffLongitude: dropoffCoords.longitude,
-      pickupLocationString: bookingDetails.pickupLocationString!,
-      dropoffLocationString: bookingDetails.dropoffLocationString!,
-    };
+    const segmentPayloads: BookingSegmentPayload[] = [];
+
+    // Validate and build each segment
+    for (const [index, segment] of segments.entries()) {
+      if (
+        !segment.bookingTypeId ||
+        !segment.startDate ||
+        !segment.startTime ||
+        !segment.pickupCoords ||
+        !segment.dropoffCoords ||
+        !segment.pickupLocationString ||
+        !segment.dropoffLocationString
+      ) {
+        toast.error(
+          `Please fill in all required fields for Booking #${index + 1}.`
+        );
+        return;
+      }
+      segmentPayloads.push({
+        bookingTypeId: segment.bookingTypeId,
+        startDate: segment.startDate,
+        startTime: segment.startTime + ":00",
+        pickupLatitude: segment.pickupCoords.latitude,
+        pickupLongitude: segment.pickupCoords.longitude,
+        dropoffLatitude: segment.dropoffCoords.latitude,
+        dropoffLongitude: segment.dropoffCoords.longitude,
+        pickupLocationString: segment.pickupLocationString,
+        dropoffLocationString: segment.dropoffLocationString,
+      });
+    }
 
     const payload: CalculateBookingPayload = {
       vehicleId: selectedVehicle.id,
-      segments: [segmentPayload],
+      segments: segmentPayloads,
     };
 
     calculationMutation.mutate(payload, {
@@ -280,12 +353,12 @@ export default function CreateBookingPage() {
   const resetAndGoToSearch = () => {
     setStep("search");
     setFilters(initialFilters);
-    setPickupCoords(null);
-    setDropoffCoords(null);
+    setSearchPickupCoords(null);
+    setSearchDropoffCoords(null);
     setSearchPage(0);
     setRunSearch(false);
     setSelectedVehicle(null);
-    setBookingDetails(initialBookingDetails);
+    setSegments([initialBookingDetails]);
     setCalculationResult(null);
     setGuestDetails({
       guestFullName: "",
@@ -308,7 +381,7 @@ export default function CreateBookingPage() {
         id="pickup-location"
         value={filters.pickupLocationString || ""}
         onChange={(value) => handleFilterChange("pickupLocationString", value)}
-        onLocationSelect={setPickupCoords}
+        onLocationSelect={setSearchPickupCoords}
         placeholder="Enter pickup address"
         required
       />
@@ -317,7 +390,7 @@ export default function CreateBookingPage() {
         id="dropoff-location"
         value={filters.dropoffLocationString || ""}
         onChange={(value) => handleFilterChange("dropoffLocationString", value)}
-        onLocationSelect={setDropoffCoords}
+        onLocationSelect={setSearchDropoffCoords}
         placeholder="Enter dropoff address (optional)"
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -398,6 +471,7 @@ export default function CreateBookingPage() {
           type="submit"
           variant="primary"
           isLoading={isSearching && runSearch}
+          className="w-auto px-4"
         >
           <Search className="h-5 w-5 mr-2" /> Search Vehicles
         </Button>
@@ -407,7 +481,19 @@ export default function CreateBookingPage() {
 
   const renderSearchResults = () => (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setRunSearch(false);
+            setStep("search");
+          }}
+          className="w-auto px-4"
+        >
+          Back to Search
+        </Button>
+      </div>
       {isSearching && !searchResultsData && (
         <div className="flex justify-center p-10">
           <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
@@ -428,14 +514,12 @@ export default function CreateBookingPage() {
         )}
 
       <div
-        className={`${
-          isSearchPlaceholder ? "opacity-50" : ""
-        } space-y-4 max-h-[60vh] overflow-y-auto pr-2`}
+        className={`${isSearchPlaceholder ? "opacity-50" : ""} space-y-4 pr-2`}
       >
         {searchResultsData?.content.map((vehicle) => (
           <div
             key={vehicle.id}
-            className="border rounded-lg p-4 flex gap-4 items-start shadow-sm hover:bg-gray-50 transition-colors"
+            className="border p-4 flex gap-4 items-start shadow-sm hover:bg-gray-50 transition-colors"
           >
             <img
               src={
@@ -488,94 +572,128 @@ export default function CreateBookingPage() {
         onPageChange={setSearchPage}
         isLoading={isSearchPlaceholder}
       />
-      <Button
-        variant="secondary"
-        onClick={() => {
-          setRunSearch(false);
-          setStep("search");
-        }}
-        className="mt-4"
-      >
-        Back to Search
-      </Button>
     </div>
   );
 
   const renderBookingDetailsForm = () => (
     <form onSubmit={handleCalculatePrice} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">
+      <h2 className="text-xl font-semibold mb-2">
         Booking Details for {selectedVehicle?.name}
       </h2>
-      <AddressInput
-        label="Pickup Location *"
-        id="pickup-location-detail"
-        value={bookingDetails.pickupLocationString || ""}
-        onChange={(value) =>
-          handleBookingDetailChange("pickupLocationString", value)
-        }
-        onLocationSelect={setPickupCoords}
-        placeholder="Confirm pickup address"
-        required
-      />
-      <AddressInput
-        label="Dropoff Location *"
-        id="dropoff-location-detail"
-        value={bookingDetails.dropoffLocationString || ""}
-        onChange={(value) =>
-          handleBookingDetailChange("dropoffLocationString", value)
-        }
-        onLocationSelect={setDropoffCoords}
-        placeholder="Confirm dropoff address"
-        required
-      />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <TextInput
-          label="Start Date *"
-          id="start-date-detail"
-          type="date"
-          value={bookingDetails.startDate || ""}
-          onChange={(e) =>
-            handleBookingDetailChange("startDate", e.target.value)
-          }
-          required
-          min={new Date().toISOString().split("T")[0]} // Min today
-        />
-        <TextInput
-          label="Start Time *"
-          id="start-time-detail"
-          type="time"
-          value={bookingDetails.startTime || ""}
-          onChange={(e) =>
-            handleBookingDetailChange("startTime", e.target.value)
-          }
-          required
-        />
-        {selectedVehicle && selectedVehicle.allPricingOptions.length > 0 ? (
-          <Select
-            label="Booking Type *"
-            options={selectedVehicle.allPricingOptions.map((p) => ({
-              id: p.bookingTypeId,
-              name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
-            }))}
-            selected={selectedVehicle.allPricingOptions
-              .map((p) => ({
-                id: p.bookingTypeId,
-                name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
-              }))
-              .find((o) => o.id === bookingDetails.bookingTypeId)}
-            onChange={(opt) =>
-              handleBookingDetailChange("bookingTypeId", opt.id)
+
+      {segments.map((segment, index) => (
+        <div key={index} className="py-4 space-y-4 relative">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-lg text-[#0096FF]">
+              Booking #{index + 1}
+            </h3>
+            {segments.length > 1 && (
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                className="w-auto p-2"
+                onClick={() => removeSegment(index)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <AddressInput
+            label="Pickup Location *"
+            id={`pickup-location-${index}`}
+            value={segment.pickupLocationString || ""}
+            onChange={(value) =>
+              handleSegmentChange(index, "pickupLocationString", value)
             }
-            placeholder="Select Booking Type"
+            onLocationSelect={(coords) =>
+              handleSegmentLocationSelect(index, "pickup", coords)
+            }
+            placeholder="Confirm pickup address"
+            required
           />
-        ) : (
-          <p className="text-red-600 text-sm mt-2 md:mt-8">
-            No pricing options available for this vehicle.
-          </p>
-        )}
+          <AddressInput
+            label="Dropoff Location *"
+            id={`dropoff-location-${index}`}
+            value={segment.dropoffLocationString || ""}
+            onChange={(value) =>
+              handleSegmentChange(index, "dropoffLocationString", value)
+            }
+            onLocationSelect={(coords) =>
+              handleSegmentLocationSelect(index, "dropoff", coords)
+            }
+            placeholder="Confirm dropoff address"
+            required
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <TextInput
+              label="Start Date *"
+              id={`start-date-${index}`}
+              type="date"
+              value={segment.startDate || ""}
+              onChange={(e) =>
+                handleSegmentChange(index, "startDate", e.target.value)
+              }
+              required
+              min={new Date().toISOString().split("T")[0]}
+            />
+            <TextInput
+              label="Start Time *"
+              id={`start-time-${index}`}
+              type="time"
+              value={segment.startTime || ""}
+              onChange={(e) =>
+                handleSegmentChange(index, "startTime", e.target.value)
+              }
+              required
+            />
+            {selectedVehicle && selectedVehicle.allPricingOptions.length > 0 ? (
+              <Select
+                label="Booking Type *"
+                options={selectedVehicle.allPricingOptions.map((p) => ({
+                  id: p.bookingTypeId,
+                  name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
+                }))}
+                selected={selectedVehicle.allPricingOptions
+                  .map((p) => ({
+                    id: p.bookingTypeId,
+                    name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
+                  }))
+                  .find((o) => o.id === segment.bookingTypeId)}
+                onChange={(opt) =>
+                  handleSegmentChange(index, "bookingTypeId", opt.id)
+                }
+                placeholder="Select Booking Type"
+              />
+            ) : (
+              <p className="text-red-600 text-sm mt-2 md:mt-8">
+                No pricing options available for this vehicle.
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Add Segment Button */}
+      <div className="pt-2">
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-auto"
+          onClick={addSegment}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Another Booking
+        </Button>
       </div>
-      <div className="flex justify-between items-center pt-4">
-        <Button variant="secondary" onClick={() => setStep("results")}>
+
+      <div className="flex justify-between items-center pt-4 border-t mt-4">
+        <Button
+          className="w-auto px-4"
+          variant="secondary"
+          onClick={() => setStep("results")}
+        >
           Back to Results
         </Button>
         <Button
@@ -585,6 +703,7 @@ export default function CreateBookingPage() {
           disabled={
             !selectedVehicle || selectedVehicle.allPricingOptions.length === 0
           }
+          className="w-auto px-4"
         >
           Calculate Price
         </Button>
@@ -594,9 +713,9 @@ export default function CreateBookingPage() {
 
   const renderConfirmationForm = () => (
     <form onSubmit={handleCreateBooking} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Confirm Booking</h2>
+      <h2 className="text-xl font-semibold mb-2">Confirm Booking</h2>
       {calculationResult && (
-        <div className="p-4 border rounded-lg bg-indigo-50 space-y-2 mb-6">
+        <div className="p-4 border bg-indigo-50 space-y-2 mb-6">
           <h3 className="font-semibold text-lg text-indigo-800">
             Price Breakdown
           </h3>
@@ -612,7 +731,7 @@ export default function CreateBookingPage() {
           )}
           {calculationResult.geofenceSurcharge > 0 && (
             <div className="flex justify-between text-sm text-orange-600">
-              <span>Geofence Surcharge:</span>{" "}
+              <span>Outskirt/Extreme Location Surcharge:</span>{" "}
               <span>+ {formatPrice(calculationResult.geofenceSurcharge)}</span>
             </div>
           )}
@@ -694,14 +813,19 @@ export default function CreateBookingPage() {
         }
       />
 
-      <div className="flex justify-between items-center pt-4">
-        <Button variant="secondary" onClick={() => setStep("details")}>
+      <div className="flex justify-between items-center pt-4 flex-wrap gap-2 border-t mt-4">
+        <Button
+          variant="secondary"
+          onClick={() => setStep("details")}
+          className="w-auto px-4"
+        >
           Back to Details
         </Button>
         <Button
           type="submit"
           variant="primary"
           isLoading={createBookingMutation.isPending}
+          className="w-auto px-4"
         >
           Create Booking (Offline Payment)
         </Button>
@@ -742,12 +866,12 @@ export default function CreateBookingPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <main className="p-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+      <CustomBack />
+      <main className="py-3 max-w-8xl mx-auto">
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">
           Create New Booking
         </h1>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border">
+        <div className="bg-white py-3">
           {step === "search" && renderSearchForm()}
           {step === "results" && renderSearchResults()}
           {step === "details" && renderBookingDetailsForm()}
