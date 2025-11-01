@@ -83,14 +83,6 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-[#000000] px-3 py-3 focus:outline-none focus:ring-2 focus:ring-[#0096FF] focus:border-none"
               />
-              <div className="mt-3 text-right text-sm">
-                <Link
-                  href="/forgot-password"
-                  className="font-medium text-black underline hover:text-gray-700 hover:no-underline"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
             </div>
             {error && (
               <p className="text-center text-sm text-red-600">{error}</p>
@@ -103,18 +95,6 @@ export default function LoginPage() {
               {isLoading ? "Logging in..." : "Log in"}
             </button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-black">
-            <p>
-              Haven&apos;t verified your account?{" "}
-              <Link
-                href="/revalidate-account"
-                className="underline hover:text-gray-600"
-              >
-                Verify Account
-              </Link>
-            </p>
-          </div>
         </div>
 
         <div className="w-full">
