@@ -132,7 +132,7 @@ export default function BookingDetailPage() {
           <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
             <div className="flex items-center gap-3 mb-4">
               <User className="h-6 w-6 text-[#0096FF]" />
-              <h3 className="text-xl font-semibold text-gray-800">Booker</h3>
+              <h3 className="text-xl font-semibold text-gray-800">Customer</h3>
             </div>
             <div className="space-y-3">
               <DetailItem label="Full Name" value={booking.booker.fullName} />
