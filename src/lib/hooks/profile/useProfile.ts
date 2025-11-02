@@ -7,6 +7,7 @@ import { apiClient } from "@/lib/apiClient";
 import {
   UserProfile,
   UpdateProfilePayload,
+  ChangePasswordPayload,
 } from "@/components/settings/profile/types";
 
 // Query Key
@@ -64,6 +65,19 @@ export function useUpdateProfilePicture() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to upload picture.");
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation<unknown, Error, ChangePasswordPayload>({
+    mutationFn: (payload) => apiClient.post("/users/change-password", payload),
+    onSuccess: () => {
+      toast.success("Password changed successfully.");
+    },
+    onError: (error) => {
+      // The error message is in error.message (from apiClient's handleResponse)
+      toast.error(error.message || "Failed to change password.");
     },
   });
 }

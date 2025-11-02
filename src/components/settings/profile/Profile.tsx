@@ -6,35 +6,214 @@ import {
   useGetMyProfile,
   useUpdateMyProfile,
   useUpdateProfilePicture,
+  useChangePassword,
 } from "@/lib/hooks/profile/useProfile";
 import { useDropzone } from "react-dropzone";
-import { User, Mail, Phone, UploadCloud, AlertCircle } from "lucide-react";
-import { Toaster } from "react-hot-toast";
+import {
+  User,
+  Mail,
+  Phone,
+  AlertCircle,
+  Camera,
+  Eye,
+  EyeOff,
+  Lock,
+} from "lucide-react";
+import { Toaster, toast } from "react-hot-toast";
 import CustomLoader from "@/components/generic/CustomLoader";
 import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CustomBack from "@/components/generic/CustomBack";
 
-// A small helper component for the user avatar
-const Avatar = ({ src, name }: { src?: string; name: string }) => {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={name}
-        className="h-24 w-24 rounded-full object-cover"
-      />
-    );
-  }
-  // Fallback to initials
+const Avatar = ({
+  src,
+  name,
+  isLoading = false,
+  getRootProps,
+  getInputProps,
+}: {
+  src?: string;
+  name: string;
+  isLoading?: boolean;
+  getRootProps: () => any;
+  getInputProps: () => any;
+}) => {
   const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("");
+
   return (
-    <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
-      <span className="text-3xl font-semibold text-gray-600">{initials}</span>
+    <div
+      {...getRootProps()}
+      className="relative h-24 w-24 rounded-full cursor-pointer group"
+    >
+      <input {...getInputProps()} />
+      {/* The Image or Initials */}
+      {src ? (
+        <img
+          src={src}
+          alt={name}
+          className="h-24 w-24 rounded-full object-cover transition-all"
+        />
+      ) : (
+        <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
+          <span className="text-3xl font-semibold text-gray-600">
+            {initials}
+          </span>
+        </div>
+      )}
+
+      {/* Loading Spinner */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-full">
+          <CustomLoader />
+        </div>
+      )}
+
+      {/* Hover Overlay */}
+      {!isLoading && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+          <Camera className="h-6 w-6 text-white" />
+        </div>
+      )}
     </div>
+  );
+};
+
+// ✅ --- NEW Change Password Card Component ---
+const ChangePasswordCard = () => {
+  const [passwords, setPasswords] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPass, setShowPass] = useState(false);
+
+  const changePasswordMutation = useChangePassword();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswords({ ...passwords, [e.target.id]: e.target.value });
+    // Clear errors when user starts typing
+    if (errors[e.target.id]) {
+      setErrors((prev) => ({ ...prev, [e.target.id]: "" }));
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({}); // Clear old errors
+
+    // Validation
+    if (!passwords.oldPassword) {
+      setErrors((prev) => ({
+        ...prev,
+        oldPassword: "Old password is required.",
+      }));
+      return;
+    }
+    if (passwords.newPassword.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        newPassword: "Must be at least 8 characters.",
+      }));
+      return;
+    }
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setErrors((prev) => ({
+        ...prev,
+        confirmPassword: "Passwords do not match.",
+      }));
+      return;
+    }
+
+    // All good, call mutation
+    changePasswordMutation.mutate(
+      {
+        oldPassword: passwords.oldPassword,
+        newPassword: passwords.newPassword,
+      },
+      {
+        onSuccess: () => {
+          // Reset form on success
+          setPasswords({
+            oldPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg"
+    >
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-semibold text-gray-800">Change Password</h3>
+        <button
+          type="button"
+          onClick={() => setShowPass(!showPass)}
+          className="text-sm text-gray-500 hover:text-[#0096FF] flex items-center gap-1"
+        >
+          {showPass ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+          {showPass ? "Hide" : "Show"}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        <TextInput
+          id="oldPassword"
+          label="Old Password"
+          type={showPass ? "text" : "password"}
+          value={passwords.oldPassword}
+          onChange={handleChange}
+          error={errors.oldPassword}
+          disabled={changePasswordMutation.isPending}
+        />
+        <TextInput
+          id="newPassword"
+          label="New Password"
+          type={showPass ? "text" : "password"}
+          value={passwords.newPassword}
+          onChange={handleChange}
+          error={errors.newPassword}
+          disabled={changePasswordMutation.isPending}
+        />
+        <TextInput
+          id="confirmPassword"
+          label="Confirm New Password"
+          type={showPass ? "text" : "password"}
+          value={passwords.confirmPassword}
+          onChange={handleChange}
+          error={errors.confirmPassword}
+          disabled={changePasswordMutation.isPending}
+        />
+      </div>
+      <div className="flex justify-end pt-6 mt-6 border-t">
+        <Button
+          type="submit"
+          variant="primary"
+          isLoading={changePasswordMutation.isPending}
+          disabled={
+            !passwords.oldPassword ||
+            !passwords.newPassword ||
+            !passwords.confirmPassword
+          }
+          className="w-auto px-4"
+        >
+          <Lock className="h-4 w-4 mr-2" />
+          Update Password
+        </Button>
+      </div>
+    </form>
   );
 };
 
@@ -54,7 +233,6 @@ export default function ProfilePage() {
   const [preview, setPreview] = useState<string | null>(null);
 
   // --- Effects ---
-  // Populate form when profile data loads
   useEffect(() => {
     if (profile) {
       const data = {
@@ -67,7 +245,6 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  // Clean up blob URL
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
@@ -79,22 +256,21 @@ export default function ProfilePage() {
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (file) {
-        // Set preview
         setPreview(URL.createObjectURL(file));
-        // Trigger mutation
         updatePictureMutation.mutate(file, {
-          onSuccess: () => setPreview(null), // Clear preview on success
-          onError: () => setPreview(null), // Clear preview on error
+          onSuccess: () => setPreview(null),
+          onError: () => setPreview(null),
         });
       }
     },
     [updatePictureMutation]
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp"] },
     multiple: false,
+    noDrag: true,
   });
 
   // --- Handlers ---
@@ -106,7 +282,6 @@ export default function ProfilePage() {
     e.preventDefault();
     updateProfileMutation.mutate(formData, {
       onSuccess: () => {
-        // Update original data to match new state
         setOriginalData(formData);
       },
     });
@@ -147,53 +322,30 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {/* --- Profile Picture Card --- */}
-        <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Profile Picture
-          </h3>
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <Avatar
-                src={preview || profile.profilePictureUrl}
-                name={`${profile.firstName} ${profile.lastName}`}
-              />
-              {updatePictureMutation.isPending && (
-                <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-full">
-                  <CustomLoader />
-                </div>
-              )}
-            </div>
-            <div
-              {...getRootProps()}
-              className={`flex-1 border-2 border-dashed ${
-                isDragActive ? "border-[#0096FF] bg-blue-50" : "border-gray-300"
-              } rounded-lg p-8 text-center cursor-pointer transition-colors`}
-            >
-              <input {...getInputProps()} />
-              <div className="flex flex-col items-center text-gray-500">
-                <UploadCloud className="h-10 w-10 mb-2" />
-                {isDragActive ? (
-                  <p className="font-semibold">Drop the image here...</p>
-                ) : (
-                  <p className="font-semibold">
-                    Drag & drop an image, or click to select
-                  </p>
-                )}
-                <p className="text-sm">PNG, JPG, or WEBP. Max 5MB.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* --- Profile Details Card --- */}
+        {/* --- Profile Details Card (UPDATED) --- */}
         <form
           onSubmit={handleSubmit}
           className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg"
         >
-          <h3 className="text-xl font-semibold text-gray-800 mb-6">
-            Personal Details
-          </h3>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800">
+                Personal Details
+              </h3>
+              <p className="text-sm text-gray-500">
+                Update your information here.
+              </p>
+            </div>
+            {/* ✅ UPDATED Profile Picture UI */}
+            <Avatar
+              src={preview || profile.profilePictureUrl}
+              name={`${profile.firstName} ${profile.lastName}`}
+              isLoading={updatePictureMutation.isPending}
+              getRootProps={getRootProps}
+              getInputProps={getInputProps}
+            />
+          </div>
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TextInput
@@ -215,7 +367,7 @@ export default function ProfilePage() {
               id="email"
               label="Email Address"
               value={profile.email}
-              disabled // Email is not updatable
+              disabled
               readOnly
             />
             <TextInput
@@ -232,11 +384,15 @@ export default function ProfilePage() {
               variant="primary"
               isLoading={updateProfileMutation.isPending}
               disabled={!isFormChanged || isLoadingMutation}
+              className="w-auto px-4"
             >
               Save Changes
             </Button>
           </div>
         </form>
+
+        {/* ✅ NEW Change Password Card */}
+        <ChangePasswordCard />
 
         {/* --- Account Info Card --- */}
         <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">

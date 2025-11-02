@@ -18,3 +18,8 @@ export interface UpdateProfilePayload {
   lastName: string;
   phoneNumber: string;
 }
+
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+}
