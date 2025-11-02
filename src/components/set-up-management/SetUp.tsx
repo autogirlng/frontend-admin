@@ -13,6 +13,7 @@ import {
   Landmark,
   BookCopy,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import React from "react";
 import CustomBack from "../generic/CustomBack";
@@ -84,6 +85,12 @@ const setupItems: SetupItem[] = [
     description: "Manage the available vehicle colors.",
     href: "/dashboard/set-up/vehicle-colors",
     icon: Palette,
+  },
+  {
+    title: "Top rated Vehicles",
+    description: "Manage the top rated vehicles.",
+    href: "/dashboard/vehicle-onboarding/top-rated-vehicles",
+    icon: Star,
   },
 ];
 
