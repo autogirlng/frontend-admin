@@ -51,7 +51,7 @@ const setupItems: SetupItem[] = [
     icon: Clock,
   },
   {
-    title: "Geofencing",
+    title: "Outskirts and Extreme Locations",
     description: "Define operational zones and boundaries.",
     href: "/dashboard/outskirts",
     icon: MapPin,

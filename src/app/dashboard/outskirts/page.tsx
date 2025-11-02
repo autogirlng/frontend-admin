@@ -58,7 +58,7 @@ export default function AdminGeofencePage() {
         <ToastContainer />
 
         <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Manage Geofenced Areas
+          Manage Outskirt and Extreme Areas
         </h1>
         <div
           className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6"
