@@ -82,3 +82,34 @@ export function useDownloadInvoice() {
     },
   });
 }
+
+
+/**
+ * Hook to download an receipt PDF
+ */
+
+export function useDownloadReceipt() {
+  return useMutation<void, Error, DownloadArgs>({
+    mutationFn: ({ bookingId }) => {
+      // This function is called by the mutation
+      const filename = `receipt-${bookingId}.pdf`;
+      
+      // We use your new helper function here!
+      return apiClient.getAndDownloadFile(
+        `/admin/invoices/${bookingId}/download-receipt`,
+        filename
+      );
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Receipt download started.", {
+        id: variables.toastId,
+      });
+    },
+    onError: (error, variables) => {
+      toast.error(`Receipt download failed: ${error.message}`, {
+        id: variables.toastId,
+      });
+    },
+  });
+}
+

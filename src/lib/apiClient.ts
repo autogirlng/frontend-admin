@@ -206,4 +206,56 @@ export const apiClient = {
     a.remove();
     window.URL.revokeObjectURL(url);
   },
+
+    getAndDownloadFile: async (
+    endpoint: string,
+    defaultFilename: string
+  ): Promise<void> => {
+    const headers = await getHeaders(); // Get auth headers
+    
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+      {
+        method: "GET",
+        headers, // No body or Content-Type needed for GET
+      }
+    );
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // Not a JSON error
+      }
+      throw new Error(
+        errorData?.message || response.statusText || "Failed to download file"
+      );
+    }
+
+    const blob = await response.blob();
+    
+    // Try to get filename from 'Content-Disposition' header
+    let filename = defaultFilename;
+    const disposition = response.headers.get("content-disposition");
+    if (disposition && disposition.indexOf("attachment") !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, "");
+      }
+    }
+
+    // Create a temporary link to trigger the download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };

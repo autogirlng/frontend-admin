@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import {
   useGetBookingSegments,
   useDownloadInvoice,
+  useDownloadReceipt,
 } from "@/lib/hooks/booking-management/useBookings";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
@@ -90,6 +91,7 @@ export default function BookingsPage() {
     useGetBookingTypes();
 
   const downloadInvoiceMutation = useDownloadInvoice();
+  const downloadReceiptMutation = useDownloadReceipt();
 
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -109,6 +111,13 @@ export default function BookingsPage() {
     // Condition 1: Can download INVOICE?
     const canDownloadInvoice = [
       BookingStatus.PENDING_PAYMENT,
+      BookingStatus.CONFIRMED,
+      BookingStatus.IN_PROGRESS,
+      BookingStatus.COMPLETED,
+    ].includes(booking.bookingStatus);
+
+    // Condition 2: Can download RECEIPT?
+    const canDownloadReceipt = [
       BookingStatus.CONFIRMED,
       BookingStatus.IN_PROGRESS,
       BookingStatus.COMPLETED,
@@ -136,6 +145,23 @@ export default function BookingsPage() {
           } else {
             // Otherwise, inform the user why
             toast.error("An invoice is not available for this booking status.");
+          }
+        },
+      },
+
+      {
+        label: "Download Receipt",
+        icon: Download,
+        onClick: () => {
+          if (canDownloadReceipt) {
+            if (downloadReceiptMutation.isPending) return;
+            const toastId = toast.loading("Downloading receipt...");
+            downloadReceiptMutation.mutate({ 
+              bookingId: booking.bookingId, 
+              toastId 
+            });
+          } else {
+            toast.error("A receipt is only available for confirmed or completed bookings.");
           }
         },
       },
@@ -236,7 +262,7 @@ export default function BookingsPage() {
             id="search"
             hideLabel
             type="text"
-            placeholder="Search by name, email, or phone..."
+            placeholder="Search by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
