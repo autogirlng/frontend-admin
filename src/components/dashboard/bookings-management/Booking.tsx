@@ -6,12 +6,13 @@ import {
   useDownloadInvoice,
 } from "@/lib/hooks/booking-management/useBookings";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
+import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { BookingSegment, BookingStatus } from "./types";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
 import Select, { Option } from "@/components/generic/ui/Select";
-import { Loader2, AlertCircle, View, Download, Plus } from "lucide-react";
+import { Loader2, Search, AlertCircle, View, Download, Plus } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -67,6 +68,8 @@ export default function BookingsPage() {
   );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // --- API Hooks ---
   const {
@@ -80,6 +83,7 @@ export default function BookingsPage() {
     bookingTypeId: bookingTypeFilter?.id || "",
     startDate,
     endDate,
+    searchTerm: debouncedSearchTerm,
   });
 
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } =
@@ -101,6 +105,15 @@ export default function BookingsPage() {
 
   // --- Define Actions for the Menu ---
   const getBookingActions = (booking: BookingSegment): ActionMenuItem[] => {
+
+    // Condition 1: Can download INVOICE?
+    const canDownloadInvoice = [
+      BookingStatus.PENDING_PAYMENT,
+      BookingStatus.CONFIRMED,
+      BookingStatus.IN_PROGRESS,
+      BookingStatus.COMPLETED,
+    ].includes(booking.bookingStatus);
+
     const actions: ActionMenuItem[] = [
       {
         label: "View Booking",
@@ -110,25 +123,34 @@ export default function BookingsPage() {
           router.push(`/dashboard/bookings/${booking.bookingId}`);
         },
       },
-    ];
 
-    // Conditionally add the Download Invoice action
-    if (booking.bookingStatus === BookingStatus.PENDING_PAYMENT) {
-      actions.push({
+      {
         label: "Download Invoice",
         icon: Download,
         onClick: () => {
-          if (downloadInvoiceMutation.isPending) return;
-          downloadInvoiceMutation.mutate({ bookingId: booking.bookingId });
+          // Only run the download if the condition is met
+          if (canDownloadInvoice) {
+            if (downloadInvoiceMutation.isPending) return;
+            const toastId = toast.loading("Downloading invoice...");
+            downloadInvoiceMutation.mutate({ bookingId: booking.bookingId, toastId });
+          } else {
+            // Otherwise, inform the user why
+            toast.error("An invoice is not available for this booking status.");
+          }
         },
-      });
-    }
+      },
+    ];
 
     return actions;
   };
 
   // --- Define Columns for the Table ---
   const columns: ColumnDefinition<BookingSegment>[] = [
+    {
+      header: "Invoice",
+      accessorKey: "invoiceNumber",
+      cell: (item) => item.invoiceNumber || "N/A",
+    },
     {
       header: "Customer",
       accessorKey: "customerName",
@@ -202,6 +224,24 @@ export default function BookingsPage() {
               <Plus className="mr-3" /> Create a Booking
             </Link>
           </div>
+        </div>
+
+        {/* --- Search Bar --- */}
+        <div className="relative mb-4">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <TextInput
+            label="Search Hosts"
+            id="search"
+            hideLabel
+            type="text"
+            placeholder="Search by name, email, or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+            style={{ paddingLeft: 35 }}
+          />
         </div>
 
         {/* --- Filters --- */}

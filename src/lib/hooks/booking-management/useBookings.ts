@@ -16,24 +16,30 @@ interface BookingFilters {
   bookingTypeId: string;
   startDate: string;
   endDate: string;
+  searchTerm: string;
 }
 
 /**
  * Fetches a paginated list of booking segments based on filters.
  */
 export function useGetBookingSegments(filters: BookingFilters) {
+  const { searchTerm, ...otherFilters } = filters;
+
   return useQuery<PaginatedResponse<BookingSegment>>({
     queryKey: [BOOKINGS_QUERY_KEY, filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.append("page", String(filters.page));
+      params.append("page", String(otherFilters.page));
       params.append("size", "10"); // Default page size
+      if (searchTerm) {
+        params.append("searchTerm", searchTerm);
+      }
 
-      if (filters.status) params.append("bookingStatus", filters.status);
-      if (filters.bookingTypeId)
-        params.append("bookingTypeId", filters.bookingTypeId);
-      if (filters.startDate) params.append("startDate", filters.startDate);
-      if (filters.endDate) params.append("endDate", filters.endDate);
+      if (otherFilters.status) params.append("bookingStatus", otherFilters.status);
+      if (otherFilters.bookingTypeId)
+        params.append("bookingTypeId", otherFilters.bookingTypeId);
+      if (otherFilters.startDate) params.append("startDate", otherFilters.startDate);
+      if (otherFilters.endDate) params.append("endDate", otherFilters.endDate);
 
       const endpoint = `/admin/bookings/segments?${params.toString()}`;
       return apiClient.get<PaginatedResponse<BookingSegment>>(endpoint);
@@ -42,11 +48,18 @@ export function useGetBookingSegments(filters: BookingFilters) {
   });
 }
 
+
+// --- Type for Download Mutations ---
+interface DownloadArgs {
+  bookingId: string;
+  toastId: string; // To update the loading toast
+}
+
 /**
  * Hook to download an invoice PDF
  */
 export function useDownloadInvoice() {
-  return useMutation<void, Error, { bookingId: string }>({
+  return useMutation<void, Error, DownloadArgs>({
     mutationFn: ({ bookingId }) => {
       const filename = `invoice-${bookingId}.pdf`;
       // We pass an empty object {} as the body
@@ -56,11 +69,16 @@ export function useDownloadInvoice() {
         filename
       );
     },
-    onSuccess: () => {
-      toast.success("Invoice download started.");
+    onSuccess: (data, variables) => {
+      // Use toastId to update the correct toast
+      toast.success("Invoice download started.", {
+        id: variables.toastId,
+      });
     },
-    onError: (error) => {
-      toast.error(`Download failed: ${error.message}`);
+    onError: (error, variables) => {
+      toast.error(`Download failed: ${error.message}`, {
+        id: variables.toastId, // This is now valid
+      });
     },
   });
 }

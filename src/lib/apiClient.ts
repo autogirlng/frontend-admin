@@ -155,12 +155,15 @@ export const apiClient = {
     body: any,
     defaultFilename: string
   ): Promise<void> => {
-    const headers = await getHeaders();
+    const authHeaders = await getHeaders();
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
       {
         method: "POST",
-        headers,
+        headers: {
+          ...authHeaders,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(body),
       }
     );

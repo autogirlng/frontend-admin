@@ -16,6 +16,7 @@ export interface BookingSegment {
   vehicleId: string;
   vehicleName: string;
   createdAt: string;
+  invoiceNumber: string;
   customerName: string;
   bookingType: string;
   city: string;
