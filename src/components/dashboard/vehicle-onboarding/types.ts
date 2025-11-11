@@ -22,6 +22,7 @@ export interface Vehicle {
   licensePlateNumber?: string;
   ownerName: string;
   status: VehicleStatus;
+  operationalStatus: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -84,4 +85,25 @@ export interface BulkCreateVehiclePayload {
 export interface BulkCreateVehicleResponse {
   successfulCreations: number;
   createdVehicleIds: string[];
+}
+
+export type UnavailabilityReason =
+  | "MAINTENANCE"
+  | "COMPANY_USE"
+  | "UNAVAILABLE";
+
+export interface CreateUnavailabilityPayload {
+  startDateTime: string; // ISO 8601 string (e.g., "2025-11-12T12:21:00")
+  endDateTime: string; // ISO 8601 string
+  reason: UnavailabilityReason;
+  notes?: string;
+}
+
+export interface UnavailabilityPeriod {
+  id: string;
+  vehicleId: string;
+  startDateTime: string; // ISO 8601 string
+  endDateTime: string; // ISO 8601 string
+  reason: UnavailabilityReason;
+  notes: string;
 }

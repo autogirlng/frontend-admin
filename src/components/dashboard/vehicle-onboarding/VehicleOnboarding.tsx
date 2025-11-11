@@ -18,12 +18,12 @@ import {
   Play,
   Plus,
   Edit,
+  Circle,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import {
   useGetVehicles,
   useSetVehicleActive,
-  useUpdateVehicleAvailability,
   useUpdateVehicleStatus,
 } from "@/lib/hooks/vehicle-onboarding/useVehiclesOnboarding";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -32,6 +32,8 @@ import { ApproveVehicleModal } from "./ApproveVehicleModal";
 import Button from "@/components/generic/ui/Button";
 import { AddVehicleModal } from "./AddVehicleModal";
 import { useRouter } from "next/navigation";
+import { ManageUnavailabilityModal } from "./ManageUnavailabilityModal";
+import clsx from "clsx";
 
 // --- Define Status Options for Filtering ---
 const statusOptions: Option[] = [
@@ -40,34 +42,78 @@ const statusOptions: Option[] = [
   { id: VehicleStatus.IN_REVIEW, name: "In Review" },
   { id: VehicleStatus.APPROVED, name: "Approved" },
   { id: VehicleStatus.REJECTED, name: "Rejected" },
-  { id: VehicleStatus.UNAVAILABLE, name: "Unavailable" },
+  /*   { id: VehicleStatus.UNAVAILABLE, name: "Unavailable" },
   { id: VehicleStatus.IN_MAINTENANCE, name: "In Maintenance" },
-  { id: VehicleStatus.COMPANY_USE, name: "Company Use" },
+  { id: VehicleStatus.COMPANY_USE, name: "Company Use" }, */
 ];
 
-// Helper to format the status for display
-const formatStatus = (status: VehicleStatus) => {
+const formatOnboardingStatus = (status: VehicleStatus) => {
   return (status || "")
     .split("_")
     .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
     .join(" ");
 };
 
+const formatOperationalStatus = (status: string) => {
+  let colorClasses = "bg-gray-100 text-gray-800";
+  let icon = <Circle className="h-2 w-2 text-gray-500" />;
+
+  switch (status) {
+    case "FREE":
+      colorClasses = "bg-green-100 text-green-800";
+      icon = <Circle className="h-2 w-2 text-green-500 fill-current" />;
+      break;
+    case "BOOKED":
+    case "IN_TRIP": // Assuming IN_TRIP might appear
+      colorClasses = "bg-blue-100 text-blue-800";
+      icon = <Circle className="h-2 w-2 text-blue-500 fill-current" />;
+      break;
+    case "MAINTENANCE":
+    case "COMPANY_USE":
+      colorClasses = "bg-yellow-100 text-yellow-800";
+      icon = <Circle className="h-2 w-2 text-yellow-500 fill-current" />;
+      break;
+    case "UNAVAILABLE":
+      colorClasses = "bg-red-100 text-red-800";
+      icon = <Circle className="h-2 w-2 text-red-500 fill-current" />;
+      break;
+    case "DRAFT":
+    default:
+      icon = <Circle className="h-2 w-2 text-gray-400" />;
+      break;
+  }
+
+  const formattedText = (status || "DRAFT")
+    .split("_")
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(" ");
+
+  return (
+    <span
+      className={clsx(
+        "inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full",
+        colorClasses
+      )}
+    >
+      {icon}
+      {formattedText}
+    </span>
+  );
+};
+
 export default function VehicleOnboarding() {
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
-  const [modal, setModal] = useState<
-    "availability" | "reject" | "setActive" | null // 'approve' is now separate
-  >(null);
+
+  // ✅ MODIFIED: Updated modal state
+  const [modal, setModal] = useState<"reject" | "setActive" | null>(null);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [isUnavailabilityModalOpen, setIsUnavailabilityModalOpen] =
+    useState(false); // ✅ NEW
+
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [availabilityStatus, setAvailabilityStatus] =
-    useState<AvailabilityStatus>(VehicleStatus.UNAVAILABLE);
-
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
-
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // --- API Hooks ---
@@ -78,7 +124,7 @@ export default function VehicleOnboarding() {
     isPlaceholderData,
   } = useGetVehicles(currentPage, debouncedSearchTerm, statusFilter?.id || "");
 
-  const availabilityMutation = useUpdateVehicleAvailability();
+  // 🛑 REMOVED: availabilityMutation
   const setActiveMutation = useSetVehicleActive();
   const rejectMutation = useUpdateVehicleStatus();
 
@@ -86,10 +132,7 @@ export default function VehicleOnboarding() {
   const totalPages = paginatedData?.totalPages || 0;
 
   // --- Modal Handling ---
-  const openModal = (
-    type: "availability" | "reject" | "setActive",
-    vehicle: Vehicle
-  ) => {
+  const openModal = (type: "reject" | "setActive", vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
     setModal(type);
   };
@@ -97,22 +140,22 @@ export default function VehicleOnboarding() {
     setSelectedVehicle(vehicle);
     setIsApproveModalOpen(true);
   };
+  // ✅ NEW: Handler for new modal
+  const openUnavailabilityModal = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsUnavailabilityModalOpen(true);
+  };
 
   const closeModal = () => {
     setModal(null);
     setIsApproveModalOpen(false);
     setIsAddVehicleModalOpen(false);
+    setIsUnavailabilityModalOpen(false); // ✅ NEW
     setSelectedVehicle(null);
   };
 
   // --- Action Handlers ---
-  const handleSetAvailability = () => {
-    if (!selectedVehicle) return;
-    availabilityMutation.mutate(
-      { id: selectedVehicle.id, status: availabilityStatus },
-      { onSuccess: closeModal }
-    );
-  };
+  // 🛑 REMOVED: handleSetAvailability
 
   const handleSetActive = () => {
     if (!selectedVehicle) return;
@@ -134,22 +177,12 @@ export default function VehicleOnboarding() {
   const getVehicleActions = (vehicle: Vehicle): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [];
 
-    // All statuses can be viewed
     actions.push({
-      label: "View Vehicle",
+      label: "View Details",
       icon: View,
       onClick: () => {
-        toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
-        router.push(`/dashboard/vehicle-onboarding/${vehicle.id}`);
-      },
-    });
-
-    actions.push({
-      label: "Edit Vehicle",
-      icon: Edit,
-      onClick: () => {
-        toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
-        router.push(`/dashboard/onboarding?id=${vehicle.id}`);
+        toast.success(`Navigating to details for ${vehicle.name}`);
+        // router.push(`/admin/vehicle-onboarding/${vehicle.id}`);
       },
     });
 
@@ -171,9 +204,9 @@ export default function VehicleOnboarding() {
 
       case VehicleStatus.APPROVED:
         actions.push({
-          label: "Set Availability",
+          label: "Manage Unavailability", // ✅ RENAMED
           icon: PauseCircle,
-          onClick: () => openModal("availability", vehicle),
+          onClick: () => openUnavailabilityModal(vehicle), // ✅ UPDATED
         });
         break;
 
@@ -212,7 +245,7 @@ export default function VehicleOnboarding() {
         cell: (item) => item.licensePlateNumber || "N/A",
       },
       {
-        header: "Status",
+        header: "Onboarding Status", // ✅ Renamed
         accessorKey: "status",
         cell: (item) => {
           let colorClasses = "";
@@ -242,11 +275,18 @@ export default function VehicleOnboarding() {
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded-full ${colorClasses}`}
             >
-              {formatStatus(item.status)}
+              {formatOnboardingStatus(item.status)}
             </span>
           );
         },
       },
+      // ✅ --- NEW COLUMN ---
+      {
+        header: "Operational Status",
+        accessorKey: "operationalStatus",
+        cell: (item) => formatOperationalStatus(item.operationalStatus),
+      },
+      // ✅ --- END NEW COLUMN ---
       {
         header: "Actions",
         accessorKey: "id",
@@ -349,41 +389,6 @@ export default function VehicleOnboarding() {
 
       {/* --- Modals --- */}
 
-      {/* 1. Set Availability Modal */}
-      {modal === "availability" && selectedVehicle && (
-        <ActionModal
-          title="Set Vehicle Availability"
-          message={
-            <>
-              Select a new availability status for{" "}
-              <strong className="text-gray-900">{selectedVehicle.name}</strong>.
-            </>
-          }
-          actionLabel="Update Status"
-          onClose={closeModal}
-          onConfirm={handleSetAvailability}
-          isLoading={availabilityMutation.isPending}
-          variant="primary"
-        >
-          {/* This is the 'children' prop of the modal */}
-          <Select
-            label="New Status"
-            selected={{
-              id: availabilityStatus,
-              name: formatStatus(availabilityStatus),
-            }}
-            onChange={(option) =>
-              setAvailabilityStatus(option.id as AvailabilityStatus)
-            }
-            options={[
-              { id: VehicleStatus.UNAVAILABLE, name: "Unavailable" },
-              { id: VehicleStatus.IN_MAINTENANCE, name: "In Maintenance" },
-              { id: VehicleStatus.COMPANY_USE, name: "Company Use" },
-            ]}
-          />
-        </ActionModal>
-      )}
-
       {/* 2. Reject Vehicle Modal */}
       {modal === "reject" && selectedVehicle && (
         <ActionModal
@@ -430,6 +435,14 @@ export default function VehicleOnboarding() {
       )}
 
       {isAddVehicleModalOpen && <AddVehicleModal onClose={closeModal} />}
+
+      {isUnavailabilityModalOpen && selectedVehicle && (
+        <ManageUnavailabilityModal
+          vehicleId={selectedVehicle.id}
+          vehicleName={selectedVehicle.name}
+          onClose={closeModal}
+        />
+      )}
     </>
   );
 }

@@ -5,7 +5,9 @@ import {
   AvailabilityStatus,
   BulkCreateVehiclePayload,
   BulkCreateVehicleResponse,
+  CreateUnavailabilityPayload,
   PaginatedResponse,
+  UnavailabilityPeriod,
   Vehicle,
   VehicleFull,
   VehicleStatus,
@@ -14,6 +16,7 @@ import toast from "react-hot-toast";
 
 // --- Query Key ---
 const VEHICLES_QUERY_KEY = "vehicles";
+export const VEHICLE_UNAVAILABILITY_KEY = "vehicleUnavailability";
 
 /**
  * Fetches a paginated list of vehicles.
@@ -42,7 +45,7 @@ export function useGetVehicles(
 /**
  * Hook for PATCH /vehicles/availability-status
  */
-export function useUpdateVehicleAvailability() {
+/* export function useUpdateVehicleAvailability() {
   const queryClient = useQueryClient();
   return useMutation<
     unknown, // The response is huge and we don't need it
@@ -58,7 +61,7 @@ export function useUpdateVehicleAvailability() {
     },
     onError: (error) => toast.error(error.message),
   });
-}
+} */
 
 /**
  * Hook for PATCH /vehicles/set-active
@@ -145,5 +148,75 @@ export function useBulkCreateVehicles() {
     onError: (error) => {
       toast.error(`Bulk create failed: ${error.message}`);
     },
+  });
+}
+
+export function useGetVehicleUnavailability(vehicleId: string | null) {
+  return useQuery<UnavailabilityPeriod[], Error>({
+    queryKey: [VEHICLE_UNAVAILABILITY_KEY, vehicleId],
+    queryFn: () =>
+      apiClient.get<UnavailabilityPeriod[]>(
+        `/vehicles/unavailability/${vehicleId}/unavailability`
+      ),
+    enabled: !!vehicleId,
+  });
+}
+
+// ✅ --- NEW: Create Vehicle Unavailability Period ---
+export function useCreateVehicleUnavailability() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    UnavailabilityPeriod,
+    Error,
+    { vehicleId: string; payload: CreateUnavailabilityPayload }
+  >({
+    mutationFn: ({ vehicleId, payload }) =>
+      apiClient.post(
+        `/vehicles/unavailability/${vehicleId}/unavailability`,
+        payload
+      ),
+    onSuccess: (_, { vehicleId }) => {
+      toast.success("Vehicle marked as unavailable.");
+      // Refetch the list of periods for this vehicle
+      queryClient.invalidateQueries({
+        queryKey: [VEHICLE_UNAVAILABILITY_KEY, vehicleId],
+      });
+      // Also refetch the main vehicles list, as its status might change
+      queryClient.invalidateQueries({
+        queryKey: [VEHICLES_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to set unavailability."),
+  });
+}
+
+// ✅ --- NEW: Delete Vehicle Unavailability Period ---
+export function useDeleteVehicleUnavailability() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    unknown,
+    Error,
+    { vehicleId: string; unavailabilityId: string }
+  >({
+    mutationFn: ({ unavailabilityId }) =>
+      apiClient.delete(
+        `/vehicles/unavailability/unavailability/${unavailabilityId}`
+      ),
+    onSuccess: (_, { vehicleId }) => {
+      toast.success("Unavailability period removed.");
+      // Refetch the list of periods for this vehicle
+      queryClient.invalidateQueries({
+        queryKey: [VEHICLE_UNAVAILABILITY_KEY, vehicleId],
+      });
+      // Also refetch the main vehicles list
+      queryClient.invalidateQueries({
+        queryKey: [VEHICLES_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to remove period."),
   });
 }
