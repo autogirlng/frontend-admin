@@ -8,6 +8,7 @@ import {
   PlatformStats,
   VehicleOnboardingStats,
   VehicleFleetStats,
+  WalletStats,
 } from "./types"; // Adjust path
 
 // --- Query Keys ---
@@ -15,6 +16,7 @@ const BOOKING_STATS_KEY = "bookingStats";
 const PLATFORM_STATS_KEY = "platformStats";
 const VEHICLE_ONBOARDING_STATS_KEY = "vehicleOnboardingStats";
 const VEHICLE_FLEET_STATS_KEY = "vehicleFleetStats";
+const WALLET_STATS_KEY = "walletStats";
 
 // --- 1. Get Booking Stats ---
 export function useGetBookingStats() {
@@ -47,5 +49,12 @@ export function useGetVehicleFleetStats() {
     queryKey: [VEHICLE_FLEET_STATS_KEY],
     queryFn: () =>
       apiClient.get<VehicleFleetStats>("/vehicles/admin/stats/fleet"),
+  });
+}
+
+export function useGetWalletStats() {
+  return useQuery<WalletStats, Error>({
+    queryKey: [WALLET_STATS_KEY],
+    queryFn: () => apiClient.get<WalletStats>("/admin/stats/wallet"),
   });
 }

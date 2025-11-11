@@ -32,3 +32,9 @@ export interface VehicleFleetStats {
   unavailable: number;
   companyUse: number;
 }
+
+export interface WalletStats {
+  totalPlatformEarnings: number;
+  earningsFromHostVehicles: number;
+  earningsFromAutogirlVehicles: number;
+}
