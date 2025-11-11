@@ -95,7 +95,7 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
   return (
     <div
       {...getRootProps()}
-      className={`relative border-2 border-dashed rounded-lg p-4 h-full flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${getBorderColor()}`}
+      className={`relative border-2 border-dashed p-4 h-full flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${getBorderColor()}`}
     >
       <input {...getInputProps()} />
 

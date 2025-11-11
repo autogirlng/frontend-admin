@@ -6,16 +6,17 @@ import { useSearchParams } from "next/navigation";
 import Stepper from "@/components/generic/Stepper";
 import TipsSidebar from "@/components/generic/TipsSidebar";
 import Button from "@/components/generic/ui/Button";
-import ImageDropzone from "@/components/generic/ui/ImageDropzone"; // Our new component
-import { useVehiclePhotos } from "@/lib/hooks/onboarding/steps/useVehicleStep3"; // Our new hook
-import { Loader2, X, Check, Star } from "lucide-react";
+import ImageDropzone from "@/components/generic/ui/ImageDropzone";
+import { useVehiclePhotos } from "@/lib/hooks/onboarding/steps/useVehicleStep3";
+import { Loader2, X, Check, Star, Camera, UploadCloud } from "lucide-react"; // Added Camera, UploadCloud
 import clsx from "clsx";
 import Link from "next/link";
 import CustomLoader from "@/components/generic/CustomLoader";
 
 const currentStep = 4;
+const REQUIRED_PHOTO_COUNT = 6; // Define the requirement as a constant
 
-// A small sub-component for rendering the photo previews
+// --- PhotoPreviewCard Component (No changes needed, it's good) ---
 const PhotoPreviewCard: React.FC<{
   previewUrl: string;
   publicId: string | undefined;
@@ -32,7 +33,7 @@ const PhotoPreviewCard: React.FC<{
   onSetPrimary,
 }) => {
   return (
-    <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-md group">
+    <div className="relative aspect-video w-full overflow-hidden shadow-md group">
       <img
         src={previewUrl}
         alt="Vehicle preview"
@@ -83,7 +84,51 @@ const PhotoPreviewCard: React.FC<{
   );
 };
 
-// --- Child Form Component ---
+// --- [NEW] Empty Placeholder Slot ---
+// This component shows the empty states in the grid.
+const EmptySlotPlaceholder: React.FC = () => {
+  return (
+    <div className="relative aspect-video w-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center">
+      <Camera className="w-8 h-8 text-gray-400" />
+      <span className="mt-1 text-sm text-gray-500">Empty Slot</span>
+    </div>
+  );
+};
+
+// --- [NEW] Photo Progress Tracker ---
+// This component visually tracks the 6-photo requirement.
+const PhotoProgressTracker: React.FC<{
+  photos: ReturnType<typeof useVehiclePhotos>["photos"];
+  primaryPhotoId: string | null;
+  onRemove: (publicId: string) => void;
+  onSetPrimary: (publicId: string) => void;
+}> = ({ photos, primaryPhotoId, onRemove, onSetPrimary }) => {
+  const filledSlots = photos.map((photo) => (
+    <PhotoPreviewCard
+      key={photo.preview} // Use preview as key before publicId exists
+      previewUrl={photo.preview}
+      publicId={photo.publicId}
+      isUploading={photo.isUploading}
+      isPrimary={photo.publicId === primaryPhotoId && !!photo.publicId}
+      onRemove={() => onRemove(photo.publicId!)}
+      onSetPrimary={() => onSetPrimary(photo.publicId!)}
+    />
+  ));
+
+  const emptySlotsCount = REQUIRED_PHOTO_COUNT - photos.length;
+  const emptySlots = Array.from({ length: emptySlotsCount }, (_, i) => (
+    <EmptySlotPlaceholder key={`empty-${i}`} />
+  ));
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {filledSlots}
+      {emptySlots}
+    </div>
+  );
+};
+
+// --- [MODIFIED] Child Form Component ---
 function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
   const {
     photos,
@@ -101,56 +146,102 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
     return <CustomLoader />;
   }
 
+  const photoCount = photos.length;
+  const hasMetRequirement = photoCount === REQUIRED_PHOTO_COUNT;
+  const canUploadMore = photoCount < REQUIRED_PHOTO_COUNT;
+
+  // Modify the submit handler to prevent submission if requirement isn't met
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!hasMetRequirement) {
+      // This is an extra safeguard, the button should be disabled anyway
+      alert(`You must upload exactly ${REQUIRED_PHOTO_COUNT} photos.`);
+      return;
+    }
+    handleSubmit(e);
+  };
+
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleFormSubmit}
       className="grid grid-cols-1 lg:grid-cols-3 gap-12"
     >
       <div className="lg:col-span-2 space-y-8">
+        {/* --- 1. Clear Instructions --- */}
         <div>
-          <h2 className="text-lg font-medium text-gray-800">
-            Upload Vehicle Photos
+          <h2 className="text-2xl font-semibold text-gray-900">
+            Upload Your Vehicle Photos
           </h2>
-          <p className="text-sm text-gray-500">
-            Upload at least 5 high-quality photos. The first photo will be the
-            primary one.
+          <p className="mt-1 text-sm text-gray-600">
+            A great first impression counts! Please upload{" "}
+            <strong>exactly {REQUIRED_PHOTO_COUNT} high-quality photos</strong>{" "}
+            of your vehicle.
           </p>
         </div>
 
-        <ImageDropzone onDrop={onFilesDrop} />
-
-        {/* --- Photo Grid --- */}
-        {photos.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {photos.map((photo) => (
-              <PhotoPreviewCard
-                key={photo.preview} // Use preview as key before publicId exists
-                previewUrl={photo.preview}
-                publicId={photo.publicId}
-                isUploading={photo.isUploading}
-                isPrimary={
-                  photo.publicId === primaryPhotoId && !!photo.publicId
-                }
-                onRemove={() => onRemovePhoto(photo.publicId!)}
-                onSetPrimary={() => onSetPrimary(photo.publicId!)}
-              />
-            ))}
+        {/* --- 2. Conditional Dropzone --- */}
+        {canUploadMore && (
+          <div>
+            <h3 className="text-lg font-medium text-gray-800">
+              Add photos ({photoCount} / {REQUIRED_PHOTO_COUNT})
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              You can drag & drop files or click to select.
+            </p>
+            <ImageDropzone
+              onDrop={onFilesDrop}
+              // You might need to add a 'disabled' prop to ImageDropzone
+              // or handle it in the onDrop function to reject files if
+              // (files.length + photoCount) > REQUIRED_PHOTO_COUNT
+            />
           </div>
         )}
-        <div className="md:col-span-2 flex justify-between gap-4 pt-4">
-          <Link
-            href={`/dashboard/onboarding/documents?id=${vehicleId}`}
-            className="inline-flex items-center justify-center px-4 py-2 border border-[#0096FF] text-sm font-medium shadow-sm text-white bg-[#0096FF] hover:bg-[#007ACC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-          >
-            Documents
-          </Link>
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            disabled={isSubmitting || isLoading}
-          >
-            {isSubmitting ? "Saving..." : "Pricing"}
-          </Button>
+
+        {/* --- 3. Visual Progress Grid --- */}
+        {!canUploadMore && (
+          <div className="p-4 bg-green-50 border border-green-200 text-green-700 flex items-center gap-3">
+            <Check className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              Great! You've uploaded all {REQUIRED_PHOTO_COUNT} photos.
+            </span>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-800">Your Photos</h3>
+          <PhotoProgressTracker
+            photos={photos}
+            primaryPhotoId={primaryPhotoId}
+            onRemove={onRemovePhoto}
+            onSetPrimary={onSetPrimary}
+          />
+        </div>
+
+        {/* --- 4. Navigation & Submission --- */}
+        <div className="md:col-span-2 flex flex-col items-end gap-4 pt-4">
+          <div className="flex justify-between w-full">
+            <Link
+              href={`/dashboard/onboarding/documents?id=${vehicleId}`}
+              className="inline-flex items-center justify-center px-4 border border-gray-300 text-sm font-medium shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              Back to Documents
+            </Link>
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+              disabled={isSubmitting || isLoading || !hasMetRequirement}
+              className="w-full md:w-auto"
+            >
+              {isSubmitting ? "Saving..." : "Next: Pricing"}
+            </Button>
+          </div>
+
+          {/* --- 5. Submission Helper Text --- */}
+          {!hasMetRequirement && (
+            <p className="text-sm text-red-500 text-right">
+              You must upload exactly {REQUIRED_PHOTO_COUNT} photos to continue.
+            </p>
+          )}
         </div>
       </div>
 
@@ -161,7 +252,7 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
   );
 }
 
-// --- Main Page Component ---
+// --- Main Page Component (No changes) ---
 function Step3Content() {
   const searchParams = useSearchParams();
   const vehicleId = searchParams.get("id");
@@ -181,7 +272,8 @@ export default function Step3() {
   return (
     <div className="relative min-h-screen pb-24 bg-white">
       <Stepper currentStep={currentStep} />
-      <main className="max-w-8xl mt-8">
+      {/* Reduced top margin for a tighter layout */}
+      <main className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
         <Suspense fallback={<CustomLoader />}>
           <Step3Content />
         </Suspense>
