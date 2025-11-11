@@ -1,8 +1,9 @@
+// app/dashboard/trips/[tripId]/page.tsx
 "use client";
 
 import React from "react";
-import { useParams, useRouter } from "next/navigation"; // Import useRouter
-import Link from "next/link"; // ✅ Import Link
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { format } from "date-fns";
 import {
   AlertCircle,
@@ -14,13 +15,14 @@ import {
   User,
   Users,
   Check,
-  Link as LinkIcon, // ✅ Import LinkIcon
+  Link as LinkIcon,
+  Briefcase,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 // Hooks
-import { useGetTripDetails } from "@/lib/hooks/trips-management/useTrips";
-import { useGetVehicleDetails } from "@/lib/hooks/trips-management/useVehicleDetails";
+import { useGetTripDetails } from "@/lib/hooks/trips-management/useTrips"; // Adjust path
+import { useGetVehicleDetails } from "@/lib/hooks/trips-management/useVehicleDetails"; // Adjust path
 
 // Components
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -131,9 +133,8 @@ export default function TripDetailPage() {
         {/* --- Header --- */}
         <div className="mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Trip Details</h1>
-          {/* ✅ UPDATED: Booking ID is now a link */}
           <Link
-            href={`/dashboard/bookings/${trip.bookingId}`} // <-- Assumed link
+            href={`/dashboard/bookings/${trip.bookingId}`} // Assumed link
             className="text-lg text-gray-600 mt-1 group inline-flex items-center gap-2"
           >
             Booking ID:
@@ -185,41 +186,50 @@ export default function TripDetailPage() {
 
         {/* --- People & Vehicle Grid --- */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* --- People Card --- */}
+          {/* --- People Card (UPDATED) --- */}
           <InfoCard icon={Users} title="Participants">
+            {/* 2-Column Grid for Customer and Driver */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h4 className="font-semibold text-gray-700 border-b pb-2">
-                  Customer
+                <h4 className="font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
+                  <User className="h-4 w-4" /> Customer
                 </h4>
                 <DetailItem label="Name" value={trip.customerName} />
                 <DetailItem label="Phone" value={trip.customerPhoneNumber} />
               </div>
               <div className="space-y-4">
-                <h4 className="font-semibold text-gray-700 border-b pb-2">
-                  Driver
+                <h4 className="font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
+                  <User className="h-4 w-4" /> Driver
                 </h4>
                 <DetailItem label="Name" value={trip.driverName} />
                 <DetailItem label="Phone" value={trip.driverPhoneNumber} />
               </div>
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-700 border-b pb-2">
-                  Agents
-                </h4>
-                <DetailItem
-                  label="Customer Agent"
-                  value={trip.customerAgentName}
-                />
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-700 border-b pb-2">
-                  &nbsp;
-                </h4>{" "}
-                {/* Spacer */}
-                <DetailItem
-                  label="Operations Agent"
-                  value={trip.operationsAgentName}
-                />
+            </div>
+
+            {/* Host & Agents Section (on new lines) */}
+            <div className="pt-6 border-t mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" /> Host
+                  </h4>
+                  <DetailItem label="Name" value={trip.hostName} />
+                  <DetailItem label="Email" value={trip.hostEmail} />
+                  <DetailItem label="Phone" value={trip.hostPhoneNumber} />
+                </div>
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-700 border-b pb-2">
+                    Assigned Agents
+                  </h4>
+                  <DetailItem
+                    label="Customer Agent"
+                    value={trip.customerAgentName}
+                  />
+                  <DetailItem
+                    label="Operations Agent"
+                    value={trip.operationsAgentName}
+                  />
+                </div>
               </div>
             </div>
           </InfoCard>
@@ -243,9 +253,8 @@ export default function TripDetailPage() {
                   )}
                 </div>
                 <div className="md:col-span-2 space-y-4">
-                  {/* ✅ UPDATED: Vehicle Name is now a link */}
                   <Link
-                    href={`/dashboard/vehicle-onboarding/${vehicle.id}`} // <-- Assumed link
+                    href={`/dashboard/vehicle-onboarding/${vehicle.id}`} // Assumed link
                     className="group"
                   >
                     <h4 className="text-xl font-bold text-gray-900 group-hover:text-[#0096FF] group-hover:underline">

@@ -19,6 +19,9 @@ export interface Trip {
   vehicleId: string;
   vehicleIdentifier: string;
   vehicleName: string;
+  hostName: string | null;
+  hostEmail: string | null;
+  hostPhoneNumber: string | null;
   driverName: string | null;
   driverPhoneNumber: string | null;
   customerAgentName: string | null;
@@ -77,6 +80,9 @@ export type TripDetail = {
   vehicleId: string;
   vehicleIdentifier: string;
   vehicleName: string;
+  hostName: string | null;
+  hostEmail: string | null;
+  hostPhoneNumber: string | null;
   driverName: string | null;
   driverPhoneNumber: string | null;
   customerAgentName: string | null;

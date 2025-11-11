@@ -5,13 +5,27 @@ import React, { useState } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
-import { AlertCircle, Eye, Filter, User, UserCheck, Car } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  Filter,
+  User,
+  UserCheck,
+  Car,
+  Download, // ✅ NEW
+  FileText, // ✅ NEW
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import clsx from "clsx"; // ✅ NEW
 
 import { BookingType } from "@/components/set-up-management/bookings-types/types";
 
 // Hooks
-import { useGetTrips } from "@/lib/hooks/trips-management/useTrips";
+import {
+  useGetTrips,
+  useDownloadTripInvoice, // ✅ NEW
+  useDownloadTripReceipt, // ✅ NEW
+} from "@/lib/hooks/trips-management/useTrips";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 
 // Reusable Components
@@ -69,6 +83,9 @@ export default function TripsPage() {
   });
 
   const { data: bookingTypes = [] } = useGetBookingTypes();
+  // ✅ Instantiate new hooks
+  const downloadInvoiceMutation = useDownloadTripInvoice();
+  const downloadReceiptMutation = useDownloadTripReceipt();
 
   // --- Derived Data ---
   const trips = paginatedData?.content || [];
@@ -77,6 +94,11 @@ export default function TripsPage() {
     id: bt.id,
     name: bt.name,
   }));
+  // ✅ Combine all loading states
+  const isActionLoading =
+    isPlaceholderData ||
+    downloadInvoiceMutation.isPending ||
+    downloadReceiptMutation.isPending;
 
   // --- Event Handlers ---
   const handleFilterChange = (
@@ -84,7 +106,7 @@ export default function TripsPage() {
     value: string | null
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(0); // Reset to first page on filter change
+    setCurrentPage(0);
   };
 
   const handleDateChange = (dateRange: DateRange | undefined) => {
@@ -113,27 +135,49 @@ export default function TripsPage() {
   };
 
   // --- Table Column Definitions ---
-  const getTripActions = (trip: Trip): ActionMenuItem[] => [
-    {
-      label: "View Trip Details",
-      icon: Eye,
-      onClick: () => {
-        toast.success(`Viewing trip ${trip.bookingId}`);
-        router.push(`/dashboard/trips/${trip.id}`);
+  // ✅ UPDATED getTripActions
+  const getTripActions = (trip: Trip): ActionMenuItem[] => {
+    const actions: ActionMenuItem[] = [
+      {
+        label: "View Trip Details",
+        icon: Eye,
+        onClick: () => {
+          router.push(`/dashboard/trips/${trip.id}`);
+        },
       },
-      // Example: router.push(`/admin/trips/${trip.id}`)
-    },
-    {
-      label: "Assign Driver",
-      icon: Car,
-      onClick: () => openModal("assignDriver", trip),
-    },
-    {
-      label: "Assign Agents",
-      icon: UserCheck,
-      onClick: () => openModal("assignAgents", trip),
-    },
-  ];
+      {
+        label: "Assign Driver",
+        icon: Car,
+        onClick: () => openModal("assignDriver", trip),
+      },
+      {
+        label: "Assign Agents",
+        icon: UserCheck,
+        onClick: () => openModal("assignAgents", trip),
+      },
+      {
+        label: "Download Invoice",
+        icon: FileText,
+        onClick: () =>
+          downloadInvoiceMutation.mutate({ bookingId: trip.bookingId }),
+      },
+    ];
+
+    // ✅ Only add Receipt if booking is confirmed or completed
+    if (
+      trip.bookingStatus === "CONFIRMED" ||
+      trip.bookingStatus === "COMPLETED"
+    ) {
+      actions.push({
+        label: "Download Receipt",
+        icon: Download,
+        onClick: () =>
+          downloadReceiptMutation.mutate({ bookingId: trip.bookingId }),
+      });
+    }
+
+    return actions;
+  };
 
   const columns: ColumnDefinition<Trip>[] = [
     {
@@ -309,9 +353,10 @@ export default function TripsPage() {
 
         {!isError && (trips.length > 0 || isLoading) && (
           <div
-            className={`${
-              isPlaceholderData ? "opacity-50" : ""
-            } transition-opacity`}
+            className={clsx(
+              "transition-opacity",
+              isActionLoading ? "opacity-50" : "" // ✅ Use combined loading state
+            )}
           >
             <CustomTable
               data={trips}

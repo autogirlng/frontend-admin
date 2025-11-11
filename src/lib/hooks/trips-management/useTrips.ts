@@ -122,3 +122,41 @@ export function useGetTripDetails(tripId: string | null) {
     enabled: !!tripId,
   });
 }
+
+export function useDownloadTripInvoice() {
+  return useMutation<void, Error, { bookingId: string }>({
+    mutationFn: async ({ bookingId }) => {
+      const defaultFilename = `Invoice-${bookingId}.pdf`;
+      await apiClient.postAndDownloadFile(
+        `/admin/invoices/generate-pdf/${bookingId}`,
+        {}, // Empty body for POST
+        defaultFilename
+      );
+    },
+    onSuccess: () => {
+      toast.success("Invoice download started.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to download invoice.");
+    },
+  });
+}
+
+// ✅ --- 6. NEW: Download Receipt ---
+export function useDownloadTripReceipt() {
+  return useMutation<void, Error, { bookingId: string }>({
+    mutationFn: async ({ bookingId }) => {
+      const defaultFilename = `Receipt-${bookingId}.pdf`;
+      await apiClient.getAndDownloadFile(
+        `/admin/invoices/${bookingId}/download-receipt`,
+        defaultFilename
+      );
+    },
+    onSuccess: () => {
+      toast.success("Receipt download started.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to download receipt.");
+    },
+  });
+}
