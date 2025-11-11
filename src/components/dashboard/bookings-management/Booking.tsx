@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 import {
   useGetBookingSegments,
   useDownloadInvoice,
@@ -13,10 +15,11 @@ import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
 import Select, { Option } from "@/components/generic/ui/Select";
-import { Loader2, Search, AlertCircle, View, Download, Plus } from "lucide-react";
+import { Search, AlertCircle, View, Download, Plus } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomLoader from "@/components/generic/CustomLoader";
+import { DatePickerWithRange } from "../availability/DatePickerWithRange";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -67,10 +70,11 @@ export default function BookingsPage() {
   const [bookingTypeFilter, setBookingTypeFilter] = useState<Option | null>(
     null
   );
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  
 
   // --- API Hooks ---
   const {
@@ -82,8 +86,8 @@ export default function BookingsPage() {
     page: currentPage,
     status: statusFilter?.id || "",
     bookingTypeId: bookingTypeFilter?.id || "",
-    startDate,
-    endDate,
+    startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "",
+    endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "",
     searchTerm: debouncedSearchTerm,
   });
 
@@ -104,6 +108,11 @@ export default function BookingsPage() {
       ...bookingTypes.map((bt) => ({ id: bt.id, name: bt.name })),
     ];
   }, [bookingTypes]);
+
+  const handleDateChange = (newDateRange: DateRange | undefined) => {
+    setDateRange(newDateRange);
+    setCurrentPage(0);
+  };
 
   // --- Define Actions for the Menu ---
   const getBookingActions = (booking: BookingSegment): ActionMenuItem[] => {
@@ -297,31 +306,10 @@ export default function BookingsPage() {
             }}
             disabled={isLoadingBookingTypes}
           />
-          <TextInput
-            label="Start Date"
-            id="start-date"
-            hideLabel
-            type="date"
-            placeholder="Start Date"
-            value={startDate}
-            onChange={(e) => {
-              setStartDate(e.target.value);
-              setCurrentPage(0);
-            }}
-            className="text-gray-500"
-          />
-          <TextInput
-            label="End Date"
-            id="end-date"
-            hideLabel
-            type="date"
-            placeholder="End Date"
-            value={endDate}
-            onChange={(e) => {
-              setEndDate(e.target.value);
-              setCurrentPage(0);
-            }}
-            className="text-gray-500"
+          <DatePickerWithRange
+            date={dateRange}
+            setDate={handleDateChange}
+            className="col-span-1 md:col-span-1" 
           />
         </div>
 
