@@ -214,7 +214,7 @@ export default function VehicleOnboarding() {
 
       case VehicleStatus.APPROVED:
         actions.push({
-          label: "Manage Unavailability", // ✅ RENAMED
+          label: "Set Availability",
           icon: PauseCircle,
           onClick: () => openUnavailabilityModal(vehicle), // ✅ UPDATED
         });
