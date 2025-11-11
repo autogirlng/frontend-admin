@@ -2,7 +2,12 @@
 "use client";
 
 import React, { useState } from "react";
-
+import {
+  useGetAdmins,
+  useUpdateAdminStatus,
+  useResendCredentials,
+  useDownloadCredentials,
+} from "@/lib/hooks/settings/useAdmins";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { AdminUser } from "./types";
 
@@ -17,6 +22,7 @@ import CustomBack from "@/components/generic/CustomBack";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import { CreateAdminModal } from "./CreateAdminModal";
 import { PromoteUserModal } from "./PromoteUserModal";
+import { AdminDetailModal } from "./AdminDetailModal"; // ✅ Import new modal
 
 // Icons
 import {
@@ -28,20 +34,16 @@ import {
   Send,
   Download,
   ArrowUpCircle,
+  View, // ✅ Import View icon
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import {
-  useGetAdmins,
-  useUpdateAdminStatus,
-  useResendCredentials,
-  useDownloadCredentials,
-} from "@/lib/hooks/settings/useAdmins";
 
 export default function StaffPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
+  // ✅ Add "view" to modal state
   const [modal, setModal] = useState<
-    "create" | "promote" | "status" | "resend" | null
+    "create" | "promote" | "status" | "resend" | "view" | null
   >(null);
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
 
@@ -67,7 +69,7 @@ export default function StaffPage() {
 
   // --- Modal Handlers ---
   const openModal = (
-    type: "create" | "promote" | "status" | "resend",
+    type: "create" | "promote" | "status" | "resend" | "view",
     admin: AdminUser | null = null
   ) => {
     setSelectedAdmin(admin);
@@ -100,12 +102,17 @@ export default function StaffPage() {
   // --- Define Actions for the Menu ---
   const getAdminActions = (admin: AdminUser): ActionMenuItem[] => [
     {
+      label: "View Details",
+      icon: View,
+      onClick: () => openModal("view", admin), // ✅ UPDATED
+    },
+    {
       label: "Resend Credentials",
       icon: Send,
       onClick: () => openModal("resend", admin),
     },
     {
-      label: "Download Credentials",
+      label: "Save Credentials",
       icon: Download,
       onClick: () => handleDownload(admin),
     },
@@ -138,6 +145,13 @@ export default function StaffPage() {
       header: "Phone Number",
       accessorKey: "phoneNumber",
     },
+    // ✅ --- NEW COLUMN ---
+    {
+      header: "Department",
+      accessorKey: "departmentName",
+      cell: (item) => item.departmentName || "N/A",
+    },
+    // ✅ --- END NEW COLUMN ---
     {
       header: "Status",
       accessorKey: "active",
@@ -252,6 +266,11 @@ export default function StaffPage() {
       {modal === "create" && <CreateAdminModal onClose={closeModal} />}
 
       {modal === "promote" && <PromoteUserModal onClose={closeModal} />}
+
+      {/* ✅ RENDER NEW MODAL */}
+      {modal === "view" && selectedAdmin && (
+        <AdminDetailModal adminId={selectedAdmin.id} onClose={closeModal} />
+      )}
 
       {modal === "status" && selectedAdmin && (
         <ActionModal

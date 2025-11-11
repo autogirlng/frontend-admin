@@ -10,10 +10,12 @@ import {
   CreateAdminPayload,
   Customer,
   Host,
+  AdminUserDetail,
 } from "@/components/settings/staffs/types";
 
 // --- Query Keys ---
 export const ADMINS_QUERY_KEY = "admins";
+export const ADMIN_DETAIL_KEY = "adminDetail";
 export const CUSTOMERS_SEARCH_KEY = "customersSearch";
 export const HOSTS_SEARCH_KEY = "hostsSearch";
 
@@ -32,6 +34,15 @@ export function useGetAdmins(page: number, searchTerm: string) {
       return apiClient.get<PaginatedResponse<AdminUser>>(endpoint);
     },
     placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useGetAdminDetails(adminId: string | null) {
+  return useQuery<AdminUserDetail, Error>({
+    queryKey: [ADMIN_DETAIL_KEY, adminId],
+    queryFn: () =>
+      apiClient.get<AdminUserDetail>(`/admin/users/admins/${adminId}`),
+    enabled: !!adminId, // Only run if adminId is not null
   });
 }
 

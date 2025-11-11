@@ -17,7 +17,28 @@ export interface AdminUser {
   email: string;
   phoneNumber: string;
   userType: "ADMIN";
-  active: boolean; // Assuming this field exists, as there's an activate/deactivate endpoint
+  active: boolean;
+  departmentName?: string;
+}
+
+export interface AdminUserDetail {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  userType: "ADMIN";
+  profilePictureUrl?: string;
+  department?: {
+    id: string;
+    name: string;
+  };
+  roles?: {
+    id: string;
+    name: string;
+  }[];
+  emailVerified: boolean;
+  phoneVerified: boolean;
 }
 
 // --- User Types for Promotion Search ---

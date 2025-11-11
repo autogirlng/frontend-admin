@@ -54,7 +54,7 @@ export function PromoteUserModal({ onClose }: PromoteUserModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-lg bg-white p-6 shadow-xl">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -68,12 +68,12 @@ export function PromoteUserModal({ onClose }: PromoteUserModalProps) {
         </h3>
 
         {/* User Type Toggle */}
-        <div className="flex rounded-md shadow-sm mb-4">
+        <div className="flex shadow-sm mb-4">
           <button
             type="button"
             onClick={() => setUserType("CUSTOMER")}
             className={clsx(
-              "relative -mr-px inline-flex flex-1 items-center justify-center gap-x-2 rounded-l-md border border-gray-300 px-3 py-2 text-sm font-semibold",
+              "relative -mr-px inline-flex flex-1 items-center justify-center gap-x-2 border border-gray-300 px-3 py-2 text-sm font-semibold",
               userType === "CUSTOMER"
                 ? "bg-[#0096FF] text-white"
                 : "bg-white text-gray-900 hover:bg-gray-50"
@@ -85,7 +85,7 @@ export function PromoteUserModal({ onClose }: PromoteUserModalProps) {
             type="button"
             onClick={() => setUserType("HOST")}
             className={clsx(
-              "relative inline-flex flex-1 items-center justify-center gap-x-2 rounded-r-md border border-gray-300 px-3 py-2 text-sm font-semibold",
+              "relative inline-flex flex-1 items-center justify-center gap-x-2 border border-gray-300 px-3 py-2 text-sm font-semibold",
               userType === "HOST"
                 ? "bg-[#0096FF] text-white"
                 : "bg-white text-gray-900 hover:bg-gray-50"
@@ -113,7 +113,7 @@ export function PromoteUserModal({ onClose }: PromoteUserModalProps) {
         </div>
 
         {/* Search Results */}
-        <div className="mt-4 h-48 overflow-y-auto border rounded-md">
+        <div className="mt-4 h-48 overflow-y-auto border">
           {isLoading && <CustomLoader />}
           {!isLoading && !searchResults && (
             <p className="p-4 text-center text-gray-500">
@@ -161,6 +161,7 @@ export function PromoteUserModal({ onClose }: PromoteUserModalProps) {
             onClick={handlePromote}
             isLoading={isPending}
             disabled={!selectedUser}
+            className="w-auto"
           >
             Promote to Admin
           </Button>
