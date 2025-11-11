@@ -79,3 +79,12 @@ export interface DriverSchedulePayload {
   saturdayShift: Shift;
   sundayShift: Shift;
 }
+
+export interface VehicleSearchResult {
+  id: string;
+  vehicleIdentifier: string;
+  name: string;
+  licensePlateNumber?: string;
+  ownerName: string;
+  status: string;
+}

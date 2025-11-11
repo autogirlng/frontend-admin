@@ -13,6 +13,8 @@ import {
   DriverSchedulePayload,
   PaginatedResponse,
 } from "@/components/dashboard/drivers-management/types"; // Adjust path
+import { VehicleDetail } from "@/components/dashboard/trips-management/types";
+import { VEHICLE_DETAIL_KEY } from "../vehicle-onboarding/details/useVehicleDetailsPage";
 
 // --- Query Keys ---
 export const DRIVERS_QUERY_KEY = "drivers";
@@ -187,5 +189,74 @@ export function useUpdateDriverStatus() {
     },
     onError: (error) =>
       toast.error(error.message || "Failed to update status."),
+  });
+}
+
+export function useAssignDriverToVehicle() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    VehicleDetail,
+    Error,
+    { vehicleId: string; driverId: string }
+  >({
+    mutationFn: ({ vehicleId, driverId }) =>
+      apiClient.patch(`/vehicles/${vehicleId}/assign-driver`, { driverId }),
+    onSuccess: (updatedVehicle) => {
+      toast.success("Driver permanently assigned to vehicle.");
+
+      // Update the vehicle detail cache
+      queryClient.setQueryData(
+        [VEHICLE_DETAIL_KEY, updatedVehicle.id],
+        updatedVehicle
+      );
+
+      // Invalidate the main drivers list, as their assignment changed
+      queryClient.invalidateQueries({
+        queryKey: [DRIVERS_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to assign driver."),
+  });
+}
+
+export function useUnassignDriverFromVehicle() {
+  const queryClient = useQueryClient();
+
+  return useMutation<VehicleDetail, Error, { vehicleId: string }>({
+    // ✅ FIX: Wrap the mutation function in an async block
+    mutationFn: async ({ vehicleId }) => {
+      const result = await apiClient.delete<VehicleDetail>(
+        `/vehicles/${vehicleId}/assign-driver`
+      );
+
+      // ✅ Check for the null case
+      if (result === null) {
+        // This shouldn't happen based on your API spec, but it satisfies TypeScript
+        throw new Error("API returned an unexpected null response.");
+      }
+
+      // ✅ Now, result is guaranteed to be VehicleDetail
+      return result;
+    },
+    onSuccess: (updatedVehicle) => {
+      toast.success("Driver permanently unassigned from vehicle.");
+
+      // Update the vehicle detail cache
+      queryClient.setQueryData(
+        [VEHICLE_DETAIL_KEY, updatedVehicle.id],
+        updatedVehicle
+      );
+
+      // Invalidate the main drivers list
+      queryClient.invalidateQueries({
+        queryKey: [DRIVERS_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to unassign driver."),
   });
 }

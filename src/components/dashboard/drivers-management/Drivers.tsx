@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   useGetMyDrivers,
   useSendScheduleLink,
+  useUnassignDriverFromVehicle,
   useUpdateDriverStatus,
 } from "@/lib/hooks/drivers-management/useDrivers";
 import { Driver } from "./types";
@@ -22,8 +23,9 @@ import {
   Search,
   CheckCircle,
   Trash2,
-  List,
   Edit,
+  Unlink,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -32,10 +34,18 @@ import { ActionModal } from "@/components/generic/ui/ActionModal";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { EditDriverModal } from "./EditDriverModal";
 import Link from "next/link";
+import { AssignVehicleModal } from "./AssignVehicleModal";
 
 export default function DriversPage() {
   const [modal, setModal] = useState<
-    "create" | "schedule" | "sendLink" | "status" | "edit" | null // ✅ Add 'edit'
+    | "create"
+    | "schedule"
+    | "sendLink"
+    | "status"
+    | "edit"
+    | "assignVehicle" // ✅ Add
+    | "unassignVehicle" // ✅ Add
+    | null
   >(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
@@ -50,16 +60,27 @@ export default function DriversPage() {
     isError,
     isPlaceholderData,
   } = useGetMyDrivers(currentPage, debouncedSearchTerm);
+
   const sendLinkMutation = useSendScheduleLink();
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateDriverStatus();
+  // ✅ Instantiate new mutation hook
+  const { mutate: unassignDriver, isPending: isUnassigning } =
+    useUnassignDriverFromVehicle();
 
   const drivers = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
   // --- Modal Handlers ---
   const openModal = (
-    type: "create" | "schedule" | "sendLink" | "status" | "edit",
+    type:
+      | "create"
+      | "schedule"
+      | "sendLink"
+      | "status"
+      | "edit"
+      | "assignVehicle"
+      | "unassignVehicle",
     driver: Driver | null = null
   ) => {
     setSelectedDriver(driver);
@@ -92,37 +113,64 @@ export default function DriversPage() {
     );
   };
 
+  // ✅ New handler for unassigning
+  const handleUnassignConfirm = () => {
+    if (!selectedDriver || !selectedDriver.assignedVehicleId) return;
+    unassignDriver(
+      { vehicleId: selectedDriver.assignedVehicleId },
+      {
+        onSuccess: closeModal,
+      }
+    );
+  };
+
   // --- Define Actions for the Menu (Updated) ---
-  const getDriverActions = (driver: Driver): ActionMenuItem[] => [
-    {
-      label: "Edit Driver", // ✅ Add Edit action
-      icon: Edit,
-      onClick: () => openModal("edit", driver),
-    },
-    {
-      label: "View/Edit Schedule",
-      icon: Calendar,
-      onClick: () => openModal("schedule", driver),
-    },
-    /*     {
-      label: "Send Schedule Link",
-      icon: Send,
-      onClick: () => openModal("sendLink", driver),
-    }, */
-    driver.active
-      ? {
-          label: "Deactivate Driver",
-          icon: Trash2,
-          onClick: () => openModal("status", driver),
-          danger: true,
-        }
-      : {
-          label: "Activate Driver",
-          icon: CheckCircle,
-          onClick: () => openModal("status", driver),
-          danger: false,
-        },
-  ];
+  const getDriverActions = (driver: Driver): ActionMenuItem[] => {
+    const actions: ActionMenuItem[] = [
+      {
+        label: "Edit Driver",
+        icon: Edit,
+        onClick: () => openModal("edit", driver),
+      },
+      // ✅ Dynamic Assign/Unassign Action
+      driver.assignedVehicleId
+        ? {
+            label: "Unassign Vehicle",
+            icon: Unlink,
+            onClick: () => openModal("unassignVehicle", driver),
+            danger: true,
+          }
+        : {
+            label: "Assign Vehicle",
+            icon: LinkIcon,
+            onClick: () => openModal("assignVehicle", driver),
+          },
+      {
+        label: "View/Edit Schedule",
+        icon: Calendar,
+        onClick: () => openModal("schedule", driver),
+      },
+      /*       {
+        label: "Send Schedule Link",
+        icon: Send,
+        onClick: () => openModal("sendLink", driver),
+      }, */
+      driver.active
+        ? {
+            label: "Deactivate Driver",
+            icon: Trash2,
+            onClick: () => openModal("status", driver),
+            danger: true,
+          }
+        : {
+            label: "Activate Driver",
+            icon: CheckCircle,
+            onClick: () => openModal("status", driver),
+            danger: false,
+          },
+    ];
+    return actions;
+  };
 
   // --- Define Columns for the Table (Updated) ---
   const columns: ColumnDefinition<Driver>[] = [
@@ -134,7 +182,7 @@ export default function DriversPage() {
       header: "Identifier",
       accessorKey: "driverIdentifier",
     },
-    // ✅ NEW COLUMN
+    // ✅ UPDATED COLUMN
     {
       header: "Assigned Vehicle",
       accessorKey: "assignedVehicleName",
@@ -271,9 +319,37 @@ export default function DriversPage() {
         <DriverScheduleModal driver={selectedDriver} onClose={closeModal} />
       )}
 
-      {/* ✅ RENDER EDIT MODAL */}
       {modal === "edit" && selectedDriver && (
         <EditDriverModal driverId={selectedDriver.id} onClose={closeModal} />
+      )}
+
+      {/* ✅ RENDER NEW MODALS */}
+      {modal === "assignVehicle" && selectedDriver && (
+        <AssignVehicleModal driver={selectedDriver} onClose={closeModal} />
+      )}
+
+      {modal === "unassignVehicle" && selectedDriver && (
+        <ActionModal
+          title="Unassign Vehicle"
+          message={
+            <>
+              Are you sure you want to unassign{" "}
+              <strong className="text-gray-900">
+                {selectedDriver.fullName}
+              </strong>{" "}
+              from{" "}
+              <strong className="text-gray-900">
+                {selectedDriver.assignedVehicleName}
+              </strong>
+              ?
+            </>
+          }
+          actionLabel="Yes, Unassign"
+          onClose={closeModal}
+          onConfirm={handleUnassignConfirm}
+          isLoading={isUnassigning}
+          variant="danger"
+        />
       )}
 
       {modal === "sendLink" && selectedDriver && (
