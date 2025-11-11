@@ -3,8 +3,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -14,7 +12,8 @@ import {
   Search,
   CheckCircle,
   ClipboardCopy,
-  CheckCheck, // ✅ NEW Icon
+  CheckCheck,
+  Download,
 } from "lucide-react";
 
 // Types
@@ -24,7 +23,8 @@ import { Booking, BookingStatus } from "./types";
 import {
   useGetFinanceBookings,
   useConfirmOfflinePayment,
-  useBulkConfirmOfflinePayment, // ✅ NEW
+  useBulkConfirmOfflinePayment,
+  useDownloadInvoice, // ✅ NEW
 } from "@/lib/hooks/finance/useFinanceBookings";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 
@@ -38,6 +38,8 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
+import clsx from "clsx";
+import CustomBack from "@/components/generic/CustomBack";
 
 // Helper to format currency
 const formatPrice = (price: number) => {
@@ -65,7 +67,6 @@ export default function FinanceBookingsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  // ✅ NEW: State for row selection
   const [selectedBookingIds, setSelectedBookingIds] = useState(
     new Set<string>()
   );
@@ -95,7 +96,8 @@ export default function FinanceBookingsPage() {
   });
 
   const confirmPaymentMutation = useConfirmOfflinePayment();
-  const bulkConfirmMutation = useBulkConfirmOfflinePayment(); // ✅ Init hook
+  const bulkConfirmMutation = useBulkConfirmOfflinePayment();
+  const downloadInvoiceMutation = useDownloadInvoice(); // ✅ Instantiate new hook
 
   // --- Derived Data ---
   const bookings = paginatedData?.content || [];
@@ -121,10 +123,10 @@ export default function FinanceBookingsPage() {
     });
     setSearchTerm("");
     setCurrentPage(0);
-    setSelectedBookingIds(new Set()); // ✅ Clear selection
+    setSelectedBookingIds(new Set());
   };
 
-  // ✅ --- Selection Handlers ---
+  // --- Selection Handlers ---
   const isRowSelectable = (booking: Booking): boolean => {
     return (
       booking.bookingStatus === BookingStatus.PENDING_PAYMENT &&
@@ -146,13 +148,11 @@ export default function FinanceBookingsPage() {
 
   const handleSelectAll = (areAllSelected: boolean) => {
     if (areAllSelected) {
-      // Select all *selectable* items
       const allSelectableIds = bookings
         .filter(isRowSelectable)
         .map((b) => b.bookingId);
       setSelectedBookingIds(new Set(allSelectableIds));
     } else {
-      // Deselect all
       setSelectedBookingIds(new Set());
     }
   };
@@ -164,7 +164,7 @@ export default function FinanceBookingsPage() {
   };
 
   const openBulkConfirmModal = () => {
-    setSelectedBooking(null); // Ensure we're in bulk mode
+    setSelectedBooking(null);
     setIsConfirmModalOpen(true);
   };
 
@@ -180,20 +180,20 @@ export default function FinanceBookingsPage() {
     });
   };
 
-  // ✅ NEW: Bulk Confirm Handler
   const handleBulkConfirmPayment = () => {
     bulkConfirmMutation.mutate(
       { bookingIds: Array.from(selectedBookingIds) },
       {
         onSuccess: () => {
           closeConfirmModal();
-          setSelectedBookingIds(new Set()); // Clear selection
+          setSelectedBookingIds(new Set());
         },
       }
     );
   };
 
   // --- Table Column Definitions ---
+  // ✅ UPDATED getBookingActions
   const getBookingActions = (booking: Booking): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
@@ -202,6 +202,15 @@ export default function FinanceBookingsPage() {
         onClick: () => {
           router.push(`/dashboard/bookings/${booking.bookingId}`);
         },
+      },
+      {
+        label: "Download Invoice",
+        icon: Download,
+        onClick: () =>
+          downloadInvoiceMutation.mutate({
+            bookingId: booking.bookingId,
+            invoiceNumber: booking.invoiceNumber,
+          }),
       },
     ];
 
@@ -304,12 +313,13 @@ export default function FinanceBookingsPage() {
     },
   ];
 
-  // ✅ --- Derived State for UI ---
   const hasSelectedItems = selectedBookingIds.size > 0;
+  const isLoadingTable = isPlaceholderData || downloadInvoiceMutation.isPending; // ✅ Add download pending
 
   return (
     <>
       <Toaster position="top-right" />
+      <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
         <div className="mb-8">
@@ -322,7 +332,7 @@ export default function FinanceBookingsPage() {
         </div>
 
         {/* --- Filter Section --- */}
-        {/* ... (Filter section is unchanged) ... */}
+        {/* ... (filter section is unchanged) ... */}
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-gray-600" />
@@ -393,9 +403,9 @@ export default function FinanceBookingsPage() {
           </Button>
         </div>
 
-        {/* ✅ NEW: Bulk Action Bar */}
+        {/* --- Bulk Action Bar --- */}
         {hasSelectedItems && (
-          <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+          <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 mb-4">
             <span className="font-medium text-blue-800">
               {selectedBookingIds.size} item(s) selected
             </span>
@@ -435,16 +445,17 @@ export default function FinanceBookingsPage() {
         )}
 
         {!isError && (bookings.length > 0 || isLoading) && (
+          // ✅ UPDATED loading state
           <div
-            className={`${
-              isPlaceholderData ? "opacity-50" : ""
-            } transition-opacity`}
+            className={clsx(
+              "transition-opacity",
+              isLoadingTable ? "opacity-50" : ""
+            )}
           >
             <CustomTable
               data={bookings}
               columns={columns}
               getUniqueRowId={(item) => item.bookingId}
-              // ✅ Pass selection props
               selectedRowIds={selectedBookingIds}
               onRowSelect={(rowId, rowData) => handleRowSelect(rowId)}
               onSelectAll={handleSelectAll}
@@ -463,7 +474,6 @@ export default function FinanceBookingsPage() {
       </main>
 
       {/* --- Modals --- */}
-      {/* ✅ UPDATED: ActionModal now handles both single and bulk */}
       {isConfirmModalOpen && (
         <ActionModal
           title={

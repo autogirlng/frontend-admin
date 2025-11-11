@@ -1,8 +1,9 @@
 // lib/hooks/finance/usePayments.ts
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient"; // Adjust path
 import {
   Payment,
@@ -57,5 +58,57 @@ export function useGetPaymentDetails(paymentId: string | null) {
     queryKey: [PAYMENTS_QUERY_KEY, "detail", paymentId],
     queryFn: () => apiClient.get<Payment>(`/payments/${paymentId}`),
     enabled: !!paymentId, // Only run if paymentId is not null
+  });
+}
+
+export function useDownloadInvoice() {
+  return useMutation<
+    void,
+    Error,
+    { bookingId: string; invoiceNumber?: string }
+  >({
+    mutationFn: async ({ bookingId, invoiceNumber }) => {
+      const defaultFilename = invoiceNumber
+        ? `Invoice-${invoiceNumber}.pdf`
+        : `Invoice-${bookingId}.pdf`;
+
+      await apiClient.postAndDownloadFile(
+        `/admin/invoices/generate-pdf/${bookingId}`,
+        {},
+        defaultFilename
+      );
+    },
+    onSuccess: () => {
+      toast.success("Invoice download started.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to download invoice.");
+    },
+  });
+}
+
+// ✅ --- 4. NEW: Download Receipt ---
+export function useDownloadPaymentReceipt() {
+  return useMutation<
+    void,
+    Error,
+    { bookingId: string; invoiceNumber?: string }
+  >({
+    mutationFn: async ({ bookingId, invoiceNumber }) => {
+      const defaultFilename = invoiceNumber
+        ? `Receipt-${invoiceNumber}.pdf`
+        : `Receipt-${bookingId}.pdf`;
+
+      await apiClient.getAndDownloadFile(
+        `/admin/invoices/${bookingId}/download-receipt`,
+        defaultFilename
+      );
+    },
+    onSuccess: () => {
+      toast.success("Receipt download started.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to download receipt.");
+    },
   });
 }

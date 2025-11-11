@@ -5,11 +5,24 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Toaster } from "react-hot-toast";
-import { AlertCircle, Eye, Filter, Search, Ticket } from "lucide-react";
+import { Toaster, toast } from "react-hot-toast";
+import {
+  AlertCircle,
+  Eye,
+  Filter,
+  Search,
+  Ticket,
+  Download, // ✅ Import
+  FileText, // ✅ Import
+} from "lucide-react";
+import clsx from "clsx"; // ✅ Import
 
 // Hooks
-import { useGetPayments } from "@/lib/hooks/finance/usePayments";
+import {
+  useGetPayments,
+  useDownloadInvoice, // ✅ Import
+  useDownloadPaymentReceipt, // ✅ Import
+} from "@/lib/hooks/finance/usePayments";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 
 // Reusable Components
@@ -70,6 +83,10 @@ export default function PaymentsPage() {
     searchTerm: debouncedSearchTerm,
   });
 
+  // ✅ Instantiate new hooks
+  const downloadInvoiceMutation = useDownloadInvoice();
+  const downloadReceiptMutation = useDownloadPaymentReceipt();
+
   // --- Derived Data ---
   const payments = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -79,12 +96,10 @@ export default function PaymentsPage() {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(0);
   };
-
   const handleDateChange = (dateRange: DateRange | undefined) => {
     setFilters((prev) => ({ ...prev, dateRange: dateRange || null }));
     setCurrentPage(0);
   };
-
   const clearFilters = () => {
     setFilters({
       paymentStatus: null,
@@ -93,26 +108,54 @@ export default function PaymentsPage() {
     setSearchTerm("");
     setCurrentPage(0);
   };
-
   const closeModal = () => {
     setSelectedPaymentId(null);
   };
 
   // --- Table Column Definitions ---
-  const getPaymentActions = (payment: Payment): ActionMenuItem[] => [
-    {
-      label: "View Details",
-      icon: Eye,
-      onClick: () => setSelectedPaymentId(payment.id),
-    },
-    {
-      label: "View Booking",
-      icon: Ticket, // You'd add a real icon here
-      onClick: () => {
-        router.push(`/dashboard/bookings/${payment.bookingId}`);
+  // ✅ UPDATED Action Menu
+  const getPaymentActions = (payment: Payment): ActionMenuItem[] => {
+    const actions: ActionMenuItem[] = [
+      {
+        label: "View Details",
+        icon: Eye,
+        onClick: () => setSelectedPaymentId(payment.id),
       },
-    },
-  ];
+      {
+        label: "View Booking",
+        icon: Ticket,
+        onClick: () => {
+          router.push(`/dashboard/bookings/${payment.bookingId}`);
+        },
+      },
+      {
+        label: "Download Invoice",
+        icon: FileText,
+        onClick: () =>
+          downloadInvoiceMutation.mutate({
+            bookingId: payment.bookingId,
+            // Assuming invoice number might be on the payment or booking
+            // We pass it to get a good filename
+            // invoiceNumber: payment.invoiceNumber,
+          }),
+      },
+    ];
+
+    // Only add "Download Receipt" if payment was successful
+    if (payment.paymentStatus === "SUCCESSFUL") {
+      actions.push({
+        label: "Download Receipt",
+        icon: Download,
+        onClick: () =>
+          downloadReceiptMutation.mutate({
+            bookingId: payment.bookingId,
+            // invoiceNumber: payment.invoiceNumber,
+          }),
+      });
+    }
+
+    return actions;
+  };
 
   const columns: ColumnDefinition<Payment>[] = [
     {
@@ -178,6 +221,12 @@ export default function PaymentsPage() {
     },
   ];
 
+  // ✅ Combine all mutation loading states
+  const isActionLoading =
+    isPlaceholderData ||
+    downloadInvoiceMutation.isPending ||
+    downloadReceiptMutation.isPending;
+
   return (
     <>
       <Toaster position="top-right" />
@@ -192,7 +241,7 @@ export default function PaymentsPage() {
           </div>
           <Link
             href="/dashboard/finance/bookings"
-            className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]"
+            className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" // Added rounded-lg
           >
             View Bookings
           </Link>
@@ -200,6 +249,8 @@ export default function PaymentsPage() {
 
         {/* --- Filter Section --- */}
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
+          {" "}
+          {/* Added rounded-lg */}
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
@@ -268,9 +319,10 @@ export default function PaymentsPage() {
 
         {!isError && (payments.length > 0 || isLoading) && (
           <div
-            className={`${
-              isPlaceholderData ? "opacity-50" : ""
-            } transition-opacity`}
+            className={clsx(
+              "transition-opacity",
+              isActionLoading ? "opacity-50" : "" // ✅ Use combined loading state
+            )}
           >
             <CustomTable
               data={payments}

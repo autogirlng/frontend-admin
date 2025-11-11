@@ -117,3 +117,31 @@ export function useBulkConfirmOfflinePayment() {
     },
   });
 }
+
+export function useDownloadInvoice() {
+  return useMutation<
+    void,
+    Error,
+    { bookingId: string; invoiceNumber?: string }
+  >({
+    mutationFn: async ({ bookingId, invoiceNumber }) => {
+      // Create a user-friendly filename
+      const defaultFilename = invoiceNumber
+        ? `Invoice-${invoiceNumber}.pdf`
+        : `Invoice-${bookingId}.pdf`;
+
+      // Use the postAndDownloadFile method from your apiClient
+      await apiClient.postAndDownloadFile(
+        `/admin/invoices/generate-pdf/${bookingId}`,
+        {}, // Empty body for the POST
+        defaultFilename
+      );
+    },
+    onSuccess: () => {
+      toast.success("Invoice download started.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to download invoice.");
+    },
+  });
+}
