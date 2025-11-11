@@ -32,6 +32,12 @@ export interface VehicleSearchFilters {
   dropoffLocationString?: string; // For form state
 }
 
+// ✅ --- UPDATED: Payload Type ---
+interface DownloadInvoicePayload {
+  bookingId: string;
+  companyBankAccountId?: string; // Optional
+}
+
 /**
  * Hook for GET /public/vehicles/search
  */
@@ -94,6 +100,29 @@ export function useCreateBooking() {
       apiClient.post("/bookings", payload, false),
     onError: (error) => {
       toast.error(`Booking creation failed: ${error.message}`);
+    },
+  });
+}
+
+export function useDownloadInvoice() {
+  return useMutation<void, Error, DownloadInvoicePayload>({
+    mutationFn: async ({ bookingId, companyBankAccountId }) => {
+      const defaultFilename = `Invoice-${bookingId}.pdf`;
+
+      // ✅ Create payload only if ID exists
+      const payload = companyBankAccountId ? { companyBankAccountId } : {};
+
+      await apiClient.postAndDownloadFile(
+        `/admin/invoices/generate-pdf/${bookingId}`,
+        payload,
+        defaultFilename
+      );
+    },
+    onSuccess: () => {
+      toast.success("Invoice download started.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to download invoice.");
     },
   });
 }

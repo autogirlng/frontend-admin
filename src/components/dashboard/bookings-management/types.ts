@@ -130,3 +130,12 @@ export interface CreateBookingResponse {
   }[];
   bookingForOthers: boolean;
 }
+
+export interface CompanyBankAccount {
+  id: string;
+  accountName: string;
+  accountNumber: string;
+  bankName: string;
+  bankCode: string;
+  default: boolean;
+}

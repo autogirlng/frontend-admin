@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useDownloadInvoice } from "@/lib/hooks/booking-management/useBookings";
+import React, { useState, useMemo, useEffect } from "react"; // ✅ Added useEffect
+import { useDownloadInvoice } from "@/lib/hooks/booking-management/useBookingCreation";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 import { useGetVehicleTypes } from "@/lib/hooks/set-up/vehicle-types/useVehicleTypes";
 import { useGetVehicleMakes } from "@/lib/hooks/set-up/vehicle-make-models/useVehicleMakes";
 import { useGetVehicleModels } from "@/lib/hooks/set-up/vehicle-make-models/useVehicleModels";
+// ✅ Import new hook
+import { useGetCompanyBankAccounts } from "@/lib/hooks/booking-management/useCompanyBankAccounts";
 import {
   VehicleSearchResult,
   BookingSegmentPayload,
@@ -14,6 +16,7 @@ import {
   CreateBookingResponse,
   BookingChannel,
   CalculateBookingPayload,
+  CompanyBankAccount, // ✅ Import new type
 } from "./types";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
@@ -43,6 +46,7 @@ import CustomBack from "@/components/generic/CustomBack";
 
 type Step = "search" | "results" | "details" | "confirm" | "success";
 
+// ... (initialFilters and initialBookingDetails are unchanged) ...
 // Initial state for filters
 const initialFilters: Omit<VehicleSearchFilters, "page"> = {
   radiusInKm: 10000,
@@ -51,7 +55,6 @@ const initialFilters: Omit<VehicleSearchFilters, "page"> = {
   dropoffLocationString: "",
   startDate: "",
   endDate: "",
-  // other optional filters default to undefined
 };
 
 // Initial state for ONE segment
@@ -64,12 +67,11 @@ const initialBookingDetails: Partial<BookingSegmentPayload> & {
   pickupLocationString: "",
   dropoffLocationString: "",
   bookingTypeId: "",
-  pickupCoords: null, // Store coords per segment
-  dropoffCoords: null, // Store coords per segment
+  pickupCoords: null,
+  dropoffCoords: null,
 };
 
 const channelOptions: Option[] = [
-  // { id: "WEBSITE", name: "Website" },
   { id: "WHATSAPP", name: "WhatsApp" },
   { id: "INSTAGRAM", name: "Instagram" },
   { id: "TELEGRAM", name: "Telegram" },
@@ -78,12 +80,11 @@ const channelOptions: Option[] = [
 ];
 
 export default function CreateBookingPage() {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const [step, setStep] = useState<Step>("search");
   const [filters, setFilters] =
     useState<Omit<VehicleSearchFilters, "page">>(initialFilters);
 
-  // These are for the search form
   const [searchPickupCoords, setSearchPickupCoords] = useState<{
     latitude: number;
     longitude: number;
@@ -99,7 +100,6 @@ export default function CreateBookingPage() {
   const [selectedVehicle, setSelectedVehicle] =
     useState<VehicleSearchResult | null>(null);
 
-  // State now holds an array of segments
   const [segments, setSegments] = useState<(typeof initialBookingDetails)[]>([
     { ...initialBookingDetails },
   ]);
@@ -117,6 +117,11 @@ export default function CreateBookingPage() {
   const [bookingResponse, setBookingResponse] =
     useState<CreateBookingResponse | null>(null);
 
+  // ✅ --- State for bank account selection ---
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null
+  );
+
   // --- API Hooks ---
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } =
     useGetBookingTypes();
@@ -126,6 +131,9 @@ export default function CreateBookingPage() {
     useGetVehicleMakes();
   const { data: vehicleModels, isLoading: isLoadingVehicleModels } =
     useGetVehicleModels();
+  // ✅ Fetch bank accounts
+  const { data: bankAccounts, isLoading: isLoadingBankAccounts } =
+    useGetCompanyBankAccounts();
 
   const searchFilters: VehicleSearchFilters = {
     ...filters,
@@ -146,6 +154,7 @@ export default function CreateBookingPage() {
   const downloadInvoiceMutation = useDownloadInvoice();
 
   // --- Memos for Select Options ---
+  // ... (bookingTypeOptions, vehicleTypeOptions, etc. are unchanged) ...
   const bookingTypeOptions = useMemo(
     () => [
       { id: "", name: "Any Booking Type" },
@@ -175,7 +184,27 @@ export default function CreateBookingPage() {
     [vehicleModels]
   );
 
+  // ✅ NEW: Memo for bank account options
+  const bankAccountOptions: Option[] = useMemo(() => {
+    if (!bankAccounts) return [];
+    return bankAccounts.map((acct: CompanyBankAccount) => ({
+      id: acct.id,
+      name: `${acct.bankName} - ${acct.accountNumber} (${acct.accountName})`,
+    }));
+  }, [bankAccounts]);
+
+  // ✅ NEW: Effect to set the default bank account
+  useEffect(() => {
+    if (bankAccounts && !selectedAccountId) {
+      const defaultAccount = bankAccounts.find((acct) => acct.default);
+      if (defaultAccount) {
+        setSelectedAccountId(defaultAccount.id);
+      }
+    }
+  }, [bankAccounts, selectedAccountId]);
+
   // --- Event Handlers ---
+  // ... (all handlers: handleFilterChange, handleSegmentChange, etc. are unchanged) ...
   const handleFilterChange = (
     field: keyof Omit<VehicleSearchFilters, "page">,
     value: any
@@ -183,7 +212,6 @@ export default function CreateBookingPage() {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handler to update a field in a specific segment
   const handleSegmentChange = (
     index: number,
     field: keyof (typeof segments)[0],
@@ -196,7 +224,6 @@ export default function CreateBookingPage() {
     );
   };
 
-  // Handler to update coordinates in a specific segment
   const handleSegmentLocationSelect = (
     index: number,
     type: "pickup" | "dropoff",
@@ -214,17 +241,15 @@ export default function CreateBookingPage() {
     );
   };
 
-  // Handlers to add/remove segments
   const addSegment = () => {
     const lastSegment = segments[segments.length - 1];
     setSegments((prev) => [
       ...prev,
       {
         ...initialBookingDetails,
-        // Pre-fill next segment with previous segment's dropoff
         pickupLocationString: lastSegment.dropoffLocationString,
         pickupCoords: lastSegment.dropoffCoords,
-        startDate: lastSegment.startDate, // Default to same start date
+        startDate: lastSegment.startDate,
       },
     ]);
   };
@@ -258,7 +283,6 @@ export default function CreateBookingPage() {
   const handleSelectVehicle = (vehicle: VehicleSearchResult) => {
     setSelectedVehicle(vehicle);
     setCalculationResult(null);
-    // Reset segments array
     setSegments([
       {
         ...initialBookingDetails,
@@ -278,7 +302,6 @@ export default function CreateBookingPage() {
 
     const segmentPayloads: BookingSegmentPayload[] = [];
 
-    // Validate and build each segment
     for (const [index, segment] of segments.entries()) {
       if (
         !segment.bookingTypeId ||
@@ -345,9 +368,13 @@ export default function CreateBookingPage() {
     });
   };
 
+  // ✅ UPDATED: handleDownloadInvoice
   const handleDownloadInvoice = () => {
     if (!bookingResponse || downloadInvoiceMutation.isPending) return;
-    downloadInvoiceMutation.mutate({ bookingId: bookingResponse.bookingId });
+    downloadInvoiceMutation.mutate({
+      bookingId: bookingResponse.bookingId,
+      companyBankAccountId: selectedAccountId || undefined, // Pass the selected ID
+    });
   };
 
   const resetAndGoToSearch = () => {
@@ -374,6 +401,7 @@ export default function CreateBookingPage() {
   // --- Render Functions for Steps ---
 
   const renderSearchForm = () => (
+    // ... (this function is unchanged) ...
     <form onSubmit={executeSearch} className="space-y-4">
       <h2 className="text-xl font-semibold mb-4">Find a Vehicle</h2>
       <AddressInput
@@ -480,6 +508,7 @@ export default function CreateBookingPage() {
   );
 
   const renderSearchResults = () => (
+    // ... (this function is unchanged) ...
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold mb-4">Search Results</h2>
@@ -512,7 +541,6 @@ export default function CreateBookingPage() {
             No vehicles found matching your criteria.
           </p>
         )}
-
       <div
         className={`${isSearchPlaceholder ? "opacity-50" : ""} space-y-4 pr-2`}
       >
@@ -534,7 +562,7 @@ export default function CreateBookingPage() {
                 (e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                   vehicle.name
                 )}&background=random&size=96`)
-              } // Fallback image
+              }
             />
             <div className="flex-1">
               <h3 className="font-semibold">{vehicle.name}</h3>
@@ -565,7 +593,6 @@ export default function CreateBookingPage() {
           </div>
         ))}
       </div>
-
       <PaginationControls
         currentPage={searchPage}
         totalPages={searchResultsData?.totalPages || 0}
@@ -576,11 +603,11 @@ export default function CreateBookingPage() {
   );
 
   const renderBookingDetailsForm = () => (
+    // ... (this function is unchanged) ...
     <form onSubmit={handleCalculatePrice} className="space-y-4">
       <h2 className="text-xl font-semibold mb-2">
         Booking Details for {selectedVehicle?.name}
       </h2>
-
       {segments.map((segment, index) => (
         <div key={index} className="py-4 space-y-4 relative">
           <div className="flex justify-between items-center">
@@ -599,7 +626,6 @@ export default function CreateBookingPage() {
               </Button>
             )}
           </div>
-
           <AddressInput
             label="Pickup Location *"
             id={`pickup-location-${index}`}
@@ -674,8 +700,6 @@ export default function CreateBookingPage() {
           </div>
         </div>
       ))}
-
-      {/* Add Segment Button */}
       <div className="pt-2">
         <Button
           type="button"
@@ -687,7 +711,6 @@ export default function CreateBookingPage() {
           Add Another Booking
         </Button>
       </div>
-
       <div className="flex justify-between items-center pt-4 border-t mt-4">
         <Button
           className="w-auto px-4"
@@ -712,6 +735,7 @@ export default function CreateBookingPage() {
   );
 
   const renderConfirmationForm = () => (
+    // ... (this function is unchanged) ...
     <form onSubmit={handleCreateBooking} className="space-y-4">
       <h2 className="text-xl font-semibold mb-2">Confirm Booking</h2>
       {calculationResult && (
@@ -752,7 +776,6 @@ export default function CreateBookingPage() {
           )}
         </div>
       )}
-
       <h3 className="text-lg font-medium text-gray-900 pt-2">
         Guest Information
       </h3>
@@ -812,7 +835,6 @@ export default function CreateBookingPage() {
           handleGuestDetailChange("purposeOfRide", e.target.value)
         }
       />
-
       <div className="flex justify-between items-center pt-4 flex-wrap gap-2 border-t mt-4">
         <Button
           variant="secondary"
@@ -833,6 +855,7 @@ export default function CreateBookingPage() {
     </form>
   );
 
+  // ✅ UPDATED: renderSuccess function
   const renderSuccess = () => (
     <div className="flex flex-col items-center text-center p-6">
       <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
@@ -844,11 +867,31 @@ export default function CreateBookingPage() {
       </p>
       <p className="text-sm text-gray-500 mt-1">Status: PENDING_PAYMENT</p>
 
+      {/* --- New Bank Account Selection --- */}
+      <div className="w-full max-w-sm text-left my-6 space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Select Bank Account for Invoice
+        </label>
+        <Select
+          label="Bank Account"
+          hideLabel
+          options={bankAccountOptions}
+          selected={
+            bankAccountOptions.find((o) => o.id === selectedAccountId) || null
+          }
+          onChange={(opt) => setSelectedAccountId(opt.id)}
+          placeholder="Select a bank account"
+          disabled={isLoadingBankAccounts}
+        />
+      </div>
+      {/* --- End of New Section --- */}
+
       <Button
         variant="primary"
-        className="w-auto px-5 mt-6"
+        className="w-auto px-5"
         onClick={handleDownloadInvoice}
         isLoading={downloadInvoiceMutation.isPending}
+        disabled={!selectedAccountId} // Disable button if no account is selected
       >
         <Download className="h-5 w-5 mr-2" />
         Download Invoice
