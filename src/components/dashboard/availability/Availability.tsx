@@ -4,26 +4,27 @@
 import React, { useState } from "react";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import TextInput from "@/components/generic/ui/TextInput";
-import CustomLoader from "@/components/generic/CustomLoader";
-import AvailabilityCalendar from "@/components/dashboard/availability/AvailabilityCalendar";
-// ✅ Import the new modal
-import DailyScheduleModal from "@/components/dashboard/availability/DailyScheduleModal";
-import { useVehicleAvailability } from "@/lib/hooks/availability/useVehicleAvailability";
-// ✅ Assuming this is the correct path
-import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
-// ✅ Assuming this is the correct path for the custom date picker
-import { DatePickerWithRange } from "./DatePickerWithRange";
+
+// Components
+import TextInput from "../../generic/ui/TextInput"; // Assuming you have this
+import CustomLoader from "../../generic/CustomLoader";
+import AvailabilityCalendar from "./AvailabilityCalendar";
+import { DatePickerWithRange } from "./DatePickerWithRange"; // Adjust path
+import DailyScheduleModal from "./DailyScheduleModal"; // Adjust path
+
+// Hooks
+import { useVehicleAvailability } from "../../../lib/hooks/availability/useVehicleAvailability"; // Adjust path
+import { useDebounce } from "../../../lib/hooks/set-up/company-bank-account/useDebounce";
 
 export default function AvailabilityPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
-    to: addDays(new Date(), 6),
+    to: addDays(new Date(), 6), // Default to a 7-day view
   });
 
-  // ✅ State for the modal
+  // ✅ State for the daily schedule modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(
     null
@@ -53,7 +54,7 @@ export default function AvailabilityPage() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Reset selection after a short delay to allow modal to fade out
+    // Reset selection after a short delay
     setTimeout(() => {
       setSelectedVehicleId(null);
       setSelectedDate(null);
@@ -61,7 +62,7 @@ export default function AvailabilityPage() {
   };
 
   return (
-    <div className="mx-auto py-3 space-y-6">
+    <div className="container mx-auto p-4 space-y-6">
       <h1 className="text-3xl font-bold">Vehicle Availability</h1>
 
       {/* --- Controls --- */}
@@ -81,6 +82,7 @@ export default function AvailabilityPage() {
         </div>
       </div>
 
+      {/* --- Calendar Display --- */}
       <div className="mt-6">
         {isLoading && <CustomLoader />}
         {isError && (
