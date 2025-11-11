@@ -23,17 +23,19 @@ import {
   CheckCircle,
   Trash2,
   List,
+  Edit,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import CustomLoader from "@/components/generic/CustomLoader";
+import { EditDriverModal } from "./EditDriverModal";
+import Link from "next/link";
 
 export default function DriversPage() {
-  const router = useRouter(); // ✅ Initialize router
   const [modal, setModal] = useState<
-    "create" | "schedule" | "sendLink" | "status" | null
+    "create" | "schedule" | "sendLink" | "status" | "edit" | null // ✅ Add 'edit'
   >(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
@@ -57,7 +59,7 @@ export default function DriversPage() {
 
   // --- Modal Handlers ---
   const openModal = (
-    type: "create" | "schedule" | "sendLink" | "status",
+    type: "create" | "schedule" | "sendLink" | "status" | "edit",
     driver: Driver | null = null
   ) => {
     setSelectedDriver(driver);
@@ -92,22 +94,21 @@ export default function DriversPage() {
 
   // --- Define Actions for the Menu (Updated) ---
   const getDriverActions = (driver: Driver): ActionMenuItem[] => [
-    // ✅ New Action
     {
-      label: "View Trips",
-      icon: List,
-      onClick: () => router.push(`/dashboard/drivers/${driver.id}/trips`),
+      label: "Edit Driver", // ✅ Add Edit action
+      icon: Edit,
+      onClick: () => openModal("edit", driver),
     },
     {
       label: "View/Edit Schedule",
       icon: Calendar,
       onClick: () => openModal("schedule", driver),
     },
-    {
+    /*     {
       label: "Send Schedule Link",
       icon: Send,
       onClick: () => openModal("sendLink", driver),
-    },
+    }, */
     driver.active
       ? {
           label: "Deactivate Driver",
@@ -123,15 +124,36 @@ export default function DriversPage() {
         },
   ];
 
-  // --- Define Columns for the Table ---
+  // --- Define Columns for the Table (Updated) ---
   const columns: ColumnDefinition<Driver>[] = [
     {
       header: "Name",
       accessorKey: "fullName",
     },
     {
-      header: "DriverID",
+      header: "Identifier",
       accessorKey: "driverIdentifier",
+    },
+    // ✅ NEW COLUMN
+    {
+      header: "Assigned Vehicle",
+      accessorKey: "assignedVehicleName",
+      cell: (item) =>
+        item.assignedVehicleId ? (
+          <Link
+            href={`/dashboard/vehicles/${item.assignedVehicleId}`} // Link to vehicle page
+            className="group"
+          >
+            <div className="font-medium text-gray-900 group-hover:text-[#0096FF] group-hover:underline">
+              {item.assignedVehicleName}
+            </div>
+            <div className="text-sm text-gray-500">
+              {item.assignedVehicleIdentifier}
+            </div>
+          </Link>
+        ) : (
+          <span className="text-gray-400">Not Assigned</span>
+        ),
     },
     {
       header: "Phone Number",
@@ -163,7 +185,6 @@ export default function DriversPage() {
     },
   ];
 
-  // ... (rest of the component is the same)
   return (
     <>
       <Toaster position="top-right" />
@@ -248,6 +269,11 @@ export default function DriversPage() {
 
       {modal === "schedule" && selectedDriver && (
         <DriverScheduleModal driver={selectedDriver} onClose={closeModal} />
+      )}
+
+      {/* ✅ RENDER EDIT MODAL */}
+      {modal === "edit" && selectedDriver && (
+        <EditDriverModal driverId={selectedDriver.id} onClose={closeModal} />
       )}
 
       {modal === "sendLink" && selectedDriver && (

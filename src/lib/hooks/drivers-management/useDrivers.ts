@@ -6,7 +6,9 @@ import { apiClient } from "@/lib/apiClient"; // Adjust path
 import toast from "react-hot-toast";
 import {
   Driver,
+  DriverDetail,
   DriverPayload,
+  UpdateDriverPayload,
   DriverSchedule,
   DriverSchedulePayload,
   PaginatedResponse,
@@ -15,12 +17,14 @@ import {
 // --- Query Keys ---
 export const DRIVERS_QUERY_KEY = "drivers";
 export const DRIVER_SCHEDULE_KEY = "driverSchedule";
+export const DRIVER_DETAIL_KEY = "driverDetail"; // ✅ ADDED
 
 // --- GET All "My Drivers" ---
 export function useGetMyDrivers(page: number, searchTerm: string) {
   return useQuery<PaginatedResponse<Driver>>({
     queryKey: [DRIVERS_QUERY_KEY, page, searchTerm],
     queryFn: async () => {
+      // ... (function is unchanged) ...
       const params = new URLSearchParams();
       params.append("page", String(page));
       params.append("size", "10");
@@ -34,13 +38,22 @@ export function useGetMyDrivers(page: number, searchTerm: string) {
   });
 }
 
-// --- POST Create Driver (FIXED) ---
+// ✅ --- NEW: GET Single Driver Details ---
+export function useGetDriverDetails(driverId: string | null) {
+  return useQuery<DriverDetail>({
+    queryKey: [DRIVER_DETAIL_KEY, driverId],
+    queryFn: () => apiClient.get<DriverDetail>(`/drivers/${driverId}`),
+    enabled: !!driverId,
+  });
+}
+
+// --- POST Create Driver ---
 export function useCreateDriver() {
+  // ... (function is unchanged) ...
   const queryClient = useQueryClient();
   return useMutation<Driver, Error, DriverPayload>({
     mutationFn: (payload) => apiClient.post("/drivers", payload),
-    onSuccess: (newData) => {
-      // ✅ FIX: Invalidate the query to refetch the paginated list
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
         exact: false,
@@ -51,7 +64,65 @@ export function useCreateDriver() {
   });
 }
 
+// ✅ --- NEW: PATCH Update Driver Details ---
+export function useUpdateDriver() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    DriverDetail,
+    Error,
+    { driverId: string; payload: UpdateDriverPayload }
+  >({
+    mutationFn: ({ driverId, payload }) =>
+      apiClient.patch(`/drivers/${driverId}`, payload),
+    onSuccess: (updatedDriver) => {
+      toast.success("Driver details updated successfully.");
+      // Invalidate both the list and the detail queries
+      queryClient.invalidateQueries({
+        queryKey: [DRIVERS_QUERY_KEY],
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: [DRIVER_DETAIL_KEY, updatedDriver.id],
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to update driver."),
+  });
+}
+
+// ✅ --- NEW: PATCH Update Driver Profile Picture ---
+export function useUpdateDriverProfilePicture() {
+  const queryClient = useQueryClient();
+  return useMutation<DriverDetail, Error, { driverId: string; file: File }>({
+    mutationFn: ({ driverId, file }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiClient.patchFormData<DriverDetail>(
+        `/drivers/${driverId}/profile-picture`,
+        formData
+      );
+    },
+    onSuccess: (updatedDriver) => {
+      toast.success("Profile picture updated!");
+      // Optimistically update the detail query cache
+      queryClient.setQueryData(
+        [DRIVER_DETAIL_KEY, updatedDriver.id],
+        updatedDriver
+      );
+      // Invalidate the main list to show new picture (if you add it)
+      queryClient.invalidateQueries({
+        queryKey: [DRIVERS_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to upload picture.");
+    },
+  });
+}
+
 // --- POST Send Schedule Link ---
+// ... (function is unchanged) ...
 export function useSendScheduleLink() {
   return useMutation<unknown, Error, { driverId: string }>({
     mutationFn: ({ driverId }) =>
@@ -64,6 +135,7 @@ export function useSendScheduleLink() {
 }
 
 // --- GET Driver Schedule ---
+// ... (function is unchanged) ...
 export function useGetDriverSchedule(driverId: string, weekStartDate: string) {
   return useQuery<DriverSchedule>({
     queryKey: [DRIVER_SCHEDULE_KEY, driverId, weekStartDate],
@@ -76,6 +148,7 @@ export function useGetDriverSchedule(driverId: string, weekStartDate: string) {
 }
 
 // --- PUT Update Driver Schedule ---
+// ... (function is unchanged) ...
 export function useUpdateDriverSchedule() {
   const queryClient = useQueryClient();
   return useMutation<
@@ -86,7 +159,6 @@ export function useUpdateDriverSchedule() {
     mutationFn: ({ driverId, payload }) =>
       apiClient.put(`/drivers/${driverId}/schedule`, payload),
     onSuccess: (updatedData) => {
-      // Update the cache for this specific schedule
       queryClient.setQueryData(
         [DRIVER_SCHEDULE_KEY, updatedData.driver.id, updatedData.weekStartDate],
         updatedData
@@ -97,27 +169,14 @@ export function useUpdateDriverSchedule() {
   });
 }
 
-// --- NEW HOOK ---
 // --- PATCH Update Driver Status ---
-type UpdateStatusPayload = {
-  isActive: boolean;
-};
-
-type MutationInput = {
-  driverId: string;
-  isActive: boolean;
-};
-
+// ... (function is unchanged) ...
 export function useUpdateDriverStatus() {
   const queryClient = useQueryClient();
-
-  return useMutation<unknown, Error, MutationInput>({
-    mutationFn: ({ driverId, isActive }) => {
-      const payload: UpdateStatusPayload = { isActive };
-      return apiClient.patch(`/drivers/${driverId}/status`, payload);
-    },
+  return useMutation<unknown, Error, { driverId: string; isActive: boolean }>({
+    mutationFn: ({ driverId, isActive }) =>
+      apiClient.patch(`/drivers/${driverId}/status`, { isActive }),
     onSuccess: (_, { isActive }) => {
-      // ✅ Invalidate the 'drivers' query cache to refetch the list
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
         exact: false,
@@ -126,8 +185,7 @@ export function useUpdateDriverStatus() {
         `Driver status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`
       );
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to update status.");
-    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to update status."),
   });
 }
