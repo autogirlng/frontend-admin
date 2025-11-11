@@ -110,7 +110,10 @@ export function useVehiclePhotos(vehicleId: string) {
   // --- Mutation: Save to our backend ---
   const { mutate: updateVehiclePhotos } = useMutation({
     mutationFn: (payload: UpdatePhotosPayload) => {
-      return apiClient.patch(`/vehicles/photos?id=${vehicleId}`, payload);
+      return apiClient.patch(
+        `/vehicles/photos?vehicleId=${vehicleId}`,
+        payload
+      );
     },
     onSuccess: () => {
       toast.success("Photos saved successfully!");

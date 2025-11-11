@@ -17,9 +17,9 @@ import CustomLoader from "@/components/generic/CustomLoader";
 
 // ... (Mock Data and consts remain the same) ...
 const durationUnits: Option[] = [
-  { id: "HOURS", name: "Hours" },
+  // { id: "HOURS", name: "Hours" },
   { id: "DAYS", name: "Days" },
-  { id: "WEEKS", name: "Weeks" },
+  // { id: "WEEKS", name: "Weeks" },
 ];
 const yesNoOptions: Option[] = [
   { id: "yes", name: "Yes" },
@@ -109,7 +109,7 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
                 handleDurationChange(
                   "advanceNotice",
                   formData.advanceNotice.value,
-                  newOption?.id || "HOURS"
+                  newOption?.id || "DAYS"
                 )
               }
             />

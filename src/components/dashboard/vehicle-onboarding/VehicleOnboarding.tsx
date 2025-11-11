@@ -102,6 +102,7 @@ const formatOperationalStatus = (status: string) => {
 };
 
 export default function VehicleOnboarding() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
@@ -182,7 +183,7 @@ export default function VehicleOnboarding() {
       icon: View,
       onClick: () => {
         toast.success(`Navigating to details for ${vehicle.name}`);
-        // router.push(`/admin/vehicle-onboarding/${vehicle.id}`);
+        router.push(`/dashboard/vehicle-onboarding/${vehicle.id}`);
       },
     });
 

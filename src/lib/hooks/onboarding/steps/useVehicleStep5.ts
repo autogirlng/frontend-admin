@@ -105,7 +105,7 @@ type UpdateConfigPayload = {
 // --- Initial State ---
 const initialState: Step5FormData = {
   maxTripDuration: { value: "", unit: "DAYS" },
-  advanceNotice: { value: "", unit: "HOURS" },
+  advanceNotice: { value: "", unit: "DAYS" },
   willProvideDriver: "",
   willProvideFuel: "",
   supportedBookingTypeIds: [],
@@ -203,7 +203,7 @@ export function useVehicleStep5(vehicleId: string) {
         },
         advanceNotice: {
           value: vehicleDetails.advanceNoticeValue ?? "",
-          unit: vehicleDetails.advanceNoticeUnit || "HOURS",
+          unit: vehicleDetails.advanceNoticeUnit || "DAYS",
         },
         willProvideDriver: vehicleDetails.willProvideDriver ? "yes" : "no",
         willProvideFuel: vehicleDetails.willProvideFuel ? "yes" : "no",

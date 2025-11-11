@@ -159,7 +159,10 @@ export function useVehicleDocuments(vehicleId: string) {
   // --- Mutation: Save to our backend ---
   const { mutate: updateVehicleDocuments } = useMutation({
     mutationFn: (payload: UpdateDocumentsPayload) => {
-      return apiClient.patch(`/vehicles/documents?id=${vehicleId}`, payload);
+      return apiClient.patch(
+        `/vehicles/documents?vehicleId=${vehicleId}`,
+        payload
+      );
     },
     onSuccess: () => {
       toast.success("Documents saved successfully!");
