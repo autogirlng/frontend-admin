@@ -182,8 +182,17 @@ export default function VehicleOnboarding() {
       label: "View Details",
       icon: View,
       onClick: () => {
-        toast.success(`Navigating to details for ${vehicle.name}`);
+        toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
         router.push(`/dashboard/vehicle-onboarding/${vehicle.id}`);
+      },
+    });
+
+    actions.push({
+      label: "Edit Vehicle",
+      icon: Edit,
+      onClick: () => {
+        toast.success(`Navigating to details for ${vehicle.vehicleIdentifier}`);
+        router.push(`/dashboard/onboarding?id=${vehicle.id}`);
       },
     });
 
