@@ -8,6 +8,8 @@ import { apiClient } from "@/lib/apiClient";
 import {
   Booking,
   PaginatedResponse,
+  BulkConfirmPayload,
+  BulkConfirmResponse,
 } from "@/components/dashboard/finance/bookings/types";
 
 // Query Key
@@ -81,6 +83,37 @@ export function useConfirmOfflinePayment() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to confirm payment.");
+    },
+  });
+}
+
+export function useBulkConfirmOfflinePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BulkConfirmResponse, Error, BulkConfirmPayload>({
+    mutationFn: (payload) =>
+      apiClient.post(`/admin/bookings/confirm-offline-payment/bulk`, payload),
+    onSuccess: (data) => {
+      // Show a detailed toast based on the response
+      if (data.failedConfirmations > 0) {
+        toast.error(
+          `Bulk action complete: ${data.successfulConfirmations} succeeded, ${data.failedConfirmations} failed.`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(
+          `Successfully confirmed ${data.successfulConfirmations} payments.`
+        );
+      }
+
+      // Invalidate the bookings list to refetch
+      queryClient.invalidateQueries({
+        queryKey: [BOOKINGS_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Bulk confirmation failed.");
     },
   });
 }

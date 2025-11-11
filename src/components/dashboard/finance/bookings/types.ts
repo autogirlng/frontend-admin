@@ -8,6 +8,7 @@ export interface PaginatedResponse<T> {
 
 export interface Booking {
   bookingId: string;
+  invoiceNumber?: string;
   bookingStatus: string;
   paymentMethod: string;
   createdAt: string;
@@ -30,4 +31,20 @@ export enum BookingStatus {
   IN_PROGRESS = "IN_PROGRESS",
   COMPLETED = "COMPLETED",
   NO_SHOW = "NO_SHOW",
+}
+
+export interface BulkConfirmPayload {
+  bookingIds: string[];
+}
+
+export interface BulkConfirmFailure {
+  bookingId: string;
+  reason: string;
+}
+
+export interface BulkConfirmResponse {
+  successfulConfirmations: number;
+  failedConfirmations: number;
+  successfulBookingIds: string[];
+  failures: BulkConfirmFailure[];
 }

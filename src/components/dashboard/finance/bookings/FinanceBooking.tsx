@@ -1,11 +1,21 @@
+// app/dashboard/finance/bookings/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
-import { AlertCircle, Eye, Filter, Search, CheckCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  Filter,
+  Search,
+  CheckCircle,
+  ClipboardCopy,
+  CheckCheck, // ✅ NEW Icon
+} from "lucide-react";
 
 // Types
 import { Booking, BookingStatus } from "./types";
@@ -14,6 +24,7 @@ import { Booking, BookingStatus } from "./types";
 import {
   useGetFinanceBookings,
   useConfirmOfflinePayment,
+  useBulkConfirmOfflinePayment, // ✅ NEW
 } from "@/lib/hooks/finance/useFinanceBookings";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 
@@ -27,7 +38,6 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
-import CustomBack from "@/components/generic/CustomBack";
 
 // Helper to format currency
 const formatPrice = (price: number) => {
@@ -43,7 +53,6 @@ const enumToOptions = (e: object): Option[] =>
 
 const bookingStatusOptions: Option[] = enumToOptions(BookingStatus);
 
-// ✅ NEW: Options for the new filter
 const paymentMethodOptions: Option[] = [
   { id: "ONLINE", name: "Online" },
   { id: "OFFLINE", name: "Offline" },
@@ -56,13 +65,16 @@ export default function FinanceBookingsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  // ✅ NEW: State for row selection
+  const [selectedBookingIds, setSelectedBookingIds] = useState(
+    new Set<string>()
+  );
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  // ✅ UPDATED filters state
   const [filters, setFilters] = useState({
     bookingStatus: null as string | null,
-    paymentMethod: null as string | null, // ✅ ADDED
+    paymentMethod: null as string | null,
     dateRange: null as DateRange | null,
   });
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -79,43 +91,80 @@ export default function FinanceBookingsPage() {
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
     searchTerm: debouncedSearchTerm,
-    paymentMethod: filters.paymentMethod, // ✅ ADDED
+    paymentMethod: filters.paymentMethod,
   });
 
   const confirmPaymentMutation = useConfirmOfflinePayment();
+  const bulkConfirmMutation = useBulkConfirmOfflinePayment(); // ✅ Init hook
 
   // --- Derived Data ---
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
   // --- Event Handlers ---
-  // ✅ UPDATED to be generic
   const handleFilterChange = (
     key: "bookingStatus" | "paymentMethod",
     value: string | null
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(0); // Reset to first page on filter change
+    setCurrentPage(0);
   };
-
   const handleDateChange = (dateRange: DateRange | undefined) => {
     setFilters((prev) => ({ ...prev, dateRange: dateRange || null }));
     setCurrentPage(0);
   };
-
-  // ✅ UPDATED clearFilters
   const clearFilters = () => {
     setFilters({
       bookingStatus: null,
-      paymentMethod: null, // ✅ ADDED
+      paymentMethod: null,
       dateRange: null,
     });
     setSearchTerm("");
     setCurrentPage(0);
+    setSelectedBookingIds(new Set()); // ✅ Clear selection
   };
 
+  // ✅ --- Selection Handlers ---
+  const isRowSelectable = (booking: Booking): boolean => {
+    return (
+      booking.bookingStatus === BookingStatus.PENDING_PAYMENT &&
+      booking.paymentMethod === "OFFLINE"
+    );
+  };
+
+  const handleRowSelect = (bookingId: string | number) => {
+    setSelectedBookingIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(bookingId as string)) {
+        newSet.delete(bookingId as string);
+      } else {
+        newSet.add(bookingId as string);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (areAllSelected: boolean) => {
+    if (areAllSelected) {
+      // Select all *selectable* items
+      const allSelectableIds = bookings
+        .filter(isRowSelectable)
+        .map((b) => b.bookingId);
+      setSelectedBookingIds(new Set(allSelectableIds));
+    } else {
+      // Deselect all
+      setSelectedBookingIds(new Set());
+    }
+  };
+
+  // --- Modal Handlers ---
   const openConfirmModal = (booking: Booking) => {
     setSelectedBooking(booking);
+    setIsConfirmModalOpen(true);
+  };
+
+  const openBulkConfirmModal = () => {
+    setSelectedBooking(null); // Ensure we're in bulk mode
     setIsConfirmModalOpen(true);
   };
 
@@ -131,25 +180,32 @@ export default function FinanceBookingsPage() {
     });
   };
 
+  // ✅ NEW: Bulk Confirm Handler
+  const handleBulkConfirmPayment = () => {
+    bulkConfirmMutation.mutate(
+      { bookingIds: Array.from(selectedBookingIds) },
+      {
+        onSuccess: () => {
+          closeConfirmModal();
+          setSelectedBookingIds(new Set()); // Clear selection
+        },
+      }
+    );
+  };
+
   // --- Table Column Definitions ---
-  // ✅ UPDATED getBookingActions
   const getBookingActions = (booking: Booking): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
         label: "View Booking Details",
         icon: Eye,
         onClick: () => {
-          toast.success(`Viewing booking ${booking.bookingId}`);
-          // router.push(`/dashboard/bookings/${booking.bookingId}`);
+          router.push(`/dashboard/bookings/${booking.bookingId}`);
         },
       },
     ];
 
-    // ✅ UPDATED: Now checks for OFFLINE payment method
-    if (
-      booking.bookingStatus === BookingStatus.PENDING_PAYMENT &&
-      booking.paymentMethod === "OFFLINE"
-    ) {
+    if (isRowSelectable(booking)) {
       actions.push({
         label: "Confirm Offline Payment",
         icon: CheckCircle,
@@ -162,12 +218,26 @@ export default function FinanceBookingsPage() {
 
   const columns: ColumnDefinition<Booking>[] = [
     {
-      header: "Booking ID",
-      accessorKey: "bookingId",
+      header: "Invoice #",
+      accessorKey: "invoiceNumber",
       cell: (item) => (
-        <span className="font-mono text-sm">
-          {item.bookingId.split("-")[0]}...
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm font-medium">
+            {item.invoiceNumber || "N/A"}
+          </span>
+          {item.invoiceNumber && (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(item.invoiceNumber!);
+                toast.success("Copied to clipboard!");
+              }}
+              className="text-gray-400 hover:text-[#0096FF]"
+              title="Copy invoice number"
+            >
+              <ClipboardCopy className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       ),
     },
     {
@@ -189,21 +259,12 @@ export default function FinanceBookingsPage() {
       accessorKey: "hostName",
     },
     {
-      header: "Trip Start",
-      accessorKey: "firstSegmentStarts",
-      cell: (item) =>
-        item.firstSegmentStarts
-          ? format(new Date(item.firstSegmentStarts), "MMM d, yyyy, h:mm a")
-          : "N/A",
-    },
-    {
       header: "Total Price",
       accessorKey: "totalPrice",
       cell: (item) => (
         <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
       ),
     },
-    // ✅ NEW Column
     {
       header: "Payment",
       accessorKey: "paymentMethod",
@@ -238,15 +299,17 @@ export default function FinanceBookingsPage() {
     },
     {
       header: "Actions",
-      accessorKey: "actions" as keyof Booking, // Use type assertion
+      accessorKey: "actions" as keyof Booking,
       cell: (item) => <ActionMenu actions={getBookingActions(item)} />,
     },
   ];
 
+  // ✅ --- Derived State for UI ---
+  const hasSelectedItems = selectedBookingIds.size > 0;
+
   return (
     <>
       <Toaster position="top-right" />
-      <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
         <div className="mb-8">
@@ -259,12 +322,12 @@ export default function FinanceBookingsPage() {
         </div>
 
         {/* --- Filter Section --- */}
+        {/* ... (Filter section is unchanged) ... */}
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
           </div>
-          {/* ✅ UPDATED grid classes */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -299,7 +362,6 @@ export default function FinanceBookingsPage() {
                 handleFilterChange("bookingStatus", option.id)
               }
             />
-            {/* ✅ NEW Select for Payment Method */}
             <Select
               label="Payment Method"
               hideLabel
@@ -331,6 +393,33 @@ export default function FinanceBookingsPage() {
           </Button>
         </div>
 
+        {/* ✅ NEW: Bulk Action Bar */}
+        {hasSelectedItems && (
+          <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+            <span className="font-medium text-blue-800">
+              {selectedBookingIds.size} item(s) selected
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="w-auto"
+                onClick={() => setSelectedBookingIds(new Set())}
+              >
+                Deselect All
+              </Button>
+              <Button
+                variant="primary"
+                className="w-auto"
+                onClick={openBulkConfirmModal}
+                isLoading={bulkConfirmMutation.isPending}
+              >
+                <CheckCheck className="h-4 w-4 mr-2" />
+                Confirm ({selectedBookingIds.size})
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
@@ -355,6 +444,11 @@ export default function FinanceBookingsPage() {
               data={bookings}
               columns={columns}
               getUniqueRowId={(item) => item.bookingId}
+              // ✅ Pass selection props
+              selectedRowIds={selectedBookingIds}
+              onRowSelect={(rowId, rowData) => handleRowSelect(rowId)}
+              onSelectAll={handleSelectAll}
+              isRowSelectable={isRowSelectable}
             />
           </div>
         )}
@@ -369,22 +463,45 @@ export default function FinanceBookingsPage() {
       </main>
 
       {/* --- Modals --- */}
-      {isConfirmModalOpen && selectedBooking && (
+      {/* ✅ UPDATED: ActionModal now handles both single and bulk */}
+      {isConfirmModalOpen && (
         <ActionModal
-          title="Confirm Offline Payment"
-          message={
-            <>
-              Are you sure you want to manually confirm payment for booking{" "}
-              <strong className="text-gray-900">
-                {selectedBooking.bookingId}
-              </strong>
-              ?
-            </>
+          title={
+            hasSelectedItems
+              ? "Confirm Bulk Payment"
+              : "Confirm Offline Payment"
           }
-          actionLabel="Yes, Confirm"
+          message={
+            hasSelectedItems ? (
+              <>
+                Are you sure you want to manually confirm payment for{" "}
+                <strong className="text-gray-900">
+                  {selectedBookingIds.size} selected bookings
+                </strong>
+                ? This action cannot be undone.
+              </>
+            ) : (
+              <>
+                Are you sure you want to manually confirm payment for booking{" "}
+                <strong className="text-gray-900">
+                  {selectedBooking?.invoiceNumber || selectedBooking?.bookingId}
+                </strong>
+                ?
+              </>
+            )
+          }
+          actionLabel={
+            hasSelectedItems
+              ? `Yes, Confirm ${selectedBookingIds.size}`
+              : "Yes, Confirm"
+          }
           onClose={closeConfirmModal}
-          onConfirm={handleConfirmPayment}
-          isLoading={confirmPaymentMutation.isPending}
+          onConfirm={
+            hasSelectedItems ? handleBulkConfirmPayment : handleConfirmPayment
+          }
+          isLoading={
+            confirmPaymentMutation.isPending || bulkConfirmMutation.isPending
+          }
           variant="primary"
         />
       )}
