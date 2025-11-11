@@ -15,3 +15,15 @@ export interface PaginatedResponse<T> {
   totalItems: number;
   totalPages: number;
 }
+
+export interface CustomerDetail {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  totalBookings: number;
+  referralWalletBalance: number;
+  totalReferrals: number;
+  active: boolean;
+  profilePictureUrl?: string; // Add profile pic, just in case
+}

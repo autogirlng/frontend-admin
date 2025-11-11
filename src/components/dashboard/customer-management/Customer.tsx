@@ -1,3 +1,4 @@
+// app/dashboard/customer-management/CustomersPage.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -22,12 +23,14 @@ import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
+import { CustomerDetailModal } from "./CustomerDetailModal"; // ✅ Import new modal
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  // ✅ Add "view" to modal state
+  const [modal, setModal] = useState<"status" | "view" | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
@@ -49,13 +52,13 @@ export default function CustomersPage() {
   const totalPages = paginatedData?.totalPages || 0;
 
   // --- Modal Handlers ---
-  const openStatusModal = (customer: Customer) => {
+  const openModal = (type: "status" | "view", customer: Customer) => {
     setSelectedCustomer(customer);
-    setIsStatusModalOpen(true);
+    setModal(type);
   };
 
-  const closeStatusModal = () => {
-    setIsStatusModalOpen(false);
+  const closeModal = () => {
+    setModal(null);
     setSelectedCustomer(null);
   };
 
@@ -67,9 +70,8 @@ export default function CustomersPage() {
           isActive: !selectedCustomer.active,
         },
         {
-          // ✅ Close the modal on success
           onSuccess: () => {
-            closeStatusModal();
+            closeModal();
           },
         }
       );
@@ -81,19 +83,19 @@ export default function CustomersPage() {
     {
       label: "View Details",
       icon: View,
-      onClick: () => toast.success(`Viewing ${customer.fullName}`),
+      onClick: () => openModal("view", customer), // ✅ Use new modal
     },
     customer.active
       ? {
           label: "Deactivate",
           icon: Trash2,
-          onClick: () => openStatusModal(customer),
+          onClick: () => openModal("status", customer),
           danger: true,
         }
       : {
           label: "Activate",
           icon: CheckCircle,
-          onClick: () => openStatusModal(customer),
+          onClick: () => openModal("status", customer),
           danger: false,
         },
   ];
@@ -210,7 +212,7 @@ export default function CustomersPage() {
       </main>
 
       {/* ✅ Status Update Modal */}
-      {isStatusModalOpen && selectedCustomer && (
+      {modal === "status" && selectedCustomer && (
         <ActionModal
           title={
             selectedCustomer.active
@@ -228,10 +230,18 @@ export default function CustomersPage() {
             </>
           }
           actionLabel={selectedCustomer.active ? "Deactivate" : "Activate"}
-          onClose={closeStatusModal}
+          onClose={closeModal}
           onConfirm={handleStatusConfirm}
           isLoading={isUpdatingStatus}
           variant={selectedCustomer.active ? "danger" : "primary"}
+        />
+      )}
+
+      {/* ✅ RENDER NEW MODAL */}
+      {modal === "view" && selectedCustomer && (
+        <CustomerDetailModal
+          customerId={selectedCustomer.id}
+          onClose={closeModal}
         />
       )}
     </>

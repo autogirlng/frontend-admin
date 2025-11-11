@@ -25,13 +25,15 @@ import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
+import { HostDetailModal } from "./HostDetailModal"; // ✅ Import new modal
 
 export default function HostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  // ✅ Add "view" to the modal state
+  const [modal, setModal] = useState<"status" | "view" | null>(null);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -51,13 +53,14 @@ export default function HostsPage() {
   const hosts = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
-  const openStatusModal = (host: Host) => {
+  // ✅ Updated handler to accept new modal type
+  const openModal = (type: "status" | "view", host: Host) => {
     setSelectedHost(host);
-    setIsStatusModalOpen(true);
+    setModal(type);
   };
 
-  const closeStatusModal = () => {
-    setIsStatusModalOpen(false);
+  const closeModal = () => {
+    setModal(null);
     setSelectedHost(null);
   };
 
@@ -70,18 +73,19 @@ export default function HostsPage() {
         },
         {
           onSuccess: () => {
-            closeStatusModal();
+            closeModal();
           },
         }
       );
     }
   };
 
+  // ✅ Updated Action Menu
   const getHostActions = (host: Host): ActionMenuItem[] => [
     {
       label: "View Details",
       icon: View,
-      onClick: () => toast.success(`Viewing ${host.fullName}`),
+      onClick: () => openModal("view", host), // ✅ Use new modal
     },
     {
       label: "Send Credentials",
@@ -92,13 +96,13 @@ export default function HostsPage() {
       ? {
           label: "Deactivate Host",
           icon: Trash2,
-          onClick: () => openStatusModal(host),
+          onClick: () => openModal("status", host),
           danger: true,
         }
       : {
           label: "Activate Host",
           icon: CheckCircle,
-          onClick: () => openStatusModal(host),
+          onClick: () => openModal("status", host),
           danger: false,
         },
   ];
@@ -224,7 +228,12 @@ export default function HostsPage() {
         />
       )}
 
-      {isStatusModalOpen && selectedHost && (
+      {/* ✅ RENDER NEW MODAL */}
+      {modal === "view" && selectedHost && (
+        <HostDetailModal hostId={selectedHost.id} onClose={closeModal} />
+      )}
+
+      {modal === "status" && selectedHost && (
         <ActionModal
           title={selectedHost.active ? "Deactivate Host" : "Activate Host"}
           message={
@@ -238,7 +247,7 @@ export default function HostsPage() {
             </>
           }
           actionLabel={selectedHost.active ? "Deactivate" : "Activate"}
-          onClose={closeStatusModal}
+          onClose={closeModal}
           onConfirm={handleStatusConfirm}
           isLoading={isUpdatingStatus}
           variant={selectedHost.active ? "danger" : "primary"}

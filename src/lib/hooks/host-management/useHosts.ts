@@ -3,9 +3,11 @@ import { apiClient } from "@/lib/apiClient";
 import {
   Host,
   PaginatedResponse,
+  HostDetail,
 } from "@/components/dashboard/host-management/types";
 
 const HOSTS_QUERY_KEY = "hosts";
+export const HOST_DETAIL_KEY = "hostDetail";
 
 export function useGetHosts(page: number, searchTerm: string) {
   return useQuery<PaginatedResponse<Host>>({
@@ -22,5 +24,13 @@ export function useGetHosts(page: number, searchTerm: string) {
       return apiClient.get<PaginatedResponse<Host>>(endpoint);
     },
     placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useGetHostDetails(hostId: string | null) {
+  return useQuery<HostDetail, Error>({
+    queryKey: [HOST_DETAIL_KEY, hostId],
+    queryFn: () => apiClient.get<HostDetail>(`/admin/users/hosts/${hostId}`),
+    enabled: !!hostId, // Only run if hostId is not null
   });
 }
