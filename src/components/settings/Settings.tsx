@@ -10,6 +10,7 @@ import {
   CreditCard,
   Bell,
   Activity,
+  Hammer,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -64,7 +65,7 @@ export default function SettingsPage() {
             iconBgColor="bg-sky-100"
           />
 
-          {/* 5. Audit Trail (Suggested) */}
+          {/* 5. Audit Trail */}
           <SettingsCard
             href="/dashboard/settings/audit-trails"
             icon={Activity}
@@ -73,13 +74,22 @@ export default function SettingsPage() {
             iconBgColor="bg-yellow-100"
           />
 
-          {/* 6. Notifications (Suggested) */}
+          {/* 6. Notifications */}
           <SettingsCard
             href="/dashboard/notifications"
             icon={Bell}
             title="Notification Settings"
             description="View all notifications."
             iconBgColor="bg-red-100"
+          />
+
+          {/* 6. Roles and Permissions */}
+          <SettingsCard
+            href="/dashboard/settings/role"
+            icon={Hammer}
+            title="Role Settings"
+            description="Manage user roles and permissions."
+            iconBgColor="bg-green-100"
           />
         </div>
       </main>
