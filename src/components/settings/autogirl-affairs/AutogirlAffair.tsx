@@ -5,40 +5,169 @@ import React, { useState, useMemo } from "react";
 import {
   useGetDepartments,
   useDeleteDepartment,
-  useUnassignDepartment,
 } from "@/lib/hooks/admin/useDepartments";
-import { useGetAdmins } from "@/lib/hooks/admin/useAdmins"; // Adjust path
-import { Department, AdminUser, PaginatedResponse } from "./types";
-import { DepartmentModal } from "./DepartmentModal"; // Adjust path
-import { AssignAdminModal } from "./AssignAdminModal"; // Adjust path
+import { Department } from "./types";
+import { DepartmentModal } from "./DepartmentModal";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
-import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
+import { ActionMenu } from "@/components/generic/ui/ActionMenu";
 import {
   AlertCircle,
   Building,
   Plus,
   Edit,
   Trash2,
-  Users,
-  UserX,
+  ChevronRight, // --- NEW ---
+  ChevronDown, // --- NEW ---
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-import clsx from "clsx";
 import CustomBack from "@/components/generic/CustomBack";
 
-export default function AutoGirlPage() {
+// --- NEW ---
+// Define a new type for the tree structure
+type DepartmentNode = Department & {
+  children: DepartmentNode[];
+};
+
+// --- NEW ---
+// A reusable item for the recursive list
+const DepartmentItem: React.FC<{
+  node: DepartmentNode;
+  onEdit: (dept: Department) => void;
+  onDelete: (dept: Department) => void;
+  level: number;
+}> = ({ node, onEdit, onDelete, level }) => {
+  const [isOpen, setIsOpen] = useState(true);
+  const hasChildren = node.children.length > 0;
+
+  return (
+    <div className="flex flex-col">
+      {/* This Row */}
+      <div
+        className="group flex items-center justify-between rounded-md hover:bg-gray-50"
+        style={{ paddingLeft: `${level * 16}px` }} // Indentation
+      >
+        <div className="flex items-center flex-1 p-3">
+          {/* Toggle Button */}
+          {hasChildren ? (
+            <button onClick={() => setIsOpen(!isOpen)} className="mr-2 p-1">
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          ) : (
+            // Spacer to keep alignment
+            <div className="w-7 mr-2"></div>
+          )}
+          {/* Name */}
+          <span
+            className={
+              level === 0 ? "font-semibold text-gray-800" : "text-gray-700"
+            }
+          >
+            {node.name}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="pr-3">
+          <ActionMenu
+            actions={[
+              {
+                label: "Edit",
+                icon: Edit,
+                onClick: () => onEdit(node),
+              },
+              {
+                label: "Delete",
+                icon: Trash2,
+                onClick: () => onDelete(node),
+                danger: true,
+              },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* Children (Rendered recursively) */}
+      {isOpen && hasChildren && (
+        <div className="border-l border-gray-200 ml-6 pl-2">
+          {" "}
+          {/* Connecting line */}
+          {node.children.map((child) => (
+            <DepartmentItem
+              key={child.id}
+              node={child}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- NEW ---
+// The main list component that builds and renders the tree
+const DepartmentList: React.FC<{
+  departments: Department[];
+  onEdit: (dept: Department) => void;
+  onDelete: (dept: Department) => void;
+}> = ({ departments, onEdit, onDelete }) => {
+  // Efficiently build a tree structure in O(N) time
+  const departmentTree = useMemo(() => {
+    const map = new Map<string, DepartmentNode>();
+    const tree: DepartmentNode[] = [];
+
+    // 1. Initialize map with all nodes
+    const allNodes: DepartmentNode[] = departments.map((d) => ({
+      ...d,
+      children: [],
+    }));
+    allNodes.forEach((node) => {
+      map.set(node.id, node);
+    });
+
+    // 2. Link children to parents
+    allNodes.forEach((node) => {
+      if (node.parentDepartmentId && map.has(node.parentDepartmentId)) {
+        const parent = map.get(node.parentDepartmentId)!;
+        parent.children.push(node);
+      } else {
+        // Root node (no parent)
+        tree.push(node);
+      }
+    });
+
+    return tree;
+  }, [departments]);
+
+  return (
+    <div className="space-y-1">
+      {departmentTree.map((node) => (
+        <DepartmentItem
+          key={node.id}
+          node={node}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          level={0}
+        />
+      ))}
+    </div>
+  );
+};
+
+// --- UPDATED --- Renamed component
+export default function DepartmentsPage() {
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [modal, setModal] = useState<
-    | "createDept"
-    | "editDept"
-    | "deleteDept"
-    | "assignAdmin"
-    | "unassignAdmin"
-    | null
+    "createDept" | "editDept" | "deleteDept" | null
   >(null);
-  const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
 
   // --- API Hooks ---
   const {
@@ -46,55 +175,32 @@ export default function AutoGirlPage() {
     isLoading: isLoadingDepts,
     isError: isDeptsError,
   } = useGetDepartments();
-  const { data: adminData, isLoading: isLoadingAdmins } = useGetAdmins(0, "");
-
-  const admins = (adminData as PaginatedResponse<AdminUser>)?.content || [];
-
   const deleteDeptMutation = useDeleteDepartment();
-  const unassignUserMutation = useUnassignDepartment();
-
-  // --- Memos ---
-  const departmentMap = useMemo(() => {
-    return new Map(departments.map((d) => [d.id, d.name]));
-  }, [departments]);
-
-  // Filter admins based on selected department
-  const adminsInSelectedDept = useMemo(() => {
-    if (!selectedDept || !admins) return [];
-    return admins.filter((a) => a.departmentName === selectedDept.name);
-  }, [admins, selectedDept]);
 
   // --- Handlers ---
+  const openModal = (
+    type: "createDept" | "editDept" | "deleteDept",
+    dept: Department | null = null
+  ) => {
+    setSelectedDept(dept);
+    setModal(type);
+  };
+
   const closeModal = () => {
     setModal(null);
-    setSelectedAdmin(null);
-    // Don't reset selectedDept, so the right pane stays active
+    setSelectedDept(null);
   };
 
   const handleDeleteDept = () => {
     if (modal === "deleteDept" && selectedDept) {
       deleteDeptMutation.mutate(selectedDept.id, {
-        onSuccess: () => {
-          closeModal();
-          setSelectedDept(null); // Clear selection as it's deleted
-        },
+        onSuccess: closeModal,
       });
     }
   };
 
-  const handleUnassignUser = () => {
-    if (modal === "unassignAdmin" && selectedAdmin) {
-      unassignUserMutation.mutate(
-        { userId: selectedAdmin.id },
-        {
-          onSuccess: closeModal,
-        }
-      );
-    }
-  };
-
-  // --- Render Functions ---
-  const renderDepartmentList = () => {
+  // --- UPDATED --- Clean render function for content
+  const renderContent = () => {
     if (isLoadingDepts) {
       return (
         <div className="h-96">
@@ -110,129 +216,25 @@ export default function AutoGirlPage() {
         </div>
       );
     }
-    // Filter for parent departments
-    const parents = departments.filter((d) => !d.parentDepartmentId);
-    return (
-      <div className="space-y-1">
-        {parents.map((parent) => {
-          // Find children for this parent
-          const children = departments.filter(
-            (d) => d.parentDepartmentId === parent.id
-          );
-          return (
-            <div key={parent.id}>
-              <div
-                className={clsx(
-                  "group flex items-center justify-between p-3 rounded-lg cursor-pointer",
-                  selectedDept?.id === parent.id
-                    ? "bg-[#0096FF] text-white"
-                    : "hover:bg-gray-100"
-                )}
-                onClick={() => setSelectedDept(parent)}
-              >
-                <span className="font-semibold">{parent.name}</span>
-                <ActionMenu
-                  actions={[
-                    {
-                      label: "Edit",
-                      icon: Edit,
-                      onClick: () => setModal("editDept"),
-                    },
-                    {
-                      label: "Delete",
-                      icon: Trash2,
-                      onClick: () => setModal("deleteDept"),
-                      danger: true,
-                    },
-                  ]}
-                />
-              </div>
-              {/* Render Children (indented) */}
-              <div className="ml-6 space-y-1 mt-1">
-                {children.map((child) => (
-                  <div
-                    key={child.id}
-                    className={clsx(
-                      "group flex items-center justify-between p-3 rounded-lg cursor-pointer",
-                      selectedDept?.id === child.id
-                        ? "bg-[#0096FF] text-white"
-                        : "hover:bg-gray-100"
-                    )}
-                    onClick={() => setSelectedDept(child)}
-                  >
-                    <span className="font-normal text-gray-700">
-                      {child.name}
-                    </span>
-                    <ActionMenu
-                      actions={[
-                        {
-                          label: "Edit",
-                          icon: Edit,
-                          onClick: () => setModal("editDept"),
-                        },
-                        {
-                          label: "Delete",
-                          icon: Trash2,
-                          onClick: () => setModal("deleteDept"),
-                          danger: true,
-                        },
-                      ]}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderAdminList = () => {
-    if (isLoadingAdmins) {
+    if (departments.length === 0) {
       return (
-        <div className="h-96">
-          <CustomLoader />
-        </div>
-      );
-    }
-    if (adminsInSelectedDept.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center p-10 text-gray-500 h-96">
-          <Users className="h-16 w-16 text-gray-400 mb-4" />
-          <p className="font-semibold">No Staff Assigned</p>
-          <p className="text-sm">Assign staff members to this department.</p>
+        <div className="flex flex-col items-center justify-center p-20 text-gray-500">
+          <Building className="h-16 w-16 text-gray-400 mb-4" />
+          <p className="font-semibold">No Departments Created</p>
+          <p className="text-sm">
+            Click "Create New" to add your first department.
+          </p>
         </div>
       );
     }
 
+    // Pass handlers to the new list component
     return (
-      <div className="space-y-3">
-        {adminsInSelectedDept.map((admin) => (
-          <div
-            key={admin.id}
-            className="p-3 bg-gray-50 rounded-lg border flex items-center justify-between"
-          >
-            <div className="flex-1">
-              <p className="font-semibold text-gray-800">
-                {admin.firstName} {admin.lastName}
-              </p>
-              <p className="text-sm text-gray-600">{admin.email}</p>
-            </div>
-            <Button
-              variant="danger"
-              size="sm"
-              className="w-auto"
-              onClick={() => {
-                setSelectedAdmin(admin);
-                setModal("unassignAdmin");
-              }}
-            >
-              <UserX className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-      </div>
+      <DepartmentList
+        departments={departments}
+        onEdit={(dept) => openModal("editDept", dept)}
+        onDelete={(dept) => openModal("deleteDept", dept)}
+      />
     );
   };
 
@@ -242,70 +244,39 @@ export default function AutoGirlPage() {
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Company Affairs</h1>
-          <p className="text-lg text-gray-600 mt-1">
-            Manage departments and staff assignments.
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Departments {/* --- UPDATED --- */}
+            </h1>
+            <p className="text-lg text-gray-600 mt-1">
+              Manage and organize company departments. {/* --- UPDATED --- */}
+            </p>
+          </div>
         </div>
 
-        {/* --- Two-Column Layout --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* --- Left Column: Departments --- */}
-          <div className="lg:col-span-1">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Departments
-              </h2>
-              <Button
-                variant="primary"
-                className="w-auto"
-                onClick={() => setModal("createDept")}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New
-              </Button>
-            </div>
-            <div className="bg-white p-4 border border-gray-200 shadow-sm rounded-lg">
-              {renderDepartmentList()}
-            </div>
+        {/* --- Departments Section --- */}
+        <div className="max-w-4xl">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">
+              All Departments
+            </h2>
+            <Button
+              variant="primary"
+              className="w-auto"
+              onClick={() => openModal("createDept")}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create New
+            </Button>
           </div>
-
-          {/* --- Right Column: Admins in Department --- */}
-          <div className="lg:col-span-2">
-            {selectedDept ? (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    Staff in: {selectedDept.name}
-                  </h2>
-                  <Button
-                    variant="primary"
-                    className="w-auto"
-                    onClick={() => setModal("assignAdmin")}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Assign Staff
-                  </Button>
-                </div>
-                <div className="bg-white p-4 border border-gray-200 shadow-sm rounded-lg">
-                  {renderAdminList()}
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col h-full items-center justify-center p-10 text-gray-500 bg-gray-50 border-2 border-dashed rounded-lg">
-                <Building className="h-16 w-16 text-gray-400 mb-4" />
-                <p className="font-semibold">Select a department</p>
-                <p className="text-sm">
-                  Choose a department from the left to view its staff.
-                </p>
-              </div>
-            )}
+          <div className="bg-white p-4 border border-gray-200 shadow-sm rounded-lg">
+            {renderContent()} {/* --- UPDATED --- Cleaner render call */}
           </div>
         </div>
       </main>
 
-      {/* --- Modals --- */}
+      {/* --- Modals (Unchanged) --- */}
       {(modal === "createDept" || modal === "editDept") && (
         <DepartmentModal
           onClose={closeModal}
@@ -328,30 +299,6 @@ export default function AutoGirlPage() {
           onClose={closeModal}
           onConfirm={handleDeleteDept}
           isLoading={deleteDeptMutation.isPending}
-          variant="danger"
-        />
-      )}
-
-      {modal === "assignAdmin" && selectedDept && (
-        <AssignAdminModal department={selectedDept} onClose={closeModal} />
-      )}
-
-      {modal === "unassignAdmin" && selectedAdmin && (
-        <ActionModal
-          title="Unassign Admin"
-          message={
-            <>
-              Are you sure you want to remove{" "}
-              <strong className="text-gray-900">
-                {selectedAdmin.firstName} {selectedAdmin.lastName}
-              </strong>{" "}
-              from this department?
-            </>
-          }
-          actionLabel="Yes, Unassign"
-          onClose={closeModal}
-          onConfirm={handleUnassignUser}
-          isLoading={unassignUserMutation.isPending}
           variant="danger"
         />
       )}

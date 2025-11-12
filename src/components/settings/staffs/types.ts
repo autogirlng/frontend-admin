@@ -1,6 +1,6 @@
 // app/dashboard/settings/staffs/types.ts
 
-// --- Generic Paginated Response ---
+// The paginated response structure
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -9,7 +9,7 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// --- Admin User ---
+// --- Admin User (for the list) ---
 export interface AdminUser {
   id: string;
   firstName: string;
@@ -18,9 +18,10 @@ export interface AdminUser {
   phoneNumber: string;
   userType: "ADMIN";
   active: boolean;
-  departmentName?: string;
+  departmentName?: string; // ✅ ADDED
 }
 
+// --- Admin User Detail (for the modal) ---
 export interface AdminUserDetail {
   userId: string;
   firstName: string;
@@ -65,4 +66,11 @@ export interface CreateAdminPayload {
   email: string;
   phoneNumber: string;
   sendCredentialTo: string[];
+}
+
+// ✅ --- NEW: Department Types ---
+export interface Department {
+  id: string;
+  name: string;
+  parentDepartmentId?: string;
 }

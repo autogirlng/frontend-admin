@@ -4,11 +4,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient"; // Adjust path
-import { ADMINS_QUERY_KEY } from "./useAdmins"; // Import key from admin hooks
 import {
   Department,
   DepartmentPayload,
 } from "@/components/settings/autogirl-affairs/types";
+import { ADMINS_QUERY_KEY } from "./useAdmins";
 
 // --- Query Key ---
 export const DEPARTMENTS_QUERY_KEY = "departments";
@@ -68,7 +68,6 @@ export function useDeleteDepartment() {
   });
 }
 
-// --- 5. PATCH Assign User to Department ---
 export function useAssignDepartment() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, { userId: string; departmentId: string }>({
@@ -78,7 +77,7 @@ export function useAssignDepartment() {
       }),
     onSuccess: () => {
       toast.success("User assigned to department.");
-      // Refetch both admins and departments (as admins list shows dept)
+      // Refetch the admins list to show the new department name
       queryClient.invalidateQueries({
         queryKey: [ADMINS_QUERY_KEY],
         exact: false,
@@ -88,7 +87,7 @@ export function useAssignDepartment() {
   });
 }
 
-// --- 6. DELETE Unassign User from Department ---
+// --- 3. DELETE Unassign User from Department ---
 export function useUnassignDepartment() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, { userId: string }>({
@@ -96,6 +95,7 @@ export function useUnassignDepartment() {
       apiClient.delete(`/admin/users/${userId}/assign-department`),
     onSuccess: () => {
       toast.success("User unassigned from department.");
+      // Refetch the admins list to remove the department name
       queryClient.invalidateQueries({
         queryKey: [ADMINS_QUERY_KEY],
         exact: false,
