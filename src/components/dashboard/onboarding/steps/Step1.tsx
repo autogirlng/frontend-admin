@@ -21,6 +21,48 @@ import CustomBack from "@/components/generic/CustomBack";
 
 const currentStep = 1;
 
+// ✅ ADDED: states constant
+const states: Option[] = [
+  { id: "abia", name: "Abia" },
+  { id: "accra", name: "Accra" },
+  { id: "adamawa", name: "Adamawa" },
+  { id: "akwa ibom", name: "Akwa Ibom" },
+  { id: "anambra", name: "Anambra" },
+  { id: "bauchi", name: "Bauchi" },
+  { id: "bayelsa", name: "Bayelsa" },
+  { id: "benue", name: "Benue" },
+  { id: "borno", name: "Borno" },
+  { id: "cross river", name: "Cross River" },
+  { id: "delta", name: "Delta" },
+  { id: "ebonyi", name: "Ebonyi" },
+  { id: "edo", name: "Edo" },
+  { id: "ekiti", name: "Ekiti" },
+  { id: "enugu", name: "Enugu" },
+  { id: "gombe", name: "Gombe" },
+  { id: "imo", name: "Imo" },
+  { id: "jigawa", name: "Jigawa" },
+  { id: "kaduna", name: "Kaduna" },
+  { id: "kano", name: "Kano" },
+  { id: "katsina", name: "Katsina" },
+  { id: "kebbi", name: "Kebbi" },
+  { id: "kogi", name: "Kogi" },
+  { id: "kwara", name: "Kwara" },
+  { id: "lagos", name: "Lagos" },
+  { id: "nasarawa", name: "Nasarawa" },
+  { id: "niger", name: "Niger" },
+  { id: "ogun", name: "Ogun" },
+  { id: "ondo", name: "Ondo" },
+  { id: "osun", name: "Osun" },
+  { id: "oyo", name: "Oyo" },
+  { id: "plateau", name: "Plateau" },
+  { id: "rivers", name: "Rivers" },
+  { id: "sokoto", name: "Sokoto" },
+  { id: "taraba", name: "Taraba" },
+  { id: "yobe", name: "Yobe" },
+  { id: "zamfara", name: "Zamfara" },
+  { id: "abuja", name: "Abuja FCT" },
+];
+
 const years: Option[] = Array.from({ length: 20 }, (_, i) => ({
   id: (2025 - i).toString(),
   name: (2025 - i).toString(),
@@ -205,6 +247,12 @@ export default function Step1() {
     }
   };
 
+  // ✅ ADDED: Helper function for City
+  const getSelectedCity = (): Option | null => {
+    if (!data.locationCityId) return null;
+    return states.find((s) => s.id === data.locationCityId) || null;
+  };
+
   const getSelectedVehicleType = (): Option | null => {
     if (!data.vehicleTypeId || !vehicleTypes) return null;
     const type = vehicleTypes.find((t) => t.id === data.vehicleTypeId);
@@ -295,13 +343,14 @@ export default function Step1() {
                 error={errors.vehicleListingName}
               />
 
-              {/* City */}
-              <TextInput
-                id="locationCityId"
+              {/* ✅ City (REPLACED) */}
+              <Select
                 label="City"
-                value={data.locationCityId}
-                onChange={(e) => updateData({ locationCityId: e.target.value })}
+                options={states}
+                selected={getSelectedCity()}
+                onChange={(option) => updateData({ locationCityId: option.id })}
                 error={errors.locationCityId}
+                placeholder="Select city/state"
               />
 
               {/* Address (Google Maps Autocomplete) */}
@@ -400,7 +449,7 @@ export default function Step1() {
                 error={errors.hasTracker}
               />
 
-              {/* ✅ Is Vehicle Upgraded? */}
+              {/* Is Vehicle Upgraded? */}
               <Select
                 label="Is Vehicle Upgraded?"
                 options={[
@@ -427,7 +476,7 @@ export default function Step1() {
                 error={errors.isVehicleUpgraded}
               />
 
-              {/* ✅ Upgraded Year (Conditional) */}
+              {/* Upgraded Year (Conditional) */}
               {data.isVehicleUpgraded === "yes" && (
                 <Select
                   label="Upgraded Year"
