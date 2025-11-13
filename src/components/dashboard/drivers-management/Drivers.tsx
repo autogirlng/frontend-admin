@@ -189,7 +189,7 @@ export default function DriversPage() {
       cell: (item) =>
         item.assignedVehicleId ? (
           <Link
-            href={`/dashboard/vehicles/${item.assignedVehicleId}`} // Link to vehicle page
+            href={`/dashboard/vehicle-onboarding/${item.assignedVehicleId}`}
             className="group"
           >
             <div className="font-medium text-gray-900 group-hover:text-[#0096FF] group-hover:underline">
