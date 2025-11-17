@@ -565,7 +565,12 @@ export default function CreateBookingPage() {
               }
             />
             <div className="flex-1">
-              <h3 className="font-semibold">{vehicle.name}</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold">{vehicle.name}</h3>
+                <p className="bg-blue-500 p-1 rounded-full text-white">
+                  {vehicle.vehicleIdentifier}
+                </p>
+              </div>
               <p className="text-sm text-gray-600">
                 {vehicle.vehicleTypeName} • {vehicle.numberOfSeats} Seats
               </p>
