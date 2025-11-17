@@ -21,8 +21,11 @@ export function AssignAgentsModal({ trip, onClose }: AssignAgentsModalProps) {
   const [operationsAgent, setOperationsAgent] = useState<Option | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const { data: paginatedAdmins, isLoading: isSearching } =
-    useGetAdmins(debouncedSearchTerm);
+  const { data: paginatedAdmins, isLoading: isSearching } = useGetAdmins(
+    0,
+    debouncedSearchTerm,
+    100
+  );
   const assignAgentsMutation = useAssignAgents();
 
   const adminOptions: Option[] = useMemo(() => {
