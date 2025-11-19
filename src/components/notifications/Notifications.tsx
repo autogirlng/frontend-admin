@@ -1,9 +1,14 @@
+// app/dashboard/notifications/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useNotificationsList } from "@/lib/hooks/notifications/useNotificationsList";
-// Assume 'type' is part of the NotificationItem
+import {
+  useNotificationsList,
+  useMarkNotificationRead, // ✅ Import
+  useDeleteNotification, // ✅ Import
+  useMarkAllNotificationsRead, // ✅ Import
+} from "@/lib/hooks/notifications/useNotificationsList";
 import { NotificationItem } from "./types";
 import { PaginationControls } from "../generic/ui/PaginationControls";
 import {
@@ -13,14 +18,15 @@ import {
   MessageSquare,
   AlertTriangle,
   Settings,
+  Trash2, // ✅ Import Trash2
+  Check, // ✅ Import Check
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import clsx from "clsx";
 import CustomBack from "../generic/CustomBack";
 import CustomLoader from "../generic/CustomLoader";
 
-// This is a new helper component to render icons based on type
-// You would customize this based on your app's notification types
+// ... (NotificationIcon and timeAgo helpers remain unchanged) ...
 const NotificationIcon = ({ type }: { type?: string }) => {
   let icon;
   switch (type) {
@@ -43,7 +49,6 @@ const NotificationIcon = ({ type }: { type?: string }) => {
   );
 };
 
-// Helper for relative time (Unchanged)
 function timeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -52,8 +57,8 @@ function timeAgo(dateString: string): string {
   const hours = Math.round(minutes / 60);
   const days = Math.round(hours / 24);
   const weeks = Math.round(days / 7);
-  const months = Math.round(days / 30); // Approximate
-  const years = Math.round(days / 365); // Approximate
+  const months = Math.round(days / 30);
+  const years = Math.round(days / 365);
 
   if (seconds < 60) return `${seconds}s ago`;
   if (minutes < 60) return `${minutes}m ago`;
@@ -73,43 +78,43 @@ export default function NotificationsPage() {
     isLoading,
     isError,
     isPlaceholderData,
-    // You would likely need to refetch or invalidate queries here
-    // queryClient.invalidateQueries(...)
   } = useNotificationsList(currentPage, pageSize);
+
+  // ✅ Instantiate mutations
+  const markReadMutation = useMarkNotificationRead();
+  const deleteMutation = useDeleteNotification();
+  const markAllReadMutation = useMarkAllNotificationsRead();
 
   const notifications = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
   const hasUnread = notifications.some((n) => !n.isRead);
 
-  // --- Placeholder for 'Mark all as read' ---
-  // You would replace this with a useMutation hook from react-query
+  // --- Handlers ---
+
   const handleMarkAllAsRead = () => {
-    // Show a toast immediately for better UX
-    toast.promise(
-      // This promise would be your actual mutation
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Marking all as read...",
-        success: () => {
-          // On success, you'd invalidate the notifications list
-          // to trigger a refetch
-          // e.g., queryClient.invalidateQueries(['notifications']);
-          return "Notifications marked as read!";
-        },
-        error: "Could not mark as read.",
-      }
-    );
-    console.warn(
-      "handleMarkAllAsRead() is a placeholder. Implement your mutation here."
-    );
+    if (markAllReadMutation.isPending) return;
+    markAllReadMutation.mutate();
   };
-  // --- End Placeholder ---
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); // Prevent link navigation if wrapped
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this notification?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleMarkRead = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    markReadMutation.mutate(id);
+  };
 
   const renderNotificationItem = (notification: NotificationItem) => {
     const content = (
       <div
         className={clsx(
-          "flex items-start gap-4 p-5 border-b border-gray-200 last:border-b-0 transition-colors",
+          "flex items-start gap-4 p-5 border-b border-gray-200 last:border-b-0 transition-colors group relative",
           !notification.isRead && "bg-blue-50",
           "hover:bg-gray-100"
         )}
@@ -129,7 +134,9 @@ export default function NotificationsPage() {
         </div>
 
         {/* --- Content --- */}
-        <div className="flex-1">
+        <div className="flex-1 pr-8">
+          {" "}
+          {/* Add padding-right for buttons */}
           <div className="flex justify-between items-center mb-1">
             <h3 className="font-semibold text-gray-900">
               {notification.title}
@@ -139,6 +146,26 @@ export default function NotificationsPage() {
             </span>
           </div>
           <p className="text-sm text-gray-700">{notification.message}</p>
+        </div>
+
+        {/* --- Actions (Visible on Hover) --- */}
+        <div className="absolute right-4 top-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {!notification.isRead && (
+            <button
+              onClick={(e) => handleMarkRead(e, notification.id)}
+              className="p-1.5 rounded-full bg-white text-blue-600 hover:bg-blue-100 border border-gray-200 shadow-sm"
+              title="Mark as read"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            onClick={(e) => handleDelete(e, notification.id)}
+            className="p-1.5 rounded-full bg-white text-red-600 hover:bg-red-100 border border-gray-200 shadow-sm"
+            title="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
     );
@@ -150,6 +177,9 @@ export default function NotificationsPage() {
           key={notification.id}
           passHref
           className="block"
+          // ✅ If user clicks the whole row (link), mark as read automatically?
+          // Usually better handled by the page load or explicitly.
+          // For now, let's just navigate.
         >
           {content}
         </Link>
@@ -167,7 +197,6 @@ export default function NotificationsPage() {
     <>
       <Toaster position="top-right" />
       <CustomBack />
-      {/* Use a more focused max-width for readability */}
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
         <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-200">
@@ -181,11 +210,12 @@ export default function NotificationsPage() {
           {hasUnread && (
             <button
               onClick={handleMarkAllAsRead}
-              // You would add a loading/disabled state from your mutation
-              // disabled={isMarkingAsRead}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+              disabled={markAllReadMutation.isPending}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
             >
-              Mark all as read
+              {markAllReadMutation.isPending
+                ? "Marking..."
+                : "Mark all as read"}
             </button>
           )}
         </div>
