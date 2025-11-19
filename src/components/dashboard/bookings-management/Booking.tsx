@@ -15,17 +15,24 @@ import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
 import Select, { Option } from "@/components/generic/ui/Select";
-import { Search, AlertCircle, View, Download, Plus } from "lucide-react";
+import {
+  Search,
+  AlertCircle,
+  View,
+  Download,
+  Plus,
+  Copy, // ✅ Added Copy icon
+} from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { DatePickerWithRange } from "../availability/DatePickerWithRange";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import clsx from "clsx"; // Helper for classes if needed
 
 // --- Helper Functions & Constants ---
 
-// Create options for the Booking Status filter
 const statusOptions: Option[] = [
   { id: "", name: "All Statuses" },
   ...Object.values(BookingStatus).map((status) => ({
@@ -34,7 +41,6 @@ const statusOptions: Option[] = [
   })),
 ];
 
-// Helper to format the status for display
 function formatStatus(status: string) {
   return (status || "")
     .split("_")
@@ -42,7 +48,6 @@ function formatStatus(status: string) {
     .join(" ");
 }
 
-// Helper to format price
 function formatPrice(price: number) {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -50,7 +55,6 @@ function formatPrice(price: number) {
   }).format(price);
 }
 
-// Helper for date formatting
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleString("en-US", {
     day: "2-digit",
@@ -61,10 +65,36 @@ function formatDate(dateString: string) {
   });
 }
 
+export function formatBookingStatus(status: BookingStatus) {
+  const formatted = {
+    name: formatStatus(status),
+    classes: "bg-gray-100 text-gray-800",
+  };
+
+  switch (status) {
+    case BookingStatus.COMPLETED:
+    case BookingStatus.CONFIRMED:
+      formatted.classes = "bg-green-100 text-green-800";
+      break;
+    case BookingStatus.IN_PROGRESS:
+    case BookingStatus.PENDING_PAYMENT:
+      formatted.classes = "bg-yellow-100 text-yellow-800";
+      break;
+    case BookingStatus.FAILED_AVAILABILITY:
+    case BookingStatus.CANCELLED_BY_USER:
+    case BookingStatus.CANCELLED_BY_HOST:
+    case BookingStatus.CANCELLED_BY_ADMIN:
+    case BookingStatus.NO_SHOW:
+      formatted.classes = "bg-red-100 text-red-800";
+      break;
+  }
+
+  return formatted;
+}
+
 // --- Main Page Component ---
 export default function BookingsPage() {
   const router = useRouter();
-  // --- Filter State ---
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
   const [bookingTypeFilter, setBookingTypeFilter] = useState<Option | null>(
@@ -74,7 +104,6 @@ export default function BookingsPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  
 
   // --- API Hooks ---
   const {
@@ -100,7 +129,6 @@ export default function BookingsPage() {
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
-  // Memoize options for the Booking Type filter
   const bookingTypeOptions: Option[] = useMemo(() => {
     if (!bookingTypes) return [{ id: "", name: "Loading..." }];
     return [
@@ -114,10 +142,13 @@ export default function BookingsPage() {
     setCurrentPage(0);
   };
 
-  // --- Define Actions for the Menu ---
-  const getBookingActions = (booking: BookingSegment): ActionMenuItem[] => {
+  // ✅ New handler for copying invoice number
+  const handleCopyInvoice = (invoiceNumber: string) => {
+    navigator.clipboard.writeText(invoiceNumber);
+    toast.success("Invoice number copied!");
+  };
 
-    // Condition 1: Can download INVOICE?
+  const getBookingActions = (booking: BookingSegment): ActionMenuItem[] => {
     const canDownloadInvoice = [
       BookingStatus.PENDING_PAYMENT,
       BookingStatus.CONFIRMED,
@@ -125,7 +156,6 @@ export default function BookingsPage() {
       BookingStatus.COMPLETED,
     ].includes(booking.bookingStatus);
 
-    // Condition 2: Can download RECEIPT?
     const canDownloadReceipt = [
       BookingStatus.CONFIRMED,
       BookingStatus.IN_PROGRESS,
@@ -141,23 +171,22 @@ export default function BookingsPage() {
           router.push(`/dashboard/bookings/${booking.bookingId}`);
         },
       },
-
       {
         label: "Download Invoice",
         icon: Download,
         onClick: () => {
-          // Only run the download if the condition is met
           if (canDownloadInvoice) {
             if (downloadInvoiceMutation.isPending) return;
             const toastId = toast.loading("Downloading invoice...");
-            downloadInvoiceMutation.mutate({ bookingId: booking.bookingId, toastId });
+            downloadInvoiceMutation.mutate({
+              bookingId: booking.bookingId,
+              toastId,
+            });
           } else {
-            // Otherwise, inform the user why
             toast.error("An invoice is not available for this booking status.");
           }
         },
       },
-
       {
         label: "Download Receipt",
         icon: Download,
@@ -165,12 +194,14 @@ export default function BookingsPage() {
           if (canDownloadReceipt) {
             if (downloadReceiptMutation.isPending) return;
             const toastId = toast.loading("Downloading receipt...");
-            downloadReceiptMutation.mutate({ 
-              bookingId: booking.bookingId, 
-              toastId 
+            downloadReceiptMutation.mutate({
+              bookingId: booking.bookingId,
+              toastId,
             });
           } else {
-            toast.error("A receipt is only available for confirmed or completed bookings.");
+            toast.error(
+              "A receipt is only available for confirmed or completed bookings."
+            );
           }
         },
       },
@@ -184,7 +215,23 @@ export default function BookingsPage() {
     {
       header: "Invoice",
       accessorKey: "invoiceNumber",
-      cell: (item) => item.invoiceNumber || "N/A",
+      // ✅ UPDATED: Invoice column with copy button
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm font-medium text-gray-700">
+            {item.invoiceNumber || "N/A"}
+          </span>
+          {item.invoiceNumber && (
+            <button
+              onClick={() => handleCopyInvoice(item.invoiceNumber!)}
+              className="text-gray-400 hover:text-[#0096FF] transition-colors p-1 rounded hover:bg-blue-50"
+              title="Copy Invoice Number"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      ),
     },
     {
       header: "Customer",
@@ -244,19 +291,19 @@ export default function BookingsPage() {
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
+        <div className="flex flex-wrap items-center justify-between mb-8">
+          <div className="my-1">
             <h1 className="text-3xl font-bold text-gray-900">Bookings</h1>
             <p className="text-lg text-gray-600 mt-1">
               Manage all bookings on the platform.
             </p>
           </div>
-          <div>
+          <div className="my-1">
             <Link
               href="/dashboard/bookings/create"
-              className="bg-[#0096FF] flex py-3 px-6 text-white flex-wrap hover:bg-[#007ACC]"
+              className="bg-[#0096FF] flex py-2 px-6 text-white flex-wrap hover:bg-[#007ACC] items-center"
             >
-              <Plus className="mr-3" /> Create a Booking
+              <Plus className="mr-2 h-5 w-5" /> Create a Booking
             </Link>
           </div>
         </div>
@@ -267,11 +314,11 @@ export default function BookingsPage() {
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <TextInput
-            label="Search Hosts"
+            label="Search Bookings"
             id="search"
             hideLabel
             type="text"
-            placeholder="Search by name..."
+            placeholder="Search by customer name, vehicle..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
@@ -279,8 +326,9 @@ export default function BookingsPage() {
           />
         </div>
 
-        {/* --- Filters --- */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        {/* --- Filters (UPDATED LAYOUT) --- */}
+        {/* ✅ Changed to md:grid-cols-3 to make the 3 items fill the row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Select
             label="Status"
             hideLabel
@@ -309,7 +357,7 @@ export default function BookingsPage() {
           <DatePickerWithRange
             date={dateRange}
             setDate={handleDateChange}
-            className="col-span-1 md:col-span-1" 
+            // No extra class needed, grid takes care of sizing
           />
         </div>
 
@@ -328,11 +376,7 @@ export default function BookingsPage() {
         )}
 
         {!isError && (bookings.length > 0 || isLoading) && (
-          <div
-            className={`${
-              isPlaceholderData ? "opacity-50" : ""
-            } transition-opacity`}
-          >
+          <div className={clsx(isPlaceholderData && "opacity-60")}>
             <CustomTable
               data={bookings}
               columns={columns}
@@ -351,38 +395,4 @@ export default function BookingsPage() {
       </main>
     </>
   );
-}
-
-export function formatBookingStatus(status: BookingStatus) {
-  const formatted = {
-    name: "Unknown",
-    classes: "bg-gray-100 text-gray-800",
-  };
-
-  // Format the name
-  formatted.name = (status || "")
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
-
-  // Assign color classes
-  switch (status) {
-    case BookingStatus.COMPLETED:
-    case BookingStatus.CONFIRMED:
-      formatted.classes = "bg-green-100 text-green-800";
-      break;
-    case BookingStatus.IN_PROGRESS:
-    case BookingStatus.PENDING_PAYMENT:
-      formatted.classes = "bg-yellow-100 text-yellow-800";
-      break;
-    case BookingStatus.FAILED_AVAILABILITY:
-    case BookingStatus.CANCELLED_BY_USER:
-    case BookingStatus.CANCELLED_BY_HOST:
-    case BookingStatus.CANCELLED_BY_ADMIN:
-    case BookingStatus.NO_SHOW:
-      formatted.classes = "bg-red-100 text-red-800";
-      break;
-  }
-
-  return formatted;
 }
