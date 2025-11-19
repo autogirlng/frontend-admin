@@ -1,4 +1,3 @@
-// app/dashboard/trips/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -9,26 +8,24 @@ import {
   AlertCircle,
   Eye,
   Filter,
-  User,
   UserCheck,
   Car,
-  Download, // ✅ NEW
-  FileText, // ✅ NEW
+  Download,
+  FileText,
+  MapPin,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import clsx from "clsx"; // ✅ NEW
+import clsx from "clsx";
 
 import { BookingType } from "@/components/set-up-management/bookings-types/types";
 
-// Hooks
 import {
   useGetTrips,
-  useDownloadTripInvoice, // ✅ NEW
-  useDownloadTripReceipt, // ✅ NEW
+  useDownloadTripInvoice,
+  useDownloadTripReceipt,
 } from "@/lib/hooks/trips-management/useTrips";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 
-// Reusable Components
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import Select, { Option } from "@/components/generic/ui/Select";
@@ -37,12 +34,10 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 
-// Modals
 import { AssignDriverModal } from "./AssignDriverModal";
 import { AssignAgentsModal } from "./AssignAgentsModal";
 import { BookingStatus, Trip, TripStatus } from "./types";
 
-// Helper function to convert enums to <Select> options
 const enumToOptions = (e: object): Option[] =>
   Object.entries(e).map(([key, value]) => ({ id: value, name: key }));
 
@@ -52,14 +47,12 @@ const bookingStatusOptions: Option[] = enumToOptions(BookingStatus);
 export default function TripsPage() {
   const router = useRouter();
 
-  // --- State Management ---
   const [currentPage, setCurrentPage] = useState(0);
   const [modal, setModal] = useState<"assignDriver" | "assignAgents" | null>(
     null
   );
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
-  // Filter States
   const [filters, setFilters] = useState({
     bookingStatus: null as string | null,
     tripStatus: null as string | null,
@@ -67,7 +60,6 @@ export default function TripsPage() {
     dateRange: null as DateRange | null,
   });
 
-  // --- API Hooks ---
   const {
     data: paginatedData,
     isLoading,
@@ -83,24 +75,21 @@ export default function TripsPage() {
   });
 
   const { data: bookingTypes = [] } = useGetBookingTypes();
-  // ✅ Instantiate new hooks
   const downloadInvoiceMutation = useDownloadTripInvoice();
   const downloadReceiptMutation = useDownloadTripReceipt();
 
-  // --- Derived Data ---
   const trips = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
   const bookingTypeOptions: Option[] = bookingTypes.map((bt: BookingType) => ({
     id: bt.id,
     name: bt.name,
   }));
-  // ✅ Combine all loading states
+
   const isActionLoading =
     isPlaceholderData ||
     downloadInvoiceMutation.isPending ||
     downloadReceiptMutation.isPending;
 
-  // --- Event Handlers ---
   const handleFilterChange = (
     key: "bookingStatus" | "tripStatus" | "bookingTypeId",
     value: string | null
@@ -134,8 +123,6 @@ export default function TripsPage() {
     setModal(type);
   };
 
-  // --- Table Column Definitions ---
-  // ✅ UPDATED getTripActions
   const getTripActions = (trip: Trip): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
@@ -163,7 +150,6 @@ export default function TripsPage() {
       },
     ];
 
-    // ✅ Only add Receipt if booking is confirmed or completed
     if (
       trip.bookingStatus === "CONFIRMED" ||
       trip.bookingStatus === "COMPLETED"
@@ -191,14 +177,48 @@ export default function TripsPage() {
       ),
     },
     {
+      header: "Vehicle",
+      accessorKey: "vehicleName",
+      cell: (item) => (
+        <div>
+          <div className="font-medium text-gray-900">{item.vehicleName}</div>
+          <div className="text-xs text-gray-500">{item.vehicleIdentifier}</div>
+        </div>
+      ),
+    },
+    {
       header: "Trip Details",
       accessorKey: "startDateTime",
       cell: (item) => (
-        <div>
-          <div className="font-medium text-gray-900">
-            {format(new Date(item.startDateTime), "MMM d, yyyy, h:mm a")}
+        <div className="flex flex-col gap-1">
+          <div>
+            <span className="text-xs font-medium text-gray-900">
+              {format(new Date(item.startDateTime), "MMM d, h:mm a")}
+            </span>
           </div>
-          <div className="text-gray-500">{item.bookingTypeName}</div>
+          <div>
+            <span className="text-xs font-medium text-gray-900">
+              {format(new Date(item.endDateTime), "MMM d, h:mm a")}
+            </span>
+          </div>
+          <div className="text-xs font-medium text-gray-900">
+            {item.bookingTypeName} ({item.duration})
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Location",
+      accessorKey: "pickupLocation",
+      cell: (item) => (
+        <div className="max-w-[200px]">
+          <div
+            className="text-sm text-gray-900 line-clamp-2"
+            title={item.pickupLocation}
+          >
+            {item.pickupLocation}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">{item.city}</div>
         </div>
       ),
     },
@@ -266,7 +286,6 @@ export default function TripsPage() {
     <>
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
-        {/* --- Header --- */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Trips</h1>
           <p className="text-lg text-gray-600 mt-1">
@@ -274,7 +293,6 @@ export default function TripsPage() {
           </p>
         </div>
 
-        {/* --- Filter Section --- */}
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-gray-600" />
@@ -337,7 +355,6 @@ export default function TripsPage() {
           </Button>
         </div>
 
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -355,7 +372,7 @@ export default function TripsPage() {
           <div
             className={clsx(
               "transition-opacity",
-              isActionLoading ? "opacity-50" : "" // ✅ Use combined loading state
+              isActionLoading ? "opacity-50" : ""
             )}
           >
             <CustomTable
@@ -366,7 +383,6 @@ export default function TripsPage() {
           </div>
         )}
 
-        {/* --- Pagination --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -375,7 +391,6 @@ export default function TripsPage() {
         />
       </main>
 
-      {/* --- Modals --- */}
       {modal === "assignDriver" && selectedTrip && (
         <AssignDriverModal trip={selectedTrip} onClose={closeModal} />
       )}

@@ -62,7 +62,7 @@ export default function AvailabilityPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="py-3 max-w-8xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Vehicle Availability</h1>
 
       {/* --- Controls --- */}
