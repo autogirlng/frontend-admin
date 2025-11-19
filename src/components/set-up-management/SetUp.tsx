@@ -14,6 +14,7 @@ import {
   BookCopy,
   ChevronRight,
   Star,
+  Ticket,
 } from "lucide-react";
 import React from "react";
 import CustomBack from "../generic/CustomBack";
@@ -91,6 +92,12 @@ const setupItems: SetupItem[] = [
     description: "Manage the top rated vehicles.",
     href: "/dashboard/vehicle-onboarding/top-rated-vehicles",
     icon: Star,
+  },
+  {
+    title: "Past Bookings",
+    description: "Add past bookings so historical data.",
+    href: "/dashboard/bookings/past-bookings",
+    icon: Ticket,
   },
 ];
 
