@@ -93,12 +93,6 @@ const setupItems: SetupItem[] = [
     href: "/dashboard/vehicle-onboarding/top-rated-vehicles",
     icon: Star,
   },
-  {
-    title: "Past Bookings",
-    description: "Add past bookings so historical data.",
-    href: "/dashboard/bookings/past-bookings",
-    icon: Ticket,
-  },
 ];
 
 // 3. The Page Component

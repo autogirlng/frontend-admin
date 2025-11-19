@@ -11,6 +11,7 @@ import {
   Bell,
   Activity,
   Hammer,
+  Ticket,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -90,6 +91,15 @@ export default function SettingsPage() {
             title="Role Settings"
             description="Manage user roles and permissions."
             iconBgColor="bg-green-100"
+          />
+
+          {/* 7. Past Bookings */}
+          <SettingsCard
+            href="/dashboard/bookings/past-bookings"
+            icon={Ticket}
+            title="Create Past Bookings"
+            description="Create past bookings which are historical bookings made before the platform was created."
+            iconBgColor="bg-blue-100"
           />
         </div>
       </main>
