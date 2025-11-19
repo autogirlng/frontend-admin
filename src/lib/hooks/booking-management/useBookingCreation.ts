@@ -1,6 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiClient } from "@/lib/apiClient"; // Adjust path
-
+import { apiClient } from "@/lib/apiClient";
 import toast from "react-hot-toast";
 import {
   CalculateBookingResponse,
@@ -9,37 +8,19 @@ import {
   CalculateBookingPayload,
   CreateBookingPayload,
   CreateBookingResponse,
+  VehicleSearchFilters,
 } from "@/components/dashboard/bookings-management/types";
 
-// --- Query Key ---
 const VEHICLE_SEARCH_KEY = "vehicleSearch";
 
-// --- Interface for search filters ---
-// (Ensure this includes pickup/dropoff strings as added previously)
-export interface VehicleSearchFilters {
-  latitude?: number;
-  longitude?: number;
-  radiusInKm?: number;
-  startDate?: string; // YYYY-MM-DD
-  endDate?: string; // YYYY-MM-DD
-  bookingTypeId?: string;
-  vehicleTypeId?: string;
-  vehicleMakeId?: string;
-  vehicleModelId?: string;
-  minSeats?: number;
-  page: number; // For pagination
-  pickupLocationString?: string; // For form state
-  dropoffLocationString?: string; // For form state
-}
-
-// ✅ --- UPDATED: Payload Type ---
 interface DownloadInvoicePayload {
   bookingId: string;
-  companyBankAccountId?: string; // Optional
+  companyBankAccountId?: string;
 }
 
 /**
- * Hook for GET /public/vehicles/search
+ * Hook for GET /v1/public/vehicles/search
+ * Implements the "Swiss Army Knife" logic
  */
 export function useVehicleSearch(
   filters: VehicleSearchFilters,
@@ -49,40 +30,49 @@ export function useVehicleSearch(
     queryKey: [VEHICLE_SEARCH_KEY, filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      // Add optional filters from the filters object
+
+      // Iterate over filters and append if value exists
       Object.entries(filters).forEach(([key, value]) => {
-        // Exclude form-only fields and pagination
+        // Skip internal UI fields or empty values
         if (
-          value &&
-          key !== "page" &&
-          key !== "pickupLocationString" &&
-          key !== "dropoffLocationString"
+          value === undefined ||
+          value === "" ||
+          value === null ||
+          key === "pickupLocationString" ||
+          key === "dropoffLocationString"
         ) {
+          return;
+        }
+
+        // Handle Time Formatting: Ensure HH:mm:ss format
+        if (key === "startTime" || key === "endTime") {
+          const timeStr = String(value);
+          // If input is HH:mm, append :00. If already HH:mm:ss, leave it.
+          params.append(key, timeStr.length === 5 ? `${timeStr}:00` : timeStr);
+        } else {
           params.append(key, String(value));
         }
       });
-      params.append("page", String(filters.page));
-      params.append("size", "10"); // Or your desired page size
+
+      // Ensure Pagination defaults
+      if (!filters.page) params.set("page", "0");
+      if (!params.has("size")) params.set("size", "10");
 
       const endpoint = `/public/vehicles/search?${params.toString()}`;
-      // Public endpoint, requireAuth is false
+
       return apiClient.get<PaginatedResponse<VehicleSearchResult>>(
         endpoint,
-        false
+        false // public endpoint
       );
     },
-    enabled: enabled, // Control when the query runs
+    enabled: enabled,
     placeholderData: (previousData) => previousData,
   });
 }
 
-/**
- * Hook for POST /public/bookings/calculate
- */
 export function useBookingCalculation() {
   return useMutation<CalculateBookingResponse, Error, CalculateBookingPayload>({
     mutationFn: (payload) =>
-      // Public endpoint
       apiClient.post("/public/bookings/calculate", payload, false),
     onError: (error) => {
       toast.error(`Calculation failed: ${error.message}`);
@@ -90,14 +80,9 @@ export function useBookingCalculation() {
   });
 }
 
-/**
- * Hook for POST /bookings
- */
 export function useCreateBooking() {
   return useMutation<CreateBookingResponse, Error, CreateBookingPayload>({
-    mutationFn: (payload) =>
-      // Public endpoint, explicitly pass false for requireAuth
-      apiClient.post("/bookings", payload, false),
+    mutationFn: (payload) => apiClient.post("/bookings", payload, false),
     onError: (error) => {
       toast.error(`Booking creation failed: ${error.message}`);
     },
@@ -108,10 +93,7 @@ export function useDownloadInvoice() {
   return useMutation<void, Error, DownloadInvoicePayload>({
     mutationFn: async ({ bookingId, companyBankAccountId }) => {
       const defaultFilename = `Invoice-${bookingId}.pdf`;
-
-      // ✅ Create payload only if ID exists
       const payload = companyBankAccountId ? { companyBankAccountId } : {};
-
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
         payload,

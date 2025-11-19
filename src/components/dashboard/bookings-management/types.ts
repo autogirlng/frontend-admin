@@ -58,6 +58,8 @@ export interface VehicleSearchResult {
   willProvideDriver: boolean;
   willProvideFuel: boolean;
   numberOfSeats: number;
+  hostName?: string;
+  hostPhoneNumber?: string;
 }
 
 // --- Booking Calculation ---
@@ -138,4 +140,27 @@ export interface CompanyBankAccount {
   bankName: string;
   bankCode: string;
   default: boolean;
+}
+
+export interface VehicleSearchFilters {
+  latitude?: number;
+  longitude?: number;
+  radiusInKm?: number;
+  startDate?: string;
+  startTime?: string;
+  endDate?: string;
+  endTime?: string;
+  minSeats?: number;
+  hostName?: string;
+  vehicleName?: string;
+  vehicleIdentifier?: string;
+  city?: string;
+  vehicleTypeId?: string;
+  vehicleMakeId?: string;
+  vehicleModelId?: string;
+  maxPrice?: number;
+  page: number;
+  size?: number;
+  pickupLocationString?: string;
+  dropoffLocationString?: string;
 }
