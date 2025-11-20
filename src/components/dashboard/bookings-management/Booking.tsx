@@ -7,11 +7,13 @@ import {
   useGetBookingSegments,
   useDownloadInvoice,
   useDownloadReceipt,
+  useCancelBooking,
+  useDeleteBooking,
 } from "@/lib/hooks/booking-management/useBookings";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { BookingSegment, BookingStatus } from "./types";
-import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
+import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu"; // Using your custom component
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
 import Select, { Option } from "@/components/generic/ui/Select";
@@ -21,7 +23,10 @@ import {
   View,
   Download,
   Plus,
-  Copy, // ✅ Added Copy icon
+  Copy,
+  Ban,
+  Trash2,
+  X,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -29,7 +34,9 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import { DatePickerWithRange } from "../availability/DatePickerWithRange";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import clsx from "clsx"; // Helper for classes if needed
+import clsx from "clsx";
+import Button from "@/components/generic/ui/Button";
+import TextAreaInput from "@/components/generic/ui/TextAreaInput";
 
 // --- Helper Functions & Constants ---
 
@@ -105,6 +112,14 @@ export default function BookingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+  // --- Modal States ---
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null
+  );
+  const [cancelReason, setCancelReason] = useState("");
+
   // --- API Hooks ---
   const {
     data: paginatedData,
@@ -125,6 +140,8 @@ export default function BookingsPage() {
 
   const downloadInvoiceMutation = useDownloadInvoice();
   const downloadReceiptMutation = useDownloadReceipt();
+  const cancelBookingMutation = useCancelBooking();
+  const deleteBookingMutation = useDeleteBooking();
 
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -142,12 +159,52 @@ export default function BookingsPage() {
     setCurrentPage(0);
   };
 
-  // ✅ New handler for copying invoice number
   const handleCopyInvoice = (invoiceNumber: string) => {
     navigator.clipboard.writeText(invoiceNumber);
     toast.success("Invoice number copied!");
   };
 
+  // --- Action Handlers ---
+
+  const initiateCancel = (id: string) => {
+    setSelectedBookingId(id);
+    setCancelReason("");
+    setShowCancelModal(true);
+  };
+
+  const initiateDelete = (id: string) => {
+    setSelectedBookingId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmCancel = () => {
+    if (!selectedBookingId) return;
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation.");
+      return;
+    }
+    cancelBookingMutation.mutate(
+      { bookingId: selectedBookingId, reason: cancelReason },
+      {
+        onSuccess: () => {
+          setShowCancelModal(false);
+          setSelectedBookingId(null);
+        },
+      }
+    );
+  };
+
+  const confirmDelete = () => {
+    if (!selectedBookingId) return;
+    deleteBookingMutation.mutate(selectedBookingId, {
+      onSuccess: () => {
+        setShowDeleteModal(false);
+        setSelectedBookingId(null);
+      },
+    });
+  };
+
+  // --- Build Actions Menu Items ---
   const getBookingActions = (booking: BookingSegment): ActionMenuItem[] => {
     const canDownloadInvoice = [
       BookingStatus.PENDING_PAYMENT,
@@ -162,12 +219,17 @@ export default function BookingsPage() {
       BookingStatus.COMPLETED,
     ].includes(booking.bookingStatus);
 
+    const isCancelled = [
+      BookingStatus.CANCELLED_BY_ADMIN,
+      BookingStatus.CANCELLED_BY_HOST,
+      BookingStatus.CANCELLED_BY_USER,
+    ].includes(booking.bookingStatus);
+
     const actions: ActionMenuItem[] = [
       {
         label: "View Booking",
         icon: View,
         onClick: () => {
-          toast.success(`Viewing ${booking.customerName} bookings`);
           router.push(`/dashboard/bookings/${booking.bookingId}`);
         },
       },
@@ -183,7 +245,7 @@ export default function BookingsPage() {
               toastId,
             });
           } else {
-            toast.error("An invoice is not available for this booking status.");
+            toast.error("Invoice not available for this status.");
           }
         },
       },
@@ -199,23 +261,38 @@ export default function BookingsPage() {
               toastId,
             });
           } else {
-            toast.error(
-              "A receipt is only available for confirmed or completed bookings."
-            );
+            toast.error("Receipt only available for confirmed bookings.");
           }
         },
       },
     ];
 
+    // ✅ Use 'danger: true' instead of 'variant: "danger"'
+    if (!isCancelled && booking.bookingStatus !== BookingStatus.COMPLETED) {
+      actions.push({
+        label: "Cancel Trip",
+        icon: Ban,
+        onClick: () => initiateCancel(booking.bookingId),
+        danger: true,
+      });
+    }
+
+    // ✅ Use 'danger: true' instead of 'variant: "danger"'
+    actions.push({
+      label: "Delete Record",
+      icon: Trash2,
+      onClick: () => initiateDelete(booking.bookingId),
+      danger: true,
+    });
+
     return actions;
   };
 
-  // --- Define Columns for the Table ---
+  // --- Table Columns ---
   const columns: ColumnDefinition<BookingSegment>[] = [
     {
       header: "Invoice",
       accessorKey: "invoiceNumber",
-      // ✅ UPDATED: Invoice column with copy button
       cell: (item) => (
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-medium text-gray-700">
@@ -243,7 +320,12 @@ export default function BookingsPage() {
       cell: (item) => (
         <div>
           <div className="font-medium">{item.vehicleName}</div>
-          <div className="text-xs text-gray-500">{item.vehicleId}</div>
+          <div
+            className="text-xs text-gray-500 truncate w-32"
+            title={item.vehicleId}
+          >
+            {item.vehicleId}
+          </div>
         </div>
       ),
     },
@@ -289,7 +371,7 @@ export default function BookingsPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <main className="py-3 max-w-8xl mx-auto">
+      <main className="py-3 max-w-8xl mx-auto relative">
         {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="my-1">
@@ -301,7 +383,7 @@ export default function BookingsPage() {
           <div className="my-1">
             <Link
               href="/dashboard/bookings/create"
-              className="bg-[#0096FF] flex py-2 px-6 text-white flex-wrap hover:bg-[#007ACC] items-center"
+              className="bg-[#0096FF] flex py-2 px-6 text-white flex-wrap hover:bg-[#007ACC] items-center rounded shadow-sm"
             >
               <Plus className="mr-2 h-5 w-5" /> Create a Booking
             </Link>
@@ -326,8 +408,7 @@ export default function BookingsPage() {
           />
         </div>
 
-        {/* --- Filters (UPDATED LAYOUT) --- */}
-        {/* ✅ Changed to md:grid-cols-3 to make the 3 items fill the row */}
+        {/* --- Filters --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Select
             label="Status"
@@ -354,11 +435,7 @@ export default function BookingsPage() {
             }}
             disabled={isLoadingBookingTypes}
           />
-          <DatePickerWithRange
-            date={dateRange}
-            setDate={handleDateChange}
-            // No extra class needed, grid takes care of sizing
-          />
+          <DatePickerWithRange date={dateRange} setDate={handleDateChange} />
         </div>
 
         {/* --- Table Display --- */}
@@ -393,6 +470,106 @@ export default function BookingsPage() {
           isLoading={isPlaceholderData}
         />
       </main>
+
+      {/* --- CANCEL MODAL --- */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-red-50">
+              <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
+                <Ban className="w-5 h-5" /> Cancel Booking
+              </h3>
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to cancel this booking? This action cannot
+                be undone.
+              </p>
+              <TextAreaInput
+                label="Reason for Cancellation"
+                id="cancelReason"
+                placeholder="e.g. Customer requested cancellation..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setShowCancelModal(false)}
+                disabled={cancelBookingMutation.isPending}
+                className="w-[200px] my-1"
+              >
+                Close
+              </Button>
+              <Button
+                variant="danger"
+                onClick={confirmCancel}
+                isLoading={cancelBookingMutation.isPending}
+                className="w-[200px] my-1"
+              >
+                Cancel Booking
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- DELETE MODAL --- */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-red-50">
+              <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" /> Delete Record
+              </h3>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <h4 className="text-gray-900 font-medium text-lg">
+                Are you absolutely sure?
+              </h4>
+              <p className="text-sm text-gray-500 mt-2">
+                This will permanently delete the booking record and all
+                associated data. This action <strong>cannot</strong> be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteBookingMutation.isPending}
+                className="w-[200px] my-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={confirmDelete}
+                isLoading={deleteBookingMutation.isPending}
+                className="w-[200px] my-1"
+              >
+                Delete Permanently
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

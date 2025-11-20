@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/apiClient";
 import {
   PaginatedResponse,
@@ -19,6 +19,10 @@ interface BookingFilters {
   searchTerm: string;
 }
 
+interface CancelBookingPayload {
+  reason: string;
+}
+
 /**
  * Fetches a paginated list of booking segments based on filters.
  */
@@ -35,10 +39,12 @@ export function useGetBookingSegments(filters: BookingFilters) {
         params.append("searchTerm", searchTerm);
       }
 
-      if (otherFilters.status) params.append("bookingStatus", otherFilters.status);
+      if (otherFilters.status)
+        params.append("bookingStatus", otherFilters.status);
       if (otherFilters.bookingTypeId)
         params.append("bookingTypeId", otherFilters.bookingTypeId);
-      if (otherFilters.startDate) params.append("startDate", otherFilters.startDate);
+      if (otherFilters.startDate)
+        params.append("startDate", otherFilters.startDate);
       if (otherFilters.endDate) params.append("endDate", otherFilters.endDate);
 
       const endpoint = `/admin/bookings/segments?${params.toString()}`;
@@ -47,7 +53,6 @@ export function useGetBookingSegments(filters: BookingFilters) {
     placeholderData: (previousData) => previousData,
   });
 }
-
 
 // --- Type for Download Mutations ---
 interface DownloadArgs {
@@ -83,7 +88,6 @@ export function useDownloadInvoice() {
   });
 }
 
-
 /**
  * Hook to download an receipt PDF
  */
@@ -93,7 +97,7 @@ export function useDownloadReceipt() {
     mutationFn: ({ bookingId }) => {
       // This function is called by the mutation
       const filename = `receipt-${bookingId}.pdf`;
-      
+
       // We use your new helper function here!
       return apiClient.getAndDownloadFile(
         `/admin/invoices/${bookingId}/download-receipt`,
@@ -113,3 +117,35 @@ export function useDownloadReceipt() {
   });
 }
 
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, { bookingId: string; reason: string }>({
+    mutationFn: ({ bookingId, reason }) =>
+      apiClient.patch(`/admin/bookings/${bookingId}/cancel`, { reason }),
+    onSuccess: () => {
+      toast.success("Booking cancelled successfully.");
+      // Refresh the list
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to cancel booking.");
+    },
+  });
+}
+
+export function useDeleteBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string>({
+    mutationFn: (bookingId) => apiClient.delete(`/admin/bookings/${bookingId}`),
+    onSuccess: () => {
+      toast.success("Booking record deleted successfully.");
+      // Refresh the list
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete booking.");
+    },
+  });
+}
