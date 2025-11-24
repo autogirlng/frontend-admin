@@ -23,6 +23,18 @@ interface CancelBookingPayload {
   reason: string;
 }
 
+interface MoveBookingPayload {
+  bookingId: string;
+  newVehicleId: string;
+  waivePriceDifference: boolean;
+}
+
+interface VehicleOption {
+  id: string;
+  name: string;
+  vehicleIdentifier: string;
+}
+
 /**
  * Fetches a paginated list of booking segments based on filters.
  */
@@ -147,5 +159,52 @@ export function useDeleteBooking() {
     onError: (error) => {
       toast.error(error.message || "Failed to delete booking.");
     },
+  });
+}
+
+export function useMoveBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, MoveBookingPayload>({
+    mutationFn: ({ bookingId, newVehicleId, waivePriceDifference }) =>
+      apiClient.post(`/admin/bookings/${bookingId}/move-vehicle`, {
+        newVehicleId,
+        waivePriceDifference,
+      }),
+    onSuccess: () => {
+      toast.success("Booking successfully moved to new vehicle.");
+      queryClient.invalidateQueries({ queryKey: [BOOKINGS_QUERY_KEY] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to move booking.");
+    },
+  });
+}
+
+export function useGetVehiclesForDropdown(searchTerm: string = "") {
+  return useQuery<VehicleOption[]>({
+    queryKey: ["vehiclesDropdown", searchTerm],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("status", "APPROVED");
+      params.append("size", "50");
+
+      if (searchTerm) {
+        params.append("searchTerm", searchTerm);
+      }
+
+      const response: any = await apiClient.get(
+        `/vehicles?${params.toString()}`
+      );
+
+      const vehicles = response.data?.content || response.content || [];
+
+      return vehicles.map((v: any) => ({
+        id: v.id,
+        name: v.name,
+        vehicleIdentifier: v.vehicleIdentifier,
+      }));
+    },
+    placeholderData: (previousData) => previousData,
   });
 }

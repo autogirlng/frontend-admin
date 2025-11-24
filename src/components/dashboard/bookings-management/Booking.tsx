@@ -9,11 +9,13 @@ import {
   useDownloadReceipt,
   useCancelBooking,
   useDeleteBooking,
+  useGetVehiclesForDropdown,
+  useMoveBooking,
 } from "@/lib/hooks/booking-management/useBookings";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { BookingSegment, BookingStatus } from "./types";
-import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu"; // Using your custom component
+import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
 import Select, { Option } from "@/components/generic/ui/Select";
@@ -27,6 +29,7 @@ import {
   Ban,
   Trash2,
   X,
+  ArrowRightLeft,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -118,7 +121,14 @@ export default function BookingsPage() {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [moveVehicleSearch, setMoveVehicleSearch] = useState("");
+  const debouncedMoveSearch = useDebounce(moveVehicleSearch, 500);
+
   const [cancelReason, setCancelReason] = useState("");
+
+  const [targetVehicleId, setTargetVehicleId] = useState<string>("");
+  const [waivePriceDiff, setWaivePriceDiff] = useState<boolean>(false);
 
   // --- API Hooks ---
   const {
@@ -138,10 +148,14 @@ export default function BookingsPage() {
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } =
     useGetBookingTypes();
 
+  const { data: availableVehicles, isLoading: isLoadingVehicles } =
+    useGetVehiclesForDropdown(debouncedMoveSearch);
+
   const downloadInvoiceMutation = useDownloadInvoice();
   const downloadReceiptMutation = useDownloadReceipt();
   const cancelBookingMutation = useCancelBooking();
   const deleteBookingMutation = useDeleteBooking();
+  const moveBookingMutation = useMoveBooking();
 
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -153,6 +167,14 @@ export default function BookingsPage() {
       ...bookingTypes.map((bt) => ({ id: bt.id, name: bt.name })),
     ];
   }, [bookingTypes]);
+
+  const vehicleOptions: Option[] = useMemo(() => {
+    if (!availableVehicles) return [];
+    return availableVehicles.map((v) => ({
+      id: v.id,
+      name: `${v.name} (${v.vehicleIdentifier})`,
+    }));
+  }, [availableVehicles]);
 
   const handleDateChange = (newDateRange: DateRange | undefined) => {
     setDateRange(newDateRange);
@@ -175,6 +197,34 @@ export default function BookingsPage() {
   const initiateDelete = (id: string) => {
     setSelectedBookingId(id);
     setShowDeleteModal(true);
+  };
+
+  const initiateMove = (id: string) => {
+    setSelectedBookingId(id);
+    setTargetVehicleId("");
+    setWaivePriceDiff(false);
+    setShowMoveModal(true);
+  };
+
+  const confirmMove = () => {
+    if (!selectedBookingId || !targetVehicleId) {
+      toast.error("Please select a new vehicle.");
+      return;
+    }
+    moveBookingMutation.mutate(
+      {
+        bookingId: selectedBookingId,
+        newVehicleId: targetVehicleId,
+        waivePriceDifference: waivePriceDiff,
+      },
+      {
+        onSuccess: () => {
+          setShowMoveModal(false);
+          setSelectedBookingId(null);
+          setTargetVehicleId("");
+        },
+      }
+    );
   };
 
   const confirmCancel = () => {
@@ -225,6 +275,11 @@ export default function BookingsPage() {
       BookingStatus.CANCELLED_BY_USER,
     ].includes(booking.bookingStatus);
 
+    const isActive = [
+      BookingStatus.PENDING_PAYMENT,
+      BookingStatus.CONFIRMED,
+    ].includes(booking.bookingStatus);
+
     const actions: ActionMenuItem[] = [
       {
         label: "View Booking",
@@ -266,6 +321,14 @@ export default function BookingsPage() {
         },
       },
     ];
+
+    if (isActive) {
+      actions.push({
+        label: "Transfer Vehicle",
+        icon: ArrowRightLeft,
+        onClick: () => initiateMove(booking.bookingId),
+      });
+    }
 
     // ✅ Use 'danger: true' instead of 'variant: "danger"'
     if (!isCancelled && booking.bookingStatus !== BookingStatus.COMPLETED) {
@@ -565,6 +628,99 @@ export default function BookingsPage() {
                 className="w-[200px] my-1"
               >
                 Delete Permanently
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MOVE BOOKING MODAL --- */}
+      {showMoveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-blue-50">
+              <h3 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                <ArrowRightLeft className="w-5 h-5" /> Transfer Booking
+              </h3>
+              <button
+                onClick={() => {
+                  setShowMoveModal(false);
+                  setMoveVehicleSearch("");
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-700">
+                Search and select a new vehicle to move this booking to.
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search vehicle name or plate..."
+                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={moveVehicleSearch}
+                  onChange={(e) => setMoveVehicleSearch(e.target.value)}
+                />
+              </div>
+
+              <Select
+                label="Select Vehicle"
+                hideLabel
+                options={vehicleOptions}
+                selected={vehicleOptions.find((v) => v.id === targetVehicleId)}
+                onChange={(opt) => setTargetVehicleId(opt.id)}
+                placeholder={
+                  isLoadingVehicles
+                    ? "Loading results..."
+                    : "Select from results"
+                }
+                disabled={isLoadingVehicles}
+              />
+              <div
+                className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer"
+                onClick={() => setWaivePriceDiff(!waivePriceDiff)}
+              >
+                <div
+                  className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center ${
+                    waivePriceDiff
+                      ? "bg-blue-600 border-blue-600"
+                      : "bg-white border-gray-400"
+                  }`}
+                >
+                  {waivePriceDiff && (
+                    <X className="w-3 h-3 text-white rotate-45" />
+                  )}
+                </div>
+                <div>
+                  <label className="font-medium text-gray-900 cursor-pointer text-sm">
+                    Waive Price Difference
+                  </label>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    If checked, the customer will not be charged extra.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setShowMoveModal(false)}
+                disabled={moveBookingMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={confirmMove}
+                isLoading={moveBookingMutation.isPending}
+              >
+                Confirm Transfer
               </Button>
             </div>
           </div>
