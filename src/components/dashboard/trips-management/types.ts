@@ -116,3 +116,15 @@ export type VehicleDetail = {
     name: string;
   }[];
 };
+
+export interface EditTripPayload {
+  newStartDateTime?: string; // ISO string
+  newEndDateTime?: string; // ISO string
+  newPickupLocation?: string;
+  newDropoffLocation?: string;
+  newPickupLatitude?: number;
+  newPickupLongitude?: number;
+  newDropoffLatitude?: number;
+  newDropoffLongitude?: number;
+  newBookingTypeId?: string;
+}

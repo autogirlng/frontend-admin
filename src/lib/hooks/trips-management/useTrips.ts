@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient";
 import {
+  EditTripPayload,
   PaginatedResponse,
   Trip,
   TripDetail,
@@ -158,5 +159,31 @@ export function useDownloadTripReceipt() {
     onError: (error) => {
       toast.error(error.message || "Failed to download receipt.");
     },
+  });
+}
+
+export function useEditTrip() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    Trip, // Returns the updated Trip object
+    Error,
+    { tripId: string; payload: EditTripPayload }
+  >({
+    mutationFn: ({ tripId, payload }) =>
+      apiClient.patch(`/admin/trips/${tripId}`, payload),
+    onSuccess: (updatedTrip) => {
+      toast.success("Trip details updated successfully.");
+      // Invalidate the list query
+      queryClient.invalidateQueries({
+        queryKey: [TRIPS_QUERY_KEY],
+        exact: false,
+      });
+      // Invalidate the detail query (if the user is viewing details)
+      queryClient.invalidateQueries({
+        queryKey: [TRIPS_QUERY_KEY, "detail", updatedTrip.id],
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to update trip details."),
   });
 }

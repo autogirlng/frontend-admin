@@ -12,7 +12,7 @@ import {
   Car,
   Download,
   FileText,
-  MapPin,
+  Edit,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -37,6 +37,7 @@ import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { AssignDriverModal } from "./AssignDriverModal";
 import { AssignAgentsModal } from "./AssignAgentsModal";
 import { BookingStatus, Trip, TripStatus } from "./types";
+import { EditTripModal } from "./EditTripModal";
 
 const enumToOptions = (e: object): Option[] =>
   Object.entries(e).map(([key, value]) => ({ id: value, name: key }));
@@ -48,9 +49,11 @@ export default function TripsPage() {
   const router = useRouter();
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [modal, setModal] = useState<"assignDriver" | "assignAgents" | null>(
-    null
-  );
+
+  const [modal, setModal] = useState<
+    "assignDriver" | "assignAgents" | "editTrip" | null
+  >(null);
+
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const [filters, setFilters] = useState({
@@ -118,7 +121,10 @@ export default function TripsPage() {
     setSelectedTrip(null);
   };
 
-  const openModal = (type: "assignDriver" | "assignAgents", trip: Trip) => {
+  const openModal = (
+    type: "assignDriver" | "assignAgents" | "editTrip",
+    trip: Trip
+  ) => {
     setSelectedTrip(trip);
     setModal(type);
   };
@@ -131,6 +137,11 @@ export default function TripsPage() {
         onClick: () => {
           router.push(`/dashboard/trips/${trip.id}`);
         },
+      },
+      {
+        label: "Edit Trip",
+        icon: Edit,
+        onClick: () => openModal("editTrip", trip),
       },
       {
         label: "Assign Driver",
@@ -397,6 +408,10 @@ export default function TripsPage() {
 
       {modal === "assignAgents" && selectedTrip && (
         <AssignAgentsModal trip={selectedTrip} onClose={closeModal} />
+      )}
+
+      {modal === "editTrip" && selectedTrip && (
+        <EditTripModal trip={selectedTrip} onClose={closeModal} />
       )}
     </>
   );
