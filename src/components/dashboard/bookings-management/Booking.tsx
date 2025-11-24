@@ -383,7 +383,7 @@ export default function BookingsPage() {
           <div className="my-1">
             <Link
               href="/dashboard/bookings/create"
-              className="bg-[#0096FF] flex py-2 px-6 text-white flex-wrap hover:bg-[#007ACC] items-center rounded shadow-sm"
+              className="bg-[#0096FF] flex py-2 px-6 text-white flex-wrap hover:bg-[#007ACC] items-center"
             >
               <Plus className="mr-2 h-5 w-5" /> Create a Booking
             </Link>
