@@ -2,71 +2,118 @@
 
 import React from "react";
 import Button from "./Button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 interface PaginationControlsProps {
-  /** The current page number (0-indexed) */
   currentPage: number;
-  /** The total number of pages */
   totalPages: number;
-  /** Callback function when a page is changed */
   onPageChange: (newPage: number) => void;
-  /** (Optional) Disables buttons during data fetch */
   isLoading?: boolean;
 }
 
-/**
- * A reusable pagination component with "Previous" and "Next" buttons.
- */
 export function PaginationControls({
   currentPage,
   totalPages,
   onPageChange,
   isLoading = false,
 }: PaginationControlsProps) {
-  // Don't render pagination if there's only 1 page (or less)
-  if (totalPages <= 1) {
-    return null;
-  }
+  const getVisiblePages = () => {
+    const delta = 1;
+    const current = currentPage + 1;
+    const range = [];
+    const rangeWithDots = [];
 
-  const handlePrevious = () => {
-    onPageChange(Math.max(currentPage - 1, 0));
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    let l;
+    for (let i of range) {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    }
+
+    return rangeWithDots;
   };
 
-  const handleNext = () => {
+  if (totalPages <= 1) return null;
+
+  const handlePrevious = () => onPageChange(Math.max(currentPage - 1, 0));
+  const handleNext = () =>
     onPageChange(Math.min(currentPage + 1, totalPages - 1));
-  };
 
-  // Disable "Previous" if on the first page or loading
-  const isPrevDisabled = currentPage === 0 || isLoading;
-  // Disable "Next" if on the last page or loading
-  const isNextDisabled = currentPage === totalPages - 1 || isLoading;
+  const visiblePages = getVisiblePages();
 
   return (
-    <div className="flex items-center justify-between mt-6">
+    <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
       <Button
         variant="secondary"
-        className="w-auto px-4"
+        className="h-9 w-9 p-0 sm:w-auto sm:px-4"
         onClick={handlePrevious}
-        disabled={isPrevDisabled}
+        disabled={currentPage === 0 || isLoading}
+        aria-label="Previous Page"
       >
-        <ChevronLeft className="h-4 w-4 mr-1" />
-        Previous
+        <ChevronLeft className="h-4 w-4 sm:mr-2" />
+        <span className="hidden sm:inline">Previous</span>{" "}
       </Button>
 
-      <span className="text-sm text-gray-700">
-        Page <span className="font-semibold">{currentPage + 1}</span> of{" "}
-        <span className="font-semibold">{totalPages}</span>
-      </span>
+      <div className="flex items-center gap-1">
+        {visiblePages.map((page, index) => {
+          if (page === "...") {
+            return (
+              <div
+                key={`ellipsis-${index}`}
+                className="flex h-9 w-9 items-center justify-center"
+              >
+                <MoreHorizontal className="h-4 w-4 text-gray-400" />
+              </div>
+            );
+          }
+
+          const isCurrent = page === currentPage + 1;
+
+          return (
+            <button
+              key={page}
+              onClick={() => onPageChange((page as number) - 1)}
+              disabled={isLoading}
+              className={`
+                h-9 w-9 flex items-center justify-center text-sm font-medium transition-colors
+                ${
+                  isCurrent
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-transparent text-gray-700 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                }
+              `}
+            >
+              {page}
+            </button>
+          );
+        })}
+      </div>
 
       <Button
         variant="secondary"
-        className="w-auto px-4"
+        className="h-9 w-9 p-0 sm:w-auto sm:px-4"
         onClick={handleNext}
-        disabled={isNextDisabled}
+        disabled={currentPage === totalPages - 1 || isLoading}
+        aria-label="Next Page"
       >
-        Next
-        <ChevronRight className="h-4 w-4 ml-1" />
+        <span className="hidden sm:inline">Next</span>{" "}
+        <ChevronRight className="h-4 w-4 sm:ml-2" />
       </Button>
     </div>
   );

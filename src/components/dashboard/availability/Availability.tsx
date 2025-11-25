@@ -1,30 +1,27 @@
-// app/dashboard/availability/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
 
-// Components
-import TextInput from "../../generic/ui/TextInput"; // Assuming you have this
+import TextInput from "../../generic/ui/TextInput";
 import CustomLoader from "../../generic/CustomLoader";
 import AvailabilityCalendar from "./AvailabilityCalendar";
-import { DatePickerWithRange } from "./DatePickerWithRange"; // Adjust path
-import DailyScheduleModal from "./DailyScheduleModal"; // Adjust path
+import { DatePickerWithRange } from "./DatePickerWithRange";
+import DailyScheduleModal from "./DailyScheduleModal";
 
-// Hooks
-import { useVehicleAvailability } from "../../../lib/hooks/availability/useVehicleAvailability"; // Adjust path
+import { useVehicleAvailability } from "../../../lib/hooks/availability/useVehicleAvailability";
 import { useDebounce } from "../../../lib/hooks/set-up/company-bank-account/useDebounce";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 export default function AvailabilityPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
-    to: addDays(new Date(), 6), // Default to a 7-day view
+    to: addDays(new Date(), 6),
   });
 
-  // ✅ State for the daily schedule modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(
     null
@@ -45,7 +42,6 @@ export default function AvailabilityPage() {
     page: page,
   });
 
-  // ✅ Handlers for opening/closing the modal
   const handleCellClick = (vehicleId: string, date: Date) => {
     setSelectedVehicleId(vehicleId);
     setSelectedDate(date);
@@ -54,11 +50,43 @@ export default function AvailabilityPage() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Reset selection after a short delay
     setTimeout(() => {
       setSelectedVehicleId(null);
       setSelectedDate(null);
     }, 300);
+  };
+
+  const getPaginationGroup = () => {
+    const total = availabilityData?.totalPages || 0;
+    const current = page + 1;
+    const delta = 1;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = 1; i <= total; i++) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    let l;
+    for (let i of range) {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    }
+
+    return rangeWithDots;
   };
 
   return (
@@ -98,7 +126,7 @@ export default function AvailabilityPage() {
               vehicles={availabilityData.content}
               startDate={dateRange.from}
               endDate={dateRange.to}
-              onCellClick={handleCellClick} // ✅ Pass the click handler
+              onCellClick={handleCellClick}
             />
           )}
         {availabilityData && availabilityData.content.length === 0 && (
@@ -108,33 +136,64 @@ export default function AvailabilityPage() {
         )}
       </div>
 
-      {/* --- Pagination (Basic) --- */}
       {availabilityData && availabilityData.totalPages > 1 && (
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex flex-wrap justify-center items-center gap-2 mt-4">
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-4 py-2 bg-gray-200 disabled:opacity-50"
+            className="flex items-center justify-center h-9 w-9 sm:w-auto sm:px-4 border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Previous
+            <ChevronLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Previous</span>
           </button>
-          <span>
-            Page {availabilityData.currentPage + 1} of{" "}
-            {availabilityData.totalPages}
-          </span>
+
+          <div className="flex items-center gap-1">
+            {getPaginationGroup().map((item, index) => {
+              if (item === "...") {
+                return (
+                  <div
+                    key={`dots-${index}`}
+                    className="flex h-9 w-9 items-center justify-center"
+                  >
+                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                  </div>
+                );
+              }
+
+              const isCurrent = item === page + 1;
+
+              return (
+                <button
+                  key={item}
+                  onClick={() => setPage((item as number) - 1)}
+                  className={`
+              h-9 w-9 flex items-center justify-center text-sm font-medium transition-colors
+              ${
+                isCurrent
+                  ? "bg-black text-white hover:bg-gray-800"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+              }
+            `}
+                >
+                  {item}
+                </button>
+              );
+            })}
+          </div>
+
           <button
             onClick={() =>
               setPage((p) => Math.min(availabilityData.totalPages - 1, p + 1))
             }
             disabled={page === availabilityData.totalPages - 1}
-            className="px-4 py-2 bg-gray-200 disabled:opacity-50"
+            className="flex items-center justify-center h-9 w-9 sm:w-auto sm:px-4 border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="h-4 w-4 sm:ml-2" />
           </button>
         </div>
       )}
 
-      {/* ✅ Render the modal */}
       <DailyScheduleModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
