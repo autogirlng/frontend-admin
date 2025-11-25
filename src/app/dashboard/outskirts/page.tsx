@@ -141,7 +141,7 @@ export default function AdminGeofencePage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+          <div className="bg-blue-50/50 p-4 border border-blue-100">
             <label className="text-xs font-semibold text-blue-800 uppercase tracking-wide mb-2 block">
               Navigate Map
             </label>
