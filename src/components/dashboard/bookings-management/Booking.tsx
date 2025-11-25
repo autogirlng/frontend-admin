@@ -30,6 +30,7 @@ import {
   Trash2,
   X,
   ArrowRightLeft,
+  FileText,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -306,7 +307,7 @@ export default function BookingsPage() {
       },
       {
         label: "Download Receipt",
-        icon: Download,
+        icon: FileText,
         onClick: () => {
           if (canDownloadReceipt) {
             if (downloadReceiptMutation.isPending) return;
