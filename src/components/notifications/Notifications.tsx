@@ -5,9 +5,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   useNotificationsList,
-  useMarkNotificationRead, // ✅ Import
-  useDeleteNotification, // ✅ Import
-  useMarkAllNotificationsRead, // ✅ Import
+  useMarkNotificationRead,
+  useDeleteNotification,
+  useMarkAllNotificationsRead,
 } from "@/lib/hooks/notifications/useNotificationsList";
 import { NotificationItem } from "./types";
 import { PaginationControls } from "../generic/ui/PaginationControls";
@@ -18,15 +18,18 @@ import {
   MessageSquare,
   AlertTriangle,
   Settings,
-  Trash2, // ✅ Import Trash2
-  Check, // ✅ Import Check
+  Trash2,
+  Check,
+  X,
 } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import clsx from "clsx";
 import CustomBack from "../generic/CustomBack";
 import CustomLoader from "../generic/CustomLoader";
+import Button from "../generic/ui/Button"; // Assuming you have a generic button, otherwise standard <button> works
 
-// ... (NotificationIcon and timeAgo helpers remain unchanged) ...
+// --- Helper Components ---
+
 const NotificationIcon = ({ type }: { type?: string }) => {
   let icon;
   switch (type) {
@@ -43,7 +46,7 @@ const NotificationIcon = ({ type }: { type?: string }) => {
       icon = <Bell className="h-6 w-6 text-blue-600" />;
   }
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 flex-shrink-0">
       {icon}
     </div>
   );
@@ -69,9 +72,67 @@ function timeAgo(dateString: string): string {
   return `${years}y ago`;
 }
 
+// --- NEW: Custom Delete Modal Component ---
+interface DeleteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+}
+
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  isDeleting,
+}: DeleteModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
+        className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6 text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <Trash2 className="h-6 w-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Delete Notification?
+          </h3>
+          <p className="text-sm text-gray-500">
+            Are you sure you want to remove this notification? This action
+            cannot be undone.
+          </p>
+        </div>
+        <div className="flex border-t border-gray-100 bg-gray-50 p-4 gap-3">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex-1 px-4 py-2 bg-red-600 border border-transparent rounded-lg text-white font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center justify-center gap-2"
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function NotificationsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 15;
+
+  // --- NEW: State for Modal ---
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const {
     data: paginatedData,
@@ -80,7 +141,6 @@ export default function NotificationsPage() {
     isPlaceholderData,
   } = useNotificationsList(currentPage, pageSize);
 
-  // ✅ Instantiate mutations
   const markReadMutation = useMarkNotificationRead();
   const deleteMutation = useDeleteNotification();
   const markAllReadMutation = useMarkAllNotificationsRead();
@@ -96,11 +156,19 @@ export default function NotificationsPage() {
     markAllReadMutation.mutate();
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
-    e.preventDefault(); // Prevent link navigation if wrapped
+  // Modified: Opens modal instead of confirm()
+  const initiateDelete = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this notification?")) {
-      deleteMutation.mutate(id);
+    setItemToDelete(id);
+  };
+
+  // Modified: Actually performs the delete
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteMutation.mutate(itemToDelete, {
+        onSettled: () => setItemToDelete(null), // Close modal after
+      });
     }
   };
 
@@ -114,54 +182,74 @@ export default function NotificationsPage() {
     const content = (
       <div
         className={clsx(
-          "flex items-start gap-4 p-5 border-b border-gray-200 last:border-b-0 transition-colors group relative",
-          !notification.isRead && "bg-blue-50",
-          "hover:bg-gray-100"
+          "flex flex-col md:flex-row md:items-start gap-4 p-5 border-b border-gray-200 last:border-b-0 transition-colors group relative",
+          !notification.isRead && "bg-blue-50/60", // Lighter blue for better contrast
+          "hover:bg-gray-50"
         )}
       >
-        {/* --- Icon & Unread Badge --- */}
-        <div className="relative flex-shrink-0">
-          <NotificationIcon type={notification.type} />
-          {!notification.isRead && (
-            <span
-              className="absolute -top-0 -right-0 flex h-3 w-3"
-              aria-label="Unread"
-            >
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500"></span>
-            </span>
-          )}
-        </div>
-
-        {/* --- Content --- */}
-        <div className="flex-1 pr-8">
-          {" "}
-          {/* Add padding-right for buttons */}
-          <div className="flex justify-between items-center mb-1">
-            <h3 className="font-semibold text-gray-900">
-              {notification.title}
-            </h3>
-            <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-              {timeAgo(notification.createdAt)}
-            </span>
+        <div className="flex gap-4 w-full">
+          {/* --- Icon & Unread Badge --- */}
+          <div className="relative flex-shrink-0">
+            <NotificationIcon type={notification.type} />
+            {!notification.isRead && (
+              <span
+                className="absolute -top-1 -right-1 flex h-3 w-3"
+                aria-label="Unread"
+              >
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500"></span>
+              </span>
+            )}
           </div>
-          <p className="text-sm text-gray-700">{notification.message}</p>
+
+          {/* --- Content --- */}
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-start mb-1 gap-2">
+              <h3 className="font-semibold text-gray-900 text-sm md:text-base leading-tight">
+                {notification.title}
+              </h3>
+              <span className="text-xs text-gray-500 flex-shrink-0 whitespace-nowrap pt-0.5">
+                {timeAgo(notification.createdAt)}
+              </span>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed break-words">
+              {notification.message}
+            </p>
+          </div>
         </div>
 
-        {/* --- Actions (Visible on Hover) --- */}
-        <div className="absolute right-4 top-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* --- MOBILE ACTIONS (Visible below content on small screens) --- */}
+        <div className="flex md:hidden items-center justify-end gap-3 pt-2 mt-2 border-t border-gray-100/50 w-full">
           {!notification.isRead && (
             <button
               onClick={(e) => handleMarkRead(e, notification.id)}
-              className="p-1.5 rounded-full bg-white text-blue-600 hover:bg-blue-100 border border-gray-200 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-blue-700 bg-blue-100 active:bg-blue-200"
+            >
+              <Check className="h-3.5 w-3.5" /> Mark Read
+            </button>
+          )}
+          <button
+            onClick={(e) => initiateDelete(e, notification.id)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-red-700 bg-red-100 active:bg-red-200"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+        </div>
+
+        {/* --- DESKTOP ACTIONS (Absolute positioned, visible on Hover) --- */}
+        <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white/80 backdrop-blur-[2px] p-1.5 rounded-lg shadow-sm border border-gray-100">
+          {!notification.isRead && (
+            <button
+              onClick={(e) => handleMarkRead(e, notification.id)}
+              className="p-2 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
               title="Mark as read"
             >
               <Check className="h-4 w-4" />
             </button>
           )}
           <button
-            onClick={(e) => handleDelete(e, notification.id)}
-            className="p-1.5 rounded-full bg-white text-red-600 hover:bg-red-100 border border-gray-200 shadow-sm"
+            onClick={(e) => initiateDelete(e, notification.id)}
+            className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             title="Delete"
           >
             <Trash2 className="h-4 w-4" />
@@ -177,9 +265,6 @@ export default function NotificationsPage() {
           key={notification.id}
           passHref
           className="block"
-          // ✅ If user clicks the whole row (link), mark as read automatically?
-          // Usually better handled by the page load or explicitly.
-          // For now, let's just navigate.
         >
           {content}
         </Link>
@@ -196,32 +281,40 @@ export default function NotificationsPage() {
   return (
     <>
       <Toaster position="top-right" />
+
+      {/* --- RENDER MODAL --- */}
+      <DeleteConfirmationModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        isDeleting={deleteMutation.isPending}
+      />
+
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
         <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-200">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-            <p className="text-lg text-gray-600 mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Notifications
+            </h1>
+            <p className="text-sm md:text-lg text-gray-600 mt-1">
               Your recent alerts and updates.
             </p>
           </div>
-          {/* --- "Mark all as read" Button --- */}
           {hasUnread && (
             <button
               onClick={handleMarkAllAsRead}
               disabled={markAllReadMutation.isPending}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50 whitespace-nowrap"
             >
-              {markAllReadMutation.isPending
-                ? "Marking..."
-                : "Mark all as read"}
+              {markAllReadMutation.isPending ? "Marking..." : "Mark all read"}
             </button>
           )}
         </div>
 
         {/* --- Notification List --- */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 overflow-hidden min-h-[300px]">
           {isLoading && !paginatedData && (
             <div className="p-16">
               <CustomLoader />
