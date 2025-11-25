@@ -1,4 +1,3 @@
-// app/dashboard/profile/page.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -7,6 +6,7 @@ import {
   useUpdateMyProfile,
   useUpdateProfilePicture,
   useChangePassword,
+  useUpdateBirthday,
 } from "@/lib/hooks/profile/useProfile";
 import { useDropzone } from "react-dropzone";
 import {
@@ -18,12 +18,15 @@ import {
   Eye,
   EyeOff,
   Lock,
+  Calendar,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import CustomLoader from "@/components/generic/CustomLoader";
 import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CustomBack from "@/components/generic/CustomBack";
+
+import { ModernDatePicker } from "@/components/generic/ui/ModernDatePicker";
 
 const Avatar = ({
   src,
@@ -46,10 +49,9 @@ const Avatar = ({
   return (
     <div
       {...getRootProps()}
-      className="relative h-24 w-24 rounded-full cursor-pointer group"
+      className="relative h-24 w-24 rounded-full cursor-pointer group flex-shrink-0"
     >
       <input {...getInputProps()} />
-      {/* The Image or Initials */}
       {src ? (
         <img
           src={src}
@@ -64,14 +66,12 @@ const Avatar = ({
         </div>
       )}
 
-      {/* Loading Spinner */}
       {isLoading && (
         <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-full">
           <CustomLoader />
         </div>
       )}
 
-      {/* Hover Overlay */}
       {!isLoading && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
           <Camera className="h-6 w-6 text-white" />
@@ -81,7 +81,6 @@ const Avatar = ({
   );
 };
 
-// ✅ --- NEW Change Password Card Component ---
 const ChangePasswordCard = () => {
   const [passwords, setPasswords] = useState({
     oldPassword: "",
@@ -95,7 +94,6 @@ const ChangePasswordCard = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswords({ ...passwords, [e.target.id]: e.target.value });
-    // Clear errors when user starts typing
     if (errors[e.target.id]) {
       setErrors((prev) => ({ ...prev, [e.target.id]: "" }));
     }
@@ -103,9 +101,8 @@ const ChangePasswordCard = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({}); // Clear old errors
+    setErrors({});
 
-    // Validation
     if (!passwords.oldPassword) {
       setErrors((prev) => ({
         ...prev,
@@ -128,7 +125,6 @@ const ChangePasswordCard = () => {
       return;
     }
 
-    // All good, call mutation
     changePasswordMutation.mutate(
       {
         oldPassword: passwords.oldPassword,
@@ -136,7 +132,6 @@ const ChangePasswordCard = () => {
       },
       {
         onSuccess: () => {
-          // Reset form on success
           setPasswords({
             oldPassword: "",
             newPassword: "",
@@ -218,27 +213,27 @@ const ChangePasswordCard = () => {
 };
 
 export default function ProfilePage() {
-  // --- Hooks ---
   const { data: profile, isLoading, isError } = useGetMyProfile();
   const updateProfileMutation = useUpdateMyProfile();
   const updatePictureMutation = useUpdateProfilePicture();
+  const updateBirthdayMutation = useUpdateBirthday();
 
-  // --- State ---
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     phoneNumber: "",
+    birthday: "",
   });
   const [originalData, setOriginalData] = useState(formData);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // --- Effects ---
   useEffect(() => {
     if (profile) {
       const data = {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        phoneNumber: profile.phoneNumber,
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        phoneNumber: profile.phoneNumber || "",
+        birthday: profile.birthday || "",
       };
       setFormData(data);
       setOriginalData(data);
@@ -251,7 +246,6 @@ export default function ProfilePage() {
     };
   }, [preview]);
 
-  // --- Dropzone ---
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
@@ -273,27 +267,59 @@ export default function ProfilePage() {
     noDrag: true,
   });
 
-  // --- Handlers ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileMutation.mutate(formData, {
-      onSuccess: () => {
-        setOriginalData(formData);
-      },
-    });
+
+    const basicProfileChanged =
+      formData.firstName !== originalData.firstName ||
+      formData.lastName !== originalData.lastName ||
+      formData.phoneNumber !== originalData.phoneNumber;
+
+    const birthdayChanged = formData.birthday !== originalData.birthday;
+
+    const promises = [];
+
+    if (basicProfileChanged) {
+      promises.push(
+        updateProfileMutation.mutateAsync({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phoneNumber: formData.phoneNumber,
+        })
+      );
+    }
+
+    if (birthdayChanged && formData.birthday) {
+      promises.push(
+        updateBirthdayMutation.mutateAsync({
+          birthday: formData.birthday,
+        })
+      );
+    }
+
+    try {
+      await Promise.all(promises);
+      setOriginalData(formData);
+
+      if (birthdayChanged && !basicProfileChanged) {
+        toast.success("Birthday updated successfully.");
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  // --- Derived State ---
   const isFormChanged =
     JSON.stringify(formData) !== JSON.stringify(originalData);
   const isLoadingMutation =
-    updateProfileMutation.isPending || updatePictureMutation.isPending;
+    updateProfileMutation.isPending ||
+    updatePictureMutation.isPending ||
+    updateBirthdayMutation.isPending;
 
-  // --- Render ---
   if (isLoading) {
     return <CustomLoader />;
   }
@@ -314,7 +340,6 @@ export default function ProfilePage() {
       <Toaster position="top-right" />
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto space-y-8">
-        {/* --- Header --- */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
           <p className="text-lg text-gray-600 mt-1">
@@ -322,7 +347,6 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {/* --- Profile Details Card (UPDATED) --- */}
         <form
           onSubmit={handleSubmit}
           className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg"
@@ -336,7 +360,7 @@ export default function ProfilePage() {
                 Update your information here.
               </p>
             </div>
-            {/* ✅ UPDATED Profile Picture UI */}
+
             <Avatar
               src={preview || profile.profilePictureUrl}
               name={`${profile.firstName} ${profile.lastName}`}
@@ -363,26 +387,42 @@ export default function ProfilePage() {
                 disabled={isLoadingMutation}
               />
             </div>
-            <TextInput
-              id="email"
-              label="Email Address"
-              value={profile.email}
-              disabled
-              readOnly
-            />
-            <TextInput
-              id="phoneNumber"
-              label="Phone Number"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              disabled={isLoadingMutation}
-            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                id="email"
+                label="Email Address"
+                value={profile.email}
+                disabled
+                readOnly
+              />
+              <TextInput
+                id="phoneNumber"
+                label="Phone Number"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                disabled={isLoadingMutation}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ModernDatePicker
+                label="Birthday"
+                value={formData.birthday}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, birthday: val }))
+                }
+                maxDate={new Date().toISOString().split("T")[0]}
+                disabled={isLoadingMutation}
+              />
+              <div className="hidden md:block"></div>
+            </div>
           </div>
           <div className="flex justify-end pt-6 mt-6 border-t">
             <Button
               type="submit"
               variant="primary"
-              isLoading={updateProfileMutation.isPending}
+              isLoading={isLoadingMutation}
               disabled={!isFormChanged || isLoadingMutation}
               className="w-auto px-4"
             >
@@ -391,10 +431,8 @@ export default function ProfilePage() {
           </div>
         </form>
 
-        {/* ✅ NEW Change Password Card */}
         <ChangePasswordCard />
 
-        {/* --- Account Info Card --- */}
         <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
             Account Information
@@ -434,6 +472,15 @@ export default function ProfilePage() {
                 </span>
               </p>
             </div>
+            {profile.birthday && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-gray-500" />
+                <p>
+                  Birthday:{" "}
+                  <span className="font-semibold">{profile.birthday}</span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>

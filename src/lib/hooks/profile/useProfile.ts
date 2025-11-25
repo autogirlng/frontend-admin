@@ -8,6 +8,7 @@ import {
   UserProfile,
   UpdateProfilePayload,
   ChangePasswordPayload,
+  UpdateBirthdayPayload,
 } from "@/components/settings/profile/types";
 
 // Query Key
@@ -76,8 +77,21 @@ export function useChangePassword() {
       toast.success("Password changed successfully.");
     },
     onError: (error) => {
-      // The error message is in error.message (from apiClient's handleResponse)
       toast.error(error.message || "Failed to change password.");
+    },
+  });
+}
+
+export function useUpdateBirthday() {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, UpdateBirthdayPayload>({
+    mutationFn: (payload) => apiClient.patch("/users/birthday", payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROFILE_QUERY_KEY] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update birthday.");
     },
   });
 }

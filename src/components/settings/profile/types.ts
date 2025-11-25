@@ -1,5 +1,3 @@
-// app/dashboard/profile/types.ts
-
 export interface UserProfile {
   userId: string;
   firstName: string;
@@ -11,12 +9,17 @@ export interface UserProfile {
   referralCode?: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  birthday?: string;
 }
 
 export interface UpdateProfilePayload {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+}
+
+export interface UpdateBirthdayPayload {
+  birthday: string;
 }
 
 export interface ChangePasswordPayload {
