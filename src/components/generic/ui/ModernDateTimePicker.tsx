@@ -31,7 +31,9 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Store coordinates for the portal popup
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  // Store "placement" to know if we are rendering top or bottom (for animation/styling if needed)
+  const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -48,20 +50,54 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     }
   }, [dateValue]);
 
-  // Calculate position when opening
+  // --- SMART POSITIONING LOGIC ---
   const updatePosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
-    setCoords({
-      top: rect.bottom + window.scrollY + 8, // 8px gap
-      left: rect.left + window.scrollX,
-      width: rect.width > 288 ? rect.width : 288, // Min width for calendar (w-72 is 288px)
-    });
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Estimated dimensions of the popups (w-72 is approx 288px + padding)
+    const POPUP_WIDTH = 300;
+    const POPUP_HEIGHT = 350;
+
+    // 1. Horizontal Positioning (Prevent cutting off right edge)
+    let left = rect.left + window.scrollX;
+
+    // If the popup extends past the right edge of the screen...
+    if (rect.left + POPUP_WIDTH > viewportWidth) {
+      // ...align it to the right edge of the screen (minus 16px padding)
+      // or align it to the right edge of the input if that fits better
+      const diff = rect.left + POPUP_WIDTH - viewportWidth;
+      left = left - diff - 16;
+    }
+
+    // Ensure it doesn't go off the left edge
+    if (left < 0) left = 16;
+
+    // 2. Vertical Positioning (Flip to top if bottom is tight)
+    let top = rect.bottom + window.scrollY + 8;
+    let place: "top" | "bottom" = "bottom";
+
+    const spaceBelow = viewportHeight - rect.bottom;
+
+    // If less than popup height remains below, AND there is space above...
+    if (spaceBelow < POPUP_HEIGHT && rect.top > POPUP_HEIGHT) {
+      // Position ABOVE the input
+      // We don't know exact height until render, but we estimate based on CSS
+      // If rendering above, we anchor to rect.top minus height (approx)
+      // For portals, we usually just set bottom-aligned logic or specific top
+      // Here we will set a specific Top to emulate 'bottom-up'
+      top = rect.top + window.scrollY - POPUP_HEIGHT + 40; // Adjustment for visual balance
+      place = "top";
+    }
+
+    setCoords({ top, left });
+    setPlacement(place);
   };
 
-  // Handle Outside Clicks (Adapted for Portal)
+  // Handle Outside Clicks
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // Check if click is inside the Trigger OR the Popup
       const target = event.target as Node;
       const inCalendarTrigger = calendarRef.current?.contains(target);
       const inTimeTrigger = timeRef.current?.contains(target);
@@ -77,7 +113,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
 
     if (showCalendar || showTimePicker) {
       document.addEventListener("mousedown", handleClickOutside);
-      // Update position on scroll to keep attached
       window.addEventListener(
         "scroll",
         () => {
@@ -146,6 +181,16 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     );
   };
 
+  // NEW: Check if this is "Today"
+  const isToday = (day: number) => {
+    const today = new Date();
+    return (
+      today.getDate() === day &&
+      today.getMonth() === currentMonth.getMonth() &&
+      today.getFullYear() === currentMonth.getFullYear()
+    );
+  };
+
   const hours = Array.from({ length: 24 }, (_, i) =>
     String(i).padStart(2, "0")
   );
@@ -206,6 +251,8 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
           const day = i + 1;
           const disabled = isDateDisabled(day);
           const selected = isSelectedDate(day);
+          const today = isToday(day); // Check if today
+
           return (
             <button
               key={day}
@@ -213,10 +260,12 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
               disabled={disabled}
               onClick={() => handleDateClick(day)}
               className={`
-                h-8 w-8 rounded-full text-sm flex items-center justify-center transition-colors
+                h-8 w-8 rounded-full text-sm flex items-center justify-center transition-all relative
                 ${
                   selected
-                    ? "bg-blue-600 text-white shadow-md"
+                    ? "bg-blue-600 text-white shadow-md font-medium"
+                    : today
+                    ? "text-blue-600 font-bold ring-1 ring-blue-600 bg-blue-50" // Today Style
                     : "text-gray-700 hover:bg-gray-100"
                 }
                 ${
@@ -348,7 +397,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
         </div>
       </div>
 
-      {/* --- RENDER PORTALS (The High Z-Index Popups) --- */}
+      {/* --- RENDER PORTALS --- */}
       {mounted && showCalendar && createPortal(CalendarPopup, document.body)}
       {mounted && showTimePicker && createPortal(TimePopup, document.body)}
     </div>
