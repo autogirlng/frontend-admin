@@ -69,12 +69,13 @@ export function ActionModal({
         {children && <div className="mt-4">{children}</div>}
 
         {/* Footer Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex flex-wrap justify-end gap-3 mt-6">
           <Button
             type="button"
             variant="secondary"
             onClick={onClose}
             disabled={isLoading}
+            className="w-[200px] my-1"
           >
             Cancel
           </Button>
@@ -83,6 +84,7 @@ export function ActionModal({
             variant={variant}
             onClick={onConfirm}
             isLoading={isLoading}
+            className="w-[200px] my-1"
           >
             {actionLabel}
           </Button>

@@ -152,17 +152,23 @@ export default function HostsPage() {
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
+        <div className="flex flex-wrap items-center justify-between mb-8">
+          <div className="my-1">
             <h1 className="text-3xl font-bold text-gray-900">Hosts</h1>
             <p className="text-lg text-gray-600 mt-1">
               Manage all hosts on the platform.
             </p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Host
-          </Button>
+          <div className="my-1">
+            {" "}
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="w-auto"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Host
+            </Button>
+          </div>
         </div>
 
         {/* --- Search Bar --- */}

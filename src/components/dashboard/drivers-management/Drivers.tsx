@@ -238,21 +238,24 @@ export default function DriversPage() {
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
+        <div className="flex flex-wrap items-center justify-between mb-8">
+          <div className="my-1">
             <h1 className="text-3xl font-bold text-gray-900">Drivers</h1>
             <p className="text-lg text-gray-600 mt-1">
               Manage your company's drivers and their schedules.
             </p>
           </div>
-          <Button
-            variant="primary"
-            className="w-auto px-5"
-            onClick={() => openModal("create")}
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Create Driver
-          </Button>
+          <div className="my-1">
+            {" "}
+            <Button
+              variant="primary"
+              className="w-auto px-5"
+              onClick={() => openModal("create")}
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Create Driver
+            </Button>
+          </div>
         </div>
 
         {/* --- Search Bar --- */}
