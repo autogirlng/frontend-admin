@@ -39,7 +39,6 @@ const AddressInput = ({
   const [suggestions, setSuggestions] = useState<Prediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // ✅ NEW: State to track if an item was selected
   const [hasSelected, setHasSelected] = useState(false);
 
   const autocompleteService = useRef<any>(null);
@@ -84,8 +83,6 @@ const AddressInput = ({
   }, []);
 
   useEffect(() => {
-    // ✅ FIX: Add 'hasSelected' to the condition
-    // Don't fetch if a selection was just made
     if (!autocompleteService.current || value.length < 3 || hasSelected) {
       setSuggestions([]);
       setIsOpen(false);
@@ -116,7 +113,7 @@ const AddressInput = ({
     }, 400);
 
     return () => clearTimeout(handler);
-  }, [value, hasSelected]); // ✅ Add 'hasSelected' to dependency array
+  }, [value, hasSelected]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -132,10 +129,10 @@ const AddressInput = ({
   }, []);
 
   const handleSelect = (prediction: Prediction) => {
-    onChange(prediction.description); // Set input text
+    onChange(prediction.description);
     setIsOpen(false);
     setSuggestions([]);
-    setHasSelected(true); // ✅ Set the flag to true
+    setHasSelected(true);
 
     if (!placesService.current) {
       console.error("Google Places service not initialized.");
@@ -170,7 +167,6 @@ const AddressInput = ({
         id={id}
         error={error}
         value={value}
-        // ✅ FIX: When the user types, reset the flag
         onChange={(e) => {
           onChange(e.target.value);
           setHasSelected(false);
