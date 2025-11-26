@@ -1,7 +1,6 @@
 "use client";
 
-// ✅ 1. Added useEffect to imports
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react"; // ✅ Added useRef
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { Vehicle, VehicleStatus, AvailabilityStatus } from "./types";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -101,6 +100,10 @@ const formatOperationalStatus = (status: string) => {
 
 export default function VehicleOnboarding() {
   const router = useRouter();
+
+  // ✅ 1. Create a ref to target the top of the component
+  const topRef = useRef<HTMLDivElement>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
@@ -114,10 +117,22 @@ export default function VehicleOnboarding() {
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // ✅ 2. FIX: Reset pagination to 0 whenever search or status changes
+  // Reset pagination to 0 whenever search or status changes
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm, statusFilter]);
+
+  // ✅ 2. FIXED: Scroll to the topRef when page changes using scrollIntoView
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   // --- API Hooks ---
   const {
@@ -304,6 +319,9 @@ export default function VehicleOnboarding() {
 
   return (
     <>
+      {/* ✅ 3. Add the Ref Anchor here at the very top */}
+      <div ref={topRef} />
+
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
         {/* --- Header --- */}
