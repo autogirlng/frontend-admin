@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+// ✅ 1. Added useEffect to imports
+import React, { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import {
@@ -131,6 +132,11 @@ export default function BookingsPage() {
   const [targetVehicleId, setTargetVehicleId] = useState<string>("");
   const [waivePriceDiff, setWaivePriceDiff] = useState<boolean>(false);
 
+  // ✅ 2. FIX: Reset pagination to 0 whenever ANY filter changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm, statusFilter, bookingTypeFilter, dateRange]);
+
   // --- API Hooks ---
   const {
     data: paginatedData,
@@ -179,7 +185,7 @@ export default function BookingsPage() {
 
   const handleDateChange = (newDateRange: DateRange | undefined) => {
     setDateRange(newDateRange);
-    setCurrentPage(0);
+    // setCurrentPage(0); // Handled by useEffect now
   };
 
   const handleCopyInvoice = (invoiceNumber: string) => {
@@ -331,7 +337,6 @@ export default function BookingsPage() {
       });
     }
 
-    // ✅ Use 'danger: true' instead of 'variant: "danger"'
     if (!isCancelled && booking.bookingStatus !== BookingStatus.COMPLETED) {
       actions.push({
         label: "Cancel Trip",
@@ -341,7 +346,6 @@ export default function BookingsPage() {
       });
     }
 
-    // ✅ Use 'danger: true' instead of 'variant: "danger"'
     actions.push({
       label: "Delete Record",
       icon: Trash2,
@@ -488,7 +492,7 @@ export default function BookingsPage() {
             selected={statusFilter}
             onChange={(option) => {
               setStatusFilter(option);
-              setCurrentPage(0);
+              // setCurrentPage(0); // Handled by useEffect
             }}
           />
           <Select
@@ -501,7 +505,7 @@ export default function BookingsPage() {
             selected={bookingTypeFilter}
             onChange={(option) => {
               setBookingTypeFilter(option);
-              setCurrentPage(0);
+              // setCurrentPage(0); // Handled by useEffect
             }}
             disabled={isLoadingBookingTypes}
           />
