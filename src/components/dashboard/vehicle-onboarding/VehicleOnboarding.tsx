@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+// ✅ 1. Added useEffect to imports
+import React, { useState, useMemo, useEffect } from "react";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { Vehicle, VehicleStatus, AvailabilityStatus } from "./types";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -42,9 +43,6 @@ const statusOptions: Option[] = [
   { id: VehicleStatus.IN_REVIEW, name: "In Review" },
   { id: VehicleStatus.APPROVED, name: "Approved" },
   { id: VehicleStatus.REJECTED, name: "Rejected" },
-  /*   { id: VehicleStatus.UNAVAILABLE, name: "Unavailable" },
-  { id: VehicleStatus.IN_MAINTENANCE, name: "In Maintenance" },
-  { id: VehicleStatus.COMPANY_USE, name: "Company Use" }, */
 ];
 
 const formatOnboardingStatus = (status: VehicleStatus) => {
@@ -64,7 +62,7 @@ const formatOperationalStatus = (status: string) => {
       icon = <Circle className="h-2 w-2 text-green-500 fill-current" />;
       break;
     case "BOOKED":
-    case "IN_TRIP": // Assuming IN_TRIP might appear
+    case "IN_TRIP":
       colorClasses = "bg-blue-100 text-blue-800";
       icon = <Circle className="h-2 w-2 text-blue-500 fill-current" />;
       break;
@@ -107,15 +105,19 @@ export default function VehicleOnboarding() {
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
 
-  // ✅ MODIFIED: Updated modal state
   const [modal, setModal] = useState<"reject" | "setActive" | null>(null);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isUnavailabilityModalOpen, setIsUnavailabilityModalOpen] =
-    useState(false); // ✅ NEW
+    useState(false);
 
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // ✅ 2. FIX: Reset pagination to 0 whenever search or status changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm, statusFilter]);
 
   // --- API Hooks ---
   const {
@@ -125,7 +127,6 @@ export default function VehicleOnboarding() {
     isPlaceholderData,
   } = useGetVehicles(currentPage, debouncedSearchTerm, statusFilter?.id || "");
 
-  // 🛑 REMOVED: availabilityMutation
   const setActiveMutation = useSetVehicleActive();
   const rejectMutation = useUpdateVehicleStatus();
 
@@ -141,7 +142,6 @@ export default function VehicleOnboarding() {
     setSelectedVehicle(vehicle);
     setIsApproveModalOpen(true);
   };
-  // ✅ NEW: Handler for new modal
   const openUnavailabilityModal = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
     setIsUnavailabilityModalOpen(true);
@@ -151,13 +151,11 @@ export default function VehicleOnboarding() {
     setModal(null);
     setIsApproveModalOpen(false);
     setIsAddVehicleModalOpen(false);
-    setIsUnavailabilityModalOpen(false); // ✅ NEW
+    setIsUnavailabilityModalOpen(false);
     setSelectedVehicle(null);
   };
 
   // --- Action Handlers ---
-  // 🛑 REMOVED: handleSetAvailability
-
   const handleSetActive = () => {
     if (!selectedVehicle) return;
     setActiveMutation.mutate(
@@ -216,7 +214,7 @@ export default function VehicleOnboarding() {
         actions.push({
           label: "Set Availability",
           icon: PauseCircle,
-          onClick: () => openUnavailabilityModal(vehicle), // ✅ UPDATED
+          onClick: () => openUnavailabilityModal(vehicle),
         });
         break;
 
@@ -255,7 +253,7 @@ export default function VehicleOnboarding() {
         cell: (item) => item.licensePlateNumber || "N/A",
       },
       {
-        header: "Onboarding Status", // ✅ Renamed
+        header: "Onboarding Status",
         accessorKey: "status",
         cell: (item) => {
           let colorClasses = "";
@@ -290,20 +288,18 @@ export default function VehicleOnboarding() {
           );
         },
       },
-      // ✅ --- NEW COLUMN ---
       {
         header: "Operational Status",
         accessorKey: "operationalStatus",
         cell: (item) => formatOperationalStatus(item.operationalStatus),
       },
-      // ✅ --- END NEW COLUMN ---
       {
         header: "Actions",
         accessorKey: "id",
         cell: (item) => <ActionMenu actions={getVehicleActions(item)} />,
       },
     ],
-    [] // Empty dep array, getVehicleActions is stable
+    []
   );
 
   return (
@@ -323,7 +319,7 @@ export default function VehicleOnboarding() {
           <div>
             <Button
               variant="primary"
-              className="w-auto px-5" // Use your Button component
+              className="w-auto px-5"
               onClick={() => setIsAddVehicleModalOpen(true)}
             >
               <Plus className="h-5 w-5 mr-2" />
@@ -398,8 +394,6 @@ export default function VehicleOnboarding() {
       </main>
 
       {/* --- Modals --- */}
-
-      {/* 2. Reject Vehicle Modal */}
       {modal === "reject" && selectedVehicle && (
         <ActionModal
           title="Reject Vehicle"
@@ -418,7 +412,6 @@ export default function VehicleOnboarding() {
         />
       )}
 
-      {/* 3. Set Active Modal */}
       {modal === "setActive" && selectedVehicle && (
         <ActionModal
           title="Set Vehicle Active"

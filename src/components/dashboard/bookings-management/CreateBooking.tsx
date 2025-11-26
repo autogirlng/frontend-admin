@@ -52,7 +52,7 @@ import { ModernDateTimePicker } from "@/components/generic/ui/ModernDateTimePick
 type Step = "search" | "results" | "details" | "confirm" | "success";
 
 const initialFilters: Omit<VehicleSearchFilters, "page"> = {
-  radiusInKm: 612,
+  radiusInKm: 100,
   minSeats: 1,
   pickupLocationString: "",
   dropoffLocationString: "",

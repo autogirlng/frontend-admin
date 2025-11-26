@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+// ✅ 1. Added useEffect to imports
+import React, { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
 
@@ -29,6 +30,11 @@ export default function AvailabilityPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // ✅ 2. FIX: Reset pagination to 0 whenever search or date range changes
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearchTerm, dateRange]);
 
   const {
     data: availabilityData,
