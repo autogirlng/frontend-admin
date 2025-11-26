@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
@@ -55,6 +55,19 @@ export default function TripsPage() {
   >(null);
 
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+
+  const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   const [filters, setFilters] = useState({
     bookingStatus: null as string | null,
@@ -297,6 +310,7 @@ export default function TripsPage() {
     <>
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
+        <div ref={topRef} />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Trips</h1>
           <p className="text-lg text-gray-600 mt-1">

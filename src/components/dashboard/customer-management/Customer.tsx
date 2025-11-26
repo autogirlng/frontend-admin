@@ -1,7 +1,7 @@
 // app/dashboard/customer-management/CustomersPage.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetCustomers } from "@/lib/hooks/customer-management/useCustomers";
 import { useUpdateCustomerStatus } from "@/lib/hooks/customer-management/useUpdateCustomerStatus";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
@@ -36,6 +36,19 @@ export default function CustomersPage() {
   );
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   // --- Data Fetching ---
   const {
@@ -145,6 +158,7 @@ export default function CustomersPage() {
       <Toaster position="top-right" />
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
+        <div ref={topRef} />
         {/* --- Header --- */}
         <div className="flex items-center justify-between mb-8">
           <div>

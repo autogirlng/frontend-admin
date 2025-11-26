@@ -1,7 +1,7 @@
 // app/dashboard/finance/payments/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -68,6 +68,19 @@ export default function PaymentsPage() {
     dateRange: null as DateRange | null,
   });
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   // --- API Hooks ---
   const {
@@ -231,6 +244,7 @@ export default function PaymentsPage() {
     <>
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
+        <div ref={topRef} />
         {/* --- Header --- */}
         <div className="flex items-center justify-between mb-8 flex-wrap">
           <div>

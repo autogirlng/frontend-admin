@@ -1,7 +1,7 @@
 "use client";
 
 // ✅ 1. Added useEffect to imports
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGetMyDrivers,
@@ -54,10 +54,23 @@ export default function DriversPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+  const topRef = useRef<HTMLDivElement>(null);
+
   // ✅ 2. FIX: Reset pagination to 0 whenever search changes
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm]);
+
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   // --- API Hooks ---
   const {
@@ -234,6 +247,7 @@ export default function DriversPage() {
     <>
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
+        <div ref={topRef} />
         {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="my-1">

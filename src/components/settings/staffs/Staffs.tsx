@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useGetAdmins,
   useUpdateAdminStatus,
@@ -62,10 +62,23 @@ export default function StaffPage() {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+  const topRef = useRef<HTMLDivElement>(null);
+
   // ✅ 2. FIX: Reset pagination to 0 whenever search changes
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm]);
+
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   // --- API Hooks ---
   const {
@@ -237,6 +250,7 @@ export default function StaffPage() {
       <Toaster position="top-right" />
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
+        <div ref={topRef} />
         {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
