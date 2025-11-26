@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import {
   Loader2,
@@ -11,6 +11,7 @@ import {
   X,
   MapPin,
   Filter,
+  Trash2,
 } from "lucide-react";
 
 // Import Hooks
@@ -45,12 +46,23 @@ import {
   BookingChannel,
   CompanyBankAccount,
   VehicleSearchFilters,
-  CreateBookingPayload, // Ensure this is imported
+  CreateBookingPayload,
+  AreaOfUseItem,
 } from "./types";
 import { ModernDateTimePicker } from "@/components/generic/ui/ModernDateTimePicker";
 
-// --- Page State Types ---
 type Step = "search" | "results" | "details" | "confirm" | "success";
+
+interface ExtendedBookingSegment extends Partial<BookingSegmentPayload> {
+  pickupCoords: { latitude: number; longitude: number } | null;
+  dropoffCoords: { latitude: number; longitude: number } | null;
+
+  uiAreaOfUse: {
+    id: number;
+    name: string;
+    coords: { latitude: number; longitude: number } | null;
+  }[];
+}
 
 const initialFilters: Omit<VehicleSearchFilters, "page"> = {
   radiusInKm: 100,
@@ -69,10 +81,7 @@ const initialFilters: Omit<VehicleSearchFilters, "page"> = {
   vehicleModelId: "",
 };
 
-const initialBookingDetails: Partial<BookingSegmentPayload> & {
-  pickupCoords: { latitude: number; longitude: number } | null;
-  dropoffCoords: { latitude: number; longitude: number } | null;
-} = {
+const initialBookingDetails: ExtendedBookingSegment = {
   startDate: "",
   startTime: "",
   pickupLocationString: "",
@@ -80,6 +89,7 @@ const initialBookingDetails: Partial<BookingSegmentPayload> & {
   bookingTypeId: "",
   pickupCoords: null,
   dropoffCoords: null,
+  uiAreaOfUse: [],
 };
 
 const channelOptions: Option[] = [
@@ -91,7 +101,7 @@ const channelOptions: Option[] = [
 ];
 
 export default function CreateBookingPage() {
-  // --- State ---
+  const topRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState<Step>("search");
   const [filters, setFilters] =
     useState<Omit<VehicleSearchFilters, "page">>(initialFilters);
@@ -107,13 +117,12 @@ export default function CreateBookingPage() {
   const [runSearch, setRunSearch] = useState(false);
   const [selectedVehicle, setSelectedVehicle] =
     useState<VehicleSearchResult | null>(null);
-  const [segments, setSegments] = useState<(typeof initialBookingDetails)[]>([
+  const [segments, setSegments] = useState<ExtendedBookingSegment[]>([
     { ...initialBookingDetails },
   ]);
   const [calculationResult, setCalculationResult] =
     useState<CalculateBookingResponse | null>(null);
 
-  // ✅ Updated State to include discountAmount
   const [guestDetails, setGuestDetails] = useState({
     guestFullName: "",
     guestEmail: "",
@@ -121,7 +130,7 @@ export default function CreateBookingPage() {
     extraDetails: "",
     purposeOfRide: "",
     channel: "WEBSITE" as BookingChannel,
-    discountAmount: "", // String for input handling
+    discountAmount: "",
   });
 
   const [bookingResponse, setBookingResponse] =
@@ -130,6 +139,17 @@ export default function CreateBookingPage() {
     null
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  useEffect(() => {
+    if (topRef.current) {
+      // 'block: "start"' ensures it aligns to the top of the container
+      // This works even if the scroll is inside a div (not the window)
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Fallback just in case
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [searchPage]);
 
   // --- Queries ---
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } =
@@ -231,7 +251,11 @@ export default function CreateBookingPage() {
     setStep("results");
   };
 
-  const handleSegmentChange = (index: number, field: string, value: any) => {
+  const handleSegmentChange = (
+    index: number,
+    field: keyof ExtendedBookingSegment,
+    value: any
+  ) => {
     setSegments((prev) =>
       prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
     );
@@ -252,6 +276,53 @@ export default function CreateBookingPage() {
     );
   };
 
+  // --- Area of Use Handlers ---
+  const addAreaOfUse = (segmentIndex: number) => {
+    setSegments((prev) =>
+      prev.map((s, i) => {
+        if (i !== segmentIndex) return s;
+        return {
+          ...s,
+          uiAreaOfUse: [
+            ...s.uiAreaOfUse,
+            { id: Date.now(), name: "", coords: null },
+          ],
+        };
+      })
+    );
+  };
+
+  const removeAreaOfUse = (segmentIndex: number, areaId: number) => {
+    setSegments((prev) =>
+      prev.map((s, i) => {
+        if (i !== segmentIndex) return s;
+        return {
+          ...s,
+          uiAreaOfUse: s.uiAreaOfUse.filter((a) => a.id !== areaId),
+        };
+      })
+    );
+  };
+
+  const updateAreaOfUse = (
+    segmentIndex: number,
+    areaId: number,
+    field: "name" | "coords",
+    value: any
+  ) => {
+    setSegments((prev) =>
+      prev.map((s, i) => {
+        if (i !== segmentIndex) return s;
+        return {
+          ...s,
+          uiAreaOfUse: s.uiAreaOfUse.map((a) =>
+            a.id === areaId ? { ...a, [field]: value } : a
+          ),
+        };
+      })
+    );
+  };
+
   const addSegment = () => {
     const last = segments[segments.length - 1];
     setSegments((prev) => [
@@ -262,6 +333,7 @@ export default function CreateBookingPage() {
         pickupCoords: last.dropoffCoords,
         startDate: last.startDate,
         startTime: last.startTime,
+        uiAreaOfUse: [],
       },
     ]);
   };
@@ -290,8 +362,17 @@ export default function CreateBookingPage() {
     e.preventDefault();
     if (!selectedVehicle) return;
 
-    const segmentPayloads = segments.map((s) => {
+    const segmentPayloads: BookingSegmentPayload[] = segments.map((s) => {
       const safeStartTime = s.startTime || "";
+
+      const areaOfUsePayload: AreaOfUseItem[] = s.uiAreaOfUse
+        .filter((a) => a.name && a.coords)
+        .map((a) => ({
+          areaOfUseName: a.name,
+          areaOfUseLatitude: a.coords!.latitude,
+          areaOfUseLongitude: a.coords!.longitude,
+        }));
+
       return {
         bookingTypeId: s.bookingTypeId || "",
         startDate: s.startDate || "",
@@ -303,13 +384,14 @@ export default function CreateBookingPage() {
         dropoffLongitude: s.dropoffCoords?.longitude || 0,
         pickupLocationString: s.pickupLocationString || "",
         dropoffLocationString: s.dropoffLocationString || "",
+        areaOfUse: areaOfUsePayload.length > 0 ? areaOfUsePayload : undefined,
       };
     });
 
     calculationMutation.mutate(
       {
         vehicleId: selectedVehicle.id,
-        segments: segmentPayloads as BookingSegmentPayload[],
+        segments: segmentPayloads,
       },
       {
         onSuccess: (data) => {
@@ -365,7 +447,6 @@ export default function CreateBookingPage() {
     setSegments([initialBookingDetails]);
     setCalculationResult(null);
     setBookingResponse(null);
-    // Reset guest details
     setGuestDetails({
       guestFullName: "",
       guestEmail: "",
@@ -384,8 +465,6 @@ export default function CreateBookingPage() {
       <h2 className="text-xl font-semibold mb-4 text-gray-800">
         Find a Vehicle
       </h2>
-
-      {/* 1. Proximity / Location Trigger */}
       <div className="py-4 space-y-4">
         <div className="flex items-center gap-2 text-blue-800 mb-1">
           <MapPin className="w-4 h-4" />
@@ -541,8 +620,17 @@ export default function CreateBookingPage() {
 
   const renderSearchResults = () => (
     <div>
+      <div ref={topRef} />
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Results</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Results
+          {/* Optional: Show page number */}
+          {searchResultsData && (
+            <span className="text-sm font-normal text-gray-500 ml-2">
+              (Page {searchPage + 1})
+            </span>
+          )}
+        </h2>
         <Button
           variant="secondary"
           onClick={() => {
@@ -555,17 +643,18 @@ export default function CreateBookingPage() {
         </Button>
       </div>
 
+      {/* Initial Loading State (First Search) */}
       {isSearching && !searchResultsData && (
         <div className="flex justify-center p-20">
           <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
         </div>
       )}
 
+      {/* No Results State */}
       {!isSearching &&
         !isSearchError &&
         searchResultsData?.content.length === 0 && (
           <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-            <div className="flex justify-center"></div>
             <p className="text-gray-500 text-lg">
               No vehicles found matching your criteria.
             </p>
@@ -575,109 +664,115 @@ export default function CreateBookingPage() {
                 setRunSearch(false);
                 setStep("search");
               }}
+              className="w-[350px] mt-4"
             >
               Try different filters
             </Button>
           </div>
         )}
 
-      <div className="grid grid-cols-1 gap-6">
-        {searchResultsData?.content.map((vehicle) => (
-          <div
-            key={vehicle.id}
-            className="bg-white border transition-shadow duration-200 overflow-hidden flex flex-col md:flex-row"
-          >
-            <div className="md:w-64 h-48 md:h-auto relative bg-gray-200">
-              <img
-                src={
-                  vehicle.photos.find((p) => p.isPrimary)?.cloudinaryUrl ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    vehicle.name
-                  )}&background=random&size=96`
-                }
-                alt={vehicle.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                {vehicle.vehicleTypeName}
-              </div>
+      <div className="relative min-h-[400px]">
+        {isSearchPlaceholder && (
+          <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[1px] flex justify-center items-start pt-32 transition-all duration-300">
+            <div className="bg-white p-3 rounded-full shadow-xl border border-gray-100">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
+          </div>
+        )}
 
-            <div className="flex-1 p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">
-                      {vehicle.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-mono text-xs">
-                        {vehicle.vehicleIdentifier}
-                      </span>
-                      <span>•</span>
-                      <span>{vehicle.numberOfSeats} Seats</span>
-                      <span>•</span>
-                      <span>{vehicle.city}</span>
-                    </div>
-                  </div>
-                  {/* Host Info Display */}
-                  {(vehicle.hostName || vehicle.hostPhoneNumber) && (
-                    <div className="hidden md:flex flex-col items-end text-right">
-                      <div className="flex items-center text-sm font-medium text-indigo-900 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
-                        {vehicle.hostName || "Host"}
-                      </div>
-                      {vehicle.hostPhoneNumber && (
-                        <span className="text-xs text-indigo-600 mt-0.5 flex items-center">
-                          {vehicle.hostPhoneNumber}
+        <div
+          className={`grid grid-cols-1 gap-6 transition-opacity duration-300 ${
+            isSearchPlaceholder
+              ? "opacity-40 pointer-events-none grayscale"
+              : "opacity-100"
+          }`}
+        >
+          {searchResultsData?.content.map((vehicle) => (
+            <div
+              key={vehicle.id}
+              className="bg-white border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col md:flex-row"
+            >
+              <div className="w-full h-64 md:w-72 md:h-auto relative bg-gray-200 shrink-0">
+                <img
+                  src={
+                    vehicle.photos.find((p) => p.isPrimary)?.cloudinaryUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      vehicle.name
+                    )}&background=random&size=96`
+                  }
+                  alt={vehicle.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                  {vehicle.vehicleTypeName}
+                </div>
+              </div>
+
+              <div className="flex-1 p-5 flex flex-col justify-between">
+                <div>
+                  <div className="flex flex-wrap justify-between items-start">
+                    <div className="my-2">
+                      <h3 className="text-xl font-bold text-gray-900 line-clamp-1">
+                        {vehicle.name}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mt-2">
+                        <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-mono text-xs border border-gray-200">
+                          {vehicle.vehicleIdentifier}
                         </span>
-                      )}
+                        <span className="hidden sm:inline">•</span>
+                        <span>{vehicle.numberOfSeats} Seats</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span>{vehicle.city}</span>
+                      </div>
                     </div>
-                  )}
+                    {(vehicle.hostName || vehicle.hostPhoneNumber) && (
+                      <div className="flex-col items-end text-right my-2">
+                        <div className="flex items-center text-sm font-medium text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+                          {vehicle.hostName || "Host"}
+                        </div>
+                        {vehicle.hostPhoneNumber && (
+                          <span className="text-xs text-indigo-600 mt-1">
+                            {vehicle.hostPhoneNumber}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Mobile Host Info */}
-                {(vehicle.hostName || vehicle.hostPhoneNumber) && (
-                  <div className="flex md:hidden items-center gap-3 mt-3 text-sm text-indigo-900 bg-indigo-50 p-2 rounded border border-indigo-100">
-                    <span className="font-medium">{vehicle.hostName}</span>
-                    {vehicle.hostPhoneNumber && (
-                      <span className="text-indigo-600 text-xs ml-auto">
-                        {vehicle.hostPhoneNumber}
+                <div className="mt-5 flex items-end justify-between border-t border-gray-100 pt-4 flex-wrap gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-1">
+                      Starting from
+                    </p>
+                    {vehicle.allPricingOptions.length > 0 ? (
+                      <p className="text-2xl font-bold text-green-700">
+                        {formatPrice(
+                          Math.min(
+                            ...vehicle.allPricingOptions.map((p) => p.price)
+                          )
+                        )}
+                      </p>
+                    ) : (
+                      <span className="text-gray-400 italic text-sm">
+                        Price unavailable
                       </span>
                     )}
                   </div>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-end justify-between border-t pt-4 flex-wrap">
-                <div className="my-1">
-                  <p className="text-sm text-gray-500">Starting from</p>
-                  {vehicle.allPricingOptions.length > 0 ? (
-                    <p className="text-2xl font-bold text-green-700">
-                      {formatPrice(
-                        Math.min(
-                          ...vehicle.allPricingOptions.map((p) => p.price)
-                        )
-                      )}
-                    </p>
-                  ) : (
-                    <span className="text-gray-400 italic text-sm">
-                      Price unavailable
-                    </span>
-                  )}
+                  <Button
+                    onClick={() => handleSelectVehicle(vehicle)}
+                    className="w-full sm:w-auto px-8"
+                  >
+                    Select Vehicle
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => handleSelectVehicle(vehicle)}
-                  className="px-6 w-[200px] my-1"
-                >
-                  Select Vehicle
-                </Button>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-8 pb-8">
         <PaginationControls
           currentPage={searchPage}
           totalPages={searchResultsData?.totalPages || 0}
@@ -767,6 +862,57 @@ export default function CreateBookingPage() {
           ) : (
             <p className="text-red-500 text-sm">No pricing options</p>
           )}
+
+          <div className="py-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-500" /> Areas of Use
+                (Optional)
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => addAreaOfUse(index)}
+                className="h-8 text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" /> Add Area
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {segment.uiAreaOfUse.length === 0 && (
+                <p className="text-xs text-gray-400 italic">
+                  No specific areas of use added.
+                </p>
+              )}
+              {segment.uiAreaOfUse.map((area) => (
+                <div key={area.id} className="flex gap-2 items-start">
+                  <div className="flex-grow">
+                    <AddressInput
+                      label="Area of Use"
+                      id={`area-${area.id}`}
+                      value={area.name}
+                      onChange={(val) =>
+                        updateAreaOfUse(index, area.id, "name", val)
+                      }
+                      onLocationSelect={(coords) =>
+                        updateAreaOfUse(index, area.id, "coords", coords)
+                      }
+                      placeholder="Enter location (e.g. Shoprite Sangotedo)"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAreaOfUse(index, area.id)}
+                    className="mt-1 p-2 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ))}
       <div className="flex gap-2 pt-2">
@@ -805,7 +951,6 @@ export default function CreateBookingPage() {
 
       {calculationResult && (
         <div className="bg-white border border-gray-200 overflow-hidden shadow-sm">
-          {/* Header */}
           <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="font-semibold text-gray-800">Payment Summary</h3>
             <span className="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-1 rounded border">
@@ -830,7 +975,7 @@ export default function CreateBookingPage() {
               </span>
             </div>
 
-            {/* Geofence Surcharge (Conditionally Rendered) */}
+            {/* Geofence Surcharge */}
             {calculationResult.geofenceSurcharge > 0 && (
               <div className="bg-orange-50 p-3 border border-orange-100">
                 <div className="flex justify-between items-start text-orange-800 text-sm">
@@ -852,7 +997,7 @@ export default function CreateBookingPage() {
               </div>
             )}
 
-            {/* Discount (Conditionally Rendered) */}
+            {/* Discount */}
             {calculationResult.discountAmount > 0 && (
               <div className="flex justify-between items-center text-green-600 text-sm bg-green-50 p-2 rounded border border-green-100">
                 <span className="font-medium">Discount Applied</span>
@@ -924,7 +1069,6 @@ export default function CreateBookingPage() {
           required
         />
 
-        {/* ✅ DISCOUNT AND CHANNEL SIDE-BY-SIDE */}
         <div className="grid md:grid-cols-2 gap-4">
           <Select
             label="Booking Channel"

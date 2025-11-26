@@ -62,6 +62,12 @@ export interface VehicleSearchResult {
   hostPhoneNumber?: string;
 }
 
+export interface AreaOfUseItem {
+  areaOfUseLatitude: number;
+  areaOfUseLongitude: number;
+  areaOfUseName: string;
+}
+
 // --- Booking Calculation ---
 export interface BookingSegmentPayload {
   bookingTypeId: string;
@@ -73,6 +79,7 @@ export interface BookingSegmentPayload {
   dropoffLongitude: number;
   pickupLocationString: string;
   dropoffLocationString: string;
+  areaOfUse?: AreaOfUseItem[];
 }
 
 export interface CalculateBookingPayload {
