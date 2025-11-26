@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   useGetAdmins,
   useUpdateAdminStatus,
   useResendCredentials,
   useDownloadCredentials,
 } from "@/lib/hooks/settings/useAdmins";
-// ✅ --- NEW IMPORTS ---
 import {
   useGetDepartments,
   useUnassignDepartment,
@@ -27,7 +26,7 @@ import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import { CreateAdminModal } from "./CreateAdminModal";
 import { PromoteUserModal } from "./PromoteUserModal";
 import { AdminDetailModal } from "./AdminDetailModal";
-import { AssignDepartmentModal } from "./AssignDepartmentModal"; // ✅ Import new modal
+import { AssignDepartmentModal } from "./AssignDepartmentModal";
 
 // Icons
 import {
@@ -40,8 +39,8 @@ import {
   Download,
   ArrowUpCircle,
   View,
-  Building, // ✅ Import
-  UserX, // ✅ Import
+  Building,
+  UserX,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -49,7 +48,6 @@ export default function StaffPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  // ✅ UPDATED modal state
   const [modal, setModal] = useState<
     | "create"
     | "promote"
@@ -64,15 +62,19 @@ export default function StaffPage() {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+  // ✅ 2. FIX: Reset pagination to 0 whenever search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
+
   // --- API Hooks ---
   const {
     data: paginatedData,
-    isLoading: isLoadingAdmins, // Renamed
+    isLoading: isLoadingAdmins,
     isError,
     isPlaceholderData,
   } = useGetAdmins(currentPage, debouncedSearchTerm);
 
-  // ✅ Fetch departments to check for loading state
   const { isLoading: isLoadingDepts } = useGetDepartments();
 
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
@@ -81,13 +83,11 @@ export default function StaffPage() {
     useResendCredentials();
   const { mutate: downloadCredentials, isPending: isDownloading } =
     useDownloadCredentials();
-  // ✅ NEW HOOK
   const { mutate: unassignUser, isPending: isUnassigning } =
     useUnassignDepartment();
 
   const admins = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
-  // ✅ Combine loading states
   const isLoading = isLoadingAdmins || isLoadingDepts;
 
   // --- Modal Handlers ---
@@ -99,7 +99,7 @@ export default function StaffPage() {
       | "resend"
       | "view"
       | "assignDept"
-      | "unassignDept", // ✅ UPDATED
+      | "unassignDept",
     admin: AdminUser | null = null
   ) => {
     setSelectedAdmin(admin);
@@ -129,7 +129,6 @@ export default function StaffPage() {
     downloadCredentials({ adminId: admin.id, adminName: adminName });
   };
 
-  // ✅ NEW HANDLER
   const handleUnassignConfirm = () => {
     if (!selectedAdmin) return;
     unassignUser({ userId: selectedAdmin.id }, { onSuccess: closeModal });
@@ -143,7 +142,6 @@ export default function StaffPage() {
         icon: View,
         onClick: () => openModal("view", admin),
       },
-      // ✅ DYNAMIC ASSIGN/UNASSIGN
       admin.departmentName
         ? {
             label: "Change Department",
@@ -155,7 +153,6 @@ export default function StaffPage() {
             icon: Building,
             onClick: () => openModal("assignDept", admin),
           },
-      // ✅ ADD UNASSIGN ACTION (only if assigned)
       ...(admin.departmentName
         ? [
             {
@@ -332,7 +329,6 @@ export default function StaffPage() {
         <AdminDetailModal adminId={selectedAdmin.id} onClose={closeModal} />
       )}
 
-      {/* ✅ RENDER NEW MODALS */}
       {modal === "assignDept" && selectedAdmin && (
         <AssignDepartmentModal adminUser={selectedAdmin} onClose={closeModal} />
       )}

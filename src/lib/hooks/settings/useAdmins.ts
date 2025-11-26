@@ -1,9 +1,8 @@
-// lib/hooks/admin/useAdmins.ts
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import { apiClient } from "@/lib/apiClient"; // Adjust path
+import { apiClient } from "@/lib/apiClient";
 import {
   PaginatedResponse,
   AdminUser,
@@ -13,13 +12,11 @@ import {
   AdminUserDetail,
 } from "@/components/settings/staffs/types";
 
-// --- Query Keys ---
 export const ADMINS_QUERY_KEY = "admins";
 export const ADMIN_DETAIL_KEY = "adminDetail";
 export const CUSTOMERS_SEARCH_KEY = "customersSearch";
 export const HOSTS_SEARCH_KEY = "hostsSearch";
 
-// --- GET All Admins ---
 export function useGetAdmins(page: number, searchTerm: string) {
   return useQuery<PaginatedResponse<AdminUser>>({
     queryKey: [ADMINS_QUERY_KEY, page, searchTerm],
@@ -42,11 +39,10 @@ export function useGetAdminDetails(adminId: string | null) {
     queryKey: [ADMIN_DETAIL_KEY, adminId],
     queryFn: () =>
       apiClient.get<AdminUserDetail>(`/admin/users/admins/${adminId}`),
-    enabled: !!adminId, // Only run if adminId is not null
+    enabled: !!adminId,
   });
 }
 
-// --- GET Customers (for promotion search) ---
 export function useGetCustomersForPromotion(searchTerm: string) {
   return useQuery<PaginatedResponse<Customer>>({
     queryKey: [CUSTOMERS_SEARCH_KEY, searchTerm],
@@ -54,11 +50,10 @@ export function useGetCustomersForPromotion(searchTerm: string) {
       apiClient.get(
         `/admin/users/customers?page=0&size=5&searchTerm=${searchTerm}`
       ),
-    enabled: searchTerm.length > 2, // Only search after 3+ chars
+    enabled: searchTerm.length > 2,
   });
 }
 
-// --- GET Hosts (for promotion search) ---
 export function useGetHostsForPromotion(searchTerm: string) {
   return useQuery<PaginatedResponse<Host>>({
     queryKey: [HOSTS_SEARCH_KEY, searchTerm],
@@ -66,11 +61,10 @@ export function useGetHostsForPromotion(searchTerm: string) {
       apiClient.get(
         `/admin/users/hosts?page=0&size=5&searchTerm=${searchTerm}`
       ),
-    enabled: searchTerm.length > 2, // Only search after 3+ chars
+    enabled: searchTerm.length > 2,
   });
 }
 
-// --- PATCH Update Admin Status ---
 export function useUpdateAdminStatus() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, { userId: string; isActive: boolean }>({
@@ -90,7 +84,6 @@ export function useUpdateAdminStatus() {
   });
 }
 
-// --- POST Create New Admin ---
 export function useCreateAdmin() {
   const queryClient = useQueryClient();
   return useMutation<AdminUser, Error, CreateAdminPayload>({
@@ -106,7 +99,6 @@ export function useCreateAdmin() {
   });
 }
 
-// --- PATCH Promote User to Admin ---
 export function usePromoteUserToAdmin() {
   const queryClient = useQueryClient();
   return useMutation<AdminUser, Error, string>({
@@ -118,7 +110,6 @@ export function usePromoteUserToAdmin() {
         queryKey: [ADMINS_QUERY_KEY],
         exact: false,
       });
-      // Also invalidate customer/host lists if they are separate
       queryClient.invalidateQueries({
         queryKey: ["customers"],
         exact: false,
@@ -132,7 +123,6 @@ export function usePromoteUserToAdmin() {
   });
 }
 
-// --- POST Resend Credentials ---
 export function useResendCredentials() {
   return useMutation<unknown, Error, string>({
     mutationFn: (adminId: string) =>
@@ -145,11 +135,9 @@ export function useResendCredentials() {
   });
 }
 
-// --- POST Download Credentials ---
 export function useDownloadCredentials() {
   return useMutation<unknown, Error, { adminId: string; adminName: string }>({
     mutationFn: async ({ adminId, adminName }) => {
-      // Use the raw download function from your apiClient
       await apiClient.postAndDownloadFile(
         `/admin/users/admins/${adminId}/download-credentials`,
         {},
