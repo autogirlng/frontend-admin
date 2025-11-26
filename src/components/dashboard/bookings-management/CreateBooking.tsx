@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import {
   Loader2,
@@ -45,6 +45,7 @@ import {
   BookingChannel,
   CompanyBankAccount,
   VehicleSearchFilters,
+  CreateBookingPayload, // Ensure this is imported
 } from "./types";
 import { ModernDateTimePicker } from "@/components/generic/ui/ModernDateTimePicker";
 
@@ -111,6 +112,8 @@ export default function CreateBookingPage() {
   ]);
   const [calculationResult, setCalculationResult] =
     useState<CalculateBookingResponse | null>(null);
+
+  // ✅ Updated State to include discountAmount
   const [guestDetails, setGuestDetails] = useState({
     guestFullName: "",
     guestEmail: "",
@@ -118,7 +121,9 @@ export default function CreateBookingPage() {
     extraDetails: "",
     purposeOfRide: "",
     channel: "WEBSITE" as BookingChannel,
+    discountAmount: "", // String for input handling
   });
+
   const [bookingResponse, setBookingResponse] =
     useState<CreateBookingResponse | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
@@ -318,24 +323,27 @@ export default function CreateBookingPage() {
   const handleCreateBooking = (e: React.FormEvent) => {
     e.preventDefault();
     if (!calculationResult) return;
-    createBookingMutation.mutate(
-      {
-        calculationId: calculationResult.calculationId,
-        primaryPhoneNumber: guestDetails.primaryPhoneNumber,
-        guestFullName: guestDetails.guestFullName,
-        guestEmail: guestDetails.guestEmail,
-        extraDetails: guestDetails.extraDetails,
-        purposeOfRide: guestDetails.purposeOfRide,
-        channel: guestDetails.channel,
-        paymentMethod: "OFFLINE",
+
+    const payload: CreateBookingPayload = {
+      calculationId: calculationResult.calculationId,
+      primaryPhoneNumber: guestDetails.primaryPhoneNumber,
+      guestFullName: guestDetails.guestFullName,
+      guestEmail: guestDetails.guestEmail,
+      extraDetails: guestDetails.extraDetails,
+      purposeOfRide: guestDetails.purposeOfRide,
+      channel: guestDetails.channel,
+      paymentMethod: "OFFLINE",
+      discountAmount: guestDetails.discountAmount
+        ? Number(guestDetails.discountAmount)
+        : undefined,
+    };
+
+    createBookingMutation.mutate(payload, {
+      onSuccess: (data) => {
+        setBookingResponse(data);
+        setStep("success");
       },
-      {
-        onSuccess: (data) => {
-          setBookingResponse(data);
-          setStep("success");
-        },
-      }
-    );
+    });
   };
 
   const handleDownloadInvoice = () => {
@@ -357,6 +365,16 @@ export default function CreateBookingPage() {
     setSegments([initialBookingDetails]);
     setCalculationResult(null);
     setBookingResponse(null);
+    // Reset guest details
+    setGuestDetails({
+      guestFullName: "",
+      guestEmail: "",
+      primaryPhoneNumber: "",
+      extraDetails: "",
+      purposeOfRide: "",
+      channel: "WEBSITE" as BookingChannel,
+      discountAmount: "",
+    });
   };
 
   // --- Render Blocks ---
@@ -495,7 +513,6 @@ export default function CreateBookingPage() {
               onChange={(opt) => handleFilterChange("vehicleMakeId", opt.id)}
               placeholder="Any Make"
             />
-            {/* ✅ ADDED MODEL FILTER */}
             <Select
               label="Model"
               options={vehicleModelOptions}
@@ -906,17 +923,34 @@ export default function CreateBookingPage() {
           }
           required
         />
-        <Select
-          label="Booking Channel"
-          options={channelOptions}
-          selected={channelOptions.find((c) => c.id === guestDetails.channel)}
-          onChange={(o) =>
-            setGuestDetails({
-              ...guestDetails,
-              channel: o.id as BookingChannel,
-            })
-          }
-        />
+
+        {/* ✅ DISCOUNT AND CHANNEL SIDE-BY-SIDE */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <Select
+            label="Booking Channel"
+            options={channelOptions}
+            selected={channelOptions.find((c) => c.id === guestDetails.channel)}
+            onChange={(o) =>
+              setGuestDetails({
+                ...guestDetails,
+                channel: o.id as BookingChannel,
+              })
+            }
+          />
+          <TextInput
+            label="Discount Amount (Optional)"
+            id="discountAmount"
+            type="number"
+            value={guestDetails.discountAmount}
+            onChange={(e) =>
+              setGuestDetails({
+                ...guestDetails,
+                discountAmount: e.target.value,
+              })
+            }
+            placeholder="e.g. 5000"
+          />
+        </div>
 
         <TextAreaInput
           label="Purpose of ride (Optional)"

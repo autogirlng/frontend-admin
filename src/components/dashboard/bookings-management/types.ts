@@ -108,6 +108,7 @@ export interface CreateBookingPayload {
   purposeOfRide?: string;
   channel: BookingChannel;
   paymentMethod: "OFFLINE";
+  discountAmount?: number;
 }
 
 export interface CreateBookingResponse {
