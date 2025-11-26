@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+// ✅ 1. Added useEffect to imports
+import React, { useState, useEffect } from "react";
 import { useGetHosts } from "@/lib/hooks/host-management/useHosts";
 import { useSendCredentials } from "@/lib/hooks/host-management/useSendCredentials";
 import { useUpdateHostStatus } from "@/lib/hooks/host-management/useUpdateHostStatus";
@@ -25,18 +26,22 @@ import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
-import { HostDetailModal } from "./HostDetailModal"; // ✅ Import new modal
+import { HostDetailModal } from "./HostDetailModal";
 
 export default function HostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // ✅ Add "view" to the modal state
   const [modal, setModal] = useState<"status" | "view" | null>(null);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // ✅ 2. FIX: Reset pagination to 0 whenever search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
 
   const {
     data: paginatedData,
@@ -53,7 +58,6 @@ export default function HostsPage() {
   const hosts = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
-  // ✅ Updated handler to accept new modal type
   const openModal = (type: "status" | "view", host: Host) => {
     setSelectedHost(host);
     setModal(type);
@@ -80,12 +84,11 @@ export default function HostsPage() {
     }
   };
 
-  // ✅ Updated Action Menu
   const getHostActions = (host: Host): ActionMenuItem[] => [
     {
       label: "View Details",
       icon: View,
-      onClick: () => openModal("view", host), // ✅ Use new modal
+      onClick: () => openModal("view", host),
     },
     {
       label: "Send Credentials",
@@ -160,7 +163,6 @@ export default function HostsPage() {
             </p>
           </div>
           <div className="my-1">
-            {" "}
             <Button
               onClick={() => setIsCreateModalOpen(true)}
               className="w-auto"
@@ -234,7 +236,6 @@ export default function HostsPage() {
         />
       )}
 
-      {/* ✅ RENDER NEW MODAL */}
       {modal === "view" && selectedHost && (
         <HostDetailModal hostId={selectedHost.id} onClose={closeModal} />
       )}

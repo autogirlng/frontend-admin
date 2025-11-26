@@ -1,7 +1,7 @@
 // lib/hooks/drivers-management/useDrivers.ts
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/apiClient"; // Adjust path
+import { apiClient } from "@/lib/apiClient";
 
 import toast from "react-hot-toast";
 import {
@@ -12,21 +12,20 @@ import {
   DriverSchedule,
   DriverSchedulePayload,
   PaginatedResponse,
-} from "@/components/dashboard/drivers-management/types"; // Adjust path
+} from "@/components/dashboard/drivers-management/types";
 import { VehicleDetail } from "@/components/dashboard/trips-management/types";
 import { VEHICLE_DETAIL_KEY } from "../vehicle-onboarding/details/useVehicleDetailsPage";
 
 // --- Query Keys ---
 export const DRIVERS_QUERY_KEY = "drivers";
 export const DRIVER_SCHEDULE_KEY = "driverSchedule";
-export const DRIVER_DETAIL_KEY = "driverDetail"; // ✅ ADDED
+export const DRIVER_DETAIL_KEY = "driverDetail";
 
 // --- GET All "My Drivers" ---
 export function useGetMyDrivers(page: number, searchTerm: string) {
   return useQuery<PaginatedResponse<Driver>>({
     queryKey: [DRIVERS_QUERY_KEY, page, searchTerm],
     queryFn: async () => {
-      // ... (function is unchanged) ...
       const params = new URLSearchParams();
       params.append("page", String(page));
       params.append("size", "10");
@@ -40,7 +39,7 @@ export function useGetMyDrivers(page: number, searchTerm: string) {
   });
 }
 
-// ✅ --- NEW: GET Single Driver Details ---
+// --- GET Single Driver Details ---
 export function useGetDriverDetails(driverId: string | null) {
   return useQuery<DriverDetail>({
     queryKey: [DRIVER_DETAIL_KEY, driverId],
@@ -51,7 +50,6 @@ export function useGetDriverDetails(driverId: string | null) {
 
 // --- POST Create Driver ---
 export function useCreateDriver() {
-  // ... (function is unchanged) ...
   const queryClient = useQueryClient();
   return useMutation<Driver, Error, DriverPayload>({
     mutationFn: (payload) => apiClient.post("/drivers", payload),
@@ -66,7 +64,7 @@ export function useCreateDriver() {
   });
 }
 
-// ✅ --- NEW: PATCH Update Driver Details ---
+// --- PATCH Update Driver Details ---
 export function useUpdateDriver() {
   const queryClient = useQueryClient();
   return useMutation<
@@ -78,7 +76,6 @@ export function useUpdateDriver() {
       apiClient.patch(`/drivers/${driverId}`, payload),
     onSuccess: (updatedDriver) => {
       toast.success("Driver details updated successfully.");
-      // Invalidate both the list and the detail queries
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
         exact: false,
@@ -92,7 +89,7 @@ export function useUpdateDriver() {
   });
 }
 
-// ✅ --- NEW: PATCH Update Driver Profile Picture ---
+// --- PATCH Update Driver Profile Picture ---
 export function useUpdateDriverProfilePicture() {
   const queryClient = useQueryClient();
   return useMutation<DriverDetail, Error, { driverId: string; file: File }>({
@@ -106,12 +103,10 @@ export function useUpdateDriverProfilePicture() {
     },
     onSuccess: (updatedDriver) => {
       toast.success("Profile picture updated!");
-      // Optimistically update the detail query cache
       queryClient.setQueryData(
         [DRIVER_DETAIL_KEY, updatedDriver.id],
         updatedDriver
       );
-      // Invalidate the main list to show new picture (if you add it)
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
         exact: false,
@@ -124,7 +119,6 @@ export function useUpdateDriverProfilePicture() {
 }
 
 // --- POST Send Schedule Link ---
-// ... (function is unchanged) ...
 export function useSendScheduleLink() {
   return useMutation<unknown, Error, { driverId: string }>({
     mutationFn: ({ driverId }) =>
@@ -137,7 +131,6 @@ export function useSendScheduleLink() {
 }
 
 // --- GET Driver Schedule ---
-// ... (function is unchanged) ...
 export function useGetDriverSchedule(driverId: string, weekStartDate: string) {
   return useQuery<DriverSchedule>({
     queryKey: [DRIVER_SCHEDULE_KEY, driverId, weekStartDate],
@@ -150,7 +143,6 @@ export function useGetDriverSchedule(driverId: string, weekStartDate: string) {
 }
 
 // --- PUT Update Driver Schedule ---
-// ... (function is unchanged) ...
 export function useUpdateDriverSchedule() {
   const queryClient = useQueryClient();
   return useMutation<
@@ -172,7 +164,6 @@ export function useUpdateDriverSchedule() {
 }
 
 // --- PATCH Update Driver Status ---
-// ... (function is unchanged) ...
 export function useUpdateDriverStatus() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, { driverId: string; isActive: boolean }>({
@@ -205,13 +196,11 @@ export function useAssignDriverToVehicle() {
     onSuccess: (updatedVehicle) => {
       toast.success("Driver permanently assigned to vehicle.");
 
-      // Update the vehicle detail cache
       queryClient.setQueryData(
         [VEHICLE_DETAIL_KEY, updatedVehicle.id],
         updatedVehicle
       );
 
-      // Invalidate the main drivers list, as their assignment changed
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
         exact: false,
@@ -226,31 +215,25 @@ export function useUnassignDriverFromVehicle() {
   const queryClient = useQueryClient();
 
   return useMutation<VehicleDetail, Error, { vehicleId: string }>({
-    // ✅ FIX: Wrap the mutation function in an async block
     mutationFn: async ({ vehicleId }) => {
       const result = await apiClient.delete<VehicleDetail>(
         `/vehicles/${vehicleId}/assign-driver`
       );
 
-      // ✅ Check for the null case
       if (result === null) {
-        // This shouldn't happen based on your API spec, but it satisfies TypeScript
         throw new Error("API returned an unexpected null response.");
       }
 
-      // ✅ Now, result is guaranteed to be VehicleDetail
       return result;
     },
     onSuccess: (updatedVehicle) => {
       toast.success("Driver permanently unassigned from vehicle.");
 
-      // Update the vehicle detail cache
       queryClient.setQueryData(
         [VEHICLE_DETAIL_KEY, updatedVehicle.id],
         updatedVehicle
       );
 
-      // Invalidate the main drivers list
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
         exact: false,

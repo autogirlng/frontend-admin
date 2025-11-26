@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+// ✅ 1. Added useEffect to imports
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGetMyDrivers,
@@ -43,8 +44,8 @@ export default function DriversPage() {
     | "sendLink"
     | "status"
     | "edit"
-    | "assignVehicle" // ✅ Add
-    | "unassignVehicle" // ✅ Add
+    | "assignVehicle"
+    | "unassignVehicle"
     | null
   >(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -52,6 +53,11 @@ export default function DriversPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // ✅ 2. FIX: Reset pagination to 0 whenever search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
 
   // --- API Hooks ---
   const {
@@ -64,7 +70,6 @@ export default function DriversPage() {
   const sendLinkMutation = useSendScheduleLink();
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateDriverStatus();
-  // ✅ Instantiate new mutation hook
   const { mutate: unassignDriver, isPending: isUnassigning } =
     useUnassignDriverFromVehicle();
 
@@ -113,7 +118,6 @@ export default function DriversPage() {
     );
   };
 
-  // ✅ New handler for unassigning
   const handleUnassignConfirm = () => {
     if (!selectedDriver || !selectedDriver.assignedVehicleId) return;
     unassignDriver(
@@ -124,7 +128,7 @@ export default function DriversPage() {
     );
   };
 
-  // --- Define Actions for the Menu (Updated) ---
+  // --- Define Actions for the Menu ---
   const getDriverActions = (driver: Driver): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
@@ -132,7 +136,6 @@ export default function DriversPage() {
         icon: Edit,
         onClick: () => openModal("edit", driver),
       },
-      // ✅ Dynamic Assign/Unassign Action
       driver.assignedVehicleId
         ? {
             label: "Unassign Vehicle",
@@ -150,11 +153,6 @@ export default function DriversPage() {
         icon: Calendar,
         onClick: () => openModal("schedule", driver),
       },
-      /*       {
-        label: "Send Schedule Link",
-        icon: Send,
-        onClick: () => openModal("sendLink", driver),
-      }, */
       driver.active
         ? {
             label: "Deactivate Driver",
@@ -172,7 +170,7 @@ export default function DriversPage() {
     return actions;
   };
 
-  // --- Define Columns for the Table (Updated) ---
+  // --- Define Columns for the Table ---
   const columns: ColumnDefinition<Driver>[] = [
     {
       header: "Name",
@@ -182,7 +180,6 @@ export default function DriversPage() {
       header: "Identifier",
       accessorKey: "driverIdentifier",
     },
-    // ✅ UPDATED COLUMN
     {
       header: "Assigned Vehicle",
       accessorKey: "assignedVehicleName",
@@ -246,7 +243,6 @@ export default function DriversPage() {
             </p>
           </div>
           <div className="my-1">
-            {" "}
             <Button
               variant="primary"
               className="w-auto px-5"
@@ -326,7 +322,6 @@ export default function DriversPage() {
         <EditDriverModal driverId={selectedDriver.id} onClose={closeModal} />
       )}
 
-      {/* ✅ RENDER NEW MODALS */}
       {modal === "assignVehicle" && selectedDriver && (
         <AssignVehicleModal driver={selectedDriver} onClose={closeModal} />
       )}
