@@ -34,3 +34,20 @@ export interface HostDetail {
   active: boolean;
   profilePictureUrl?: string; // ✅ Assuming this might exist
 }
+
+export interface HostVehicle {
+  id: string;
+  vehicleIdentifier: string;
+  name: string;
+  ownerName: string;
+  licensePlateNumber?: string;
+  status:
+    | "DRAFT"
+    | "IN_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "UNAVAILABLE"
+    | "IN_MAINTENANCE"
+    | "COMPANY_USE";
+  operationalStatus: string; // e.g., "FREE", "BOOKED", "DRAFT", "MAINTENANCE"
+}

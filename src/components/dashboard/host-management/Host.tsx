@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ 1. Added useEffect to imports
 import React, { useState, useEffect, useRef } from "react";
 import { useGetHosts } from "@/lib/hooks/host-management/useHosts";
 import { useSendCredentials } from "@/lib/hooks/host-management/useSendCredentials";
@@ -26,7 +25,7 @@ import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
-import { HostDetailModal } from "./HostDetailModal";
+import { useRouter } from "next/navigation";
 
 export default function HostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,18 +39,16 @@ export default function HostsPage() {
 
   const topRef = useRef<HTMLDivElement>(null);
 
-  // ✅ 2. FIX: Reset pagination to 0 whenever search changes
+  const router = useRouter();
+
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm]);
 
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
@@ -101,7 +98,10 @@ export default function HostsPage() {
     {
       label: "View Details",
       icon: View,
-      onClick: () => openModal("view", host),
+      onClick: () => {
+        toast.success(`Viewing ${host.fullName}`);
+        router.push(`/dashboard/host/${host.id}`);
+      },
     },
     {
       label: "Send Credentials",
@@ -248,10 +248,6 @@ export default function HostsPage() {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
         />
-      )}
-
-      {modal === "view" && selectedHost && (
-        <HostDetailModal hostId={selectedHost.id} onClose={closeModal} />
       )}
 
       {modal === "status" && selectedHost && (
