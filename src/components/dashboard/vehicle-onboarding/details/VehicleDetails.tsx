@@ -1,10 +1,11 @@
 // app/dashboard/vehicles/[vehicleId]/page.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 import {
   AlertCircle,
   Car,
@@ -21,6 +22,7 @@ import {
   Users,
   Wrench,
   X,
+  Share2,
   CalendarDays,
   Clock,
   ExternalLink,
@@ -80,7 +82,7 @@ const DetailItem = ({
     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
       {label}
     </p>
-    <p className="text-sm font-medium text-gray-900 break-words">
+    <p className="text-sm font-medium text-gray-900 wrap-break-words">
       {value || <span className="text-gray-400 italic">Not specified</span>}
     </p>
   </div>
@@ -181,6 +183,75 @@ export default function VehicleDetailPage() {
     return pMap;
   }, [vehicle?.pricing]);
 
+  const isSharing = useRef(false);
+
+  // Updated handleShare with locking mechanism
+  const handleShare = async () => {
+    // Prevent execution if data is missing OR if a share is already in progress
+    if (!vehicle || isSharing.current) return;
+
+    const shareText = `Check out this ${vehicle.name} (${vehicle.yearOfRelease})\nID: ${vehicle.vehicleIdentifier}`;
+
+    try {
+      isSharing.current = true; // 🔒 Lock the function
+
+      // ---------------------------------------------------------
+      // STRATEGY 1: Try to share the Image File + Text
+      // ---------------------------------------------------------
+      if (primaryPhoto && navigator.canShare && navigator.share) {
+        try {
+          toast.loading("Preparing image for sharing...");
+          
+          const response = await fetch(primaryPhoto, { mode: "cors" });
+          const blob = await response.blob();
+          const file = new File([blob], "vehicle.jpg", { type: blob.type });
+
+          const fileShareData = {
+            files: [file],
+            title: vehicle.name,
+            text: shareText,
+          };
+
+          if (navigator.canShare(fileShareData)) {
+            toast.dismiss();
+            await navigator.share(fileShareData);
+            return; // Stop here if file share was successful
+          }
+        } catch (fileError) {
+          console.warn("File sharing failed, falling back to text sharing:", fileError);
+          toast.dismiss();
+        }
+      }
+
+      // ---------------------------------------------------------
+      // STRATEGY 2: Text-Only Share (Mobile Fallback)
+      // ---------------------------------------------------------
+      if (navigator.share) {
+        await navigator.share({
+          title: vehicle.name,
+          text: shareText,
+        });
+      } 
+      // ---------------------------------------------------------
+      // STRATEGY 3: Clipboard Copy (Desktop Fallback)
+      // ---------------------------------------------------------
+      else {
+        // Since we can't share a private URL, we copy the text details
+        await navigator.clipboard.writeText(shareText);
+        toast.success("Vehicle details copied to clipboard!");
+      }
+
+    } catch (err) {
+      // Ignore AbortError (user closed the share sheet)
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Error sharing:", err);
+        toast.error("Failed to share");
+      }
+    } finally {
+      isSharing.current = false; // 🔓 Unlock
+    }
+  };
+
   // --- Render Logic ---
 
   if (isLoadingVehicle) {
@@ -207,7 +278,7 @@ export default function VehicleDetailPage() {
   return (
     <main className="min-h-screen">
       {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-r from-[#0096FF] to-[#0077CC] text-white">
+      <div className="bg-linear-to-r from-[#0096FF] to-[#0077CC] text-white">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <CustomBack />
           <div className="mt-4 md:flex md:items-start md:justify-between">
@@ -225,7 +296,7 @@ export default function VehicleDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 -mt-[20px] pb-12">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 -mt-5 pb-12">
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
@@ -261,15 +332,38 @@ export default function VehicleDetailPage() {
             {/* Photo Gallery */}
             <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
               {primaryPhoto ? (
-                <div className="relative aspect-video w-full bg-gray-100">
+                <div className="relative aspect-video w-full bg-gray-100 group">
                   <img
                     src={primaryPhoto}
                     alt={`${vehicle.name} primary`}
                     className="w-full h-full object-cover"
                   />
+
+                  {/* ✅ handleShare is used here in the onClick event */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleShare();
+                    }}
+                    className="absolute top-4 left-4 p-2.5 bg-white/80 hover:bg-white backdrop-blur-md text-gray-700 hover:text-blue-600 rounded-full shadow-lg transition-all duration-200 z-10 border border-white/50"
+                    title="Share this vehicle"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </button>
                 </div>
               ) : (
-                <div className="aspect-video w-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                <div className="aspect-video w-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
+                  {/* Added Share button to fallback/placeholder state as well */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleShare();
+                    }}
+                    className="absolute top-4 left-4 p-2.5 bg-white/80 hover:bg-white backdrop-blur-md text-gray-700 hover:text-blue-600 rounded-full shadow-lg transition-all duration-200 z-10 border border-white/50"
+                    title="Share this vehicle"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </button>
                   <Car className="h-24 w-24 text-gray-300" />
                 </div>
               )}
@@ -351,7 +445,7 @@ export default function VehicleDetailPage() {
                   vehicle.features.map((feature) => (
                     <span
                       key={feature.id}
-                      className="inline-flex items-center gap-2 text-sm bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium border border-blue-200"
+                      className="inline-flex items-center gap-2 text-sm bg-linear-to-r from-blue-50 to-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium border border-blue-200"
                     >
                       <Check className="h-4 w-4" />
                       {feature.name}

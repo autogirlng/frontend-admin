@@ -1,7 +1,7 @@
-// app/dashboard/finance/payments/PaymentDetailModal.tsx
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { X, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useGetPaymentDetails } from "@/lib/hooks/finance/usePayments";
@@ -25,9 +25,9 @@ const DetailItem = ({
 }) => (
   <div className={className}>
     <p className="text-sm font-medium text-gray-500">{label}</p>
-    <p className="text-base font-semibold text-gray-900 break-words">
+    <div className="text-base font-semibold text-gray-900 wrap-break-words">
       {value || <span className="text-gray-400">N/A</span>}
-    </p>
+    </div>
   </div>
 );
 
@@ -37,7 +37,7 @@ const formatPrice = (price?: number) => {
   return `₦${price.toLocaleString()}`;
 };
 
-// ✅ --- NEW: Status Badge Helper ---
+// Status Badge Helper
 const StatusBadge = ({ status }: { status: string }) => {
   let colorClasses = "bg-gray-100 text-gray-800"; // Default
 
@@ -56,13 +56,12 @@ const StatusBadge = ({ status }: { status: string }) => {
 
   return (
     <span
-      className={`px-3 py-1 text-sm font-medium rounded-full inline-block ${colorClasses}`}
+      className={`px-3 py-1 text-sm font-semibold rounded-full inline-block ${colorClasses}`}
     >
       {status.replace(/_/g, " ")}
     </span>
   );
 };
-// ✅ --- END NEW COMPONENT ---
 
 export function PaymentDetailModal({
   paymentId,
@@ -73,7 +72,7 @@ export function PaymentDetailModal({
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="p-10">
+        <div className="flex justify-center items-center p-10 h-64">
           <CustomLoader />
         </div>
       );
@@ -81,26 +80,38 @@ export function PaymentDetailModal({
 
     if (isError || !payment) {
       return (
-        <div className="flex flex-col items-center gap-2 p-10 text-red-600">
+        <div className="flex flex-col items-center justify-center gap-2 p-10 text-red-600 h-64">
           <AlertCircle className="h-8 w-8" />
           <span className="font-semibold">Failed to load payment details.</span>
         </div>
       );
     }
 
-    // ✅ Logic for financial status color
+    // Logic for financial status color
     const isPaid = payment.paymentStatus === "SUCCESSFUL";
     const amountPaid = payment.amountPaid ?? 0;
     const isAmountMismatch = isPaid && amountPaid < payment.totalPayable;
 
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-6 overflow-y-auto">
+        {/* Top Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem label="Payment ID" value={payment.id} />
-          <DetailItem label="Booking ID" value={payment.bookingId} />
+          <DetailItem 
+            label="Booking ID" 
+            value={
+              <Link 
+                href={`/dashboard/bookings/${payment.bookingId}`}
+                className="text-gray-900 hover:text-gray-900 hover:underline transition-colors"
+              >
+                {payment.bookingId}
+              </Link>
+            } 
+          />
         </div>
+
+        {/* Status Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-          {/* ✅ UPDATED: Use the StatusBadge component */}
           <DetailItem
             label="Payment Status"
             value={<StatusBadge status={payment.paymentStatus} />}
@@ -110,17 +121,20 @@ export function PaymentDetailModal({
             value={payment.paymentProvider}
           />
         </div>
+
         <DetailItem
           label="Transaction Reference"
           value={payment.transactionReference}
         />
+
         <hr />
+
+        {/* Financial Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem
             label="Total Payable"
             value={formatPrice(payment.totalPayable)}
           />
-          {/* ✅ UPDATED: Add color coding for amount paid */}
           <div>
             <p className="text-sm font-medium text-gray-500">Amount Paid</p>
             <p
@@ -135,6 +149,8 @@ export function PaymentDetailModal({
             </p>
           </div>
         </div>
+
+        {/* Dates Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem
             label="Created At"
@@ -149,41 +165,71 @@ export function PaymentDetailModal({
             }
           />
         </div>
-        <hr />
+
+        <hr/>
+
+        {/* Vehicle Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem label="Vehicle Name" value={payment.vehicleName} />
           <DetailItem
             label="Vehicle Identifier"
             value={payment.vehicleIdentifier}
           />
-          <DetailItem label="Vehicle ID" value={payment.vehicleId} />
-          <DetailItem label="User ID" value={payment.userId} />
+          <DetailItem 
+            label="Vehicle ID" 
+            value={
+              <Link 
+                href={`/dashboard/vehicles-onboarding/${payment.vehicleId}`}
+                className="text-gray-900 hover:text-gray-900 hover:underline transition-colors"
+              >
+                {payment.vehicleId}
+              </Link>
+            } 
+          />
+        </div>
+
+        <hr/>
+
+        {/* Customer Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <DetailItem 
+            label="Customer Name" 
+            value={payment.userName} 
+          />
+          <DetailItem
+            label="Customer Email"
+            value={payment.userEmail}
+          />
+          <DetailItem label="Customer Phone Number" value={payment.userPhone} />
         </div>
       </div>
     );
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-2xl rounded-lg bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg md:max-w-xl max-h-[90vh] flex flex-col rounded-xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-xl font-semibold leading-6 text-gray-900">
+        <div className="flex items-center justify-between p-5 border-b bg-white shrink-0">
+          <h3 className="text-lg font-semibold leading-6 text-gray-900">
             Payment Details
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content */}
-        {renderContent()}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {renderContent()}
+        </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t">
+        <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t shrink-0">
           <Button type="button" variant="secondary" onClick={onClose}>
             Close
           </Button>
