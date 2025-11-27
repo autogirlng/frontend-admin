@@ -112,3 +112,26 @@ export function useDownloadPaymentReceipt() {
     },
   });
 }
+
+
+// 7. Preview Invoice → uses POST (same as download)
+export function usePreviewInvoiceBlob() {
+  return useMutation<Blob, Error, { bookingId: string }>({
+    mutationFn: async ({ bookingId }) => {
+      return await apiClient.postFileAsBlob(
+        `/admin/invoices/generate-pdf/${bookingId}?preview=true`
+      );
+    },
+  });
+}
+
+// 8. Preview Receipt → uses GET (same as download)
+export function usePreviewReceiptBlob() {
+  return useMutation<Blob, Error, { bookingId: string }>({
+    mutationFn: async ({ bookingId }) => {
+      return await apiClient.getFileAsBlob(
+        `/admin/invoices/${bookingId}/download-receipt?preview=true`
+      );
+    },
+  });
+}

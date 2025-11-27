@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import {
   AlertCircle,
   Eye,
@@ -23,6 +23,8 @@ import {
   useGetPayments,
   useDownloadInvoice, // ✅ Import
   useDownloadPaymentReceipt, // ✅ Import
+  usePreviewInvoiceBlob,
+  usePreviewReceiptBlob,
 } from "@/lib/hooks/finance/usePayments";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 
@@ -35,6 +37,7 @@ import TextInput from "@/components/generic/ui/TextInput";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
+import { DocumentPreviewModal } from "./PreviewModal";
 import { PaymentDetailModal } from "./PaymentDetailModal";
 import { Payment, PaymentStatus } from "./types";
 import Link from "next/link";
@@ -61,6 +64,12 @@ export default function PaymentsPage() {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
     null
   );
+
+  // State tracks which document type (and payment ID) we are previewing
+  const [previewConfig, setPreviewConfig] = useState<{
+    type: "invoice" | "receipt";
+    payment: Payment;
+  } | null>(null);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
@@ -100,6 +109,9 @@ export default function PaymentsPage() {
   // ✅ Instantiate new hooks
   const downloadInvoiceMutation = useDownloadInvoice();
   const downloadReceiptMutation = useDownloadPaymentReceipt();
+
+  const previewInvoiceBlob = usePreviewInvoiceBlob();
+  const previewReceiptBlob = usePreviewReceiptBlob();
 
   // --- Derived Data ---
   const payments = paginatedData?.content || [];
@@ -143,6 +155,11 @@ export default function PaymentsPage() {
         },
       },
       {
+        label: "View Invoice",
+        icon: FileText,
+        onClick: () => setPreviewConfig({ type: "invoice", payment }),
+      },
+      {
         label: "Download Invoice",
         icon: FileText,
         onClick: () =>
@@ -154,6 +171,15 @@ export default function PaymentsPage() {
           }),
       },
     ];
+
+    if (payment.paymentStatus === "SUCCESSFUL") {
+      // ✅ Preview Receipt Action
+      actions.push({
+        label: "View Receipt",
+        icon: FileText,
+        onClick: () => setPreviewConfig({ type: "receipt", payment }),
+      });
+    }
 
     // Only add "Download Receipt" if payment was successful
     if (payment.paymentStatus === "SUCCESSFUL") {
@@ -375,6 +401,26 @@ export default function PaymentsPage() {
         <PaymentDetailModal
           paymentId={selectedPaymentId}
           onClose={closeModal}
+        />
+      )}
+
+      {/* ✅ Document Preview Modal */}
+      {previewConfig && (
+        <DocumentPreviewModal
+          title={
+            previewConfig.type === "invoice" ? "Invoice Preview" : "Receipt Preview"
+          }
+          onClose={() => setPreviewConfig(null)}
+          fetchDocument={async () => {
+            const bookingId = previewConfig.payment.bookingId;
+
+            if (previewConfig.type === "invoice") {
+              // mutateAsync returns the Blob directly
+              return await previewInvoiceBlob.mutateAsync({ bookingId });
+            } else {
+              return await previewReceiptBlob.mutateAsync({ bookingId });
+            }
+          }}
         />
       )}
     </>

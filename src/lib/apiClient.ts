@@ -258,4 +258,51 @@ export const apiClient = {
     a.remove();
     window.URL.revokeObjectURL(url);
   },
+
+  // Add these two methods to your existing apiClient object
+
+  getFileAsBlob: async (endpoint: string): Promise<Blob> => {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+      {
+        method: "GET",
+        headers,
+      }
+    );
+
+    if (!response.ok) {
+      let errorMsg = "Failed to load file";
+      try {
+        const err = await response.json();
+        errorMsg = err.message || errorMsg;
+      } catch {}
+      throw new Error(errorMsg);
+    }
+
+    return await response.blob();
+  },
+
+  postFileAsBlob: async (endpoint: string, body: any = {}): Promise<Blob> => {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      let errorMsg = "Failed to load file";
+      try {
+        const err = await response.json();
+        errorMsg = err.message || errorMsg;
+      } catch {}
+      throw new Error(errorMsg);
+    }
+
+    return await response.blob();
+  },
 };
