@@ -96,7 +96,7 @@ export function PaymentDetailModal({
       <div className="space-y-6 p-6 overflow-y-auto">
         {/* Top Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <DetailItem label="Payment ID" value={payment.id} />
+          <DetailItem label="Payment ID" value={payment.bookingRef} />
           <DetailItem 
             label="Booking ID" 
             value={
@@ -104,7 +104,7 @@ export function PaymentDetailModal({
                 href={`/dashboard/bookings/${payment.bookingId}`}
                 className="text-gray-900 hover:text-gray-900 hover:underline transition-colors"
               >
-                {payment.bookingId}
+                {payment.invoiceNumber}
               </Link>
             } 
           />
@@ -170,21 +170,17 @@ export function PaymentDetailModal({
 
         {/* Vehicle Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <DetailItem label="Vehicle Name" value={payment.vehicleName} />
-          <DetailItem
-            label="Vehicle Identifier"
-            value={payment.vehicleIdentifier}
-          />
-          <DetailItem 
-            label="Vehicle ID" 
-            value={
+          <DetailItem label="Vehicle Name" value={
               <Link 
                 href={`/dashboard/vehicles-onboarding/${payment.vehicleId}`}
                 className="text-gray-900 hover:text-gray-900 hover:underline transition-colors"
               >
-                {payment.vehicleId}
+                {payment.vehicleName}
               </Link>
-            } 
+            }  />
+          <DetailItem
+            label="Vehicle Identifier"
+            value={payment.vehicleIdentifier}
           />
         </div>
 

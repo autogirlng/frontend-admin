@@ -24,7 +24,14 @@ export interface Payment {
   vehicleIdentifier: string;
   vehicleId: string;
   userId?: string; // Optional
+  paymentRef: string;
+  invoiceNumber: string;
+  bookingRef: string;
+  userEmail: string;
+  userPhone: string;
+  userName: string;
 }
+
 
 // Enums for filters
 export enum PaymentStatus {

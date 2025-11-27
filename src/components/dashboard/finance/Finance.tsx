@@ -12,6 +12,7 @@ import {
   Filter,
   Search,
   Ticket,
+  Vote,
   Download, // ✅ Import
   FileText, // ✅ Import
 } from "lucide-react";
@@ -167,18 +168,35 @@ export default function PaymentsPage() {
       });
     }
 
+    if (payment.paymentStatus === "PENDING") {
+      actions.push({
+        label: "Approve Payment",
+        icon: Vote,
+        onClick: () =>
+          downloadReceiptMutation.mutate({
+            bookingId: payment.bookingId,
+            // invoiceNumber: payment.invoiceNumber,
+          }),
+      });
+    }
+
     return actions;
   };
 
   const columns: ColumnDefinition<Payment>[] = [
+    // {
+    //   header: "Booking ID",
+    //   accessorKey: "bookingId",
+    //   cell: (item) => (
+    //     <span className="font-mono text-sm">
+    //       {item.bookingId.split("-")[0]}...
+    //     </span>
+    //   ),
+    // },
     {
-      header: "Booking ID",
-      accessorKey: "bookingId",
-      cell: (item) => (
-        <span className="font-mono text-sm">
-          {item.bookingId.split("-")[0]}...
-        </span>
-      ),
+      header: "Customer Name",
+      accessorKey: "userName",
+      cell: (item) => item.userName || "Guest",
     },
     {
       header: "Vehicle",
@@ -190,10 +208,7 @@ export default function PaymentsPage() {
         </div>
       ),
     },
-    {
-      header: "Reference",
-      accessorKey: "transactionReference",
-    },
+
     {
       header: "Amount",
       accessorKey: "totalPayable",
@@ -279,7 +294,7 @@ export default function PaymentsPage() {
                 id="search"
                 hideLabel
                 type="text"
-                placeholder="Search by Reference, Booking ID, etc."
+                placeholder="Search by Customer Name, Booking ID, etc."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"
