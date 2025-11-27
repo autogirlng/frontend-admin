@@ -9,6 +9,7 @@ import {
   Payment,
   PaginatedResponse,
 } from "@/components/dashboard/finance/types";
+import { OfflinePaymentApprovalResponse } from "@/components/dashboard/finance/types";
 
 // Query Key
 export const PAYMENTS_QUERY_KEY = "payments";
@@ -114,7 +115,7 @@ export function useDownloadPaymentReceipt() {
 }
 
 
-// 7. Preview Invoice → uses POST (same as download)
+// 5. Preview Invoice → uses POST (same as download)
 export function usePreviewInvoiceBlob() {
   return useMutation<Blob, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
@@ -125,12 +126,41 @@ export function usePreviewInvoiceBlob() {
   });
 }
 
-// 8. Preview Receipt → uses GET (same as download)
+// 6. Preview Receipt → uses GET (same as download)
 export function usePreviewReceiptBlob() {
   return useMutation<Blob, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
       return await apiClient.getFileAsBlob(
         `/admin/invoices/${bookingId}/download-receipt?preview=true`
+      );
+    },
+  });
+}
+
+
+// 7. Approve Offline Payment (Confirm Payment)
+export function useApproveOfflinePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation<OfflinePaymentApprovalResponse, Error, { bookingId: string }>({
+    mutationFn: async ({ bookingId }) => {
+      return await apiClient.post(
+        `/admin/bookings/${bookingId}/confirm-offline-payment`,
+        {} // No request body needed based on your API
+      );
+    },
+
+    onSuccess: (data, variables) => {
+      toast.success(
+        `Payment approved successfully! Invoice: ${data.invoiceNumber}`
+      );
+      // Invalidate and refetch the payments list so UI updates instantly
+      queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
+    },
+
+    onError: (error) => {
+      toast.error(
+        error.message || "Failed to approve payment. Please try again."
       );
     },
   });

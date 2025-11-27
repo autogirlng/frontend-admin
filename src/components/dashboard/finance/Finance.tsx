@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import {
   AlertCircle,
   Eye,
@@ -25,6 +25,7 @@ import {
   useDownloadPaymentReceipt, // ✅ Import
   usePreviewInvoiceBlob,
   usePreviewReceiptBlob,
+  useApproveOfflinePayment,
 } from "@/lib/hooks/finance/usePayments";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 
@@ -37,6 +38,7 @@ import TextInput from "@/components/generic/ui/TextInput";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
+import { ConfirmModal } from "@/components/generic/ui/CustomModal";
 import { DocumentPreviewModal } from "./PreviewModal";
 import { PaymentDetailModal } from "./PaymentDetailModal";
 import { Payment, PaymentStatus } from "./types";
@@ -70,6 +72,14 @@ export default function PaymentsPage() {
     type: "invoice" | "receipt";
     payment: Payment;
   } | null>(null);
+
+  // In your PaymentsPage component (add these states near the top)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    payment: Payment | null;
+  }>({ isOpen: false, payment: null });
+
+  const approveOfflinePayment = useApproveOfflinePayment();
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
@@ -138,6 +148,8 @@ export default function PaymentsPage() {
     setSelectedPaymentId(null);
   };
 
+  const approveOfflinePaymentMutation = useApproveOfflinePayment();
+
   // --- Table Column Definitions ---
   // ✅ UPDATED Action Menu
   const getPaymentActions = (payment: Payment): ActionMenuItem[] => {
@@ -194,15 +206,15 @@ export default function PaymentsPage() {
       });
     }
 
-    if (payment.paymentStatus === "PENDING") {
+    // Only show for PENDING offline payments
+    if (payment.paymentStatus === "PENDING" && payment.paymentProvider === "OFFLINE") {
       actions.push({
         label: "Approve Payment",
         icon: Vote,
-        onClick: () =>
-          downloadReceiptMutation.mutate({
-            bookingId: payment.bookingId,
-            // invoiceNumber: payment.invoiceNumber,
-          }),
+        onClick: () => {
+          setConfirmModal({ isOpen: true, payment });
+        },
+        disabled: approveOfflinePayment.isPending,
       });
     }
 
@@ -423,6 +435,62 @@ export default function PaymentsPage() {
           }}
         />
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="Approve Offline Payment"
+        message={
+          confirmModal.payment ? (
+            <div className="space-y-2">
+              <p>Are you sure you want to approve the offline payment for:</p>
+              <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900">
+                <p className="text-lg">
+                  {confirmModal.payment.userName || "Guest"}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Booking Ref: <span className="font-mono">{confirmModal.payment.bookingRef}</span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Amount: ₦{confirmModal.payment.totalPayable?.toLocaleString()}
+                </p>
+              </div>
+              <p className="mt-3 text-sm">
+                This action will mark the payment as <strong>SUCCESSFUL</strong> and generate a receipt.
+              </p>
+            </div>
+          ) : (
+            "Loading payment details..."
+          )
+        }
+        confirmLabel="Approve Payment"
+        onConfirm={() => {
+          if (!confirmModal.payment) return;
+
+          approveOfflinePayment.mutate(
+            { bookingId: confirmModal.payment.bookingId },
+            {
+              onSuccess: (data) => {
+                toast.success(
+                  <div>
+                    <strong>Payment Approved Successfully!</strong>
+                    <br />
+                    Customer: <strong>{confirmModal.payment?.userName || "Guest"}</strong>
+                    <br />
+                    Invoice: <span className="font-mono">{data.invoiceNumber}</span>
+                  </div>
+                );
+                setConfirmModal({ isOpen: false, payment: null });
+              },
+              onError: () => {
+                toast.error("Failed to approve payment. Please try again.");
+              },
+            }
+          );
+        }}
+        onCancel={() => setConfirmModal({ isOpen: false, payment: null })}
+        isLoading={approveOfflinePayment.isPending}
+      />
     </>
   );
 }

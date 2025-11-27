@@ -40,3 +40,35 @@ export enum PaymentStatus {
   ABANDONED = "ABANDONED",
   FAILED = "FAILED",
 }
+
+export type OfflinePaymentApprovalResponse = {
+  bookingId: string;
+  invoiceNumber: string;
+  vehicleId: string;
+  calculationId: string;
+  userId: string;
+  status: string; // e.g. "CONFIRMED"
+  totalPrice: number;
+  bookedAt: string;
+  primaryPhoneNumber: string;
+  secondaryPhoneNumber?: string;
+  guestFullName: string;
+  guestEmail: string;
+  isBookingForOthers: boolean;
+  recipientFullName?: string;
+  recipientEmail?: string;
+  recipientPhoneNumber?: string;
+  recipientSecondaryPhoneNumber?: string;
+  extraDetails?: string;
+  purposeOfRide?: string;
+  bookingRef: string;
+  segments: Array<{
+    segmentId: string;
+    pickupLocation: string;
+    dropoffLocation: string;
+    pickupTime: string;
+    distanceKm: number;
+    price: number;
+  }>;
+  // ... add more fields as needed
+};

@@ -10,6 +10,7 @@ export interface ActionMenuItem {
   icon: React.ElementType;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }
 
 interface ActionMenuProps {
