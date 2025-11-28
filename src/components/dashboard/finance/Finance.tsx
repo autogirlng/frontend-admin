@@ -17,6 +17,7 @@ import {
   FileText, // ✅ Import
 } from "lucide-react";
 import clsx from "clsx"; // ✅ Import
+import * as XLSX from "xlsx";
 
 // Hooks
 import {
@@ -136,6 +137,73 @@ export default function PaymentsPage() {
     setFilters((prev) => ({ ...prev, dateRange: dateRange || null }));
     setCurrentPage(0);
   };
+  const handleExportSuccessfulPayments = () => {
+    // 1. Get the data currently visible in the table
+    const visiblePayments = payments; // ← already filtered by your useGetPayments + filters
+
+    // 2. Filter only SUCCESSFUL ones
+    const successfulPayments = visiblePayments.filter(
+      (p) => p.paymentStatus === "SUCCESSFUL"
+    );
+
+    if (successfulPayments.length === 0) {
+      toast.error("No successful payments match the current filters");
+      return;
+    }
+
+    // 3. Build a smart filename with the actual period
+    let period = "All_Time";
+
+    if (filters.dateRange?.from && filters.dateRange?.to) {
+      const from = format(filters.dateRange.from, "dd-MMM-yyyy");
+      const to = format(filters.dateRange.to, "dd-MMM-yyyy");
+      period = `${from}_to_${to}`;
+    } else if (filters.dateRange?.from) {
+      period = `From_${format(filters.dateRange.from, "dd-MMM-yyyy")}`;
+    } else if (filters.dateRange?.to) {
+      period = `Up_to_${format(filters.dateRange.to, "dd-MMM-yyyy")}`;
+    }
+
+    const filename = `Successful_Payments_${period}.xlsx`;
+
+    // 4. Prepare clean data
+    const exportData = successfulPayments.map((p) => ({
+      "Customer Name": p.userName || "Guest",
+      "Booking Ref": p.bookingRef || "-",
+      Amount: `₦${p.totalPayable.toLocaleString()}`,
+      "Invoice Number": p.invoiceNumber || "-",
+      "Payment Date": format(new Date(p.createdAt), "dd MMM yyyy, HH:mm"),
+      Vehicle: p.vehicleName,
+      Provider: p.paymentProvider,
+      Status: p.paymentStatus === "SUCCESSFUL" ? "SUCCESSFUL" : p.paymentStatus,
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws["!cols"] = [
+      { wch: 22 }, // Customer Name
+      { wch: 18 }, // Booking Ref
+      { wch: 15 }, // Amount
+      { wch: 20 }, // Invoice Number
+      { wch: 24 }, // Payment Date
+      { wch: 22 }, // Vehicle
+      { wch: 14 }, // Provider
+      { wch: 12 }, // Status ← Added
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Payments");
+    XLSX.writeFile(wb, filename);
+
+    toast.success(
+      <div className="text-sm">
+        <strong>Export Complete!</strong>
+        <br />
+        {successfulPayments.length} successful payments
+        <br />
+        Period: <strong>{period.replace(/_/g, " ")}</strong>
+      </div>
+    );
+  };
   const clearFilters = () => {
     setFilters({
       paymentStatus: null,
@@ -177,9 +245,8 @@ export default function PaymentsPage() {
         onClick: () =>
           downloadInvoiceMutation.mutate({
             bookingId: payment.bookingId,
-            // Assuming invoice number might be on the payment or booking
-            // We pass it to get a good filename
-            // invoiceNumber: payment.invoiceNumber,
+            invoiceNumber: payment.invoiceNumber,
+            userName: payment.userName
           }),
       },
     ];
@@ -201,7 +268,8 @@ export default function PaymentsPage() {
         onClick: () =>
           downloadReceiptMutation.mutate({
             bookingId: payment.bookingId,
-            // invoiceNumber: payment.invoiceNumber,
+            invoiceNumber: payment.invoiceNumber,
+            userName: payment.userName
           }),
       });
     }
@@ -306,12 +374,23 @@ export default function PaymentsPage() {
               View and manage all payments on the platform.
             </p>
           </div>
-          <Link
-            href="/dashboard/finance/bookings"
-            className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" // Added rounded-lg
-          >
-            View Bookings
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard/finance/bookings"
+              className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" // Added rounded-lg
+            >
+              View Bookings
+            </Link>
+            <Button
+              onClick={handleExportSuccessfulPayments}
+              variant="secondary"
+              size="sm"
+              className="w-auto min-w-28 font-medium"
+              disabled={isLoading || payments.length === 0}
+            >
+              Export Payments
+            </Button>
+          </div>
         </div>
 
         {/* --- Filter Section --- */}

@@ -66,12 +66,14 @@ export function useDownloadInvoice() {
   return useMutation<
     void,
     Error,
-    { bookingId: string; invoiceNumber?: string }
+    { bookingId: string; invoiceNumber?: string, userName?: string; }
   >({
-    mutationFn: async ({ bookingId, invoiceNumber }) => {
-      const defaultFilename = invoiceNumber
-        ? `Invoice-${invoiceNumber}.pdf`
-        : `Invoice-${bookingId}.pdf`;
+    mutationFn: async ({ bookingId, invoiceNumber, userName }) => {
+      const safeName = userName
+        ? userName.trim().replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 30) + "_"
+        : "";
+
+      const defaultFilename = `Invoice_${safeName}_${invoiceNumber}.pdf`;
 
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
@@ -93,12 +95,14 @@ export function useDownloadPaymentReceipt() {
   return useMutation<
     void,
     Error,
-    { bookingId: string; invoiceNumber?: string }
+    { bookingId: string; invoiceNumber?: string, userName?: string;}
   >({
-    mutationFn: async ({ bookingId, invoiceNumber }) => {
-      const defaultFilename = invoiceNumber
-        ? `Receipt-${invoiceNumber}.pdf`
-        : `Receipt-${bookingId}.pdf`;
+    mutationFn: async ({ bookingId, invoiceNumber, userName }) => {
+      const safeName = userName
+        ? userName.trim().replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 30) + "_"
+        : "";
+
+      const defaultFilename = `Receipt_${safeName}_${invoiceNumber}.pdf`;
 
       await apiClient.getAndDownloadFile(
         `/admin/invoices/${bookingId}/download-receipt`,
