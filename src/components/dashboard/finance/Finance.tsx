@@ -13,6 +13,7 @@ import {
   Search,
   Ticket,
   Vote,
+  ClipboardCopy,
   Download, // ✅ Import
   FileText, // ✅ Import
 } from "lucide-react";
@@ -290,15 +291,29 @@ export default function PaymentsPage() {
   };
 
   const columns: ColumnDefinition<Payment>[] = [
-    // {
-    //   header: "Booking ID",
-    //   accessorKey: "bookingId",
-    //   cell: (item) => (
-    //     <span className="font-mono text-sm">
-    //       {item.bookingId.split("-")[0]}...
-    //     </span>
-    //   ),
-    // },
+    {
+      header: "Invoice #",
+      accessorKey: "invoiceNumber",
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm font-medium">
+            {item.invoiceNumber || "N/A"}
+          </span>
+          {item.invoiceNumber && (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(item.invoiceNumber!);
+                toast.success("Copied to clipboard!");
+              }}
+              className="text-gray-400 hover:text-[#0096FF]"
+              title="Copy invoice number"
+            >
+              <ClipboardCopy className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      ),
+    },
     {
       header: "Customer Name",
       accessorKey: "userName",
@@ -411,7 +426,7 @@ export default function PaymentsPage() {
                 id="search"
                 hideLabel
                 type="text"
-                placeholder="Search by Customer Name, Booking ID, etc."
+                placeholder="Search by Customer Name, Invoice Number, etc."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"

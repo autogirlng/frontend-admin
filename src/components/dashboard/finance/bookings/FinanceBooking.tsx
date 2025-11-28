@@ -4,6 +4,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
 import { Toaster, toast } from "react-hot-toast";
 import {
   AlertCircle,
@@ -318,6 +319,11 @@ export default function FinanceBookingsPage() {
           {item.bookingStatus.replace(/_/g, " ")}
         </span>
       ),
+    },
+    {
+      header: "Date",
+      accessorKey: "createdAt",
+      cell: (item) => format(new Date(item.createdAt), "MMM d, yyyy"),
     },
     {
       header: "Actions",
