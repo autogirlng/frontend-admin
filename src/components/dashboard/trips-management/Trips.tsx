@@ -24,6 +24,10 @@ import {
   useDownloadTripInvoice,
   useDownloadTripReceipt,
 } from "@/lib/hooks/trips-management/useTrips";
+import {
+  usePreviewInvoiceBlob,
+  usePreviewReceiptBlob,
+} from "@/lib/hooks/finance/usePayments";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -38,6 +42,7 @@ import { AssignDriverModal } from "./AssignDriverModal";
 import { AssignAgentsModal } from "./AssignAgentsModal";
 import { BookingStatus, Trip, TripStatus } from "./types";
 import { EditTripModal } from "./EditTripModal";
+import { DocumentPreviewModal } from "../finance/PreviewModal";
 
 const enumToOptions = (e: object): Option[] =>
   Object.entries(e).map(([key, value]) => ({ id: value, name: key }));
@@ -53,6 +58,11 @@ export default function TripsPage() {
   const [modal, setModal] = useState<
     "assignDriver" | "assignAgents" | "editTrip" | null
   >(null);
+
+  const [previewConfig, setPreviewConfig] = useState<{
+    type: "invoice" | "receipt";
+    trip: Trip;
+  } | null>(null);
 
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
@@ -93,6 +103,9 @@ export default function TripsPage() {
   const { data: bookingTypes = [] } = useGetBookingTypes();
   const downloadInvoiceMutation = useDownloadTripInvoice();
   const downloadReceiptMutation = useDownloadTripReceipt();
+
+  const previewInvoiceBlob = usePreviewInvoiceBlob();
+  const previewReceiptBlob = usePreviewReceiptBlob();
 
   const trips = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -167,12 +180,29 @@ export default function TripsPage() {
         onClick: () => openModal("assignAgents", trip),
       },
       {
+        label: "View Invoice",
+        icon: Eye,
+        onClick: () => setPreviewConfig({ type: "invoice", trip }),
+      },
+      {
         label: "Download Invoice",
         icon: FileText,
         onClick: () =>
           downloadInvoiceMutation.mutate({ bookingId: trip.bookingId }),
       },
     ];
+
+    if (
+      trip.bookingStatus === "CONFIRMED" ||
+      trip.bookingStatus === "COMPLETED"
+    ) {
+      // ✅ Preview Receipt Action
+      actions.push({
+        label: "View Receipt",
+        icon: Eye,
+        onClick: () => setPreviewConfig({ type: "receipt", trip }),
+      });
+    }
 
     if (
       trip.bookingStatus === "CONFIRMED" ||
@@ -426,6 +456,24 @@ export default function TripsPage() {
 
       {modal === "editTrip" && selectedTrip && (
         <EditTripModal trip={selectedTrip} onClose={closeModal} />
+      )}
+
+      {/* Document Preview Modal */}
+      {previewConfig && (
+        <DocumentPreviewModal
+          title={
+            previewConfig.type === "invoice" ? "Invoice Preview" : "Receipt Preview"
+          }
+          onClose={() => setPreviewConfig(null)}
+          fetchDocument={async () => {
+            const bookingId = previewConfig.trip.bookingId;
+            if (previewConfig.type === "invoice") {
+              return await previewInvoiceBlob.mutateAsync({ bookingId });
+            } else {
+              return await previewReceiptBlob.mutateAsync({ bookingId });
+            }
+          }}
+        />
       )}
     </>
   );

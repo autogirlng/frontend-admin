@@ -14,6 +14,7 @@ import {
   Search,
   Ticket,
   Vote,
+  View,
   ClipboardCopy,
   CheckCheck,
   Download, // ✅ Import
@@ -306,7 +307,7 @@ export default function PaymentsPage() {
       },
       {
         label: "View Invoice",
-        icon: FileText,
+        icon: View,
         onClick: () => setPreviewConfig({ type: "invoice", payment }),
       },
       {
@@ -325,7 +326,7 @@ export default function PaymentsPage() {
       // ✅ Preview Receipt Action
       actions.push({
         label: "View Receipt",
-        icon: FileText,
+        icon: View,
         onClick: () => setPreviewConfig({ type: "receipt", payment }),
       });
     }
@@ -561,14 +562,18 @@ export default function PaymentsPage() {
             <div className="flex gap-3">
               <Button
                 variant="secondary"
+                size="smd"
                 onClick={() => setSelectedPaymentIds(new Set())}
+                className="w-auto min-w-[140px] whitespace-nowrap"
               >
                 Deselect All
               </Button>
               <Button
                 variant="primary"
+                size="smd"
                 onClick={() => setConfirmModal({ isOpen: true, payment: null, mode: "bulk" })}
                 isLoading={bulkConfirmMutation.isPending}
+                className="w-auto min-w-[140px] whitespace-nowrap"
               >
                 <CheckCheck className="w-4 h-4 mr-2" />
                 Approve Selected ({selectedPaymentIds.size})
@@ -665,6 +670,8 @@ export default function PaymentsPage() {
                           </p>
                           <p className="text-sm text-gray-600">
                             Booking: <span className="font-mono">{p.bookingRef}</span> 
+                          </p>
+                          <p className="text-sm text-gray-600">
                             Amount : <span>₦ {p.totalPayable?.toLocaleString()}</span>
                           </p>
                         </div>

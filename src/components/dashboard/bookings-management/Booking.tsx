@@ -13,6 +13,10 @@ import {
   useGetVehiclesForDropdown,
   useMoveBooking,
 } from "@/lib/hooks/booking-management/useBookings";
+import {
+  usePreviewInvoiceBlob,
+  usePreviewReceiptBlob,
+} from "@/lib/hooks/finance/usePayments";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { BookingSegment, BookingStatus } from "./types";
@@ -42,6 +46,7 @@ import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import Button from "@/components/generic/ui/Button";
 import TextAreaInput from "@/components/generic/ui/TextAreaInput";
+import { DocumentPreviewModal } from "../finance/PreviewModal";
 
 // --- Helper Functions & Constants ---
 
@@ -112,6 +117,10 @@ export default function BookingsPage() {
   const [bookingTypeFilter, setBookingTypeFilter] = useState<Option | null>(
     null
   );
+  const [previewConfig, setPreviewConfig] = useState<{ type: "invoice" | "receipt"; booking: BookingSegment } | null>(null);
+
+  const previewInvoiceBlob = usePreviewInvoiceBlob();
+  const previewReceiptBlob = usePreviewReceiptBlob();
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState("");
@@ -309,6 +318,11 @@ export default function BookingsPage() {
         },
       },
       {
+        label: "View Invoice",
+        icon: View,
+        onClick: () => setPreviewConfig({ type: "invoice", booking }),
+      },
+      {
         label: "Download Invoice",
         icon: Download,
         onClick: () => {
@@ -324,22 +338,27 @@ export default function BookingsPage() {
           }
         },
       },
-      {
-        label: "Download Receipt",
-        icon: FileText,
-        onClick: () => {
-          if (canDownloadReceipt) {
-            if (downloadReceiptMutation.isPending) return;
-            const toastId = toast.loading("Downloading receipt...");
-            downloadReceiptMutation.mutate({
-              bookingId: booking.bookingId,
-              toastId,
-            });
-          } else {
-            toast.error("Receipt only available for confirmed bookings.");
-          }
-        },
-      },
+      ...(canDownloadReceipt
+        ? [
+            {
+              label: "View Receipt",
+              icon: View,
+              onClick: () => setPreviewConfig({ type: "receipt", booking }),
+            },
+            {
+              label: "Download Receipt",
+              icon: Download,
+              disabled: downloadReceiptMutation.isPending,
+              onClick: () => {
+                const toastId = toast.loading("Downloading receipt...");
+                downloadReceiptMutation.mutate({
+                  bookingId: booking.bookingId,
+                  toastId,
+                });
+              },
+            },
+          ]
+        : []),
     ];
 
     if (isActive) {
@@ -558,6 +577,25 @@ export default function BookingsPage() {
           isLoading={isPlaceholderData}
         />
       </main>
+
+      {/* Document Preview Modal - Works for Invoice & Receipt */}
+      {previewConfig && (
+        <DocumentPreviewModal
+          title={
+            previewConfig.type === "invoice" ? "Invoice Preview" : "Receipt Preview"
+          }
+          onClose={() => setPreviewConfig(null)}
+          fetchDocument={async () => {
+            const bookingId = previewConfig.booking.bookingId;
+
+            if (previewConfig.type === "invoice") {
+              return await previewInvoiceBlob.mutateAsync({ bookingId });
+            } else {
+              return await previewReceiptBlob.mutateAsync({ bookingId });
+            }
+          }}
+        />
+      )}
 
       {/* --- CANCEL MODAL --- */}
       {showCancelModal && (
