@@ -90,7 +90,7 @@ export function DocumentPreviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="relative w-full max-w-4xl bg-white rounded-lg shadow-2xl flex flex-col h-[85vh]">
+      <div className="relative w-full max-w-6xl bg-white rounded-lg shadow-2xl flex flex-col h-[95vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg shrink-0">
           <h3 className="text-lg font-semibold text-gray-900 capitalize">

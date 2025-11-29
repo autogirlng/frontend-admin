@@ -7,7 +7,7 @@ import clsx from "clsx";
 // Define the props for the button
 type ButtonProps = React.ComponentPropsWithoutRef<"button"> & {
   variant?: "primary" | "secondary" | "danger";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "smd"  |"lg";
   isLoading?: boolean;
 };
 
@@ -64,6 +64,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const sizeClasses = {
       sm: "px-3 py-1.5 text-sm",
       md: "px-4 py-2 text-base",
+      smd: "px-5 py-3 text-sm",
       lg: "px-6 py-3 text-lg",
     };
 

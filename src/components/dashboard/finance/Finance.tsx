@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
+import { apiClient } from "@/lib/apiClient"; 
 import {
   AlertCircle,
   Eye,
@@ -14,6 +15,7 @@ import {
   Ticket,
   Vote,
   ClipboardCopy,
+  CheckCheck,
   Download, // ✅ Import
   FileText, // ✅ Import
 } from "lucide-react";
@@ -27,9 +29,15 @@ import {
   useDownloadPaymentReceipt, // ✅ Import
   usePreviewInvoiceBlob,
   usePreviewReceiptBlob,
-  useApproveOfflinePayment,
 } from "@/lib/hooks/finance/usePayments";
+import {
+  useConfirmOfflinePayment,
+  useBulkConfirmOfflinePayment,
+} from "@/lib/hooks/finance/useFinanceBookings";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
+import {
+  PaginatedResponse
+} from "@/components/dashboard/finance/types";
 
 // Reusable Components
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -78,10 +86,15 @@ export default function PaymentsPage() {
   // In your PaymentsPage component (add these states near the top)
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
-    payment: Payment | null;
-  }>({ isOpen: false, payment: null });
+    payment: Payment | null;  // ← now nullable
+    mode: "single" | "bulk";
+  }>({ isOpen: false, payment: null, mode: "single" });
 
-  const approveOfflinePayment = useApproveOfflinePayment();
+  const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(new Set());
+
+  // const approveOfflinePayment = useApproveOfflinePayment();
+  const confirmPaymentMutation = useConfirmOfflinePayment();
+  const bulkConfirmMutation = useBulkConfirmOfflinePayment();
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
@@ -129,6 +142,35 @@ export default function PaymentsPage() {
   const payments = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
+  // Fetch ALL filtered payments (ignoring pagination)
+  const fetchAllFilteredPayments = async () => {
+    const params = new URLSearchParams();
+
+    params.append("page", "0");
+    params.append("size", "10000"); // large size so all results fit
+
+    // Date range
+    if (filters.dateRange?.from) {
+      params.append("startDate", format(filters.dateRange.from, "yyyy-MM-dd"));
+    }
+
+    if (filters.dateRange?.to) {
+      params.append("endDate", format(filters.dateRange.to, "yyyy-MM-dd"));
+    }
+
+    // Search term (not stored inside filters)
+    if (debouncedSearchTerm.trim() !== "") {
+      params.append("searchTerm", debouncedSearchTerm.trim());
+    }
+
+    const endpoint = `/admin/payments?${params.toString()}`;
+    const res = await apiClient.get<PaginatedResponse<Payment>>(endpoint);
+
+    // your API returns: content[], totalPages, ...
+    return res.content ?? [];
+  };
+
+
   // --- Event Handlers ---
   const handleFilterChange = (key: "paymentStatus", value: string | null) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -138,36 +180,60 @@ export default function PaymentsPage() {
     setFilters((prev) => ({ ...prev, dateRange: dateRange || null }));
     setCurrentPage(0);
   };
-  const handleExportSuccessfulPayments = () => {
-    // 1. Get the data currently visible in the table
-    const visiblePayments = payments; // ← already filtered by your useGetPayments + filters
+  // --- Selection Handlers ---
+  const isRowSelectable = (payment: Payment): boolean => {
+    return payment.paymentStatus === "PENDING" && payment.paymentProvider === "OFFLINE";
+  };
 
-    // 2. Filter only SUCCESSFUL ones
-    const successfulPayments = visiblePayments.filter(
+  const handleRowSelect = (rowId: string | number, rowData: Payment) => {
+    const id = rowId.toString();
+    setSelectedPaymentIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (areAllSelected: boolean) => {
+    if (areAllSelected) {
+      const allSelectableIds = payments
+        .filter(isRowSelectable)
+        .map((p) => p.id);
+      setSelectedPaymentIds(new Set(allSelectableIds));
+    } else {
+      setSelectedPaymentIds(new Set());
+    }
+  };
+  const handleExportSuccessfulPayments = async () => {
+    toast.loading("Preparing export...", { id: "export" });
+
+    // Fetch ALL data (ignoring pagination)
+    const allPayments = await fetchAllFilteredPayments();
+
+    const successfulPayments = allPayments.filter(
       (p) => p.paymentStatus === "SUCCESSFUL"
     );
 
     if (successfulPayments.length === 0) {
-      toast.error("No successful payments match the current filters");
+      toast.error("No successful payments match the current filters", { id: "export" });
       return;
     }
 
-    // 3. Build a smart filename with the actual period
+    // Build export period text
     let period = "All_Time";
-
     if (filters.dateRange?.from && filters.dateRange?.to) {
       const from = format(filters.dateRange.from, "dd-MMM-yyyy");
       const to = format(filters.dateRange.to, "dd-MMM-yyyy");
       period = `${from}_to_${to}`;
-    } else if (filters.dateRange?.from) {
-      period = `From_${format(filters.dateRange.from, "dd-MMM-yyyy")}`;
-    } else if (filters.dateRange?.to) {
-      period = `Up_to_${format(filters.dateRange.to, "dd-MMM-yyyy")}`;
     }
 
     const filename = `Successful_Payments_${period}.xlsx`;
 
-    // 4. Prepare clean data
+    // Prepare export data
     const exportData = successfulPayments.map((p) => ({
       "Customer Name": p.userName || "Guest",
       "Booking Ref": p.bookingRef || "-",
@@ -176,11 +242,13 @@ export default function PaymentsPage() {
       "Payment Date": format(new Date(p.createdAt), "dd MMM yyyy, HH:mm"),
       Vehicle: p.vehicleName,
       Provider: p.paymentProvider,
-      Status: p.paymentStatus === "SUCCESSFUL" ? "SUCCESSFUL" : p.paymentStatus,
+      Status: p.paymentStatus,
     }));
 
+    // Build Excel file
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(exportData);
+
     ws["!cols"] = [
       { wch: 22 }, // Customer Name
       { wch: 18 }, // Booking Ref
@@ -189,7 +257,7 @@ export default function PaymentsPage() {
       { wch: 24 }, // Payment Date
       { wch: 22 }, // Vehicle
       { wch: 14 }, // Provider
-      { wch: 12 }, // Status ← Added
+      { wch: 12 }, // Status
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Payments");
@@ -202,9 +270,11 @@ export default function PaymentsPage() {
         {successfulPayments.length} successful payments
         <br />
         Period: <strong>{period.replace(/_/g, " ")}</strong>
-      </div>
+      </div>,
+      { id: "export" }
     );
   };
+
   const clearFilters = () => {
     setFilters({
       paymentStatus: null,
@@ -217,7 +287,6 @@ export default function PaymentsPage() {
     setSelectedPaymentId(null);
   };
 
-  const approveOfflinePaymentMutation = useApproveOfflinePayment();
 
   // --- Table Column Definitions ---
   // ✅ UPDATED Action Menu
@@ -281,9 +350,9 @@ export default function PaymentsPage() {
         label: "Approve Payment",
         icon: Vote,
         onClick: () => {
-          setConfirmModal({ isOpen: true, payment });
+          setConfirmModal({ isOpen: true, payment, mode: "single" });
         },
-        disabled: approveOfflinePayment.isPending,
+        disabled: confirmPaymentMutation.isPending,
       });
     }
 
@@ -317,7 +386,12 @@ export default function PaymentsPage() {
     {
       header: "Customer Name",
       accessorKey: "userName",
-      cell: (item) => item.userName || "Guest",
+      cell: (item) => (
+        <div>
+          <div className="font-medium text-gray-900">{item.userName}</div>
+          <div className="text-gray-500">{item.userPhone}</div>
+        </div>
+      ),
     },
     {
       header: "Vehicle",
@@ -392,15 +466,15 @@ export default function PaymentsPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard/finance/bookings"
-              className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" // Added rounded-lg
+              className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" 
             >
               View Bookings
             </Link>
             <Button
               onClick={handleExportSuccessfulPayments}
-              variant="secondary"
-              size="sm"
-              className="w-auto min-w-28 font-medium"
+              variant="primary"
+              size="smd"
+              className="w-auto min-w-[140px] whitespace-nowrap"
               disabled={isLoading || payments.length === 0}
             >
               Export Payments
@@ -478,6 +552,31 @@ export default function PaymentsPage() {
           </div>
         )}
 
+        {/* ADD THIS BULK BAR HERE */}
+        {selectedPaymentIds.size > 0 && (
+          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 mb-6 rounded-lg">
+            <span className="font-medium text-green-800">
+              {selectedPaymentIds.size} pending offline payment(s) selected
+            </span>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setSelectedPaymentIds(new Set())}
+              >
+                Deselect All
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setConfirmModal({ isOpen: true, payment: null, mode: "bulk" })}
+                isLoading={bulkConfirmMutation.isPending}
+              >
+                <CheckCheck className="w-4 h-4 mr-2" />
+                Approve Selected ({selectedPaymentIds.size})
+              </Button>
+            </div>
+          </div>
+        )}
+
         {!isError && (payments.length > 0 || isLoading) && (
           <div
             className={clsx(
@@ -489,6 +588,10 @@ export default function PaymentsPage() {
               data={payments}
               columns={columns}
               getUniqueRowId={(item) => item.id}
+              selectedRowIds={selectedPaymentIds}
+              onRowSelect={handleRowSelect}
+              onSelectAll={handleSelectAll}
+              isRowSelectable={isRowSelectable}
             />
           </div>
         )}
@@ -533,15 +636,61 @@ export default function PaymentsPage() {
       {/* Confirmation Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Approve Offline Payment"
+        title={
+          confirmModal.mode === "bulk"
+            ? `Bulk Approve ${selectedPaymentIds.size} Offline Payments`
+            : "Approve Offline Payment"
+        }
         message={
-          confirmModal.payment ? (
+          confirmModal.mode === "bulk" ? (
+            <div className="space-y-2">
+              <p>Are you sure you want to approve the offline payments for:</p>
+
+              {/* Beautiful card — same exact style as single */}
+              <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900 border border-gray-200 max-h-64 overflow-y-auto">
+                {(() => {
+                  const selectedPayments = payments
+                    .filter((p) => selectedPaymentIds.has(p.id))
+                    .sort((a, b) => (a.userName || "").localeCompare(b.userName || ""));
+
+                  const displayed = selectedPayments.slice(0, 5);
+                  const remaining = selectedPayments.length - displayed.length;
+
+                  return (
+                    <>
+                      {displayed.map((p) => (
+                        <div key={p.id} className="py-2 border-b border-gray-200 last:border-0">
+                          <p className="text-base font-medium">
+                            {p.userName || "Guest"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Booking: <span className="font-mono">{p.bookingRef}</span> 
+                            Amount : <span>₦ {p.totalPayable?.toLocaleString()}</span>
+                          </p>
+                        </div>
+                      ))}
+
+                      {remaining > 0 && (
+                        <p className="pt-3 text-center text-sm font-medium text-gray-600">
+                          and <strong>{remaining}</strong> other{remaining > 1 ? "s" : ""}
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+
+              <p className="mt-4 text-sm text-gray-700">
+                This will mark all <strong>{selectedPaymentIds.size}</strong> payments as{" "}
+                <strong className="text-green-600">SUCCESSFUL</strong> and generate receipts.
+              </p>
+              <p className="text-xs text-gray-500">This action cannot be undone.</p>
+            </div>
+          ) : confirmModal.payment ? (
             <div className="space-y-2">
               <p>Are you sure you want to approve the offline payment for:</p>
-              <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900">
-                <p className="text-lg">
-                  {confirmModal.payment.userName || "Guest"}
-                </p>
+              <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900 border border-gray-200">
+                <p className="text-lg">{confirmModal.payment.userName || "Guest"}</p>
                 <p className="text-sm text-gray-600">
                   Booking Ref: <span className="font-mono">{confirmModal.payment.bookingRef}</span>
                 </p>
@@ -554,36 +703,63 @@ export default function PaymentsPage() {
               </p>
             </div>
           ) : (
-            "Loading payment details..."
+            "Loading..."
           )
         }
-        confirmLabel="Approve Payment"
+        confirmLabel={
+          confirmModal.mode === "bulk"
+            ? `Approve ${selectedPaymentIds.size} Payments`
+            : "Approve Payment"
+        }
         onConfirm={() => {
-          if (!confirmModal.payment) return;
+          if (confirmModal.mode === "bulk") {
+            const bookingIds = payments
+              .filter((p) => selectedPaymentIds.has(p.id))
+              .map((p) => p.bookingId);
 
-          approveOfflinePayment.mutate(
-            { bookingId: confirmModal.payment.bookingId },
-            {
-              onSuccess: (data) => {
-                toast.success(
-                  <div>
-                    <strong>Payment Approved Successfully!</strong>
-                    <br />
-                    Customer: <strong>{confirmModal.payment?.userName || "Guest"}</strong>
-                    <br />
-                    Invoice: <span className="font-mono">{data.invoiceNumber}</span>
-                  </div>
-                );
-                setConfirmModal({ isOpen: false, payment: null });
-              },
-              onError: () => {
-                toast.error("Failed to approve payment. Please try again.");
-              },
-            }
-          );
+            bulkConfirmMutation.mutate(
+              { bookingIds },
+              {
+                onSuccess: () => {
+                  toast.success(`Approved ${bookingIds.length} payments successfully!`);
+                  setConfirmModal({ isOpen: false, payment: null, mode: "single" });
+                  setSelectedPaymentIds(new Set());
+                },
+                onError: () => {
+                  toast.error("Bulk approval failed");
+                },
+              }
+            );
+          } else if (confirmModal.payment) {
+            confirmPaymentMutation.mutate(confirmModal.payment.bookingId,
+              {
+                onSuccess: () => {
+                  toast.success(
+                    <div>
+                      <strong>Payment Approved Successfully!</strong>
+                      <br />
+                      Customer: <strong>{confirmModal.payment?.userName || "Guest"}</strong>
+                      <br />
+                      Invoice: <span className="font-mono">{confirmModal.payment?.invoiceNumber}</span>
+                    </div>
+                  );
+                  setConfirmModal({ isOpen: false, payment: null, mode: "single" });
+                },
+                onError: () => {
+                  toast.error("Failed to approve payment.");
+                },
+              }
+            );
+          }
         }}
-        onCancel={() => setConfirmModal({ isOpen: false, payment: null })}
-        isLoading={approveOfflinePayment.isPending}
+        onCancel={() => {
+          setConfirmModal({ isOpen: false, payment: null, mode: "single" });
+          if (confirmModal.mode === "bulk") {
+            setSelectedPaymentIds(new Set());
+          }
+        }}
+        isLoading={confirmPaymentMutation.isPending || bulkConfirmMutation.isPending}
+        variant={confirmModal.mode === "bulk" ? "primary" : "primary"}
       />
     </>
   );
