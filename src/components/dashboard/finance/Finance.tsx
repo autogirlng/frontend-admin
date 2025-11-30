@@ -74,6 +74,7 @@ export default function PaymentsPage() {
 
   // --- State Management ---
   const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
     null
   );
@@ -126,6 +127,7 @@ export default function PaymentsPage() {
     isPlaceholderData,
   } = useGetPayments({
     page: currentPage,
+    size: pageSize,
     paymentStatus: filters.paymentStatus,
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
@@ -479,7 +481,7 @@ export default function PaymentsPage() {
               className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" 
             >
               View Bookings
-            </Link>
+            </Link>   
             <Button
               onClick={handleExportPayments}
               variant="primary"
@@ -546,6 +548,46 @@ export default function PaymentsPage() {
           >
             Clear Filters
           </Button>
+        </div>
+
+        {/* --- Page Size & Info Bar --- */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          {/* Left: Page size selector */}
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(0); // Reset to first page
+              }}
+              className="px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {[10, 25, 50, 75, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span>entries</span>
+          </div>
+
+          {/* Right: Showing X to Y of Z + Export Button */}
+          <div className="flex items-center gap-6">
+            <span className="text-sm text-gray-600">
+              Showing{" "}
+              <strong>
+                {paginatedData
+                  ? currentPage * pageSize + 1
+                  : 0}{" "}
+                to{" "}
+                {paginatedData
+                  ? Math.min((currentPage + 1) * pageSize, paginatedData.totalItems)
+                  : 0}
+              </strong>{" "}
+              of <strong>{paginatedData?.totalItems || 0}</strong> payments
+            </span>
+          </div>
         </div>
 
         {/* --- Table Display --- */}
