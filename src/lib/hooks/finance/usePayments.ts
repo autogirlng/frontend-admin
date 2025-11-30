@@ -10,6 +10,7 @@ import {
   PaginatedResponse,
 } from "@/components/dashboard/finance/types";
 import { OfflinePaymentApprovalResponse } from "@/components/dashboard/finance/types";
+import { SignalZero } from "lucide-react";
 
 // Query Key
 export const PAYMENTS_QUERY_KEY = "payments";
@@ -17,6 +18,7 @@ export const PAYMENTS_QUERY_KEY = "payments";
 // 1. Get Paginated Payments
 export interface PaymentFilters {
   page: number;
+  size: number;
   paymentStatus: string | null;
   startDate: Date | null;
   endDate: Date | null;
@@ -24,12 +26,13 @@ export interface PaymentFilters {
 }
 
 export function useGetPayments(filters: PaymentFilters) {
-  const { page, paymentStatus, startDate, endDate, searchTerm } = filters;
+  const { page, size, paymentStatus, startDate, endDate, searchTerm } = filters;
 
   return useQuery<PaginatedResponse<Payment>>({
     queryKey: [
       PAYMENTS_QUERY_KEY,
       page,
+      size,
       paymentStatus,
       startDate,
       endDate,
@@ -38,7 +41,7 @@ export function useGetPayments(filters: PaymentFilters) {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", String(page));
-      params.append("size", "10");
+      params.append("size", String(size));
 
       if (paymentStatus) params.append("paymentStatus", paymentStatus);
       if (startDate)

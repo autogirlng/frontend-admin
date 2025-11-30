@@ -74,6 +74,7 @@ export default function PaymentsPage() {
 
   // --- State Management ---
   const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
     null
   );
@@ -126,6 +127,7 @@ export default function PaymentsPage() {
     isPlaceholderData,
   } = useGetPayments({
     page: currentPage,
+    size: pageSize,
     paymentStatus: filters.paymentStatus,
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
@@ -209,18 +211,23 @@ export default function PaymentsPage() {
       setSelectedPaymentIds(new Set());
     }
   };
-  const handleExportSuccessfulPayments = async () => {
+  const handleExportPayments = async () => {
     toast.loading("Preparing export...", { id: "export" });
 
     // Fetch ALL data (ignoring pagination)
     const allPayments = await fetchAllFilteredPayments();
 
-    const successfulPayments = allPayments.filter(
-      (p) => p.paymentStatus === "SUCCESSFUL"
-    );
+    const activeStatus =
+      filters.paymentStatus && filters.paymentStatus !== "ALL"
+        ? filters.paymentStatus
+        : null;
 
-    if (successfulPayments.length === 0) {
-      toast.error("No successful payments match the current filters", { id: "export" });
+    const filteredPayments = activeStatus
+      ? allPayments.filter((p) => p.paymentStatus === activeStatus)
+      : allPayments;
+    
+    if (filteredPayments.length === 0) {
+      toast.error("No payments match the current filters", { id: "export" });
       return;
     }
 
@@ -232,10 +239,12 @@ export default function PaymentsPage() {
       period = `${from}_to_${to}`;
     }
 
-    const filename = `Successful_Payments_${period}.xlsx`;
+    const statusForName = activeStatus ?? "All_Statuses";
+
+    const filename = `Payments_${statusForName}_${period}.xlsx`
 
     // Prepare export data
-    const exportData = successfulPayments.map((p) => ({
+    const exportData = filteredPayments.map((p) => ({
       "Customer Name": p.userName || "Guest",
       "Booking Ref": p.bookingRef || "-",
       Amount: `₦${p.totalPayable.toLocaleString()}`,
@@ -268,7 +277,9 @@ export default function PaymentsPage() {
       <div className="text-sm">
         <strong>Export Complete!</strong>
         <br />
-        {successfulPayments.length} successful payments
+        {filteredPayments.length} payments exported
+        <br />
+        Status: <strong>{statusForName}</strong>
         <br />
         Period: <strong>{period.replace(/_/g, " ")}</strong>
       </div>,
@@ -470,9 +481,9 @@ export default function PaymentsPage() {
               className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" 
             >
               View Bookings
-            </Link>
+            </Link>   
             <Button
-              onClick={handleExportSuccessfulPayments}
+              onClick={handleExportPayments}
               variant="primary"
               size="smd"
               className="w-auto min-w-[140px] whitespace-nowrap"
@@ -537,6 +548,46 @@ export default function PaymentsPage() {
           >
             Clear Filters
           </Button>
+        </div>
+
+        {/* --- Page Size & Info Bar --- */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          {/* Left: Page size selector */}
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(0); // Reset to first page
+              }}
+              className="px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {[10, 25, 50, 75, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span>entries</span>
+          </div>
+
+          {/* Right: Showing X to Y of Z + Export Button */}
+          <div className="flex items-center gap-6">
+            <span className="text-sm text-gray-600">
+              Showing{" "}
+              <strong>
+                {paginatedData
+                  ? currentPage * pageSize + 1
+                  : 0}{" "}
+                to{" "}
+                {paginatedData
+                  ? Math.min((currentPage + 1) * pageSize, paginatedData.totalItems)
+                  : 0}
+              </strong>{" "}
+              of <strong>{paginatedData?.totalItems || 0}</strong> payments
+            </span>
+          </div>
         </div>
 
         {/* --- Table Display --- */}
