@@ -85,3 +85,24 @@ export function useDownloadConsolidatedReceipt() {
     onError: (error) => toast.error("Failed to download receipt."),
   });
 }
+
+export function usePreviewConsolidatedInvoiceBlob() {
+  return useMutation<Blob, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      return await apiClient.getFileAsBlob(
+        `/admin/invoices/consolidated/${id}/pdf?preview=true`
+      );
+    },
+  });
+}
+
+
+export function usePreviewConsolidatedReceiptBlob() {
+  return useMutation<Blob, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      return await apiClient.getFileAsBlob(
+        `/admin/invoices/consolidated/${id}/receipt?preview=true`
+      );
+    },
+  });
+}

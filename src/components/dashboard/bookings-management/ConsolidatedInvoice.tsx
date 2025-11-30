@@ -8,6 +8,7 @@ import {
   Plus,
   CheckCircle,
   Download,
+  View,
   AlertCircle,
   Layers,
 } from "lucide-react";
@@ -19,6 +20,8 @@ import {
   useConfirmConsolidatedInvoice,
   useDownloadConsolidatedPdf,
   useDownloadConsolidatedReceipt,
+  usePreviewConsolidatedInvoiceBlob,
+  usePreviewConsolidatedReceiptBlob,
 } from "./useConsolidatedInvoices";
 import { ConsolidatedInvoice } from "./consolidated-types";
 
@@ -30,6 +33,7 @@ import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import { CreateConsolidatedModal } from "./CreateConsolidatedModal";
+import { DocumentPreviewModal } from "../finance/PreviewModal";
 
 // Helper to format currency
 const formatPrice = (price: number) => {
@@ -46,6 +50,12 @@ export default function ConsolidatedInvoices() {
   const [selectedInvoice, setSelectedInvoice] =
     useState<ConsolidatedInvoice | null>(null);
 
+  // Preview state
+  const [previewConfig, setPreviewConfig] = useState<{
+    type: "invoice" | "receipt";
+    invoice: ConsolidatedInvoice;
+  } | null>(null);
+
   // --- API Hooks ---
   const {
     data: paginatedData,
@@ -57,6 +67,8 @@ export default function ConsolidatedInvoices() {
   const confirmMutation = useConfirmConsolidatedInvoice();
   const downloadPdfMutation = useDownloadConsolidatedPdf();
   const downloadReceiptMutation = useDownloadConsolidatedReceipt();
+  const previewInvoiceBlob = usePreviewConsolidatedInvoiceBlob();
+  const previewReceiptBlob = usePreviewConsolidatedReceiptBlob();
 
   const invoices = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -75,6 +87,12 @@ export default function ConsolidatedInvoices() {
   // --- Column Definition ---
   const getActions = (invoice: ConsolidatedInvoice): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [];
+
+    actions.push({
+        label: "View Invoice",
+        icon: View,
+        onClick: () => setPreviewConfig({ type: "invoice", invoice }),
+      });
 
     // 1. Download PDF (Always available)
     actions.push({
@@ -101,15 +119,21 @@ export default function ConsolidatedInvoices() {
 
     // 3. Download Receipt (Only for Paid/Confirmed)
     if (invoice.status === "PAID" || invoice.status === "CONFIRMED") {
-      actions.push({
-        label: "Download Receipt",
-        icon: Download,
-        onClick: () =>
-          downloadReceiptMutation.mutate({
-            id: invoice.id,
-            invoiceNumber: invoice.invoiceNumber,
-          }),
-      });
+      actions.push(
+        {
+          label: "View Receipt",
+          icon: View,
+          onClick: () => setPreviewConfig({ type: "receipt", invoice }),
+        },
+        {
+          label: "Download Receipt",
+          icon: Download,
+          onClick: () =>
+            downloadReceiptMutation.mutate({
+              id: invoice.id,
+              invoiceNumber: invoice.invoiceNumber,
+            }),
+        });
     }
 
     return actions;
@@ -262,6 +286,26 @@ export default function ConsolidatedInvoices() {
           onConfirm={handleConfirm}
           isLoading={confirmMutation.isPending}
           variant="primary"
+        />
+      )}
+
+      {/* Document Preview Modal - Reused from your app */}
+      {previewConfig && (
+        <DocumentPreviewModal
+          title={
+            previewConfig.type === "invoice"
+              ? "Consolidated Invoice Preview"
+              : "Consolidated Receipt Preview"
+          }
+          onClose={() => setPreviewConfig(null)}
+          fetchDocument={async () => {
+            const  id  = previewConfig.invoice.id;
+            if (previewConfig.type === "invoice") {
+              return await previewInvoiceBlob.mutateAsync({ id });
+            } else {
+              return await previewReceiptBlob.mutateAsync({ id });
+            }
+          }}
         />
       )}
     </>
