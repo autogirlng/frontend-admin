@@ -606,33 +606,47 @@ export default function PaymentsPage() {
 
         {/* ADD THIS BULK BAR HERE */}
         {selectedPaymentIds.size > 0 && (
-          <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 mb-6 rounded-lg">
-            <span className="font-medium text-green-800">
-              {selectedPaymentIds.size} pending offline payment(s) selected
-            </span>
-            <div className="flex gap-3">
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6 shadow-sm">
+          {/* Mobile: Vertical layout */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left: Selection info */}
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <CheckCheck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-green-900">
+                  {selectedPaymentIds.size} pending payment{selectedPaymentIds.size > 1 ? "s" : ""} selected
+                </p>
+                <p className="text-sm text-green-700">Ready for approval</p>
+              </div>
+            </div>
+
+            {/* Right: Action buttons */}
+            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
               <Button
                 variant="secondary"
-                size="smd"
+                size="md"
                 onClick={() => setSelectedPaymentIds(new Set())}
-                className="w-auto min-w-[140px] whitespace-nowrap"
+                className="w-full sm:w-auto justify-center"
               >
                 Deselect All
               </Button>
+
               <Button
                 variant="primary"
-                size="smd"
+                size="md"
                 onClick={() => setConfirmModal({ isOpen: true, payment: null, mode: "bulk" })}
                 isLoading={bulkConfirmMutation.isPending}
-                className="w-auto min-w-[140px] whitespace-nowrap"
+                className="w-full sm:w-auto justify-center"
               >
                 <CheckCheck className="w-4 h-4 mr-2" />
                 Approve Selected ({selectedPaymentIds.size})
               </Button>
             </div>
           </div>
-        )}
-
+        </div>
+      )}
         {!isError && (payments.length > 0 || isLoading) && (
           <div
             className={clsx(
