@@ -1,4 +1,3 @@
-// app/dashboard/finance/payments/page.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -6,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
-import { apiClient } from "@/lib/apiClient"; 
+import { apiClient } from "@/lib/apiClient";
 import {
   AlertCircle,
   Eye,
@@ -17,17 +16,18 @@ import {
   View,
   ClipboardCopy,
   CheckCheck,
-  Download, // ✅ Import
-  FileText, // ✅ Import
+  Download,
+  FileText,
+  Plus,
 } from "lucide-react";
-import clsx from "clsx"; // ✅ Import
+import clsx from "clsx";
 import * as XLSX from "xlsx";
 
 // Hooks
 import {
   useGetPayments,
-  useDownloadInvoice, // ✅ Import
-  useDownloadPaymentReceipt, // ✅ Import
+  useDownloadInvoice,
+  useDownloadPaymentReceipt,
   usePreviewInvoiceBlob,
   usePreviewReceiptBlob,
 } from "@/lib/hooks/finance/usePayments";
@@ -36,9 +36,7 @@ import {
   useBulkConfirmOfflinePayment,
 } from "@/lib/hooks/finance/useFinanceBookings";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
-import {
-  PaginatedResponse
-} from "@/components/dashboard/finance/types";
+import { PaginatedResponse } from "@/components/dashboard/finance/types";
 
 // Reusable Components
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -88,11 +86,13 @@ export default function PaymentsPage() {
   // In your PaymentsPage component (add these states near the top)
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
-    payment: Payment | null;  // ← now nullable
+    payment: Payment | null; // ← now nullable
     mode: "single" | "bulk";
   }>({ isOpen: false, payment: null, mode: "single" });
 
-  const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(new Set());
+  const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(
+    new Set()
+  );
 
   // const approveOfflinePayment = useApproveOfflinePayment();
   const confirmPaymentMutation = useConfirmOfflinePayment();
@@ -173,7 +173,6 @@ export default function PaymentsPage() {
     return res.content ?? [];
   };
 
-
   // --- Event Handlers ---
   const handleFilterChange = (key: "paymentStatus", value: string | null) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -185,7 +184,10 @@ export default function PaymentsPage() {
   };
   // --- Selection Handlers ---
   const isRowSelectable = (payment: Payment): boolean => {
-    return payment.paymentStatus === "PENDING" && payment.paymentProvider === "OFFLINE";
+    return (
+      payment.paymentStatus === "PENDING" &&
+      payment.paymentProvider === "OFFLINE"
+    );
   };
 
   const handleRowSelect = (rowId: string | number, rowData: Payment) => {
@@ -225,7 +227,7 @@ export default function PaymentsPage() {
     const filteredPayments = activeStatus
       ? allPayments.filter((p) => p.paymentStatus === activeStatus)
       : allPayments;
-    
+
     if (filteredPayments.length === 0) {
       toast.error("No payments match the current filters", { id: "export" });
       return;
@@ -241,7 +243,7 @@ export default function PaymentsPage() {
 
     const statusForName = activeStatus ?? "All_Statuses";
 
-    const filename = `Payments_${statusForName}_${period}.xlsx`
+    const filename = `Payments_${statusForName}_${period}.xlsx`;
 
     // Prepare export data
     const exportData = filteredPayments.map((p) => ({
@@ -299,7 +301,6 @@ export default function PaymentsPage() {
     setSelectedPaymentId(null);
   };
 
-
   // --- Table Column Definitions ---
   // ✅ UPDATED Action Menu
   const getPaymentActions = (payment: Payment): ActionMenuItem[] => {
@@ -328,7 +329,7 @@ export default function PaymentsPage() {
           downloadInvoiceMutation.mutate({
             bookingId: payment.bookingId,
             invoiceNumber: payment.invoiceNumber,
-            userName: payment.userName
+            userName: payment.userName,
           }),
       },
     ];
@@ -351,13 +352,16 @@ export default function PaymentsPage() {
           downloadReceiptMutation.mutate({
             bookingId: payment.bookingId,
             invoiceNumber: payment.invoiceNumber,
-            userName: payment.userName
+            userName: payment.userName,
           }),
       });
     }
 
     // Only show for PENDING offline payments
-    if (payment.paymentStatus === "PENDING" && payment.paymentProvider === "OFFLINE") {
+    if (
+      payment.paymentStatus === "PENDING" &&
+      payment.paymentProvider === "OFFLINE"
+    ) {
       actions.push({
         label: "Approve Payment",
         icon: Vote,
@@ -475,22 +479,32 @@ export default function PaymentsPage() {
               View and manage all payments on the platform.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard/finance/bookings"
-              className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF]" 
-            >
-              View Bookings
-            </Link>   
-            <Button
-              onClick={handleExportPayments}
-              variant="primary"
-              size="smd"
-              className="w-auto min-w-[140px] whitespace-nowrap"
-              disabled={isLoading || payments.length === 0}
-            >
-              Export Payments
-            </Button>
+          <div className="flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="/dashboard/finance/bookings"
+                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1"
+              >
+                View Bookings
+              </Link>
+              <Button
+                onClick={handleExportPayments}
+                variant="primary"
+                size="smd"
+                className="w-auto min-w-[140px] whitespace-nowrap my-1"
+                disabled={isLoading || payments.length === 0}
+              >
+                Export Payments
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              <Link
+                href="/dashboard/bookings/consolidated-invoice"
+                className="bg-[#7796FF] flex py-2 px-6 my-1 text-white hover:bg-[#007ACC] items-center"
+              >
+                <Plus className="mr-2 h-5 w-5" /> Consolidated Invoice
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -577,12 +591,12 @@ export default function PaymentsPage() {
             <span className="text-sm text-gray-600">
               Showing{" "}
               <strong>
+                {paginatedData ? currentPage * pageSize + 1 : 0} to{" "}
                 {paginatedData
-                  ? currentPage * pageSize + 1
-                  : 0}{" "}
-                to{" "}
-                {paginatedData
-                  ? Math.min((currentPage + 1) * pageSize, paginatedData.totalItems)
+                  ? Math.min(
+                      (currentPage + 1) * pageSize,
+                      paginatedData.totalItems
+                    )
                   : 0}
               </strong>{" "}
               of <strong>{paginatedData?.totalItems || 0}</strong> payments
@@ -606,47 +620,54 @@ export default function PaymentsPage() {
 
         {/* ADD THIS BULK BAR HERE */}
         {selectedPaymentIds.size > 0 && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6 shadow-sm">
-          {/* Mobile: Vertical layout */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Left: Selection info */}
-            <div className="flex items-center gap-3">
-              <div className="shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                <CheckCheck className="w-5 h-5 text-white" />
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6 shadow-sm">
+            {/* Mobile: Vertical layout */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              {/* Left: Selection info */}
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                  <CheckCheck className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-medium text-green-900">
+                    {selectedPaymentIds.size} pending payment
+                    {selectedPaymentIds.size > 1 ? "s" : ""} selected
+                  </p>
+                  <p className="text-sm text-green-700">Ready for approval</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-green-900">
-                  {selectedPaymentIds.size} pending payment{selectedPaymentIds.size > 1 ? "s" : ""} selected
-                </p>
-                <p className="text-sm text-green-700">Ready for approval</p>
+
+              {/* Right: Action buttons */}
+              <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setSelectedPaymentIds(new Set())}
+                  className="w-full sm:w-auto justify-center"
+                >
+                  Deselect All
+                </Button>
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() =>
+                    setConfirmModal({
+                      isOpen: true,
+                      payment: null,
+                      mode: "bulk",
+                    })
+                  }
+                  isLoading={bulkConfirmMutation.isPending}
+                  className="w-full sm:w-auto justify-center"
+                >
+                  <CheckCheck className="w-4 h-4 mr-2" />
+                  Approve Selected ({selectedPaymentIds.size})
+                </Button>
               </div>
-            </div>
-
-            {/* Right: Action buttons */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => setSelectedPaymentIds(new Set())}
-                className="w-full sm:w-auto justify-center"
-              >
-                Deselect All
-              </Button>
-
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => setConfirmModal({ isOpen: true, payment: null, mode: "bulk" })}
-                isLoading={bulkConfirmMutation.isPending}
-                className="w-full sm:w-auto justify-center"
-              >
-                <CheckCheck className="w-4 h-4 mr-2" />
-                Approve Selected ({selectedPaymentIds.size})
-              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
         {!isError && (payments.length > 0 || isLoading) && (
           <div
             className={clsx(
@@ -687,7 +708,9 @@ export default function PaymentsPage() {
       {previewConfig && (
         <DocumentPreviewModal
           title={
-            previewConfig.type === "invoice" ? "Invoice Preview" : "Receipt Preview"
+            previewConfig.type === "invoice"
+              ? "Invoice Preview"
+              : "Receipt Preview"
           }
           onClose={() => setPreviewConfig(null)}
           fetchDocument={async () => {
@@ -721,7 +744,9 @@ export default function PaymentsPage() {
                 {(() => {
                   const selectedPayments = payments
                     .filter((p) => selectedPaymentIds.has(p.id))
-                    .sort((a, b) => (a.userName || "").localeCompare(b.userName || ""));
+                    .sort((a, b) =>
+                      (a.userName || "").localeCompare(b.userName || "")
+                    );
 
                   const displayed = selectedPayments.slice(0, 5);
                   const remaining = selectedPayments.length - displayed.length;
@@ -729,22 +754,28 @@ export default function PaymentsPage() {
                   return (
                     <>
                       {displayed.map((p) => (
-                        <div key={p.id} className="py-2 border-b border-gray-200 last:border-0">
+                        <div
+                          key={p.id}
+                          className="py-2 border-b border-gray-200 last:border-0"
+                        >
                           <p className="text-base font-medium">
                             {p.userName || "Guest"}
                           </p>
                           <p className="text-sm text-gray-600">
-                            Booking: <span className="font-mono">{p.bookingRef}</span> 
+                            Booking:{" "}
+                            <span className="font-mono">{p.bookingRef}</span>
                           </p>
                           <p className="text-sm text-gray-600">
-                            Amount : <span>₦ {p.totalPayable?.toLocaleString()}</span>
+                            Amount :{" "}
+                            <span>₦ {p.totalPayable?.toLocaleString()}</span>
                           </p>
                         </div>
                       ))}
 
                       {remaining > 0 && (
                         <p className="pt-3 text-center text-sm font-medium text-gray-600">
-                          and <strong>{remaining}</strong> other{remaining > 1 ? "s" : ""}
+                          and <strong>{remaining}</strong> other
+                          {remaining > 1 ? "s" : ""}
                         </p>
                       )}
                     </>
@@ -753,25 +784,35 @@ export default function PaymentsPage() {
               </div>
 
               <p className="mt-4 text-sm text-gray-700">
-                This will mark all <strong>{selectedPaymentIds.size}</strong> payments as{" "}
-                <strong className="text-green-600">SUCCESSFUL</strong> and generate receipts.
+                This will mark all <strong>{selectedPaymentIds.size}</strong>{" "}
+                payments as{" "}
+                <strong className="text-green-600">SUCCESSFUL</strong> and
+                generate receipts.
               </p>
-              <p className="text-xs text-gray-500">This action cannot be undone.</p>
+              <p className="text-xs text-gray-500">
+                This action cannot be undone.
+              </p>
             </div>
           ) : confirmModal.payment ? (
             <div className="space-y-2">
               <p>Are you sure you want to approve the offline payment for:</p>
               <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900 border border-gray-200">
-                <p className="text-lg">{confirmModal.payment.userName || "Guest"}</p>
+                <p className="text-lg">
+                  {confirmModal.payment.userName || "Guest"}
+                </p>
                 <p className="text-sm text-gray-600">
-                  Booking Ref: <span className="font-mono">{confirmModal.payment.bookingRef}</span>
+                  Booking Ref:{" "}
+                  <span className="font-mono">
+                    {confirmModal.payment.bookingRef}
+                  </span>
                 </p>
                 <p className="text-sm text-gray-600">
                   Amount: ₦{confirmModal.payment.totalPayable?.toLocaleString()}
                 </p>
               </div>
               <p className="mt-3 text-sm">
-                This action will mark the payment as <strong>SUCCESSFUL</strong> and generate a receipt.
+                This action will mark the payment as <strong>SUCCESSFUL</strong>{" "}
+                and generate a receipt.
               </p>
             </div>
           ) : (
@@ -793,8 +834,14 @@ export default function PaymentsPage() {
               { bookingIds },
               {
                 onSuccess: () => {
-                  toast.success(`Approved ${bookingIds.length} payments successfully!`);
-                  setConfirmModal({ isOpen: false, payment: null, mode: "single" });
+                  toast.success(
+                    `Approved ${bookingIds.length} payments successfully!`
+                  );
+                  setConfirmModal({
+                    isOpen: false,
+                    payment: null,
+                    mode: "single",
+                  });
                   setSelectedPaymentIds(new Set());
                 },
                 onError: () => {
@@ -803,25 +850,31 @@ export default function PaymentsPage() {
               }
             );
           } else if (confirmModal.payment) {
-            confirmPaymentMutation.mutate(confirmModal.payment.bookingId,
-              {
-                onSuccess: () => {
-                  toast.success(
-                    <div>
-                      <strong>Payment Approved Successfully!</strong>
-                      <br />
-                      Customer: <strong>{confirmModal.payment?.userName || "Guest"}</strong>
-                      <br />
-                      Invoice: <span className="font-mono">{confirmModal.payment?.invoiceNumber}</span>
-                    </div>
-                  );
-                  setConfirmModal({ isOpen: false, payment: null, mode: "single" });
-                },
-                onError: () => {
-                  toast.error("Failed to approve payment.");
-                },
-              }
-            );
+            confirmPaymentMutation.mutate(confirmModal.payment.bookingId, {
+              onSuccess: () => {
+                toast.success(
+                  <div>
+                    <strong>Payment Approved Successfully!</strong>
+                    <br />
+                    Customer:{" "}
+                    <strong>{confirmModal.payment?.userName || "Guest"}</strong>
+                    <br />
+                    Invoice:{" "}
+                    <span className="font-mono">
+                      {confirmModal.payment?.invoiceNumber}
+                    </span>
+                  </div>
+                );
+                setConfirmModal({
+                  isOpen: false,
+                  payment: null,
+                  mode: "single",
+                });
+              },
+              onError: () => {
+                toast.error("Failed to approve payment.");
+              },
+            });
           }
         }}
         onCancel={() => {
@@ -830,7 +883,9 @@ export default function PaymentsPage() {
             setSelectedPaymentIds(new Set());
           }
         }}
-        isLoading={confirmPaymentMutation.isPending || bulkConfirmMutation.isPending}
+        isLoading={
+          confirmPaymentMutation.isPending || bulkConfirmMutation.isPending
+        }
         variant={confirmModal.mode === "bulk" ? "primary" : "primary"}
       />
     </>
