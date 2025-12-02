@@ -12,6 +12,7 @@ import {
   Activity,
   Hammer,
   Ticket,
+  Puzzle,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -100,6 +101,15 @@ export default function SettingsPage() {
             title="Create Past Bookings"
             description="Create past bookings which are historical bookings made before the platform was created."
             iconBgColor="bg-blue-100"
+          />
+
+          {/* 7. Coupons */}
+          <SettingsCard
+            href="/dashboard/coupons"
+            icon={Puzzle}
+            title="Coupons"
+            description="Manage discount coupons for your platform."
+            iconBgColor="bg-yellow-300"
           />
         </div>
       </main>
