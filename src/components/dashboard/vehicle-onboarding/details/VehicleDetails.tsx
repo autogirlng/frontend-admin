@@ -1,7 +1,6 @@
-// app/dashboard/vehicles/[vehicleId]/page.tsx
 "use client";
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -27,6 +26,7 @@ import {
   Clock,
   ExternalLink,
   ChevronRight,
+  ChevronLeft, // Needed for carousel controls
 } from "lucide-react";
 
 // Reusable Components
@@ -38,9 +38,8 @@ import {
   useGetVehicleDetails,
 } from "@/lib/hooks/vehicle-onboarding/details/useVehicleDetailsPage";
 
-// --- Helper Components (Internal to this page) ---
+// --- Helper Components ---
 
-// Enhanced status badge with icons
 const StatusBadge = ({ status }: { status: string }) => {
   let colorClasses = "bg-gray-100 text-gray-700 border-gray-300";
   let icon = null;
@@ -68,7 +67,6 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// Enhanced detail item with better typography
 const DetailItem = ({
   label,
   value,
@@ -88,7 +86,6 @@ const DetailItem = ({
   </div>
 );
 
-// Enhanced info card with hover effect
 const InfoCard = ({
   icon: Icon,
   title,
@@ -113,7 +110,6 @@ const InfoCard = ({
   </div>
 );
 
-// Stat card for key metrics
 const StatCard = ({
   icon: Icon,
   label,
@@ -162,47 +158,68 @@ export default function VehicleDetailPage() {
     isError,
   } = useGetVehicleDetails(vehicleId);
 
-  // Fetch first 5 bookings
   const { data: bookingsData, isLoading: isLoadingBookings } =
     useGetVehicleBookings(vehicleId, 0, 5);
 
-  // --- Memos & Derived Data ---
+  // --- CAROUSEL STATE ---
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const isSharing = useRef(false);
 
-  // Find the primary photo
-  const primaryPhoto = useMemo(
-    () =>
-      vehicle?.photos?.find((p) => p.isPrimary)?.cloudinaryUrl ||
-      vehicle?.photos?.[0]?.cloudinaryUrl,
-    [vehicle?.photos]
-  );
+  // Ensure activeIndex resets if vehicle loads or photos change
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [vehicle?.photos]);
 
-  // Map prices to booking types for easy display
+  // Auto-Play Logic
+  useEffect(() => {
+    // Only auto-play if not hovered and multiple photos exist
+    if (!isHovered && vehicle?.photos && vehicle.photos.length > 1) {
+      autoPlayRef.current = setInterval(() => {
+        setActiveIndex((prev) => (prev + 1) % vehicle.photos.length);
+      }, 4000); // 4 Seconds per slide
+    }
+
+    return () => {
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    };
+  }, [isHovered, vehicle?.photos]);
+
+  const nextSlide = () => {
+    if (!vehicle?.photos) return;
+    setActiveIndex((prev) => (prev + 1) % vehicle.photos.length);
+  };
+
+  const prevSlide = () => {
+    if (!vehicle?.photos) return;
+    setActiveIndex(
+      (prev) => (prev - 1 + vehicle.photos.length) % vehicle.photos.length
+    );
+  };
+
+  const goToSlide = (index: number) => {
+    setActiveIndex(index);
+  };
+
   const pricingMap = useMemo(() => {
     const pMap = new Map<string, number>();
     vehicle?.pricing.forEach((p) => pMap.set(p.bookingTypeId, p.price));
     return pMap;
   }, [vehicle?.pricing]);
 
-  const isSharing = useRef(false);
-
-  // Updated handleShare with locking mechanism
   const handleShare = async () => {
-    // Prevent execution if data is missing OR if a share is already in progress
     if (!vehicle || isSharing.current) return;
+    const currentPhotoUrl = vehicle.photos[activeIndex]?.cloudinaryUrl;
 
     const shareText = `Check out this ${vehicle.name} (${vehicle.yearOfRelease})\nID: ${vehicle.vehicleIdentifier}`;
 
     try {
-      isSharing.current = true; // 🔒 Lock the function
-
-      // ---------------------------------------------------------
-      // STRATEGY 1: Try to share the Image File + Text
-      // ---------------------------------------------------------
-      if (primaryPhoto && navigator.canShare && navigator.share) {
+      isSharing.current = true;
+      if (currentPhotoUrl && navigator.canShare && navigator.share) {
         try {
-          toast.loading("Preparing image for sharing...");
-          
-          const response = await fetch(primaryPhoto, { mode: "cors" });
+          toast.loading("Preparing image...");
+          const response = await fetch(currentPhotoUrl, { mode: "cors" });
           const blob = await response.blob();
           const file = new File([blob], "vehicle.jpg", { type: blob.type });
 
@@ -215,48 +232,33 @@ export default function VehicleDetailPage() {
           if (navigator.canShare(fileShareData)) {
             toast.dismiss();
             await navigator.share(fileShareData);
-            return; // Stop here if file share was successful
+            return;
           }
-        } catch (fileError) {
-          console.warn("File sharing failed, falling back to text sharing:", fileError);
+        } catch (e) {
+          console.warn("File share failed", e);
           toast.dismiss();
         }
       }
 
-      // ---------------------------------------------------------
-      // STRATEGY 2: Text-Only Share (Mobile Fallback)
-      // ---------------------------------------------------------
       if (navigator.share) {
         await navigator.share({
           title: vehicle.name,
           text: shareText,
         });
-      } 
-      // ---------------------------------------------------------
-      // STRATEGY 3: Clipboard Copy (Desktop Fallback)
-      // ---------------------------------------------------------
-      else {
-        // Since we can't share a private URL, we copy the text details
+      } else {
         await navigator.clipboard.writeText(shareText);
-        toast.success("Vehicle details copied to clipboard!");
+        toast.success("Copied to clipboard!");
       }
-
     } catch (err) {
-      // Ignore AbortError (user closed the share sheet)
       if (err instanceof Error && err.name !== "AbortError") {
-        console.error("Error sharing:", err);
         toast.error("Failed to share");
       }
     } finally {
-      isSharing.current = false; // 🔓 Unlock
+      isSharing.current = false;
     }
   };
 
-  // --- Render Logic ---
-
-  if (isLoadingVehicle) {
-    return <CustomLoader />;
-  }
+  if (isLoadingVehicle) return <CustomLoader />;
 
   if (isError || !vehicle) {
     return (
@@ -264,20 +266,18 @@ export default function VehicleDetailPage() {
         <CustomBack />
         <div className="flex flex-col items-center gap-3 p-8 text-red-600 bg-red-50 border border-red-200 rounded-xl mt-6">
           <AlertCircle className="h-12 w-12" />
-          <span className="font-semibold text-lg">
-            Failed to load vehicle details.
-          </span>
-          <p className="text-sm text-red-500">
-            Please try again or contact support.
-          </p>
+          <span className="font-semibold text-lg">Failed to load details.</span>
         </div>
       </main>
     );
   }
 
+  // Current photo for the big display
+  const currentPhoto = vehicle.photos?.[activeIndex];
+
   return (
     <main className="min-h-screen">
-      {/* Header Section with Gradient */}
+      {/* Header Section */}
       <div className="bg-linear-to-r from-[#0096FF] to-[#0077CC] text-white">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <CustomBack />
@@ -329,64 +329,100 @@ export default function VehicleDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Photos & Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Photo Gallery */}
-            <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-              {primaryPhoto ? (
-                <div className="relative aspect-video w-full bg-gray-100 group">
+            {/* --- CAROUSEL COMPONENT --- */}
+            <div
+              className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden group"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
+              {/* 1. BIG PICTURE (Auto-Scrolls / Controlled) */}
+              <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
+                {currentPhoto ? (
                   <img
-                    src={primaryPhoto}
-                    alt={`${vehicle.name} primary`}
-                    className="w-full h-full object-cover"
+                    src={currentPhoto.cloudinaryUrl}
+                    alt={`Vehicle View ${activeIndex + 1}`}
+                    className="w-full h-full object-cover transition-opacity duration-500 ease-in-out"
                   />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                    <Car className="h-16 w-16 mb-2" />
+                    <span className="text-sm">No photos available</span>
+                  </div>
+                )}
 
-                  {/* ✅ handleShare is used here in the onClick event */}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleShare();
-                    }}
-                    className="absolute top-4 left-4 p-2.5 bg-white/80 hover:bg-white backdrop-blur-md text-gray-700 hover:text-blue-600 rounded-full shadow-lg transition-all duration-200 z-10 border border-white/50"
-                    title="Share this vehicle"
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="aspect-video w-full bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
-                  {/* Added Share button to fallback/placeholder state as well */}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleShare();
-                    }}
-                    className="absolute top-4 left-4 p-2.5 bg-white/80 hover:bg-white backdrop-blur-md text-gray-700 hover:text-blue-600 rounded-full shadow-lg transition-all duration-200 z-10 border border-white/50"
-                    title="Share this vehicle"
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </button>
-                  <Car className="h-24 w-24 text-gray-300" />
-                </div>
-              )}
+                {/* Controls (Arrows) - Only show if > 1 photo */}
+                {vehicle.photos.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevSlide();
+                      }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextSlide();
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
 
+                {/* Share Button (Top Left) */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleShare();
+                  }}
+                  className="absolute top-4 left-4 p-2 bg-white/90 hover:bg-white backdrop-blur-md text-gray-700 hover:text-blue-600 rounded-full shadow-lg transition-all z-20"
+                  title="Share current image"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+
+                {/* Slide Counter (Bottom Right) */}
+                {vehicle.photos.length > 0 && (
+                  <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
+                    {activeIndex + 1} / {vehicle.photos.length}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. THUMBNAILS (Control the Big Picture) */}
               {vehicle.photos.length > 0 && (
-                <div className="p-4 bg-gray-50 border-t border-gray-200">
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                <div className="p-4 bg-gray-50 border-t border-gray-200 overflow-x-auto">
+                  <div className="flex gap-2 min-w-min">
                     {vehicle.photos.map((photo, index) => (
-                      <div
+                      <button
                         key={`${photo.cloudinaryPublicId}-${index}`}
-                        className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-[#0096FF] transition-colors cursor-pointer"
+                        onClick={() => goToSlide(index)}
+                        className={`
+                          relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all
+                          ${
+                            index === activeIndex
+                              ? "border-[#0096FF] ring-2 ring-blue-100 opacity-100 scale-105"
+                              : "border-transparent hover:border-gray-300 opacity-70 hover:opacity-100"
+                          }
+                        `}
                       >
                         <img
                           src={photo.cloudinaryUrl}
-                          alt="Vehicle thumbnail"
+                          alt={`Thumbnail ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
             </div>
+            {/* --- END CAROUSEL --- */}
 
             {/* Description */}
             <InfoCard icon={Info} title="About This Vehicle">
