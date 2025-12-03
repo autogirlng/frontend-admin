@@ -26,7 +26,7 @@ import {
   Clock,
   ExternalLink,
   ChevronRight,
-  ChevronLeft, // Needed for carousel controls
+  ChevronLeft,
 } from "lucide-react";
 
 // Reusable Components
@@ -210,47 +210,33 @@ export default function VehicleDetailPage() {
 
   const handleShare = async () => {
     if (!vehicle || isSharing.current) return;
-    const currentPhotoUrl = vehicle.photos[activeIndex]?.cloudinaryUrl;
 
-    const shareText = `Check out this ${vehicle.name} (${vehicle.yearOfRelease})\nID: ${vehicle.vehicleIdentifier}`;
+    const baseUrl =
+      process.env.NEXT_PUBLIC_CUSTOMER_APP_URL ||
+      "https://muvment-customer-app.vercel.app";
+    const shareUrl = `${baseUrl}/Booking/details/${vehicle.id}`;
+
+    const shareText = `Check out this ${vehicle.name} on Muvment!`;
 
     try {
       isSharing.current = true;
-      if (currentPhotoUrl && navigator.canShare && navigator.share) {
-        try {
-          toast.loading("Preparing image...");
-          const response = await fetch(currentPhotoUrl, { mode: "cors" });
-          const blob = await response.blob();
-          const file = new File([blob], "vehicle.jpg", { type: blob.type });
 
-          const fileShareData = {
-            files: [file],
-            title: vehicle.name,
-            text: shareText,
-          };
-
-          if (navigator.canShare(fileShareData)) {
-            toast.dismiss();
-            await navigator.share(fileShareData);
-            return;
-          }
-        } catch (e) {
-          console.warn("File share failed", e);
-          toast.dismiss();
-        }
-      }
-
+      // Prioritize standard Web Share API for Links
       if (navigator.share) {
         await navigator.share({
           title: vehicle.name,
           text: shareText,
+          url: shareUrl,
         });
       } else {
-        await navigator.clipboard.writeText(shareText);
-        toast.success("Copied to clipboard!");
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard!");
       }
     } catch (err) {
+      // Ignore AbortError (user closed share sheet)
       if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Share error:", err);
         toast.error("Failed to share");
       }
     } finally {
@@ -381,7 +367,7 @@ export default function VehicleDetailPage() {
                     handleShare();
                   }}
                   className="absolute top-4 left-4 p-2 bg-white/90 hover:bg-white backdrop-blur-md text-gray-700 hover:text-blue-600 rounded-full shadow-lg transition-all z-20"
-                  title="Share current image"
+                  title="Share booking link"
                 >
                   <Share2 className="h-5 w-5" />
                 </button>
