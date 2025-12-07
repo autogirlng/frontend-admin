@@ -357,7 +357,7 @@ export default function VehicleOnboarding() {
               id="search"
               hideLabel
               type="text"
-              placeholder="Search by name, ID, or owner..."
+              placeholder="Search by name, vehicle Id"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
