@@ -17,6 +17,7 @@ import {
   Plus,
   KeyRound,
   CheckCircle,
+  Wallet,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -101,6 +102,13 @@ export default function HostsPage() {
       onClick: () => {
         toast.success(`Viewing ${host.fullName}`);
         router.push(`/dashboard/host/${host.id}`);
+      },
+    },
+    {
+      label: "View Payouts",
+      icon: Wallet,
+      onClick: () => {
+        router.push(`/dashboard/host/payouts/${host.id}`);
       },
     },
     {
