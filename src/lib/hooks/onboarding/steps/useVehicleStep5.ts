@@ -337,7 +337,7 @@ export function useVehicleStep5(vehicleId: string) {
           price: Number(price),
           bookingTypeName:
             bookingTypes.find((bt) => bt.id === id)?.name || "Unknown",
-          platformFeeType: "AUTOGIRL_FEE",
+          platformFeeType: "HOST_FEE", // "AUTOGIRL_FEE",
         })),
 
       // This logic remains correct for discounts
