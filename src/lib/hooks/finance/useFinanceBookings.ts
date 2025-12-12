@@ -10,7 +10,10 @@ import {
   PaginatedResponse,
   BulkConfirmPayload,
   BulkConfirmResponse,
+  UpdateBookingPayload,
+  CalculationResponse,
 } from "@/components/dashboard/finance/bookings/types";
+import { BookingForCalculation } from "@/components/dashboard/finance/booking-calculation-type";
 
 // Query Key
 export const BOOKINGS_QUERY_KEY = "financeBookings";
@@ -142,6 +145,59 @@ export function useDownloadInvoice() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to download invoice.");
+    },
+  });
+}
+
+// Ensure your fetcher extracts the inner .data correctly
+export function useGetBooking(bookingId: string | null) {
+  return useQuery({
+    queryKey: ["booking-details", bookingId],
+    queryFn: async () => {
+      if (!bookingId) return null;
+      return await apiClient.get<BookingForCalculation>(
+        `/bookings/${bookingId}`
+      );
+    },
+    enabled: !!bookingId,
+  });
+}
+
+// 2. Get Calculation Details (to pre-fill the form)
+export function useGetCalculation(calculationId: string | null) {
+  return useQuery({
+    queryKey: ["calculation-details", calculationId],
+    queryFn: async () => {
+      if (!calculationId) return null;
+      // ✅ NEW: Return the result directly
+      return await apiClient.get<CalculationResponse>(
+        `/public/bookings/calculate/${calculationId}`
+      );
+    },
+    enabled: !!calculationId,
+  });
+}
+
+// 3. Update Booking Mutation
+export function useUpdateBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    unknown,
+    Error,
+    { bookingId: string; payload: UpdateBookingPayload }
+  >({
+    mutationFn: async ({ bookingId, payload }) => {
+      return await apiClient.patch(`/admin/bookings/${bookingId}`, payload);
+    },
+    onSuccess: () => {
+      toast.success("Booking updated successfully.");
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: [BOOKINGS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update booking.");
     },
   });
 }

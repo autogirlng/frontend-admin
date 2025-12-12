@@ -48,3 +48,47 @@ export interface BulkConfirmResponse {
   successfulBookingIds: string[];
   failures: BulkConfirmFailure[];
 }
+
+// New
+
+export interface CalculationResponse {
+  calculationId: string;
+  requestedSegments: {
+    bookingTypeId: string;
+    startDate: string;
+    startTime: string;
+    pickupLatitude: number;
+    pickupLongitude: number;
+    dropoffLatitude: number;
+    dropoffLongitude: number;
+    pickupLocationString: string;
+    dropoffLocationString: string;
+    areaOfUse: {
+      areaOfUseLatitude: number;
+      areaOfUseLongitude: number;
+      areaOfUseName: string;
+    }[];
+  }[];
+  // ... add other fields if needed
+}
+
+export interface UpdateBookingPayload {
+  segments: {
+    bookingTypeId: string;
+    startDate: string;
+    startTime: string;
+    pickupLatitude: number;
+    pickupLongitude: number;
+    dropoffLatitude: number;
+    dropoffLongitude: number;
+    pickupLocationString: string;
+    dropoffLocationString: string;
+    areaOfUse: {
+      areaOfUseLatitude: number;
+      areaOfUseLongitude: number;
+      areaOfUseName: string;
+    }[];
+  }[];
+  couponCode?: string;
+  discountAmount?: number;
+}

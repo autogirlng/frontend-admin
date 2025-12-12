@@ -19,6 +19,7 @@ import {
   Download,
   FileText,
   Plus,
+  Edit,
 } from "lucide-react";
 import clsx from "clsx";
 import * as XLSX from "xlsx";
@@ -52,6 +53,7 @@ import { DocumentPreviewModal } from "./PreviewModal";
 import { PaymentDetailModal } from "./PaymentDetailModal";
 import { Payment, PaymentStatus } from "./types";
 import Link from "next/link";
+import { UpdateBookingModal } from "./UpdateBookingModal";
 
 // Helper to format currency
 const formatPrice = (price: number) => {
@@ -94,6 +96,8 @@ export default function PaymentsPage() {
     new Set()
   );
 
+  const [paymentToUpdate, setPaymentToUpdate] = useState<Payment | null>(null);
+
   // const approveOfflinePayment = useApproveOfflinePayment();
   const confirmPaymentMutation = useConfirmOfflinePayment();
   const bulkConfirmMutation = useBulkConfirmOfflinePayment();
@@ -134,7 +138,6 @@ export default function PaymentsPage() {
     searchTerm: debouncedSearchTerm,
   });
 
-  // ✅ Instantiate new hooks
   const downloadInvoiceMutation = useDownloadInvoice();
   const downloadReceiptMutation = useDownloadPaymentReceipt();
 
@@ -333,6 +336,14 @@ export default function PaymentsPage() {
           }),
       },
     ];
+
+    if (payment.paymentStatus === "PENDING") {
+      actions.push({
+        label: "Update Booking",
+        icon: Edit,
+        onClick: () => setPaymentToUpdate(payment),
+      });
+    }
 
     if (payment.paymentStatus === "SUCCESSFUL") {
       // ✅ Preview Receipt Action
@@ -888,6 +899,13 @@ export default function PaymentsPage() {
         }
         variant={confirmModal.mode === "bulk" ? "primary" : "primary"}
       />
+
+      {paymentToUpdate && (
+        <UpdateBookingModal
+          bookingId={paymentToUpdate.bookingId}
+          onClose={() => setPaymentToUpdate(null)}
+        />
+      )}
     </>
   );
 }
