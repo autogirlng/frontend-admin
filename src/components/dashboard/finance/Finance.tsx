@@ -462,7 +462,19 @@ export default function PaymentsPage() {
     {
       header: "Date",
       accessorKey: "createdAt",
-      cell: (item) => format(new Date(item.createdAt), "MMM d, yyyy"),
+      cell: (item) => {
+        const date = new Date(item.createdAt);
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium text-gray-900">
+              {format(date, "MMM d, yyyy")}
+            </span>
+            <span className="text-xs text-gray-500">
+              {format(date, "h:mm a")}
+            </span>
+          </div>
+        );
+      },
     },
     {
       header: "Actions",
