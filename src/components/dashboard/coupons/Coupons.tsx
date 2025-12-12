@@ -35,12 +35,16 @@ import {
 import { Toaster } from "react-hot-toast";
 import clsx from "clsx";
 
-// Helper for currency
-const formatPrice = (amount: number) =>
-  new Intl.NumberFormat("en-NG", {
+const formatDiscount = (amount: number, type?: string) => {
+  if (type === "PERCENTAGE") {
+    return `${amount}%`;
+  }
+  // Default to FIXED_AMOUNT logic
+  return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
   }).format(amount);
+};
 
 export default function CouponsPage() {
   const [currentPage, setCurrentPage] = useState(0);
@@ -115,9 +119,14 @@ export default function CouponsPage() {
       header: "Discount",
       accessorKey: "discountAmount",
       cell: (item) => (
-        <span className="font-semibold">
-          {formatPrice(item.discountAmount)}
-        </span>
+        <div className="flex flex-col">
+          <span className="font-semibold">
+            {formatDiscount(item.discountAmount, item.couponType)}
+          </span>
+          <span className="text-[10px] text-gray-400 uppercase">
+            {item.couponType === "PERCENTAGE" ? "Off" : "Flat"}
+          </span>
+        </div>
       ),
     },
     {

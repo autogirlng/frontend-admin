@@ -24,10 +24,15 @@ const DetailItem = ({ icon: Icon, label, value }: any) => (
   </div>
 );
 
-const formatPrice = (amount: number) =>
-  new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(
-    amount
-  );
+const formatDiscount = (amount: number, type?: string) => {
+  if (type === "PERCENTAGE") {
+    return `${amount}%`;
+  }
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+  }).format(amount);
+};
 
 export function CouponDetailModal({
   couponId,
@@ -76,8 +81,21 @@ export function CouponDetailModal({
             </h4>
             <DetailItem
               icon={Tag}
-              label="Discount Amount"
-              value={formatPrice(coupon.discountAmount)}
+              label="Discount Value"
+              value={
+                coupon
+                  ? formatDiscount(coupon.discountAmount, coupon.couponType)
+                  : "N/A"
+              }
+            />
+            <DetailItem
+              icon={Tag}
+              label="Discount Type"
+              value={
+                coupon?.couponType === "PERCENTAGE"
+                  ? "Percentage (%)"
+                  : "Fixed Amount (₦)"
+              }
             />
             <DetailItem
               icon={Users}

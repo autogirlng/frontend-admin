@@ -1,9 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Tag, Calendar, User, DollarSign, Search } from "lucide-react";
+import React, { useState } from "react";
+import {
+  X,
+  Tag,
+  Calendar,
+  User,
+  DollarSign,
+  Search,
+  Percent,
+} from "lucide-react";
 import { useCreateCoupon } from "./useCoupons";
-import { CreateCouponPayload } from "./types";
+import { CreateCouponPayload, CouponType } from "./types";
 import TextInput from "@/components/generic/ui/TextInput";
 import TextAreaInput from "@/components/generic/ui/TextAreaInput";
 import Button from "@/components/generic/ui/Button";
@@ -20,6 +28,7 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
   const [code, setCode] = useState("");
   const [description, setDescription] = useState("");
   const [discountAmount, setDiscountAmount] = useState("");
+  const [couponType, setCouponType] = useState<CouponType>("FIXED_AMOUNT");
   const [usageLimit, setUsageLimit] = useState("");
 
   const [startDate, setStartDate] = useState("");
@@ -65,6 +74,7 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
       code,
       description,
       discountAmount: Number(discountAmount),
+      couponType,
       ...(usageLimit && { usageLimit: Number(usageLimit) }),
       ...(specificUserId && { specificUserId: specificUserId.id }),
       ...(startIso && { startDate: startIso }),
@@ -115,6 +125,33 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-green-500" /> Value & Code
               </h4>
+
+              {/* Type Selector Toggle */}
+              <div className="flex p-1 bg-gray-100 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setCouponType("FIXED_AMOUNT")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-md transition-all ${
+                    couponType === "FIXED_AMOUNT"
+                      ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  <DollarSign className="w-3.5 h-3.5" /> Fixed Amount
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCouponType("PERCENTAGE")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-md transition-all ${
+                    couponType === "PERCENTAGE"
+                      ? "bg-white text-blue-600 shadow-sm ring-1 ring-gray-200"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  <Percent className="w-3.5 h-3.5" /> Percentage
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 gap-4">
                 <TextInput
                   label="Coupon Code *"
@@ -126,13 +163,20 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
                   className="font-mono tracking-wider uppercase"
                 />
                 <TextInput
-                  label="Discount Amount (₦) *"
+                  // Dynamic Label based on type
+                  label={
+                    couponType === "PERCENTAGE"
+                      ? "Percentage Discount (%) *"
+                      : "Discount Amount (₦) *"
+                  }
                   id="discount"
                   type="number"
                   placeholder="0.00"
                   value={discountAmount}
                   onChange={(e) => setDiscountAmount(e.target.value)}
                   required
+                  // Optional: Add max value validation for percentage
+                  max={couponType === "PERCENTAGE" ? 100 : undefined}
                 />
               </div>
               <TextAreaInput

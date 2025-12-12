@@ -1,3 +1,5 @@
+export type CouponType = "FIXED_AMOUNT" | "PERCENTAGE";
+
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -11,6 +13,7 @@ export interface Coupon {
   code: string;
   description: string;
   discountAmount: number;
+  couponType?: CouponType;
   usageLimit: number | null;
   usageCount: number;
   specificUserId: string | null;
@@ -24,6 +27,7 @@ export interface CreateCouponPayload {
   code: string;
   description: string;
   discountAmount: number;
+  couponType: CouponType;
   usageLimit?: number;
   specificUserId?: string;
   startDate?: string;
