@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X, Calendar, MapPin, Layers } from "lucide-react";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
-import { Toaster } from "react-hot-toast";
+import Select from "@/components/generic/ui/Select";
 
-// Ensure these import paths match your project structure
 import AddressInput from "@/components/generic/ui/AddressInput";
 import { ModernDateTimePicker } from "@/components/generic/ui/ModernDateTimePicker";
 
 import {
   useGetBooking,
   useGetCalculation,
+  useGetVehicleDetails,
   useUpdateBooking,
 } from "@/lib/hooks/finance/useFinanceBookings";
 import { UpdateBookingPayload } from "./bookings/types";
@@ -26,19 +26,19 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   bookingId,
   onClose,
 }) => {
-  // 1. Fetch Booking
   const { data: booking, isLoading: isBookingLoading } =
     useGetBooking(bookingId);
 
-  // 2. Fetch Calculation (using the ID from the booking)
-  // We use the optional chaining '?.' and fallback to null to prevent errors if booking is loading
   const { data: calculation, isLoading: isCalculationLoading } =
     useGetCalculation(booking?.calculationId || null);
+
+  const { data: vehicle, isLoading: isVehicleLoading } = useGetVehicleDetails(
+    booking?.vehicle?.id || null
+  );
 
   const updateBookingMutation = useUpdateBooking();
   const [formData, setFormData] = useState<UpdateBookingPayload | null>(null);
 
-  // 3. Sync Data: When calculation loads, populate the form
   useEffect(() => {
     if (calculation && calculation.requestedSegments) {
       setFormData({
@@ -52,7 +52,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
           pickupLongitude: seg.pickupLongitude,
           dropoffLatitude: seg.dropoffLatitude,
           dropoffLongitude: seg.dropoffLongitude,
-          // We load the existing string exactly as it is from the API
           pickupLocationString: seg.pickupLocationString,
           dropoffLocationString: seg.dropoffLocationString,
           areaOfUse: seg.areaOfUse || [],
@@ -61,42 +60,39 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     }
   }, [calculation]);
 
-  // --- Handlers ---
-
-  // Update text fields (Date, Time, Location Strings)
   const handleSegmentChange = (
     index: number,
     field: string,
     value: string | number
   ) => {
-    if (!formData) return;
-    const newSegments = [...formData.segments];
-
-    // We update the field directly with the value provided
-    // This ensures no cropping happens on the location string
-    newSegments[index] = { ...newSegments[index], [field]: value };
-
-    setFormData({ ...formData, segments: newSegments });
+    setFormData((prev) => {
+      if (!prev) return null;
+      const newSegments = [...prev.segments];
+      // @ts-ignore - Dynamic key assignment
+      newSegments[index] = { ...newSegments[index], [field]: value };
+      return { ...prev, segments: newSegments };
+    });
   };
 
-  // Update Coordinates (Lat/Long) when a location is selected from the dropdown
   const handleLocationSelect = (
     index: number,
     type: "pickup" | "dropoff",
     coords: { latitude: number; longitude: number }
   ) => {
-    if (!formData) return;
-    const newSegments = [...formData.segments];
+    setFormData((prev) => {
+      if (!prev) return null;
+      const newSegments = [...prev.segments];
 
-    if (type === "pickup") {
-      newSegments[index].pickupLatitude = coords.latitude;
-      newSegments[index].pickupLongitude = coords.longitude;
-    } else {
-      newSegments[index].dropoffLatitude = coords.latitude;
-      newSegments[index].dropoffLongitude = coords.longitude;
-    }
+      if (type === "pickup") {
+        newSegments[index].pickupLatitude = coords.latitude;
+        newSegments[index].pickupLongitude = coords.longitude;
+      } else {
+        newSegments[index].dropoffLatitude = coords.latitude;
+        newSegments[index].dropoffLongitude = coords.longitude;
+      }
 
-    setFormData({ ...formData, segments: newSegments });
+      return { ...prev, segments: newSegments };
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,124 +109,187 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     );
   };
 
-  // Logic to determine if we are still waiting for data
+  const bookingTypeOptions =
+    vehicle?.allPricingOptions.map((opt) => ({
+      id: opt.bookingTypeId,
+      name: `${opt.bookingTypeName} (₦${opt.price.toLocaleString()})`,
+    })) || [];
+
   const isSyncing =
     !!booking?.calculationId && !calculation && !isCalculationLoading;
-  const isLoading = isBookingLoading || isCalculationLoading || isSyncing;
+
+  const isLoading =
+    isBookingLoading ||
+    isCalculationLoading ||
+    isSyncing ||
+    (!!booking?.vehicle?.id && isVehicleLoading);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4">
+      <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl bg-white sm:rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
+        <div className="flex-none flex items-center justify-between p-4 border-b border-gray-100 bg-white z-10">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Update Booking</h2>
-            <p className="text-sm text-gray-500">
-              Invoice: {booking?.invoiceNumber || "Loading..."}
+            <h2 className="text-lg font-bold text-gray-900 leading-tight">
+              Update Booking
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Invoice:{" "}
+              <span className="font-mono">
+                {booking?.invoiceNumber || "Loading..."}
+              </span>
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 grow">
+        <div className="flex-1 overflow-y-auto bg-gray-50/50 p-4 sm:p-6 custom-scrollbar">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-500">
               <CustomLoader />
-              <p className="text-sm text-gray-500">
-                Syncing booking details...
-              </p>
+              <p className="text-sm">Syncing booking details...</p>
             </div>
           ) : !formData ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center text-red-500">
+            <div className="flex flex-col items-center justify-center py-20 text-center text-red-500 bg-red-50 rounded-xl border border-red-100">
               <p>Could not load booking details.</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {formData.segments.map((segment, index) => (
-                <div
-                  key={index}
-                  className="p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-6"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide">
-                      Trip Segment {index + 1}
-                    </span>
+            <form
+              id="update-booking-form"
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+              {formData.segments.map((segment, index) => {
+                const currentType = bookingTypeOptions.find(
+                  (opt) => opt.id === segment.bookingTypeId
+                );
+
+                return (
+                  <div
+                    key={index}
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                  >
+                    <div className="bg-gray-50/80 p-3 border-b border-gray-100 flex items-center gap-2">
+                      <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+                        Booking #{index + 1}
+                      </span>
+                      <div className="h-px bg-gray-200 flex-1"></div>
+                    </div>
+
+                    <div className="p-4 space-y-5">
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <Layers className="h-3 w-3" /> Type
+                        </label>
+                        <Select
+                          label="Booking Type"
+                          hideLabel
+                          options={bookingTypeOptions}
+                          selected={currentType || null}
+                          onChange={(option) =>
+                            handleSegmentChange(
+                              index,
+                              "bookingTypeId",
+                              option.id
+                            )
+                          }
+                          placeholder={
+                            vehicle
+                              ? "Select Booking Type"
+                              : "Loading options..."
+                          }
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> Schedule
+                        </label>
+                        <ModernDateTimePicker
+                          label="Start Date & Time"
+                          required
+                          dateValue={segment.startDate}
+                          timeValue={segment.startTime}
+                          minDate={new Date().toISOString().split("T")[0]}
+                          onDateChange={(val) =>
+                            handleSegmentChange(index, "startDate", val)
+                          }
+                          onTimeChange={(val) =>
+                            handleSegmentChange(index, "startTime", val)
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
+                          <MapPin className="h-3 w-3" /> Locations
+                        </label>
+                        <div className="space-y-4">
+                          <AddressInput
+                            label="Pickup Location"
+                            id={`pickup-${index}`}
+                            value={segment.pickupLocationString}
+                            onChange={(val) =>
+                              handleSegmentChange(
+                                index,
+                                "pickupLocationString",
+                                val
+                              )
+                            }
+                            onLocationSelect={(coords) =>
+                              handleLocationSelect(index, "pickup", coords)
+                            }
+                          />
+
+                          <AddressInput
+                            label="Dropoff Location"
+                            id={`dropoff-${index}`}
+                            value={segment.dropoffLocationString}
+                            onChange={(val) =>
+                              handleSegmentChange(
+                                index,
+                                "dropoffLocationString",
+                                val
+                              )
+                            }
+                            onLocationSelect={(coords) =>
+                              handleLocationSelect(index, "dropoff", coords)
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Date & Time Picker */}
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <ModernDateTimePicker
-                      label="Start Date & Time"
-                      required
-                      dateValue={segment.startDate}
-                      timeValue={segment.startTime}
-                      minDate={new Date().toISOString().split("T")[0]}
-                      onDateChange={(val) =>
-                        handleSegmentChange(index, "startDate", val)
-                      }
-                      onTimeChange={(val) =>
-                        handleSegmentChange(index, "startTime", val)
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-5">
-                    {/* Pickup Address Input */}
-                    <AddressInput
-                      label="Pickup Location"
-                      id={`pickup-${index}`}
-                      value={segment.pickupLocationString}
-                      // 1. TEXT UPDATE: Directly updates state with the full string from AddressInput
-                      onChange={(val) =>
-                        handleSegmentChange(index, "pickupLocationString", val)
-                      }
-                      // 2. COORDINATE UPDATE: Updates lat/long when a place is clicked
-                      onLocationSelect={(coords) =>
-                        handleLocationSelect(index, "pickup", coords)
-                      }
-                    />
-
-                    {/* Dropoff Address Input */}
-                    <AddressInput
-                      label="Dropoff Location"
-                      id={`dropoff-${index}`}
-                      value={segment.dropoffLocationString}
-                      onChange={(val) =>
-                        handleSegmentChange(index, "dropoffLocationString", val)
-                      }
-                      onLocationSelect={(coords) =>
-                        handleLocationSelect(index, "dropoff", coords)
-                      }
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={onClose}
-                  disabled={updateBookingMutation.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  type="submit"
-                  isLoading={updateBookingMutation.isPending}
-                >
-                  Save Changes
-                </Button>
-              </div>
+                );
+              })}
             </form>
           )}
+        </div>
+
+        <div className="flex-none p-4 bg-white border-t border-gray-100 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+            disabled={updateBookingMutation.isPending}
+            className="flex-1 sm:flex-none sm:w-32"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="update-booking-form"
+            variant="primary"
+            isLoading={updateBookingMutation.isPending}
+            className="flex-1 sm:flex-none sm:w-40"
+          >
+            Save Changes
+          </Button>
         </div>
       </div>
     </div>

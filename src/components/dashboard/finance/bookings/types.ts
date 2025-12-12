@@ -49,8 +49,6 @@ export interface BulkConfirmResponse {
   failures: BulkConfirmFailure[];
 }
 
-// New
-
 export interface CalculationResponse {
   calculationId: string;
   requestedSegments: {
@@ -69,7 +67,6 @@ export interface CalculationResponse {
       areaOfUseName: string;
     }[];
   }[];
-  // ... add other fields if needed
 }
 
 export interface UpdateBookingPayload {
@@ -91,4 +88,17 @@ export interface UpdateBookingPayload {
   }[];
   couponCode?: string;
   discountAmount?: number;
+}
+
+export interface VehiclePricingOption {
+  bookingTypeId: string;
+  bookingTypeName: string;
+  price: number;
+  platformFeeType: string;
+}
+
+export interface Vehicle {
+  id: string;
+  name: string;
+  allPricingOptions: VehiclePricingOption[];
 }

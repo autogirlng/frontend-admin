@@ -1,4 +1,3 @@
-// lib/hooks/finance/useFinanceBookings.ts
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,31 +11,24 @@ import {
   BulkConfirmResponse,
   UpdateBookingPayload,
   CalculationResponse,
+  Vehicle,
 } from "@/components/dashboard/finance/bookings/types";
 import { BookingForCalculation } from "@/components/dashboard/finance/booking-calculation-type";
 
-// Query Key
 export const BOOKINGS_QUERY_KEY = "financeBookings";
 
-// 1. Get Bookings
 export interface BookingFilters {
   page: number;
   bookingStatus: string | null;
   startDate: Date | null;
   endDate: Date | null;
   searchTerm: string;
-  paymentMethod: string | null; // ✅ ADDED
+  paymentMethod: string | null;
 }
 
 export function useGetFinanceBookings(filters: BookingFilters) {
-  const {
-    page,
-    bookingStatus,
-    startDate,
-    endDate,
-    searchTerm,
-    paymentMethod, // ✅ ADDED
-  } = filters;
+  const { page, bookingStatus, startDate, endDate, searchTerm, paymentMethod } =
+    filters;
 
   return useQuery<PaginatedResponse<Booking>>({
     queryKey: [
@@ -46,7 +38,7 @@ export function useGetFinanceBookings(filters: BookingFilters) {
       startDate,
       endDate,
       searchTerm,
-      paymentMethod, // ✅ ADDED
+      paymentMethod,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -58,7 +50,7 @@ export function useGetFinanceBookings(filters: BookingFilters) {
         params.append("startDate", format(startDate, "yyyy-MM-dd"));
       if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));
       if (searchTerm) params.append("searchTerm", searchTerm);
-      if (paymentMethod) params.append("paymentMethod", paymentMethod); // ✅ ADDED
+      if (paymentMethod) params.append("paymentMethod", paymentMethod);
 
       const endpoint = `/bookings?${params.toString()}`;
       return apiClient.get<PaginatedResponse<Booking>>(endpoint);
@@ -67,7 +59,6 @@ export function useGetFinanceBookings(filters: BookingFilters) {
   });
 }
 
-// 2. Confirm Offline Payment (Unchanged)
 export function useConfirmOfflinePayment() {
   const queryClient = useQueryClient();
 
@@ -97,7 +88,6 @@ export function useBulkConfirmOfflinePayment() {
     mutationFn: (payload) =>
       apiClient.post(`/admin/bookings/confirm-offline-payment/bulk`, payload),
     onSuccess: (data) => {
-      // Show a detailed toast based on the response
       if (data.failedConfirmations > 0) {
         toast.error(
           `Bulk action complete: ${data.successfulConfirmations} succeeded, ${data.failedConfirmations} failed.`,
@@ -108,8 +98,6 @@ export function useBulkConfirmOfflinePayment() {
           `Successfully confirmed ${data.successfulConfirmations} payments.`
         );
       }
-
-      // Invalidate the bookings list to refetch
       queryClient.invalidateQueries({
         queryKey: [BOOKINGS_QUERY_KEY],
         exact: false,
@@ -128,15 +116,12 @@ export function useDownloadInvoice() {
     { bookingId: string; invoiceNumber?: string }
   >({
     mutationFn: async ({ bookingId, invoiceNumber }) => {
-      // Create a user-friendly filename
       const defaultFilename = invoiceNumber
         ? `Invoice-${invoiceNumber}.pdf`
         : `Invoice-${bookingId}.pdf`;
-
-      // Use the postAndDownloadFile method from your apiClient
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
-        {}, // Empty body for the POST
+        {},
         defaultFilename
       );
     },
@@ -149,7 +134,6 @@ export function useDownloadInvoice() {
   });
 }
 
-// Ensure your fetcher extracts the inner .data correctly
 export function useGetBooking(bookingId: string | null) {
   return useQuery({
     queryKey: ["booking-details", bookingId],
@@ -163,13 +147,11 @@ export function useGetBooking(bookingId: string | null) {
   });
 }
 
-// 2. Get Calculation Details (to pre-fill the form)
 export function useGetCalculation(calculationId: string | null) {
   return useQuery({
     queryKey: ["calculation-details", calculationId],
     queryFn: async () => {
       if (!calculationId) return null;
-      // ✅ NEW: Return the result directly
       return await apiClient.get<CalculationResponse>(
         `/public/bookings/calculate/${calculationId}`
       );
@@ -178,7 +160,6 @@ export function useGetCalculation(calculationId: string | null) {
   });
 }
 
-// 3. Update Booking Mutation
 export function useUpdateBooking() {
   const queryClient = useQueryClient();
 
@@ -192,12 +173,22 @@ export function useUpdateBooking() {
     },
     onSuccess: () => {
       toast.success("Booking updated successfully.");
-      // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: [BOOKINGS_QUERY_KEY] });
       queryClient.invalidateQueries({ queryKey: ["payments"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update booking.");
     },
+  });
+}
+
+export function useGetVehicleDetails(vehicleId: string | null) {
+  return useQuery({
+    queryKey: ["vehicle-details", vehicleId],
+    queryFn: async () => {
+      if (!vehicleId) return null;
+      return await apiClient.get<Vehicle>(`/public/vehicles/${vehicleId}`);
+    },
+    enabled: !!vehicleId,
   });
 }
