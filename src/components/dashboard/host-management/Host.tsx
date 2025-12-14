@@ -4,11 +4,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { useGetHosts } from "@/lib/hooks/host-management/useHosts";
 import { useSendCredentials } from "@/lib/hooks/host-management/useSendCredentials";
 import { useUpdateHostStatus } from "@/lib/hooks/host-management/useUpdateHostStatus";
+import { useEndVacationMode } from "./useVacationMode";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { Host } from "./types";
 import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CreateHostModal from "./CreateHostModal";
+import VacationModeModal from "./VacationModeModal";
 import {
   AlertCircle,
   Search,
@@ -18,6 +20,10 @@ import {
   KeyRound,
   CheckCircle,
   Wallet,
+  Plane,
+  PlaneLanding,
+  Palmtree,
+  Activity,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -36,10 +42,13 @@ export default function HostsPage() {
   const [modal, setModal] = useState<"status" | "view" | null>(null);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
 
+  const [vacationModalHost, setVacationModalHost] = useState<Host | null>(null);
+  const [endVacationModalHost, setEndVacationModalHost] = useState<Host | null>(
+    null
+  );
+
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
   const topRef = useRef<HTMLDivElement>(null);
-
   const router = useRouter();
 
   useEffect(() => {
@@ -65,6 +74,8 @@ export default function HostsPage() {
     useSendCredentials();
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateHostStatus();
+  const { mutate: endVacation, isPending: isEndingVacation } =
+    useEndVacationMode();
 
   const hosts = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -77,6 +88,8 @@ export default function HostsPage() {
   const closeModal = () => {
     setModal(null);
     setSelectedHost(null);
+    setVacationModalHost(null);
+    setEndVacationModalHost(null);
   };
 
   const handleStatusConfirm = () => {
@@ -92,6 +105,16 @@ export default function HostsPage() {
           },
         }
       );
+    }
+  };
+
+  const handleEndVacationConfirm = () => {
+    if (endVacationModalHost) {
+      endVacation(endVacationModalHost.id, {
+        onSuccess: () => {
+          closeModal();
+        },
+      });
     }
   };
 
@@ -116,6 +139,18 @@ export default function HostsPage() {
       icon: KeyRound,
       onClick: () => sendCredentials(host.id),
     },
+
+    host.vacationMode
+      ? {
+          label: "End Vacation Mode",
+          icon: PlaneLanding,
+          onClick: () => setEndVacationModalHost(host),
+        }
+      : {
+          label: "Set Vacation Mode",
+          icon: Plane,
+          onClick: () => setVacationModalHost(host),
+        },
     host.active
       ? {
           label: "Deactivate Host",
@@ -147,6 +182,34 @@ export default function HostsPage() {
     {
       header: "Vehicles",
       accessorKey: "totalVehicles",
+      cell: (item) => (
+        <span className="font-medium text-gray-700">{item.totalVehicles}</span>
+      ),
+    },
+
+    {
+      header: "Bookings",
+      accessorKey: "totalBookings",
+      cell: (item) => (
+        <span className="font-medium text-gray-700">{item.totalBookings}</span>
+      ),
+    },
+
+    {
+      header: "Vacation",
+      accessorKey: "vacationMode",
+      cell: (item) =>
+        item.vacationMode ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+            <Palmtree className="w-3 h-3" />
+            Vacation Mode
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-black text-white">
+            <Activity className="w-3 h-3" />
+            Available
+          </span>
+        ),
     },
     {
       header: "Status",
@@ -250,7 +313,7 @@ export default function HostsPage() {
         />
       </main>
 
-      {/* --- Modals --- */}
+      {/* --- Create Host Modal --- */}
       {isCreateModalOpen && (
         <CreateHostModal
           isOpen={isCreateModalOpen}
@@ -258,6 +321,7 @@ export default function HostsPage() {
         />
       )}
 
+      {/* --- Status Modal (Activate/Deactivate) --- */}
       {modal === "status" && selectedHost && (
         <ActionModal
           title={selectedHost.active ? "Deactivate Host" : "Activate Host"}
@@ -276,6 +340,39 @@ export default function HostsPage() {
           onConfirm={handleStatusConfirm}
           isLoading={isUpdatingStatus}
           variant={selectedHost.active ? "danger" : "primary"}
+        />
+      )}
+
+      {/* --- Vacation Mode Modal (Set) --- */}
+      {vacationModalHost && (
+        <VacationModeModal
+          hostId={vacationModalHost.id}
+          hostName={vacationModalHost.fullName}
+          onClose={closeModal}
+        />
+      )}
+
+      {/* --- End Vacation Mode Confirmation --- */}
+      {endVacationModalHost && (
+        <ActionModal
+          title="End Vacation Mode"
+          message={
+            <>
+              Are you sure you want to end vacation mode for{" "}
+              <span className="font-bold">{endVacationModalHost.fullName}</span>
+              ?
+              <br />
+              <span className="text-sm text-gray-500 mt-2 block">
+                This will make their vehicles available for booking again
+                immediately.
+              </span>
+            </>
+          }
+          actionLabel="End Vacation"
+          onClose={closeModal}
+          onConfirm={handleEndVacationConfirm}
+          isLoading={isEndingVacation}
+          variant="primary"
         />
       )}
     </>

@@ -30,9 +30,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
   const timeRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  // Store coordinates for the portal popup
   const [coords, setCoords] = useState({ top: 0, left: 0 });
-  // Store "placement" to know if we are rendering top or bottom (for animation/styling if needed)
   const [placement, setPlacement] = useState<"top" | "bottom">("bottom");
   const [mounted, setMounted] = useState(false);
 
@@ -40,7 +38,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     setMounted(true);
   }, []);
 
-  // --- Calendar State ---
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
@@ -50,44 +47,30 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     }
   }, [dateValue]);
 
-  // --- SMART POSITIONING LOGIC ---
   const updatePosition = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Estimated dimensions of the popups (w-72 is approx 288px + padding)
     const POPUP_WIDTH = 300;
     const POPUP_HEIGHT = 350;
 
-    // 1. Horizontal Positioning (Prevent cutting off right edge)
     let left = rect.left + window.scrollX;
 
-    // If the popup extends past the right edge of the screen...
     if (rect.left + POPUP_WIDTH > viewportWidth) {
-      // ...align it to the right edge of the screen (minus 16px padding)
-      // or align it to the right edge of the input if that fits better
       const diff = rect.left + POPUP_WIDTH - viewportWidth;
       left = left - diff - 16;
     }
 
-    // Ensure it doesn't go off the left edge
     if (left < 0) left = 16;
 
-    // 2. Vertical Positioning (Flip to top if bottom is tight)
     let top = rect.bottom + window.scrollY + 8;
     let place: "top" | "bottom" = "bottom";
 
     const spaceBelow = viewportHeight - rect.bottom;
 
-    // If less than popup height remains below, AND there is space above...
     if (spaceBelow < POPUP_HEIGHT && rect.top > POPUP_HEIGHT) {
-      // Position ABOVE the input
-      // We don't know exact height until render, but we estimate based on CSS
-      // If rendering above, we anchor to rect.top minus height (approx)
-      // For portals, we usually just set bottom-aligned logic or specific top
-      // Here we will set a specific Top to emulate 'bottom-up'
-      top = rect.top + window.scrollY - POPUP_HEIGHT + 40; // Adjustment for visual balance
+      top = rect.top + window.scrollY - POPUP_HEIGHT + 40;
       place = "top";
     }
 
@@ -95,7 +78,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     setPlacement(place);
   };
 
-  // Handle Outside Clicks
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
@@ -131,7 +113,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     };
   }, [showCalendar, showTimePicker]);
 
-  // --- Logic Helpers ---
   const daysInMonth = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth() + 1,
@@ -181,7 +162,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     );
   };
 
-  // NEW: Check if this is "Today"
   const isToday = (day: number) => {
     const today = new Date();
     return (
@@ -204,14 +184,12 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     else onTimeChange(`${currentH || "10"}:${val}`);
   };
 
-  // --- PORTAL POPUP CONTENT ---
   const CalendarPopup = (
     <div
       ref={popupRef}
       style={{ top: coords.top, left: coords.left, zIndex: 9999 }}
       className="fixed bg-white border border-gray-200 rounded-lg shadow-2xl p-4 w-72 animate-in fade-in zoom-in-95 duration-100"
     >
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <button
           type="button"
@@ -235,7 +213,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
         </button>
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-7 gap-1 mb-2 text-center">
         {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
           <span key={d} className="text-xs font-medium text-gray-400">
@@ -251,7 +228,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
           const day = i + 1;
           const disabled = isDateDisabled(day);
           const selected = isSelectedDate(day);
-          const today = isToday(day); // Check if today
+          const today = isToday(day);
 
           return (
             <button
@@ -265,7 +242,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
                   selected
                     ? "bg-blue-600 text-white shadow-md font-medium"
                     : today
-                    ? "text-blue-600 font-bold ring-1 ring-blue-600 bg-blue-50" // Today Style
+                    ? "text-blue-600 font-bold ring-1 ring-blue-600 bg-blue-50"
                     : "text-gray-700 hover:bg-gray-100"
                 }
                 ${
@@ -289,7 +266,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
       style={{ top: coords.top, left: coords.left, zIndex: 9999 }}
       className="fixed bg-white border border-gray-200 rounded-lg shadow-2xl flex overflow-hidden h-48 w-48 animate-in fade-in zoom-in-95 duration-100"
     >
-      {/* Hours */}
       <div className="flex-1 overflow-y-auto border-r border-gray-100 no-scrollbar">
         <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
           Hrs
@@ -308,7 +284,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
           </div>
         ))}
       </div>
-      {/* Minutes */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
           Min
@@ -340,7 +315,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
       </label>
 
       <div className="flex flex-col sm:flex-row py-1 border border-gray-300 bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
-        {/* --- Date Trigger --- */}
         <div
           ref={calendarRef}
           className="relative flex-grow p-2.5 hover:bg-gray-50 cursor-pointer transition-colors group"
@@ -368,7 +342,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
           </div>
         </div>
 
-        {/* --- Time Trigger --- */}
         <div
           ref={timeRef}
           className="relative w-full sm:w-1/3 p-2.5 hover:bg-gray-50 cursor-pointer transition-colors group bg-gray-50 sm:bg-white"
@@ -397,7 +370,6 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
         </div>
       </div>
 
-      {/* --- RENDER PORTALS --- */}
       {mounted && showCalendar && createPortal(CalendarPopup, document.body)}
       {mounted && showTimePicker && createPortal(TimePopup, document.body)}
     </div>

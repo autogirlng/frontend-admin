@@ -14,6 +14,7 @@ export interface Host {
   totalVehicles: number;
   totalBookings: number;
   active: boolean;
+  vacationMode: boolean;
 }
 
 export interface HostDetail {
@@ -32,7 +33,7 @@ export interface HostDetail {
   accountName: string;
   bankCode: string;
   active: boolean;
-  profilePictureUrl?: string; // ✅ Assuming this might exist
+  profilePictureUrl?: string;
 }
 
 export interface HostVehicle {
