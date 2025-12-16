@@ -325,15 +325,30 @@ export default function CreateBookingPage() {
 
   const addSegment = () => {
     const last = segments[segments.length - 1];
+    let nextStartDate = "";
+    if (last.startDate) {
+      const dateObj = new Date(last.startDate);
+      if (!isNaN(dateObj.getTime())) {
+        dateObj.setDate(dateObj.getDate() + 1);
+        nextStartDate = dateObj.toISOString().split("T")[0];
+      }
+    }
+
     setSegments((prev) => [
       ...prev,
       {
         ...initialBookingDetails,
-        pickupLocationString: last.dropoffLocationString,
-        pickupCoords: last.dropoffCoords,
-        startDate: last.startDate,
+        pickupLocationString: last.pickupLocationString,
+        dropoffLocationString: last.dropoffLocationString,
+        pickupCoords: last.pickupCoords,
+        dropoffCoords: last.dropoffCoords,
+        startDate: nextStartDate,
         startTime: last.startTime,
-        uiAreaOfUse: [],
+        bookingTypeId: last.bookingTypeId,
+        uiAreaOfUse: last.uiAreaOfUse.map((area, index) => ({
+          ...area,
+          id: Date.now() + index,
+        })),
       },
     ]);
   };
