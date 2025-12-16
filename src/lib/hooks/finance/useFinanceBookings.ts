@@ -7,7 +7,6 @@ import { apiClient } from "@/lib/apiClient";
 import {
   Booking,
   PaginatedResponse,
-  BulkConfirmPayload,
   BulkConfirmResponse,
   UpdateBookingPayload,
   CalculationResponse,
@@ -16,6 +15,19 @@ import {
 import { BookingForCalculation } from "@/components/dashboard/finance/booking-calculation-type";
 
 export const BOOKINGS_QUERY_KEY = "financeBookings";
+
+export interface OfflinePaymentPayload {
+  paymentImageUrl: string;
+  publicId: string;
+}
+
+export interface BulkOfflinePaymentPayload {
+  paymentConfirmations: {
+    bookingId: string;
+    paymentImageUrl: string;
+    publicId: string;
+  }[];
+}
 
 export interface BookingFilters {
   page: number;
@@ -62,16 +74,24 @@ export function useGetFinanceBookings(filters: BookingFilters) {
 export function useConfirmOfflinePayment() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, string>({
-    mutationFn: (bookingId: string) =>
+  return useMutation<
+    unknown,
+    Error,
+    { bookingId: string; payload: OfflinePaymentPayload }
+  >({
+    mutationFn: ({ bookingId, payload }) =>
       apiClient.post(
         `/admin/bookings/${bookingId}/confirm-offline-payment`,
-        {}
+        payload
       ),
     onSuccess: () => {
       toast.success("Offline payment confirmed. Booking is now active.");
       queryClient.invalidateQueries({
         queryKey: [BOOKINGS_QUERY_KEY],
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["payments"],
         exact: false,
       });
     },
@@ -84,7 +104,7 @@ export function useConfirmOfflinePayment() {
 export function useBulkConfirmOfflinePayment() {
   const queryClient = useQueryClient();
 
-  return useMutation<BulkConfirmResponse, Error, BulkConfirmPayload>({
+  return useMutation<BulkConfirmResponse, Error, BulkOfflinePaymentPayload>({
     mutationFn: (payload) =>
       apiClient.post(`/admin/bookings/confirm-offline-payment/bulk`, payload),
     onSuccess: (data) => {
@@ -100,6 +120,10 @@ export function useBulkConfirmOfflinePayment() {
       }
       queryClient.invalidateQueries({
         queryKey: [BOOKINGS_QUERY_KEY],
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["payments"],
         exact: false,
       });
     },

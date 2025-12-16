@@ -5,12 +5,8 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster, toast } from "react-hot-toast";
-import { apiClient } from "@/lib/apiClient";
 import {
-  AlertCircle,
   Eye,
-  Filter,
-  Search,
   Ticket,
   Vote,
   View,
@@ -20,11 +16,11 @@ import {
   FileText,
   Plus,
   Edit,
+  ExternalLink,
 } from "lucide-react";
 import clsx from "clsx";
-import * as XLSX from "xlsx";
+import Link from "next/link";
 
-// Hooks
 import {
   useGetPayments,
   useDownloadInvoice,
@@ -32,98 +28,65 @@ import {
   usePreviewInvoiceBlob,
   usePreviewReceiptBlob,
 } from "@/lib/hooks/finance/usePayments";
-import {
-  useConfirmOfflinePayment,
-  useBulkConfirmOfflinePayment,
-} from "@/lib/hooks/finance/useFinanceBookings";
+import { usePaymentExport } from "./payments/hooks/usePaymentExport";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
-import { PaginatedResponse } from "@/components/dashboard/finance/types";
 
-// Reusable Components
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
-import Select, { Option } from "@/components/generic/ui/Select";
-import { DatePickerWithRange } from "../availability/DatePickerWithRange";
-import TextInput from "@/components/generic/ui/TextInput";
-import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
+import CustomLoader from "@/components/generic/CustomLoader";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
-import { ConfirmModal } from "@/components/generic/ui/CustomModal";
 import { DocumentPreviewModal } from "./PreviewModal";
 import { PaymentDetailModal } from "./PaymentDetailModal";
-import { Payment, PaymentStatus } from "./types";
-import Link from "next/link";
 import { UpdateBookingModal } from "./UpdateBookingModal";
+import { PaymentFilters } from "./payments/PaymentFilters";
+import { PaymentApprovalModal } from "./payments/PaymentApprovalModal";
 
-// Helper to format currency
-const formatPrice = (price: number) => {
-  return `₦${price.toLocaleString()}`;
-};
-
-// Helper function to convert enums to <Select> options
-const enumToOptions = (e: object): Option[] =>
-  Object.entries(e).map(([key, value]) => ({
-    id: value,
-    name: key.replace(/_/g, " "),
-  }));
-
-const paymentStatusOptions: Option[] = enumToOptions(PaymentStatus);
+import { Payment } from "./types";
+import { formatPrice } from "./payments/utils";
 
 export default function PaymentsPage() {
   const router = useRouter();
+  const topRef = useRef<HTMLDivElement>(null);
 
-  // --- State Management ---
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
-    null
-  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // State tracks which document type (and payment ID) we are previewing
-  const [previewConfig, setPreviewConfig] = useState<{
-    type: "invoice" | "receipt";
-    payment: Payment;
-  } | null>(null);
-
-  // In your PaymentsPage component (add these states near the top)
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean;
-    payment: Payment | null; // ← now nullable
-    mode: "single" | "bulk";
-  }>({ isOpen: false, payment: null, mode: "single" });
+  const [filters, setFilters] = useState<{
+    paymentStatus: string | null;
+    paymentProvider: string | null;
+    dateRange: DateRange | null;
+  }>({
+    paymentStatus: null,
+    paymentProvider: null,
+    dateRange: null,
+  });
 
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(
     new Set()
   );
 
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
+    null
+  );
   const [paymentToUpdate, setPaymentToUpdate] = useState<Payment | null>(null);
+  const [previewConfig, setPreviewConfig] = useState<{
+    type: "invoice" | "receipt";
+    payment: Payment;
+  } | null>(null);
 
-  // const approveOfflinePayment = useApproveOfflinePayment();
-  const confirmPaymentMutation = useConfirmOfflinePayment();
-  const bulkConfirmMutation = useBulkConfirmOfflinePayment();
-
-  // Filter States
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    paymentStatus: null as string | null,
-    dateRange: null as DateRange | null,
+  const [approvalModal, setApprovalModal] = useState<{
+    isOpen: boolean;
+    payment: Payment | null;
+    mode: "single" | "bulk";
+  }>({
+    isOpen: false,
+    payment: null,
+    mode: "single",
   });
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const topRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
-      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      // Fallback just in case
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [currentPage]);
-
-  // --- API Hooks ---
   const {
     data: paginatedData,
     isLoading,
@@ -133,6 +96,7 @@ export default function PaymentsPage() {
     page: currentPage,
     size: pageSize,
     paymentStatus: filters.paymentStatus,
+    paymentProvider: filters.paymentProvider,
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
     searchTerm: debouncedSearchTerm,
@@ -140,68 +104,54 @@ export default function PaymentsPage() {
 
   const downloadInvoiceMutation = useDownloadInvoice();
   const downloadReceiptMutation = useDownloadPaymentReceipt();
-
   const previewInvoiceBlob = usePreviewInvoiceBlob();
   const previewReceiptBlob = usePreviewReceiptBlob();
 
-  // --- Derived Data ---
+  const { handleExportPayments, isExporting } = usePaymentExport({
+    filters,
+    searchTerm: debouncedSearchTerm,
+  });
+
   const payments = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
-  // Fetch ALL filtered payments (ignoring pagination)
-  const fetchAllFilteredPayments = async () => {
-    const params = new URLSearchParams();
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [currentPage]);
 
-    params.append("page", "0");
-    params.append("size", "10000"); // large size so all results fit
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
 
-    // Date range
-    if (filters.dateRange?.from) {
-      params.append("startDate", format(filters.dateRange.from, "yyyy-MM-dd"));
-    }
-
-    if (filters.dateRange?.to) {
-      params.append("endDate", format(filters.dateRange.to, "yyyy-MM-dd"));
-    }
-
-    // Search term (not stored inside filters)
-    if (debouncedSearchTerm.trim() !== "") {
-      params.append("searchTerm", debouncedSearchTerm.trim());
-    }
-
-    const endpoint = `/admin/payments?${params.toString()}`;
-    const res = await apiClient.get<PaginatedResponse<Payment>>(endpoint);
-
-    // your API returns: content[], totalPages, ...
-    return res.content ?? [];
-  };
-
-  // --- Event Handlers ---
-  const handleFilterChange = (key: "paymentStatus", value: string | null) => {
+  const handleFilterChange = (
+    key: "paymentStatus" | "paymentProvider",
+    value: string | null
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(0);
   };
+
   const handleDateChange = (dateRange: DateRange | undefined) => {
     setFilters((prev) => ({ ...prev, dateRange: dateRange || null }));
     setCurrentPage(0);
   };
-  // --- Selection Handlers ---
-  const isRowSelectable = (payment: Payment): boolean => {
-    return (
-      payment.paymentStatus === "PENDING" &&
-      payment.paymentProvider === "OFFLINE"
-    );
+
+  const clearFilters = () => {
+    setFilters({ paymentStatus: null, paymentProvider: null, dateRange: null });
+    setSearchTerm("");
+    setCurrentPage(0);
   };
 
-  const handleRowSelect = (rowId: string | number, rowData: Payment) => {
+  const isRowSelectable = (payment: Payment) =>
+    payment.paymentStatus === "PENDING" &&
+    payment.paymentProvider === "OFFLINE";
+
+  const handleRowSelect = (rowId: string | number) => {
     const id = rowId.toString();
     setSelectedPaymentIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
       return newSet;
     });
   };
@@ -216,96 +166,7 @@ export default function PaymentsPage() {
       setSelectedPaymentIds(new Set());
     }
   };
-  const handleExportPayments = async () => {
-    toast.loading("Preparing export...", { id: "export" });
 
-    // Fetch ALL data (ignoring pagination)
-    const allPayments = await fetchAllFilteredPayments();
-
-    const activeStatus =
-      filters.paymentStatus && filters.paymentStatus !== "ALL"
-        ? filters.paymentStatus
-        : null;
-
-    const filteredPayments = activeStatus
-      ? allPayments.filter((p) => p.paymentStatus === activeStatus)
-      : allPayments;
-
-    if (filteredPayments.length === 0) {
-      toast.error("No payments match the current filters", { id: "export" });
-      return;
-    }
-
-    // Build export period text
-    let period = "All_Time";
-    if (filters.dateRange?.from && filters.dateRange?.to) {
-      const from = format(filters.dateRange.from, "dd-MMM-yyyy");
-      const to = format(filters.dateRange.to, "dd-MMM-yyyy");
-      period = `${from}_to_${to}`;
-    }
-
-    const statusForName = activeStatus ?? "All_Statuses";
-
-    const filename = `Payments_${statusForName}_${period}.xlsx`;
-
-    // Prepare export data
-    const exportData = filteredPayments.map((p) => ({
-      "Customer Name": p.userName || "Guest",
-      "Booking Ref": p.bookingRef || "-",
-      Amount: `₦${p.totalPayable.toLocaleString()}`,
-      "Invoice Number": p.invoiceNumber || "-",
-      "Payment Date": format(new Date(p.createdAt), "dd MMM yyyy, HH:mm"),
-      Vehicle: p.vehicleName,
-      Provider: p.paymentProvider,
-      Status: p.paymentStatus,
-    }));
-
-    // Build Excel file
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(exportData);
-
-    ws["!cols"] = [
-      { wch: 22 }, // Customer Name
-      { wch: 18 }, // Booking Ref
-      { wch: 15 }, // Amount
-      { wch: 20 }, // Invoice Number
-      { wch: 24 }, // Payment Date
-      { wch: 22 }, // Vehicle
-      { wch: 14 }, // Provider
-      { wch: 12 }, // Status
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, "Payments");
-    XLSX.writeFile(wb, filename);
-
-    toast.success(
-      <div className="text-sm">
-        <strong>Export Complete!</strong>
-        <br />
-        {filteredPayments.length} payments exported
-        <br />
-        Status: <strong>{statusForName}</strong>
-        <br />
-        Period: <strong>{period.replace(/_/g, " ")}</strong>
-      </div>,
-      { id: "export" }
-    );
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      paymentStatus: null,
-      dateRange: null,
-    });
-    setSearchTerm("");
-    setCurrentPage(0);
-  };
-  const closeModal = () => {
-    setSelectedPaymentId(null);
-  };
-
-  // --- Table Column Definitions ---
-  // ✅ UPDATED Action Menu
   const getPaymentActions = (payment: Payment): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
@@ -316,9 +177,7 @@ export default function PaymentsPage() {
       {
         label: "View Booking",
         icon: Ticket,
-        onClick: () => {
-          router.push(`/dashboard/bookings/${payment.bookingId}`);
-        },
+        onClick: () => router.push(`/dashboard/bookings/${payment.bookingId}`),
       },
       {
         label: "View Invoice",
@@ -337,6 +196,14 @@ export default function PaymentsPage() {
       },
     ];
 
+    if (payment.paymentImage && payment.paymentImage !== "string") {
+      actions.push({
+        label: "View Payment Proof",
+        icon: ExternalLink,
+        onClick: () => window.open(payment.paymentImage!, "_blank"),
+      });
+    }
+
     if (payment.paymentStatus === "PENDING") {
       actions.push({
         label: "Update Booking",
@@ -346,16 +213,11 @@ export default function PaymentsPage() {
     }
 
     if (payment.paymentStatus === "SUCCESSFUL") {
-      // ✅ Preview Receipt Action
       actions.push({
         label: "View Receipt",
         icon: View,
         onClick: () => setPreviewConfig({ type: "receipt", payment }),
       });
-    }
-
-    // Only add "Download Receipt" if payment was successful
-    if (payment.paymentStatus === "SUCCESSFUL") {
       actions.push({
         label: "Download Receipt",
         icon: Download,
@@ -368,7 +230,6 @@ export default function PaymentsPage() {
       });
     }
 
-    // Only show for PENDING offline payments
     if (
       payment.paymentStatus === "PENDING" &&
       payment.paymentProvider === "OFFLINE"
@@ -376,10 +237,8 @@ export default function PaymentsPage() {
       actions.push({
         label: "Approve Payment",
         icon: Vote,
-        onClick: () => {
-          setConfirmModal({ isOpen: true, payment, mode: "single" });
-        },
-        disabled: confirmPaymentMutation.isPending,
+        onClick: () =>
+          setApprovalModal({ isOpen: true, payment, mode: "single" }),
       });
     }
 
@@ -399,10 +258,9 @@ export default function PaymentsPage() {
             <button
               onClick={() => {
                 navigator.clipboard.writeText(item.invoiceNumber!);
-                toast.success("Copied to clipboard!");
+                toast.success("Copied!");
               }}
               className="text-gray-400 hover:text-[#0096FF]"
-              title="Copy invoice number"
             >
               <ClipboardCopy className="h-4 w-4" />
             </button>
@@ -411,7 +269,7 @@ export default function PaymentsPage() {
       ),
     },
     {
-      header: "Customer Name",
+      header: "Customer",
       accessorKey: "userName",
       cell: (item) => (
         <div>
@@ -430,7 +288,6 @@ export default function PaymentsPage() {
         </div>
       ),
     },
-
     {
       header: "Amount",
       accessorKey: "totalPayable",
@@ -438,10 +295,7 @@ export default function PaymentsPage() {
         <span className="font-semibold">{formatPrice(item.totalPayable)}</span>
       ),
     },
-    {
-      header: "Provider",
-      accessorKey: "paymentProvider",
-    },
+    { header: "Provider", accessorKey: "paymentProvider" },
     {
       header: "Status",
       accessorKey: "paymentStatus",
@@ -467,7 +321,7 @@ export default function PaymentsPage() {
         return (
           <div className="flex flex-col">
             <span className="font-medium text-gray-900">
-              {format(date, "MMM d, yyyy")}
+              {format(date, "MMM d")}
             </span>
             <span className="text-xs text-gray-500">
               {format(date, "h:mm a")}
@@ -483,18 +337,11 @@ export default function PaymentsPage() {
     },
   ];
 
-  // ✅ Combine all mutation loading states
-  const isActionLoading =
-    isPlaceholderData ||
-    downloadInvoiceMutation.isPending ||
-    downloadReceiptMutation.isPending;
-
   return (
     <>
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
-        {/* --- Header --- */}
         <div className="flex items-center justify-between mb-8 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
@@ -530,75 +377,61 @@ export default function PaymentsPage() {
             </div>
           </div>
         </div>
-
-        {/* --- Filter Section --- */}
-        <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
-          {" "}
-          {/* Added rounded-lg */}
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+        <PaymentFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filters={filters}
+          handleFilterChange={handleFilterChange}
+          handleDateChange={handleDateChange}
+          clearFilters={clearFilters}
+        />
+        {selectedPaymentIds.size > 0 && (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <CheckCheck className="w-5 h-5 text-white" />
               </div>
-              <TextInput
-                label="Search"
-                id="search"
-                hideLabel
-                type="text"
-                placeholder="Search by Customer Name, Invoice Number, etc."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-                style={{ paddingLeft: 35 }}
-              />
+              <div>
+                <p className="font-medium text-green-900">
+                  {selectedPaymentIds.size} selected
+                </p>
+                <p className="text-sm text-green-700">Ready for approval</p>
+              </div>
             </div>
-            <Select
-              label="Payment Status"
-              hideLabel
-              placeholder="All Payment Statuses"
-              options={paymentStatusOptions}
-              selected={
-                filters.paymentStatus
-                  ? {
-                      id: filters.paymentStatus,
-                      name: filters.paymentStatus.replace(/_/g, " "),
-                    }
-                  : null
-              }
-              onChange={(option) =>
-                handleFilterChange("paymentStatus", option.id)
-              }
-            />
-            <DatePickerWithRange
-              date={filters.dateRange || undefined}
-              setDate={handleDateChange}
-            />
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setSelectedPaymentIds(new Set())}
+              >
+                Deselect All
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() =>
+                  setApprovalModal({
+                    isOpen: true,
+                    payment: null,
+                    mode: "bulk",
+                  })
+                }
+              >
+                <CheckCheck className="w-4 h-4 mr-2" />
+                Approve ({selectedPaymentIds.size})
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="secondary"
-            className="w-auto px-4 mt-4"
-            onClick={clearFilters}
-          >
-            Clear Filters
-          </Button>
-        </div>
+        )}
 
-        {/* --- Page Size & Info Bar --- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          {/* Left: Page size selector */}
           <div className="flex items-center gap-3 text-sm text-gray-600">
             <span>Show</span>
             <select
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
-                setCurrentPage(0); // Reset to first page
+                setCurrentPage(0);
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="px-3 py-1.5 border border-gray-300 rounded-md bg-white"
             >
               {[10, 25, 50, 75, 100].map((size) => (
                 <option key={size} value={size}>
@@ -608,94 +441,32 @@ export default function PaymentsPage() {
             </select>
             <span>entries</span>
           </div>
-
-          {/* Right: Showing X to Y of Z + Export Button */}
-          <div className="flex items-center gap-6">
-            <span className="text-sm text-gray-600">
-              Showing{" "}
-              <strong>
-                {paginatedData ? currentPage * pageSize + 1 : 0} to{" "}
-                {paginatedData
-                  ? Math.min(
-                      (currentPage + 1) * pageSize,
-                      paginatedData.totalItems
-                    )
-                  : 0}
-              </strong>{" "}
-              of <strong>{paginatedData?.totalItems || 0}</strong> payments
-            </span>
-          </div>
+          <span className="text-sm text-gray-600">
+            Showing{" "}
+            <strong>
+              {paginatedData ? currentPage * pageSize + 1 : 0} -{" "}
+              {paginatedData
+                ? Math.min(
+                    (currentPage + 1) * pageSize,
+                    paginatedData.totalItems
+                  )
+                : 0}
+            </strong>{" "}
+            of <strong>{paginatedData?.totalItems || 0}</strong>
+          </span>
         </div>
 
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
-        {isError && (
-          <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
-            <AlertCircle className="h-8 w-8" />
-            <span className="font-semibold">Failed to load payments.</span>
-          </div>
-        )}
         {!isLoading && !isError && payments.length === 0 && (
           <div className="flex justify-center p-10 text-gray-500">
-            <p>No payments found for the selected filters.</p>
-          </div>
-        )}
-
-        {/* ADD THIS BULK BAR HERE */}
-        {selectedPaymentIds.size > 0 && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6 shadow-sm">
-            {/* Mobile: Vertical layout */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              {/* Left: Selection info */}
-              <div className="flex items-center gap-3">
-                <div className="shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                  <CheckCheck className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-green-900">
-                    {selectedPaymentIds.size} pending payment
-                    {selectedPaymentIds.size > 1 ? "s" : ""} selected
-                  </p>
-                  <p className="text-sm text-green-700">Ready for approval</p>
-                </div>
-              </div>
-
-              {/* Right: Action buttons */}
-              <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => setSelectedPaymentIds(new Set())}
-                  className="w-full sm:w-auto justify-center"
-                >
-                  Deselect All
-                </Button>
-
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={() =>
-                    setConfirmModal({
-                      isOpen: true,
-                      payment: null,
-                      mode: "bulk",
-                    })
-                  }
-                  isLoading={bulkConfirmMutation.isPending}
-                  className="w-full sm:w-auto justify-center"
-                >
-                  <CheckCheck className="w-4 h-4 mr-2" />
-                  Approve Selected ({selectedPaymentIds.size})
-                </Button>
-              </div>
-            </div>
+            <p>No payments found.</p>
           </div>
         )}
         {!isError && (payments.length > 0 || isLoading) && (
           <div
             className={clsx(
               "transition-opacity",
-              isActionLoading ? "opacity-50" : "" // ✅ Use combined loading state
+              isPlaceholderData || isExporting ? "opacity-50" : ""
             )}
           >
             <CustomTable
@@ -703,14 +474,13 @@ export default function PaymentsPage() {
               columns={columns}
               getUniqueRowId={(item) => item.id}
               selectedRowIds={selectedPaymentIds}
-              onRowSelect={handleRowSelect}
+              onRowSelect={(id) => handleRowSelect(id)}
               onSelectAll={handleSelectAll}
               isRowSelectable={isRowSelectable}
             />
           </div>
         )}
 
-        {/* --- Pagination --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -719,15 +489,13 @@ export default function PaymentsPage() {
         />
       </main>
 
-      {/* --- Modals --- */}
       {selectedPaymentId && (
         <PaymentDetailModal
           paymentId={selectedPaymentId}
-          onClose={closeModal}
+          onClose={() => setSelectedPaymentId(null)}
         />
       )}
 
-      {/* ✅ Document Preview Modal */}
       {previewConfig && (
         <DocumentPreviewModal
           title={
@@ -738,178 +506,23 @@ export default function PaymentsPage() {
           onClose={() => setPreviewConfig(null)}
           fetchDocument={async () => {
             const bookingId = previewConfig.payment.bookingId;
-
-            if (previewConfig.type === "invoice") {
-              // mutateAsync returns the Blob directly
-              return await previewInvoiceBlob.mutateAsync({ bookingId });
-            } else {
-              return await previewReceiptBlob.mutateAsync({ bookingId });
-            }
+            return previewConfig.type === "invoice"
+              ? await previewInvoiceBlob.mutateAsync({ bookingId })
+              : await previewReceiptBlob.mutateAsync({ bookingId });
           }}
         />
       )}
 
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        title={
-          confirmModal.mode === "bulk"
-            ? `Bulk Approve ${selectedPaymentIds.size} Offline Payments`
-            : "Approve Offline Payment"
-        }
-        message={
-          confirmModal.mode === "bulk" ? (
-            <div className="space-y-2">
-              <p>Are you sure you want to approve the offline payments for:</p>
-
-              {/* Beautiful card — same exact style as single */}
-              <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900 border border-gray-200 max-h-64 overflow-y-auto">
-                {(() => {
-                  const selectedPayments = payments
-                    .filter((p) => selectedPaymentIds.has(p.id))
-                    .sort((a, b) =>
-                      (a.userName || "").localeCompare(b.userName || "")
-                    );
-
-                  const displayed = selectedPayments.slice(0, 5);
-                  const remaining = selectedPayments.length - displayed.length;
-
-                  return (
-                    <>
-                      {displayed.map((p) => (
-                        <div
-                          key={p.id}
-                          className="py-2 border-b border-gray-200 last:border-0"
-                        >
-                          <p className="text-base font-medium">
-                            {p.userName || "Guest"}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Booking:{" "}
-                            <span className="font-mono">{p.bookingRef}</span>
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Amount :{" "}
-                            <span>₦ {p.totalPayable?.toLocaleString()}</span>
-                          </p>
-                        </div>
-                      ))}
-
-                      {remaining > 0 && (
-                        <p className="pt-3 text-center text-sm font-medium text-gray-600">
-                          and <strong>{remaining}</strong> other
-                          {remaining > 1 ? "s" : ""}
-                        </p>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-
-              <p className="mt-4 text-sm text-gray-700">
-                This will mark all <strong>{selectedPaymentIds.size}</strong>{" "}
-                payments as{" "}
-                <strong className="text-green-600">SUCCESSFUL</strong> and
-                generate receipts.
-              </p>
-              <p className="text-xs text-gray-500">
-                This action cannot be undone.
-              </p>
-            </div>
-          ) : confirmModal.payment ? (
-            <div className="space-y-2">
-              <p>Are you sure you want to approve the offline payment for:</p>
-              <div className="bg-gray-50 rounded-lg p-4 font-medium text-gray-900 border border-gray-200">
-                <p className="text-lg">
-                  {confirmModal.payment.userName || "Guest"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Booking Ref:{" "}
-                  <span className="font-mono">
-                    {confirmModal.payment.bookingRef}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Amount: ₦{confirmModal.payment.totalPayable?.toLocaleString()}
-                </p>
-              </div>
-              <p className="mt-3 text-sm">
-                This action will mark the payment as <strong>SUCCESSFUL</strong>{" "}
-                and generate a receipt.
-              </p>
-            </div>
-          ) : (
-            "Loading..."
-          )
-        }
-        confirmLabel={
-          confirmModal.mode === "bulk"
-            ? `Approve ${selectedPaymentIds.size} Payments`
-            : "Approve Payment"
-        }
-        onConfirm={() => {
-          if (confirmModal.mode === "bulk") {
-            const bookingIds = payments
-              .filter((p) => selectedPaymentIds.has(p.id))
-              .map((p) => p.bookingId);
-
-            bulkConfirmMutation.mutate(
-              { bookingIds },
-              {
-                onSuccess: () => {
-                  toast.success(
-                    `Approved ${bookingIds.length} payments successfully!`
-                  );
-                  setConfirmModal({
-                    isOpen: false,
-                    payment: null,
-                    mode: "single",
-                  });
-                  setSelectedPaymentIds(new Set());
-                },
-                onError: () => {
-                  toast.error("Bulk approval failed");
-                },
-              }
-            );
-          } else if (confirmModal.payment) {
-            confirmPaymentMutation.mutate(confirmModal.payment.bookingId, {
-              onSuccess: () => {
-                toast.success(
-                  <div>
-                    <strong>Payment Approved Successfully!</strong>
-                    <br />
-                    Customer:{" "}
-                    <strong>{confirmModal.payment?.userName || "Guest"}</strong>
-                    <br />
-                    Invoice:{" "}
-                    <span className="font-mono">
-                      {confirmModal.payment?.invoiceNumber}
-                    </span>
-                  </div>
-                );
-                setConfirmModal({
-                  isOpen: false,
-                  payment: null,
-                  mode: "single",
-                });
-              },
-              onError: () => {
-                toast.error("Failed to approve payment.");
-              },
-            });
-          }
+      <PaymentApprovalModal
+        isOpen={approvalModal.isOpen}
+        mode={approvalModal.mode}
+        payment={approvalModal.payment}
+        selectedPayments={payments.filter((p) => selectedPaymentIds.has(p.id))}
+        onClose={() => setApprovalModal((prev) => ({ ...prev, isOpen: false }))}
+        onSuccess={() => {
+          setApprovalModal((prev) => ({ ...prev, isOpen: false }));
+          setSelectedPaymentIds(new Set());
         }}
-        onCancel={() => {
-          setConfirmModal({ isOpen: false, payment: null, mode: "single" });
-          if (confirmModal.mode === "bulk") {
-            setSelectedPaymentIds(new Set());
-          }
-        }}
-        isLoading={
-          confirmPaymentMutation.isPending || bulkConfirmMutation.isPending
-        }
-        variant={confirmModal.mode === "bulk" ? "primary" : "primary"}
       />
 
       {paymentToUpdate && (

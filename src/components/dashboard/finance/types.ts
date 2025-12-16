@@ -1,6 +1,3 @@
-// app/dashboard/finance/payments/types.ts
-
-// The paginated response structure
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -9,36 +6,42 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// A single payment object (for list and detail)
 export interface Payment {
   id: string;
   bookingId: string;
-  paymentStatus: string; // PENDING, SUCCESSFUL, FAILED, ABANDONED
+  paymentStatus: string;
   paymentProvider: string;
   transactionReference: string;
   totalPayable: number;
-  amountPaid?: number; // Optional, as it's not on PENDING
+  amountPaid?: number;
   createdAt: string;
-  paidAt?: string; // Optional, as it's not on PENDING
+  paidAt?: string;
   vehicleName: string;
   vehicleIdentifier: string;
   vehicleId: string;
-  userId?: string; // Optional
+  userId?: string;
   paymentRef: string;
   invoiceNumber: string;
   bookingRef: string;
   userEmail: string;
   userPhone: string;
   userName: string;
+  paymentImage?: string | null;
+  publicId?: string | null;
 }
 
-
-// Enums for filters
 export enum PaymentStatus {
   PENDING = "PENDING",
   SUCCESSFUL = "SUCCESSFUL",
   ABANDONED = "ABANDONED",
   FAILED = "FAILED",
+}
+
+export enum PaymentProvider {
+  MONNIFY = "MONNIFY",
+  PAYSTACK = "PAYSTACK",
+  OFFLINE = "OFFLINE",
+  MANUAL = "MANUAL",
 }
 
 export type OfflinePaymentApprovalResponse = {
@@ -47,7 +50,7 @@ export type OfflinePaymentApprovalResponse = {
   vehicleId: string;
   calculationId: string;
   userId: string;
-  status: string; // e.g. "CONFIRMED"
+  status: string;
   totalPrice: number;
   bookedAt: string;
   primaryPhoneNumber: string;
@@ -70,5 +73,4 @@ export type OfflinePaymentApprovalResponse = {
     distanceKm: number;
     price: number;
   }>;
-  // ... add more fields as needed
 };

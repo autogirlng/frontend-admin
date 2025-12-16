@@ -1,32 +1,37 @@
-// lib/hooks/finance/usePayments.ts
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
-import { apiClient } from "@/lib/apiClient"; // Adjust path
+import { apiClient } from "@/lib/apiClient";
 import {
   Payment,
   PaginatedResponse,
 } from "@/components/dashboard/finance/types";
 import { OfflinePaymentApprovalResponse } from "@/components/dashboard/finance/types";
-import { SignalZero } from "lucide-react";
 
-// Query Key
 export const PAYMENTS_QUERY_KEY = "payments";
 
-// 1. Get Paginated Payments
 export interface PaymentFilters {
   page: number;
   size: number;
   paymentStatus: string | null;
+  paymentProvider: string | null;
   startDate: Date | null;
   endDate: Date | null;
   searchTerm: string;
 }
 
 export function useGetPayments(filters: PaymentFilters) {
-  const { page, size, paymentStatus, startDate, endDate, searchTerm } = filters;
+  const {
+    page,
+    size,
+    paymentStatus,
+    paymentProvider,
+    startDate,
+    endDate,
+    searchTerm,
+  } = filters;
 
   return useQuery<PaginatedResponse<Payment>>({
     queryKey: [
@@ -34,6 +39,7 @@ export function useGetPayments(filters: PaymentFilters) {
       page,
       size,
       paymentStatus,
+      paymentProvider,
       startDate,
       endDate,
       searchTerm,
@@ -44,6 +50,7 @@ export function useGetPayments(filters: PaymentFilters) {
       params.append("size", String(size));
 
       if (paymentStatus) params.append("paymentStatus", paymentStatus);
+      if (paymentProvider) params.append("paymentProvider", paymentProvider);
       if (startDate)
         params.append("startDate", format(startDate, "yyyy-MM-dd"));
       if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));
@@ -56,13 +63,11 @@ export function useGetPayments(filters: PaymentFilters) {
   });
 }
 
-
-// 2. Get Single Payment Details
 export function useGetPaymentDetails(paymentId: string | null) {
   return useQuery<Payment>({
     queryKey: [PAYMENTS_QUERY_KEY, "detail", paymentId],
     queryFn: () => apiClient.get<Payment>(`/payments/${paymentId}`),
-    enabled: !!paymentId, // Only run if paymentId is not null
+    enabled: !!paymentId,
   });
 }
 
@@ -70,11 +75,15 @@ export function useDownloadInvoice() {
   return useMutation<
     void,
     Error,
-    { bookingId: string; invoiceNumber?: string, userName?: string; }
+    { bookingId: string; invoiceNumber?: string; userName?: string }
   >({
     mutationFn: async ({ bookingId, invoiceNumber, userName }) => {
       const safeName = userName
-        ? userName.trim().replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 30) + "_"
+        ? userName
+            .trim()
+            .replace(/[^a-zA-Z0-9\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .slice(0, 30) + "_"
         : "";
 
       const defaultFilename = `Invoice_${safeName}_${invoiceNumber}.pdf`;
@@ -94,16 +103,19 @@ export function useDownloadInvoice() {
   });
 }
 
-// ✅ --- 4. NEW: Download Receipt ---
 export function useDownloadPaymentReceipt() {
   return useMutation<
     void,
     Error,
-    { bookingId: string; invoiceNumber?: string, userName?: string;}
+    { bookingId: string; invoiceNumber?: string; userName?: string }
   >({
     mutationFn: async ({ bookingId, invoiceNumber, userName }) => {
       const safeName = userName
-        ? userName.trim().replace(/[^a-zA-Z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 30) + "_"
+        ? userName
+            .trim()
+            .replace(/[^a-zA-Z0-9\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .slice(0, 30) + "_"
         : "";
 
       const defaultFilename = `Receipt_${safeName}_${invoiceNumber}.pdf`;
@@ -122,8 +134,6 @@ export function useDownloadPaymentReceipt() {
   });
 }
 
-
-// 5. Preview Invoice → uses POST (same as download)
 export function usePreviewInvoiceBlob() {
   return useMutation<Blob, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
@@ -134,7 +144,6 @@ export function usePreviewInvoiceBlob() {
   });
 }
 
-// 6. Preview Receipt → uses GET (same as download)
 export function usePreviewReceiptBlob() {
   return useMutation<Blob, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
@@ -145,16 +154,18 @@ export function usePreviewReceiptBlob() {
   });
 }
 
-
-// 7. Approve Offline Payment (Confirm Payment)
 export function useApproveOfflinePayment() {
   const queryClient = useQueryClient();
 
-  return useMutation<OfflinePaymentApprovalResponse, Error, { bookingId: string }>({
+  return useMutation<
+    OfflinePaymentApprovalResponse,
+    Error,
+    { bookingId: string }
+  >({
     mutationFn: async ({ bookingId }) => {
       return await apiClient.post(
         `/admin/bookings/${bookingId}/confirm-offline-payment`,
-        {} // No request body needed based on your API
+        {}
       );
     },
 
@@ -162,7 +173,6 @@ export function useApproveOfflinePayment() {
       toast.success(
         `Payment approved successfully! Invoice: ${data.invoiceNumber}`
       );
-      // Invalidate and refetch the payments list so UI updates instantly
       queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
     },
 

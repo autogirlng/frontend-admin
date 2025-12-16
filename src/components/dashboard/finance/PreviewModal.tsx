@@ -22,7 +22,7 @@ export function DocumentPreviewModal({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // 1. Use a Ref to store the fetch function. 
+  // 1. Use a Ref to store the fetch function.
   // This keeps the function stable across renders so we don't need it in the dependency array.
   const fetchDocRef = useRef(fetchDocument);
 
@@ -94,7 +94,7 @@ export function DocumentPreviewModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg shrink-0">
           <h3 className="text-lg font-semibold text-gray-900 capitalize">
-            {title} 
+            {title}
           </h3>
           <button
             onClick={onClose}
