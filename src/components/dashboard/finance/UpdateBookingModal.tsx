@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { X, Calendar, MapPin, Layers } from "lucide-react";
+import { X, Calendar, MapPin, Layers, Map, Trash2, Plus } from "lucide-react";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Select from "@/components/generic/ui/Select";
@@ -68,7 +68,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     setFormData((prev) => {
       if (!prev) return null;
       const newSegments = [...prev.segments];
-      // @ts-ignore - Dynamic key assignment
+      // @ts-ignore
       newSegments[index] = { ...newSegments[index], [field]: value };
       return { ...prev, segments: newSegments };
     });
@@ -82,7 +82,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     setFormData((prev) => {
       if (!prev) return null;
       const newSegments = [...prev.segments];
-
       if (type === "pickup") {
         newSegments[index].pickupLatitude = coords.latitude;
         newSegments[index].pickupLongitude = coords.longitude;
@@ -90,6 +89,93 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
         newSegments[index].dropoffLatitude = coords.latitude;
         newSegments[index].dropoffLongitude = coords.longitude;
       }
+      return { ...prev, segments: newSegments };
+    });
+  };
+
+  const handleAreaOfUseChange = (
+    segmentIndex: number,
+    areaIndex: number,
+    value: string
+  ) => {
+    setFormData((prev) => {
+      if (!prev) return null;
+      const newSegments = [...prev.segments];
+      const newAreas = [...newSegments[segmentIndex].areaOfUse];
+
+      newAreas[areaIndex] = {
+        ...newAreas[areaIndex],
+        areaOfUseName: value,
+      };
+
+      newSegments[segmentIndex] = {
+        ...newSegments[segmentIndex],
+        areaOfUse: newAreas,
+      };
+
+      return { ...prev, segments: newSegments };
+    });
+  };
+
+  const handleAreaOfUseLocationSelect = (
+    segmentIndex: number,
+    areaIndex: number,
+    coords: { latitude: number; longitude: number }
+  ) => {
+    setFormData((prev) => {
+      if (!prev) return null;
+      const newSegments = [...prev.segments];
+      const newAreas = [...newSegments[segmentIndex].areaOfUse];
+
+      newAreas[areaIndex] = {
+        ...newAreas[areaIndex],
+        areaOfUseLatitude: coords.latitude,
+        areaOfUseLongitude: coords.longitude,
+      };
+
+      newSegments[segmentIndex] = {
+        ...newSegments[segmentIndex],
+        areaOfUse: newAreas,
+      };
+
+      return { ...prev, segments: newSegments };
+    });
+  };
+
+  const handleRemoveAreaOfUse = (segmentIndex: number, areaIndex: number) => {
+    setFormData((prev) => {
+      if (!prev) return null;
+      const newSegments = [...prev.segments];
+      const newAreas = newSegments[segmentIndex].areaOfUse.filter(
+        (_, i) => i !== areaIndex
+      );
+
+      newSegments[segmentIndex] = {
+        ...newSegments[segmentIndex],
+        areaOfUse: newAreas,
+      };
+
+      return { ...prev, segments: newSegments };
+    });
+  };
+
+  const handleAddAreaOfUse = (segmentIndex: number) => {
+    setFormData((prev) => {
+      if (!prev) return null;
+      const newSegments = [...prev.segments];
+      const currentAreas = newSegments[segmentIndex].areaOfUse || [];
+
+      newSegments[segmentIndex] = {
+        ...newSegments[segmentIndex],
+        areaOfUse: [
+          ...currentAreas,
+          {
+            areaOfUseName: "",
+            areaOfUseLatitude: 0,
+            areaOfUseLongitude: 0,
+          },
+        ],
+      };
 
       return { ...prev, segments: newSegments };
     });
@@ -171,7 +257,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                 return (
                   <div
                     key={index}
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm"
                   >
                     <div className="bg-gray-50/80 p-3 border-b border-gray-100 flex items-center gap-2">
                       <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
@@ -205,7 +291,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                           className="w-full"
                         />
                       </div>
-
                       <div>
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
                           <Calendar className="h-3 w-3" /> Schedule
@@ -224,7 +309,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                           }
                         />
                       </div>
-
                       <div>
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
                           <MapPin className="h-3 w-3" /> Locations
@@ -262,6 +346,70 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                             }
                           />
                         </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                            <Map className="h-3 w-3" /> Area of Use
+                          </label>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleAddAreaOfUse(index)}
+                            className="h-6 px-2 text-[10px] text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Plus className="w-3 h-3 mr-1" /> Add Area
+                          </Button>
+                        </div>
+
+                        {segment.areaOfUse && segment.areaOfUse.length > 0 ? (
+                          <div className="space-y-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            {segment.areaOfUse.map((area, areaIndex) => (
+                              <div
+                                key={areaIndex}
+                                className="flex items-start gap-2"
+                              >
+                                <div className="flex-1">
+                                  <AddressInput
+                                    label={`Area ${areaIndex + 1}`}
+                                    id={`areaofuse-${index}-${areaIndex}`}
+                                    value={area.areaOfUseName}
+                                    onChange={(val) =>
+                                      handleAreaOfUseChange(
+                                        index,
+                                        areaIndex,
+                                        val
+                                      )
+                                    }
+                                    onLocationSelect={(coords) =>
+                                      handleAreaOfUseLocationSelect(
+                                        index,
+                                        areaIndex,
+                                        coords
+                                      )
+                                    }
+                                    placeholder="Enter area or city"
+                                    className="bg-white"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRemoveAreaOfUse(index, areaIndex)
+                                  }
+                                  className="mt-7 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                  title="Remove Area"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-xs text-gray-400">
+                            No areas of use defined.
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
