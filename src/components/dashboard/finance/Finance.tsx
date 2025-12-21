@@ -56,11 +56,11 @@ export default function PaymentsPage() {
 
   const [filters, setFilters] = useState<{
     paymentStatus: string | null;
-    paymentProvider: string | null;
+    paymentMethod: string | null;
     dateRange: DateRange | null;
   }>({
     paymentStatus: null,
-    paymentProvider: null,
+    paymentMethod: null,
     dateRange: null,
   });
 
@@ -96,7 +96,7 @@ export default function PaymentsPage() {
     page: currentPage,
     size: pageSize,
     paymentStatus: filters.paymentStatus,
-    paymentProvider: filters.paymentProvider,
+    paymentMethod: filters.paymentMethod,
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
     searchTerm: debouncedSearchTerm,
@@ -124,7 +124,7 @@ export default function PaymentsPage() {
   }, [debouncedSearchTerm]);
 
   const handleFilterChange = (
-    key: "paymentStatus" | "paymentProvider",
+    key: "paymentStatus" | "paymentMethod",
     value: string | null
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -137,7 +137,7 @@ export default function PaymentsPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ paymentStatus: null, paymentProvider: null, dateRange: null });
+    setFilters({ paymentStatus: null, paymentMethod: null, dateRange: null });
     setSearchTerm("");
     setCurrentPage(0);
   };

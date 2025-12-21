@@ -16,7 +16,7 @@ export interface PaymentFilters {
   page: number;
   size: number;
   paymentStatus: string | null;
-  paymentProvider: string | null;
+  paymentMethod: string | null;
   startDate: Date | null;
   endDate: Date | null;
   searchTerm: string;
@@ -27,7 +27,7 @@ export function useGetPayments(filters: PaymentFilters) {
     page,
     size,
     paymentStatus,
-    paymentProvider,
+    paymentMethod,
     startDate,
     endDate,
     searchTerm,
@@ -39,7 +39,7 @@ export function useGetPayments(filters: PaymentFilters) {
       page,
       size,
       paymentStatus,
-      paymentProvider,
+      paymentMethod,
       startDate,
       endDate,
       searchTerm,
@@ -50,7 +50,7 @@ export function useGetPayments(filters: PaymentFilters) {
       params.append("size", String(size));
 
       if (paymentStatus) params.append("paymentStatus", paymentStatus);
-      if (paymentProvider) params.append("paymentProvider", paymentProvider);
+      if (paymentMethod) params.append("paymentMethod", paymentMethod);
       if (startDate)
         params.append("startDate", format(startDate, "yyyy-MM-dd"));
       if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));

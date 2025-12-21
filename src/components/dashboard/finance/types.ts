@@ -44,6 +44,11 @@ export enum PaymentProvider {
   MANUAL = "MANUAL",
 }
 
+export enum PaymentMethod {
+  ONLINE = "ONLINE",
+  OFFLINE = "OFFLINE",
+}
+
 export type OfflinePaymentApprovalResponse = {
   bookingId: string;
   invoiceNumber: string;

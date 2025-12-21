@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, ExternalLink, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useGetPaymentDetails } from "@/lib/hooks/finance/usePayments";
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -13,7 +13,6 @@ interface PaymentDetailModalProps {
   onClose: () => void;
 }
 
-// Helper for data pairs
 const DetailItem = ({
   label,
   value,
@@ -31,15 +30,13 @@ const DetailItem = ({
   </div>
 );
 
-// Helper to format currency
 const formatPrice = (price?: number) => {
   if (price === undefined || price === null) return "N/A";
   return `₦${price.toLocaleString()}`;
 };
 
-// Status Badge Helper
 const StatusBadge = ({ status }: { status: string }) => {
-  let colorClasses = "bg-gray-100 text-gray-800"; // Default
+  let colorClasses = "bg-gray-100 text-gray-800";
 
   switch (status) {
     case "SUCCESSFUL":
@@ -87,30 +84,30 @@ export function PaymentDetailModal({
       );
     }
 
-    // Logic for financial status color
     const isPaid = payment.paymentStatus === "SUCCESSFUL";
     const amountPaid = payment.amountPaid ?? 0;
     const isAmountMismatch = isPaid && amountPaid < payment.totalPayable;
 
+    const hasPaymentProof =
+      payment.paymentImage && payment.paymentImage !== "string";
+
     return (
       <div className="space-y-6 p-6 overflow-y-auto">
-        {/* Top Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem label="Payment ID" value={payment.bookingRef} />
-          <DetailItem 
-            label="Booking ID" 
+          <DetailItem
+            label="Booking ID"
             value={
-              <Link 
+              <Link
                 href={`/dashboard/bookings/${payment.bookingId}`}
                 className="text-gray-900 hover:text-gray-900 hover:underline transition-colors"
               >
                 {payment.invoiceNumber}
               </Link>
-            } 
+            }
           />
         </div>
 
-        {/* Status Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
           <DetailItem
             label="Payment Status"
@@ -122,14 +119,33 @@ export function PaymentDetailModal({
           />
         </div>
 
-        <DetailItem
-          label="Transaction Reference"
-          value={payment.transactionReference}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <DetailItem
+            label="Transaction Reference"
+            value={payment.transactionReference}
+          />
+
+          {hasPaymentProof && (
+            <DetailItem
+              label="Payment Proof"
+              value={
+                <a
+                  href={payment.paymentImage!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="underline">View Document</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              }
+            />
+          )}
+        </div>
 
         <hr />
 
-        {/* Financial Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem
             label="Total Payable"
@@ -150,7 +166,6 @@ export function PaymentDetailModal({
           </div>
         </div>
 
-        {/* Dates Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem
             label="Created At"
@@ -166,36 +181,31 @@ export function PaymentDetailModal({
           />
         </div>
 
-        <hr/>
+        <hr />
 
-        {/* Vehicle Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <DetailItem label="Vehicle Name" value={
-              <Link 
+          <DetailItem
+            label="Vehicle Name"
+            value={
+              <Link
                 href={`/dashboard/vehicles-onboarding/${payment.vehicleId}`}
                 className="text-gray-900 hover:text-gray-900 hover:underline transition-colors"
               >
                 {payment.vehicleName}
               </Link>
-            }  />
+            }
+          />
           <DetailItem
             label="Vehicle Identifier"
             value={payment.vehicleIdentifier}
           />
         </div>
 
-        <hr/>
+        <hr />
 
-        {/* Customer Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <DetailItem 
-            label="Customer Name" 
-            value={payment.userName} 
-          />
-          <DetailItem
-            label="Customer Email"
-            value={payment.userEmail}
-          />
+          <DetailItem label="Customer Name" value={payment.userName} />
+          <DetailItem label="Customer Email" value={payment.userEmail} />
           <DetailItem label="Customer Phone Number" value={payment.userPhone} />
         </div>
       </div>
@@ -205,8 +215,6 @@ export function PaymentDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg md:max-w-xl max-h-[90vh] flex flex-col rounded-xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b bg-white shrink-0">
           <h3 className="text-lg font-semibold leading-6 text-gray-900">
             Payment Details
@@ -219,12 +227,8 @@ export function PaymentDetailModal({
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {renderContent()}
-        </div>
+        <div className="flex-1 overflow-y-auto min-h-0">{renderContent()}</div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t shrink-0">
           <Button type="button" variant="secondary" onClick={onClose}>
             Close

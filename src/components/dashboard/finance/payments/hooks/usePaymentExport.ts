@@ -10,7 +10,7 @@ import { DateRange } from "react-day-picker";
 interface UsePaymentExportProps {
   filters: {
     paymentStatus: string | null;
-    paymentProvider: string | null;
+    paymentMethod: string | null;
     dateRange: DateRange | null;
   };
   searchTerm: string;
@@ -33,8 +33,8 @@ export function usePaymentExport({
 
       if (filters.paymentStatus)
         params.append("paymentStatus", filters.paymentStatus);
-      if (filters.paymentProvider)
-        params.append("paymentProvider", filters.paymentProvider);
+      if (filters.paymentMethod)
+        params.append("paymentMethod", filters.paymentMethod);
 
       if (filters.dateRange?.from) {
         params.append(

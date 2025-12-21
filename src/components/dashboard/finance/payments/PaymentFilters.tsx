@@ -6,21 +6,21 @@ import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import { DatePickerWithRange } from "../../availability/DatePickerWithRange";
 import { enumToOptions } from "./utils";
-import { PaymentStatus, PaymentProvider } from "../types";
+import { PaymentStatus, PaymentMethod } from "../types";
 
 const paymentStatusOptions = enumToOptions(PaymentStatus);
-const paymentProviderOptions = enumToOptions(PaymentProvider);
+const paymentMethodOptions = enumToOptions(PaymentMethod);
 
 interface PaymentFiltersProps {
   searchTerm: string;
   setSearchTerm: (val: string) => void;
   filters: {
     paymentStatus: string | null;
-    paymentProvider: string | null;
+    paymentMethod: string | null;
     dateRange: DateRange | null;
   };
   handleFilterChange: (
-    key: "paymentStatus" | "paymentProvider",
+    key: "paymentStatus" | "paymentMethod",
     value: string | null
   ) => void;
   handleDateChange: (range: DateRange | undefined) => void;
@@ -63,7 +63,7 @@ export const PaymentFilters: React.FC<PaymentFiltersProps> = ({
         <Select
           label="Payment Status"
           hideLabel
-          placeholder="Status: All"
+          placeholder="Payment Status"
           options={paymentStatusOptions}
           selected={
             filters.paymentStatus
@@ -77,21 +77,19 @@ export const PaymentFilters: React.FC<PaymentFiltersProps> = ({
         />
 
         <Select
-          label="Payment Provider"
+          label="Payment Method"
           hideLabel
-          placeholder="Provider: All"
-          options={paymentProviderOptions}
+          placeholder="Payment Method"
+          options={paymentMethodOptions}
           selected={
-            filters.paymentProvider
+            filters.paymentMethod
               ? {
-                  id: filters.paymentProvider,
-                  name: filters.paymentProvider.replace(/_/g, " "),
+                  id: filters.paymentMethod,
+                  name: filters.paymentMethod.replace(/_/g, " "),
                 }
               : null
           }
-          onChange={(option) =>
-            handleFilterChange("paymentProvider", option.id)
-          }
+          onChange={(option) => handleFilterChange("paymentMethod", option.id)}
         />
 
         <DatePickerWithRange
