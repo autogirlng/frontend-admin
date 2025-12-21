@@ -304,11 +304,6 @@ export default function VehicleOnboarding() {
         },
       },
       {
-        header: "Operational Status",
-        accessorKey: "operationalStatus",
-        cell: (item) => formatOperationalStatus(item.operationalStatus),
-      },
-      {
         header: "Actions",
         accessorKey: "id",
         cell: (item) => <ActionMenu actions={getVehicleActions(item)} />,

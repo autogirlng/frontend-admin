@@ -22,7 +22,7 @@ export interface Vehicle {
   licensePlateNumber?: string;
   ownerName: string;
   status: VehicleStatus;
-  operationalStatus: string;
+  // operationalStatus: string;
 }
 
 export interface PaginatedResponse<T> {
