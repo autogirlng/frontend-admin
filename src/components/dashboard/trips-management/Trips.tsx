@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import {
   AlertCircle,
   Eye,
@@ -13,6 +13,7 @@ import {
   Download,
   FileText,
   Edit,
+  Search,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -37,6 +38,7 @@ import { DatePickerWithRange } from "../availability/DatePickerWithRange";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
+import TextInput from "@/components/generic/ui/TextInput";
 
 import { AssignDriverModal } from "./AssignDriverModal";
 import { AssignAgentsModal } from "./AssignAgentsModal";
@@ -55,6 +57,9 @@ export default function TripsPage() {
 
   const [currentPage, setCurrentPage] = useState(0);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
   const [modal, setModal] = useState<
     "assignDriver" | "assignAgents" | "editTrip" | null
   >(null);
@@ -70,14 +75,23 @@ export default function TripsPage() {
 
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
 
   const [filters, setFilters] = useState({
     bookingStatus: null as string | null,
@@ -98,6 +112,7 @@ export default function TripsPage() {
     bookingTypeId: filters.bookingTypeId,
     startDate: filters.dateRange?.from || null,
     endDate: filters.dateRange?.to || null,
+    searchTerm: debouncedSearchTerm,
   });
 
   const { data: bookingTypes = [] } = useGetBookingTypes();
@@ -139,6 +154,8 @@ export default function TripsPage() {
       bookingTypeId: null,
       dateRange: null,
     });
+    setSearchTerm("");
+    setDebouncedSearchTerm("");
     setCurrentPage(0);
   };
 
@@ -196,7 +213,6 @@ export default function TripsPage() {
       trip.bookingStatus === "CONFIRMED" ||
       trip.bookingStatus === "COMPLETED"
     ) {
-      // ✅ Preview Receipt Action
       actions.push({
         label: "View Receipt",
         icon: Eye,
@@ -353,7 +369,25 @@ export default function TripsPage() {
             <Filter className="h-5 w-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <TextInput
+                label="Search"
+                id="search"
+                hideLabel
+                type="text"
+                placeholder="Search Customer, Vehicle..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+                style={{ paddingLeft: 35 }}
+              />
+            </div>
+
             <Select
               label="Trip Status"
               hideLabel
@@ -458,11 +492,12 @@ export default function TripsPage() {
         <EditTripModal trip={selectedTrip} onClose={closeModal} />
       )}
 
-      {/* Document Preview Modal */}
       {previewConfig && (
         <DocumentPreviewModal
           title={
-            previewConfig.type === "invoice" ? "Invoice Preview" : "Receipt Preview"
+            previewConfig.type === "invoice"
+              ? "Invoice Preview"
+              : "Receipt Preview"
           }
           onClose={() => setPreviewConfig(null)}
           fetchDocument={async () => {

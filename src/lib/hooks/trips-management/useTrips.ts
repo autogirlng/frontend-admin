@@ -13,7 +13,6 @@ import {
 
 export const TRIPS_QUERY_KEY = "trips";
 
-// 1. Get Trips
 export interface TripFilters {
   page: number;
   bookingStatus: string | null;
@@ -21,11 +20,19 @@ export interface TripFilters {
   bookingTypeId: string | null;
   startDate: Date | null;
   endDate: Date | null;
+  searchTerm: string;
 }
 
 export function useGetTrips(filters: TripFilters) {
-  const { page, bookingStatus, tripStatus, bookingTypeId, startDate, endDate } =
-    filters;
+  const {
+    page,
+    bookingStatus,
+    tripStatus,
+    bookingTypeId,
+    startDate,
+    endDate,
+    searchTerm,
+  } = filters;
 
   return useQuery<PaginatedResponse<Trip>>({
     queryKey: [
@@ -36,6 +43,7 @@ export function useGetTrips(filters: TripFilters) {
       bookingTypeId,
       startDate,
       endDate,
+      searchTerm,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -45,6 +53,7 @@ export function useGetTrips(filters: TripFilters) {
       if (bookingStatus) params.append("bookingStatus", bookingStatus);
       if (tripStatus) params.append("tripStatus", tripStatus);
       if (bookingTypeId) params.append("bookingTypeId", bookingTypeId);
+      if (searchTerm) params.append("searchTerm", searchTerm);
       if (startDate)
         params.append("startDate", format(startDate, "yyyy-MM-dd"));
       if (endDate) params.append("endDate", format(endDate, "yyyy-MM-dd"));
@@ -56,7 +65,6 @@ export function useGetTrips(filters: TripFilters) {
   });
 }
 
-// 2. Assign Driver
 type AssignDriverPayload = {
   driverId: string;
 };
@@ -70,7 +78,6 @@ export function useAssignDriver() {
     mutationFn: ({ tripId, payload }) =>
       apiClient.patch(`/admin/trips/${tripId}/assign-driver`, payload),
     onSuccess: (updatedTrip) => {
-      // Invalidate the main trips list to refetch
       queryClient.invalidateQueries({
         queryKey: [TRIPS_QUERY_KEY],
         exact: false,
@@ -82,7 +89,6 @@ export function useAssignDriver() {
   });
 }
 
-// 3. Assign Agents
 type AssignAgentsPayload = {
   customerAgentId?: string | null;
   operationsAgentId?: string | null;
@@ -110,7 +116,6 @@ export function useAssignAgents() {
   });
 }
 
-// 4. Get Trip Details
 export function useGetTripDetails(tripId: string | null) {
   return useQuery<TripDetail>({
     queryKey: [TRIPS_QUERY_KEY, "detail", tripId],
@@ -130,7 +135,7 @@ export function useDownloadTripInvoice() {
       const defaultFilename = `Invoice-${bookingId}.pdf`;
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
-        {}, // Empty body for POST
+        {},
         defaultFilename
       );
     },
@@ -143,7 +148,6 @@ export function useDownloadTripInvoice() {
   });
 }
 
-// ✅ --- 6. NEW: Download Receipt ---
 export function useDownloadTripReceipt() {
   return useMutation<void, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
@@ -164,26 +168,22 @@ export function useDownloadTripReceipt() {
 
 export function useEditTrip() {
   const queryClient = useQueryClient();
-  return useMutation<
-    Trip, // Returns the updated Trip object
-    Error,
-    { tripId: string; payload: EditTripPayload }
-  >({
-    mutationFn: ({ tripId, payload }) =>
-      apiClient.patch(`/admin/trips/${tripId}`, payload),
-    onSuccess: (updatedTrip) => {
-      toast.success("Trip details updated successfully.");
-      // Invalidate the list query
-      queryClient.invalidateQueries({
-        queryKey: [TRIPS_QUERY_KEY],
-        exact: false,
-      });
-      // Invalidate the detail query (if the user is viewing details)
-      queryClient.invalidateQueries({
-        queryKey: [TRIPS_QUERY_KEY, "detail", updatedTrip.id],
-      });
-    },
-    onError: (error) =>
-      toast.error(error.message || "Failed to update trip details."),
-  });
+  return useMutation<Trip, Error, { tripId: string; payload: EditTripPayload }>(
+    {
+      mutationFn: ({ tripId, payload }) =>
+        apiClient.patch(`/admin/trips/${tripId}`, payload),
+      onSuccess: (updatedTrip) => {
+        toast.success("Trip details updated successfully.");
+        queryClient.invalidateQueries({
+          queryKey: [TRIPS_QUERY_KEY],
+          exact: false,
+        });
+        queryClient.invalidateQueries({
+          queryKey: [TRIPS_QUERY_KEY, "detail", updatedTrip.id],
+        });
+      },
+      onError: (error) =>
+        toast.error(error.message || "Failed to update trip details."),
+    }
+  );
 }
