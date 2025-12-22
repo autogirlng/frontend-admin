@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { format, eachDayOfInterval } from "date-fns";
 import type {
   AvailabilityCalendarProps,
@@ -9,14 +9,18 @@ import type {
 } from "./availability";
 import {
   Wrench,
-  XCircle,
+  Ban,
+  CheckCircle2,
+  AlertCircle,
+  Calendar as CalendarIcon,
   ChevronDown,
   ChevronUp,
-  Calendar,
+  Clock,
+  Briefcase,
 } from "lucide-react";
 
 const useProcessedVehicles = (vehicles: VehicleAvailability[]) => {
-  return React.useMemo(() => {
+  return useMemo(() => {
     return vehicles.map((vehicle) => {
       const availabilityMap = new Map<string, AvailabilityStatus>(
         vehicle.availability.map((a) => [a.date, a])
@@ -26,31 +30,81 @@ const useProcessedVehicles = (vehicles: VehicleAvailability[]) => {
   }, [vehicles]);
 };
 
-const getStatusConfig = (status: AvailabilityStatus | undefined) => {
-  let cellContent: React.ReactNode = "Available";
-  let cellColor = "bg-green-50 text-green-700 border-green-100";
-  let icon = null;
-
-  const isBooked = status && status.bookedTypes.length > 0;
-  const isUnavailable = status && status.unavailabilityReasons.length > 0;
-
-  if (isBooked) {
-    cellColor = "bg-red-50 text-red-700 border-red-100";
-    cellContent = status.bookedTypes.join(", ");
-  } else if (isUnavailable) {
-    const reason = status.unavailabilityReasons[0];
-    if (reason === "MAINTENANCE") {
-      cellColor = "bg-yellow-50 text-yellow-700 border-yellow-100";
-      icon = <Wrench className="h-3 w-3 sm:h-4 sm:w-4" />;
-      cellContent = "Maintenance";
-    } else {
-      cellColor = "bg-gray-100 text-gray-600 border-gray-200";
-      icon = <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />;
-      cellContent = reason.replace(/_/g, " ");
-    }
+const getStatusConfig = (statusData: AvailabilityStatus | undefined) => {
+  if (!statusData) {
+    return {
+      color: "bg-gray-50 border-gray-100 text-gray-400",
+      icon: <Clock className="w-3 h-3" />,
+      label: "Unknown",
+      subLabel: "No data",
+    };
   }
 
-  return { cellContent, cellColor, icon };
+  const { status, unavailabilityReasons, summary } = statusData;
+
+  if (unavailabilityReasons.includes("MAINTENANCE")) {
+    return {
+      color: "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100",
+      icon: <Wrench className="w-3 h-3" />,
+      label: "Maintenance",
+      subLabel: "Unavailable",
+    };
+  }
+
+  if (unavailabilityReasons.includes("COMPANY_USE")) {
+    return {
+      color:
+        "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100",
+      icon: <Briefcase className="w-3 h-3" />,
+      label: "Company Use",
+      subLabel: "Internal",
+    };
+  }
+
+  if (
+    unavailabilityReasons.includes("UNAVAILABLE") ||
+    status === "UNAVAILABLE"
+  ) {
+    return {
+      color: "bg-red-50 border-red-200 text-red-700 hover:bg-red-100",
+      icon: <Ban className="w-3 h-3" />,
+      label: "Unavailable",
+      subLabel: summary || "Blocked",
+    };
+  }
+
+  switch (status) {
+    case "FULLY_AVAILABLE":
+    case "AVAILABLE":
+      return {
+        color:
+          "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100",
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        label: "Available",
+        subLabel: summary,
+      };
+    case "PARTIALLY_BOOKED":
+      return {
+        color: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100",
+        icon: <Clock className="w-3 h-3" />,
+        label: "Partial",
+        subLabel: summary,
+      };
+    case "FULLY_BOOKED":
+      return {
+        color: "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200",
+        icon: <Ban className="w-3 h-3" />,
+        label: "Booked",
+        subLabel: "Fully occupied",
+      };
+    default:
+      return {
+        color: "bg-gray-50 border-gray-100 text-gray-500",
+        icon: <AlertCircle className="w-3 h-3" />,
+        label: status.replace(/_/g, " "),
+        subLabel: summary,
+      };
+  }
 };
 
 export default function AvailabilityCalendar({
@@ -61,7 +115,6 @@ export default function AvailabilityCalendar({
 }: AvailabilityCalendarProps) {
   const days = eachDayOfInterval({ start: startDate, end: endDate });
   const processedVehicles = useProcessedVehicles(vehicles);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(
     null
   );
@@ -71,31 +124,27 @@ export default function AvailabilityCalendar({
   };
 
   return (
-    <div className="w-full">
-      {/* =========================================================
-          MOBILE VIEW: Accordion Cards (Visible on small screens)
-          ========================================================= */}
+    <div className="w-full space-y-4">
+      {/* --- Mobile View (Card List) --- */}
       <div className="block md:hidden space-y-3">
         {processedVehicles.map((vehicle) => {
           const isExpanded = expandedVehicleId === vehicle.vehicleId;
-
           return (
             <div
               key={vehicle.vehicleId}
               className="bg-white border border-gray-200 overflow-hidden"
             >
-              {/* Header: Click to Expand */}
               <button
                 onClick={() => toggleVehicle(vehicle.vehicleId)}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 active:bg-gray-100 transition-colors"
+                className="w-full flex items-center justify-between p-4 bg-white active:bg-gray-50 transition-colors"
               >
-                <div className="text-left">
-                  <div className="font-semibold text-gray-900">
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold text-gray-900">
                     {vehicle.vehicleName}
-                  </div>
-                  <div className="text-xs text-gray-500">
+                  </span>
+                  <span className="text-xs text-gray-500 font-mono mt-0.5">
                     {vehicle.vehicleIdentifier}
-                  </div>
+                  </span>
                 </div>
                 {isExpanded ? (
                   <ChevronUp className="h-5 w-5 text-gray-400" />
@@ -104,37 +153,35 @@ export default function AvailabilityCalendar({
                 )}
               </button>
 
-              {/* Body: Date Grid (Shown only when expanded) */}
               {isExpanded && (
-                <div className="p-3 bg-white border-t border-gray-100">
+                <div className="p-3 border-t border-gray-100 bg-gray-50/50">
                   <div className="grid grid-cols-2 gap-2">
                     {days.map((day) => {
                       const dateKey = format(day, "yyyy-MM-dd");
-                      const status = vehicle.availabilityMap.get(dateKey);
-                      const config = getStatusConfig(status);
+                      const statusData = vehicle.availabilityMap.get(dateKey);
+                      const config = getStatusConfig(statusData);
 
                       return (
                         <div
                           key={dateKey}
                           onClick={() => onCellClick(vehicle.vehicleId, day)}
                           className={`
-                            relative p-3 border text-center cursor-pointer 
-                            transition-all active:scale-95 flex flex-col items-center justify-center gap-1
-                            ${config.cellColor}
+                            relative flex flex-col p-3 border cursor-pointer 
+                            transition-all active:scale-[0.98] ${config.color}
                           `}
                         >
-                          {/* Date Header inside the chip */}
-                          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide opacity-70 mb-1">
-                            <Calendar className="h-3 w-3" />
-                            {format(day, "MMM d")}
-                          </div>
-
-                          {/* Content/Icon */}
-                          <div className="text-xs font-medium flex items-center gap-1">
-                            {config.icon}
-                            <span className="truncate max-w-[100px]">
-                              {config.cellContent}
+                          <div className="flex items-center gap-1.5 mb-1 opacity-70">
+                            <CalendarIcon className="w-3 h-3" />
+                            <span className="text-[10px] uppercase font-bold tracking-wider">
+                              {format(day, "MMM d")}
                             </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 font-medium text-sm">
+                            {config.icon}
+                            <span>{config.label}</span>
+                          </div>
+                          <div className="text-[10px] mt-1 opacity-80 truncate">
+                            {config.subLabel}
                           </div>
                         </div>
                       );
@@ -147,67 +194,83 @@ export default function AvailabilityCalendar({
         })}
       </div>
 
-      {/* =========================================================
-          DESKTOP VIEW: Full Table (Hidden on mobile)
-          ========================================================= */}
-      <div className="hidden md:block overflow-x-auto relative border border-gray-200">
-        <table className="w-full min-w-[1200px] text-sm text-left text-gray-500">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10">
-            <tr>
-              <th
-                scope="col"
-                className="py-3 px-6 sticky left-0 bg-gray-50 z-20 border-b border-r border-gray-200"
-              >
-                Vehicle
-              </th>
-              {days.map((day) => (
-                <th
-                  key={day.toISOString()}
-                  scope="col"
-                  className="py-3 px-6 text-center border-b border-gray-200"
-                >
-                  {format(day, "MMM d")} <br />
-                  <span className="font-normal text-gray-500">
-                    {format(day, "eee")}
-                  </span>
+      {/* --- Desktop View (Table) --- */}
+      <div className="hidden md:block bg-white border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1000px] border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50 border-b border-gray-200 text-left">
+                <th className="py-4 px-6 font-semibold text-gray-700 text-sm sticky left-0 bg-gray-50 z-10 w-64 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                  Vehicle
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {processedVehicles.map((vehicle) => (
-              <tr
-                key={vehicle.vehicleId}
-                className="bg-white border-b hover:bg-gray-50"
-              >
-                <td className="py-4 px-6 font-medium text-gray-900 sticky left-0 bg-white z-0 border-r border-gray-100 shadow-sm">
-                  {vehicle.vehicleName} <br />
-                  <span className="font-normal text-gray-500">
-                    {vehicle.vehicleIdentifier}
-                  </span>
-                </td>
-                {days.map((day) => {
-                  const dateKey = format(day, "yyyy-MM-dd");
-                  const status = vehicle.availabilityMap.get(dateKey);
-                  const config = getStatusConfig(status);
-
-                  return (
-                    <td
-                      key={dateKey}
-                      onClick={() => onCellClick(vehicle.vehicleId, day)}
-                      className={`py-4 px-6 text-center cursor-pointer transition-all hover:ring-2 hover:ring-blue-400 hover:ring-inset ${config.cellColor}`}
-                    >
-                      <span className="flex items-center justify-center gap-1 font-medium">
-                        {config.icon}
-                        {config.cellContent}
+                {days.map((day) => (
+                  <th
+                    key={day.toISOString()}
+                    className="py-3 px-4 text-center min-w-[120px]"
+                  >
+                    <div className="flex flex-col items-center">
+                      <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                        {format(day, "EEE")}
                       </span>
-                    </td>
-                  );
-                })}
+                      <span className="text-sm text-gray-500 font-medium">
+                        {format(day, "MMM d")}
+                      </span>
+                    </div>
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {processedVehicles.map((vehicle) => (
+                <tr
+                  key={vehicle.vehicleId}
+                  className="group hover:bg-gray-50/30 transition-colors"
+                >
+                  <td className="py-4 px-6 sticky left-0 bg-white group-hover:bg-gray-50/90 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">
+                        {vehicle.vehicleName}
+                      </span>
+                      <span className="text-xs text-gray-500 font-mono mt-0.5">
+                        {vehicle.vehicleIdentifier}
+                      </span>
+                    </div>
+                  </td>
+                  {days.map((day) => {
+                    const dateKey = format(day, "yyyy-MM-dd");
+                    const statusData = vehicle.availabilityMap.get(dateKey);
+                    const config = getStatusConfig(statusData);
+
+                    return (
+                      <td key={dateKey} className="p-2">
+                        <button
+                          onClick={() => onCellClick(vehicle.vehicleId, day)}
+                          className={`
+                            w-full h-full min-h-[70px] flex flex-col items-center justify-center 
+                            border text-center p-2 transition-all 
+                            hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500
+                            ${config.color}
+                          `}
+                          title={`${config.label} - ${config.subLabel}`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {config.icon}
+                            <span className="text-xs font-bold">
+                              {config.label}
+                            </span>
+                          </div>
+                          <span className="text-[10px] opacity-80 line-clamp-2 leading-tight px-1">
+                            {config.subLabel}
+                          </span>
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

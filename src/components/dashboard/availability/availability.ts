@@ -1,10 +1,20 @@
-// lib/types/availability.ts
-
-// --- Existing Types ---
 export type AvailabilityStatus = {
-  date: string; // "YYYY-MM-DD"
-  bookedTypes: string[]; // e.g., ["12 Hours"], empty if available
-  unavailabilityReasons: string[]; // ✅ NEW: e.g., ["MAINTENANCE"]
+  date: string;
+  bookedTypes: string[];
+  unavailabilityReasons: string[];
+  status: string;
+  availabilityPercentage: number;
+  summary: string;
+};
+
+export type UnavailabilitySchedule = {
+  id: string;
+  vehicleId: string;
+  startDateTime: string;
+  endDateTime: string;
+  reason: string;
+  notes: string;
+  createdById: string;
 };
 
 export type VehicleAvailability = {
@@ -12,10 +22,10 @@ export type VehicleAvailability = {
   vehicleIdentifier: string;
   vehicleName: string;
   availability: AvailabilityStatus[];
-  unavailabilitySchedule: any[]; // This field seems to be for raw data, we'll ignore it for the calendar view
+  unavailabilitySchedule: UnavailabilitySchedule[];
 };
 
-export type AvailabilityResponse = {
+export type PaginatedAvailabilityData = {
   content: VehicleAvailability[];
   currentPage: number;
   pageSize: number;
@@ -23,15 +33,20 @@ export type AvailabilityResponse = {
   totalPages: number;
 };
 
-// --- Updated ---
+export type AvailabilityApiResponse = {
+  status: string;
+  message: string;
+  data: PaginatedAvailabilityData;
+  timestamp: string;
+};
+
 export type AvailabilityCalendarProps = {
   vehicles: VehicleAvailability[];
   startDate: Date;
   endDate: Date;
-  onCellClick: (vehicleId: string, date: Date) => void; // ✅ For the hourly modal
+  onCellClick: (vehicleId: string, date: Date) => void;
 };
 
-// --- New Types for Daily Schedule ---
 export type HourlySlot = {
   hour: number;
   startTime: string;

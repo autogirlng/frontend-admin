@@ -1,4 +1,3 @@
-// components/dashboard/availability/DailyScheduleModal.tsx
 "use client";
 
 import React from "react";
@@ -32,12 +31,11 @@ export default function DailyScheduleModal({
     return null;
   }
 
-  // Helper to format 12-hour time
   const formatHour = (startTime: string) => {
     const [hour] = startTime.split(":");
     const hourNum = parseInt(hour, 10);
     const ampm = hourNum >= 12 ? "PM" : "AM";
-    const h = hourNum % 12 || 12; // 0 becomes 12
+    const h = hourNum % 12 || 12;
     return `${h} ${ampm}`;
   };
 
@@ -61,7 +59,7 @@ export default function DailyScheduleModal({
         {schedule.hourlySlots.map((slot: HourlySlot) => (
           <div
             key={slot.hour}
-            className={`p-3 rounded-lg border ${
+            className={`p-3 border ${
               slot.available
                 ? "bg-green-50 border-green-200"
                 : "bg-red-50 border-red-200"
@@ -97,16 +95,13 @@ export default function DailyScheduleModal({
 
   return (
     <>
-      {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal Panel */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-          {/* Header */}
+        <div className="bg-white shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
           <div className="flex justify-between items-center p-4 border-b">
             <div>
               <h2 className="text-lg font-bold text-gray-900">
@@ -129,7 +124,6 @@ export default function DailyScheduleModal({
             </button>
           </div>
 
-          {/* Content */}
           <div className="overflow-y-auto">{renderContent()}</div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ 1. Added useEffect to imports
 import React, { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -31,7 +30,6 @@ export default function AvailabilityPage() {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // ✅ 2. FIX: Reset pagination to 0 whenever search or date range changes
   useEffect(() => {
     setPage(0);
   }, [debouncedSearchTerm, dateRange]);
@@ -99,7 +97,6 @@ export default function AvailabilityPage() {
     <div className="py-3 max-w-8xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Vehicle Availability</h1>
 
-      {/* --- Controls --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <TextInput
           id="search"
@@ -116,7 +113,6 @@ export default function AvailabilityPage() {
         </div>
       </div>
 
-      {/* --- Calendar Display --- */}
       <div className="mt-6">
         {isLoading && <CustomLoader />}
         {isError && (
@@ -124,17 +120,14 @@ export default function AvailabilityPage() {
             Error: {error?.message || "Failed to fetch availability."}
           </div>
         )}
-        {availabilityData &&
-          availabilityData.content.length > 0 &&
-          dateRange?.from &&
-          dateRange?.to && (
-            <AvailabilityCalendar
-              vehicles={availabilityData.content}
-              startDate={dateRange.from}
-              endDate={dateRange.to}
-              onCellClick={handleCellClick}
-            />
-          )}
+        {!isLoading && !isError && availabilityData && (
+          <AvailabilityCalendar
+            vehicles={availabilityData.content || []}
+            startDate={dateRange!.from!}
+            endDate={dateRange!.to!}
+            onCellClick={handleCellClick}
+          />
+        )}
         {availabilityData && availabilityData.content.length === 0 && (
           <p className="text-center text-gray-500">
             No vehicles found for this search or date range.

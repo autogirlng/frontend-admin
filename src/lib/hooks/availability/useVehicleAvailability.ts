@@ -1,10 +1,9 @@
-// lib/hooks/useVehicleAvailability.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { apiClient } from "@/lib/apiClient"; // Use your existing apiClient
-import type { AvailabilityResponse } from "@/components/dashboard/availability/availability";
+import { apiClient } from "@/lib/apiClient";
+import type { PaginatedAvailabilityData } from "@/components/dashboard/availability/availability";
 
 type UseVehicleAvailabilityProps = {
   searchTerm: string;
@@ -13,23 +12,19 @@ type UseVehicleAvailabilityProps = {
   page: number;
 };
 
-/**
- * Fetches vehicle availability data.
- */
 export function useVehicleAvailability({
   searchTerm,
   startDate,
   endDate,
   page,
 }: UseVehicleAvailabilityProps) {
-  return useQuery<AvailabilityResponse, Error>({
+  return useQuery<PaginatedAvailabilityData, Error>({
     queryKey: ["vehicleAvailability", searchTerm, startDate, endDate, page],
     queryFn: async () => {
       if (!startDate || !endDate) {
         throw new Error("Start date and end date are required.");
       }
 
-      // Format dates to "YYYY-MM-DD" for the API
       const formattedStartDate = format(startDate, "yyyy-MM-dd");
       const formattedEndDate = format(endDate, "yyyy-MM-dd");
 
@@ -38,13 +33,38 @@ export function useVehicleAvailability({
         startDate: formattedStartDate,
         endDate: formattedEndDate,
         page: String(page),
-        size: "10", // Or make this dynamic
+        size: "10",
       });
 
       const endpoint = `/availability?${params.toString()}`;
-      return apiClient.get<AvailabilityResponse>(endpoint);
+
+      const response = await apiClient.get<any>(endpoint);
+
+      if (response?.data?.content) {
+        return response.data;
+      }
+
+      if (response?.content) {
+        return response;
+      }
+
+      if (response?.data === null) {
+        return {
+          content: [],
+          currentPage: 0,
+          pageSize: 10,
+          totalItems: 0,
+          totalPages: 0,
+        };
+      }
+
+      console.error("Unexpected API Response Structure:", response);
+      throw new Error(
+        "Vehicle availability data is undefined or invalid structure"
+      );
     },
-    // Only run the query if start and end dates are provided
     enabled: !!startDate && !!endDate,
+    retry: 1,
+    staleTime: 5000,
   });
 }
