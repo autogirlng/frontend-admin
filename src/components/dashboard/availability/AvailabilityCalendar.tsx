@@ -57,7 +57,7 @@ const getStatusConfig = (statusData: AvailabilityStatus | undefined) => {
         "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100",
       icon: <Briefcase className="w-3 h-3" />,
       label: "Company Use",
-      subLabel: "Internal",
+      subLabel: summary || "Internal",
     };
   }
 
@@ -85,9 +85,9 @@ const getStatusConfig = (statusData: AvailabilityStatus | undefined) => {
       };
     case "PARTIALLY_BOOKED":
       return {
-        color: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100",
+        color: "bg-red-50 border-red-200 text-red-700 hover:bg-red-100",
         icon: <Clock className="w-3 h-3" />,
-        label: "Partial",
+        label: "Booked",
         subLabel: summary,
       };
     case "FULLY_BOOKED":
