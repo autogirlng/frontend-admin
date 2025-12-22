@@ -1,9 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import CustomLoader from "./CustomLoader";
 
 const steps = [
   { name: "Basic Details", route: "" },
@@ -17,7 +18,7 @@ type StepperProps = {
   currentStep: number;
 };
 
-export default function Stepper({ currentStep }: StepperProps) {
+function StepperContent({ currentStep }: StepperProps) {
   const searchParams = useSearchParams();
   const vehicleId = searchParams.get("id");
   const activeStepInfo = steps[currentStep - 1] || steps[0];
@@ -141,5 +142,13 @@ export default function Stepper({ currentStep }: StepperProps) {
         </ol>
       </nav>
     </div>
+  );
+}
+
+export default function Stepper(props: StepperProps) {
+  return (
+    <Suspense fallback={<CustomLoader />}>
+      <StepperContent {...props} />
+    </Suspense>
   );
 }

@@ -129,7 +129,7 @@ export default function CreateBookingPage() {
     primaryPhoneNumber: "",
     extraDetails: "",
     purposeOfRide: "",
-    channel: "WEBSITE" as BookingChannel,
+    channel: "WHATSAPP" as BookingChannel,
     discountAmount: "",
   });
 
@@ -465,7 +465,7 @@ export default function CreateBookingPage() {
       primaryPhoneNumber: "",
       extraDetails: "",
       purposeOfRide: "",
-      channel: "WEBSITE" as BookingChannel,
+      channel: "WHATSAPP" as BookingChannel,
       discountAmount: "",
     });
   };
