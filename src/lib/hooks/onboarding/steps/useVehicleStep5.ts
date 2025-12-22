@@ -175,6 +175,17 @@ export function useVehicleStep5(vehicleId: string) {
 
   useEffect(() => {
     if (vehicleDetails && bookingTypes && discountDurations && !originalData) {
+      const vehicleIdentifier = vehicleDetails.vehicleIdentifier || "";
+      const isHostVehicle = vehicleIdentifier.startsWith("HST");
+
+      let rawOutskirt = vehicleDetails.outskirtFee || 0;
+      let rawExtreme = vehicleDetails.extremeFee || 0;
+
+      if (isHostVehicle) {
+        rawOutskirt = Math.max(0, rawOutskirt - 5000);
+        rawExtreme = Math.max(0, rawExtreme - 5000);
+      }
+
       const initialPrices: PriceState = {};
       bookingTypes.forEach((bt) => {
         const existing = (vehicleDetails.pricing || []).find(
@@ -207,8 +218,8 @@ export function useVehicleStep5(vehicleId: string) {
             .map((t) => t.id)
             .sort() || [],
         outOfBoundsAreaIds: (vehicleDetails.outOfBoundsAreaIds || []).sort(),
-        outskirtFee: String(vehicleDetails.outskirtFee || ""),
-        extremeFee: String(vehicleDetails.extremeFee || ""),
+        outskirtFee: String(rawOutskirt || ""),
+        extremeFee: String(rawExtreme || ""),
         extraHourlyRate: String(vehicleDetails.extraHourlyRate || ""),
         pricing: initialPrices,
         discounts: initialDiscounts,
