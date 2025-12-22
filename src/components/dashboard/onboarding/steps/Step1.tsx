@@ -21,7 +21,6 @@ import CustomBack from "@/components/generic/CustomBack";
 
 const currentStep = 1;
 
-// ✅ ADDED: states constant
 const states: Option[] = [
   { id: "abia", name: "Abia" },
   { id: "accra", name: "Accra" },
@@ -125,7 +124,6 @@ export default function Step1() {
     }
   };
 
-  // --- Data Fetching Hooks ---
   const { data: vehicleTypes, isLoading: loadingTypes } = useVehicleTypes();
   const { data: vehicleMakes, isLoading: loadingMakes } = useVehicleMakes();
   const { data: vehicleModels, isLoading: loadingModels } = useVehicleModels();
@@ -176,7 +174,6 @@ export default function Step1() {
     }
   }, [vehicleDetails, vehicleId, isLoadingDetails]);
 
-  // --- Error Handling Logic ---
   const handleApiError = (err: any) => {
     console.error("API Error:", err);
     const apiErrors = err?.response?.data;
@@ -247,7 +244,6 @@ export default function Step1() {
     }
   };
 
-  // ✅ ADDED: Helper function for City
   const getSelectedCity = (): Option | null => {
     if (!data.locationCityId) return null;
     return states.find((s) => s.id === data.locationCityId) || null;
@@ -343,7 +339,7 @@ export default function Step1() {
                 error={errors.vehicleListingName}
               />
 
-              {/* ✅ City (REPLACED) */}
+              {/* City */}
               <Select
                 label="City"
                 options={states}
