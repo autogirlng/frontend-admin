@@ -1,4 +1,3 @@
-// lib/hooks/onboarding/steps/useVehicleStep5.ts
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
@@ -6,11 +5,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { apiClient } from "@/lib/apiClient"; // Your client
+import { apiClient } from "@/lib/apiClient";
 import { Option } from "@/components/generic/ui/Select";
 
-// ... (Type definitions, Initial State, and Helper functions remain unchanged) ...
-// --- Type Definitions ---
 export type BookingType = {
   id: string;
   name: string;
@@ -32,7 +29,10 @@ type PublicDataApiResponse<T> = {
   message: string;
   data: T;
 };
+
 type VehicleConfigData = {
+  id: string;
+  vehicleIdentifier: string;
   maxTripDurationUnit: string | null;
   maxTripDurationValue: number | null;
   advanceNoticeUnit: string | null;
@@ -57,6 +57,7 @@ type VehicleConfigData = {
     | null;
   extraHourlyRate: number | null;
 };
+
 type DurationState = {
   value: number | "";
   unit: string;
@@ -102,7 +103,6 @@ type UpdateConfigPayload = {
   discounts: DiscountPayload[];
 };
 
-// --- Initial State ---
 const initialState: Step5FormData = {
   maxTripDuration: { value: "", unit: "DAYS" },
   advanceNotice: { value: "", unit: "DAYS" },
@@ -117,7 +117,6 @@ const initialState: Step5FormData = {
   discounts: {},
 };
 
-// --- Helper to safely parse API responses ---
 async function fetchApiData<T>(endpoint: string): Promise<T[]> {
   const res = await apiClient.get<T[] | PublicDataApiResponse<T[]>>(endpoint);
 
@@ -125,10 +124,10 @@ async function fetchApiData<T>(endpoint: string): Promise<T[]> {
     throw new Error(`Failed to fetch ${endpoint}: No response`);
   }
   if (Array.isArray(res)) {
-    return res; // Unwrapped data
+    return res;
   }
   if (res && "data" in res && Array.isArray(res.data)) {
-    return res.data; // Wrapped data
+    return res.data;
   }
   if (res && "data" in res) {
     return res.data as T[];
@@ -136,7 +135,6 @@ async function fetchApiData<T>(endpoint: string): Promise<T[]> {
   return res as T[];
 }
 
-// --- The Hook ---
 export function useVehicleStep5(vehicleId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -145,24 +143,22 @@ export function useVehicleStep5(vehicleId: string) {
   const [formData, setFormData] = useState<Step5FormData>(initialState);
   const [originalData, setOriginalData] = useState<Step5FormData | null>(null);
 
-  // ... (Data Fetching, Prefill, Mutation, and Form Handlers remain unchanged) ...
-  // --- Data Fetching ---
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } = useQuery({
     queryKey: ["bookingTypes"],
     queryFn: () => fetchApiData<BookingType>("/booking-types"),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 
   const { data: geofenceAreas, isLoading: isLoadingGeofence } = useQuery({
     queryKey: ["geofenceAreas"],
     queryFn: () => fetchApiData<GeofenceArea>("/geofence-areas"),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 
   const { data: discountDurations, isLoading: isLoadingDiscounts } = useQuery({
     queryKey: ["discountDurations"],
     queryFn: () => fetchApiData<DiscountDuration>("/discount-durations"),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 
   const { data: vehicleDetails, isLoading: isLoadingVehicle } = useQuery({
@@ -177,7 +173,6 @@ export function useVehicleStep5(vehicleId: string) {
     enabled: !!vehicleId && sessionStatus === "authenticated",
   });
 
-  // --- Prefill Form ---
   useEffect(() => {
     if (vehicleDetails && bookingTypes && discountDurations && !originalData) {
       const initialPrices: PriceState = {};
@@ -224,7 +219,6 @@ export function useVehicleStep5(vehicleId: string) {
     }
   }, [vehicleDetails, bookingTypes, discountDurations, originalData]);
 
-  // --- Mutation ---
   const { mutate: updateConfiguration, isPending: isUpdating } = useMutation({
     mutationFn: (payload: UpdateConfigPayload) => {
       return apiClient.patch(
@@ -237,7 +231,6 @@ export function useVehicleStep5(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: ["vehicleDetails", vehicleId],
       });
-      // router.push(`/onboarding/step6?id=${vehicleId}`);
       router.push(`/dashboard/onboarding/submit-review?id=${vehicleId}`);
     },
     onError: (err: any) => {
@@ -245,7 +238,6 @@ export function useVehicleStep5(vehicleId: string) {
     },
   });
 
-  // --- Form Handlers ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
@@ -298,7 +290,6 @@ export function useVehicleStep5(vehicleId: string) {
     }));
   };
 
-  // --- ✅ MODIFIED Submit Handler ---
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
@@ -308,10 +299,26 @@ export function useVehicleStep5(vehicleId: string) {
       return;
     }
 
-    if (!bookingTypes || !discountDurations) {
+    if (!bookingTypes || !discountDurations || !vehicleDetails) {
       toast.error("Data is still loading, please wait.");
       return;
     }
+
+    const vehicleIdentifier = vehicleDetails.vehicleIdentifier || "";
+    const isHostVehicle = vehicleIdentifier.startsWith("HST");
+
+    const platformFeeType = isHostVehicle ? "HOST_FEE" : "AUTOGIRL_FEE";
+
+    const baseOutskirtFee = Number(formData.outskirtFee || 0);
+    const baseExtremeFee = Number(formData.extremeFee || 0);
+
+    const finalOutskirtFee = isHostVehicle
+      ? baseOutskirtFee + 5000
+      : baseOutskirtFee;
+
+    const finalExtremeFee = isHostVehicle
+      ? baseExtremeFee + 5000
+      : baseExtremeFee;
 
     const payload: UpdateConfigPayload = {
       maxTripDurationUnit: formData.maxTripDuration.unit,
@@ -322,25 +329,23 @@ export function useVehicleStep5(vehicleId: string) {
       willProvideFuel: formData.willProvideFuel === "yes",
       supportedBookingTypeIds: formData.supportedBookingTypeIds,
       outOfBoundsAreaIds: formData.outOfBoundsAreaIds,
-      outskirtFee: Number(formData.outskirtFee || 0),
-      extremeFee: Number(formData.extremeFee || 0),
+
+      outskirtFee: finalOutskirtFee,
+      extremeFee: finalExtremeFee,
+
       extraHourlyRate: Number(formData.extraHourlyRate || 0),
 
-      // ✅ FIX: Filter prices based on selected booking types
       pricing: Object.entries(formData.pricing)
-        // 1. Only include prices for booking types that are in the supported list
         .filter(([id]) => formData.supportedBookingTypeIds.includes(id))
-        // 2. Only include prices that have been set (allows "0" but not "")
         .filter(([, price]) => price !== "")
         .map(([id, price]) => ({
           bookingTypeId: id,
           price: Number(price),
           bookingTypeName:
             bookingTypes.find((bt) => bt.id === id)?.name || "Unknown",
-          platformFeeType: "HOST_FEE", // "AUTOGIRL_FEE",
+          platformFeeType: platformFeeType,
         })),
 
-      // This logic remains correct for discounts
       discounts: Object.entries(formData.discounts)
         .filter(([, percentage]) => percentage && Number(percentage) > 0)
         .map(([id, percentage]) => ({
@@ -352,7 +357,6 @@ export function useVehicleStep5(vehicleId: string) {
     updateConfiguration(payload);
   };
 
-  // --- Consolidate Loading/Error ---
   const isLoading =
     isLoadingBookingTypes ||
     isLoadingGeofence ||
@@ -360,7 +364,6 @@ export function useVehicleStep5(vehicleId: string) {
     isLoadingVehicle;
   const isLoadingSession = sessionStatus === "loading";
 
-  // Map dynamic data to Option[] for UI
   const bookingTypeOptions: Option[] =
     bookingTypes?.map((t) => ({ id: t.id, name: t.name })) || [];
   const geofenceAreaOptions: Option[] =

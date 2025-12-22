@@ -1,4 +1,3 @@
-// app/components/steps/Step5.tsx
 "use client";
 import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,9 +14,7 @@ import { useVehicleStep5 } from "@/lib/hooks/onboarding/steps/useVehicleStep5";
 import Link from "next/link";
 import CustomLoader from "@/components/generic/CustomLoader";
 
-// ... (Mock Data and consts remain the same) ...
 const durationUnits: Option[] = [
-  // { id: "HOURS", name: "Hours" },
   { id: "DAYS", name: "Days" },
   // { id: "WEEKS", name: "Weeks" },
 ];
@@ -27,19 +24,16 @@ const yesNoOptions: Option[] = [
 ];
 const currentStep = 5;
 
-// --- Child Form Component ---
 function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
   const {
     formData,
     isLoading,
     isLoadingSession,
     isUpdating,
-    // Dynamic data for rendering
     bookingTypes,
     bookingTypeOptions,
     geofenceAreaOptions,
     discountDurations,
-    // Handlers
     handleInputChange,
     handleSelectChange,
     handleDurationChange,
@@ -49,7 +43,6 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
     handleSubmit,
   } = useVehicleStep5(vehicleId);
 
-  // ✅ NEW: Create a filtered list of booking types to show
   const selectedBookingTypes = React.useMemo(() => {
     return bookingTypes.filter((bt) =>
       formData.supportedBookingTypeIds.includes(bt.id)
@@ -67,9 +60,6 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
     >
       <div className="lg:col-span-2">
         <fieldset disabled={isUpdating} className="space-y-8">
-          {/* ... (Sections 1, 2, 3 remain unchanged) ... */}
-
-          {/* Section 1: Trip Policies */}
           <FormSection title="Trip Policies">
             <DurationInput
               label="Maximum Trip Duration"
@@ -115,7 +105,6 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
             />
           </FormSection>
 
-          {/* Section 2: Services */}
           <FormSection title="Services">
             <Select
               label="Will you provide a driver?"
@@ -143,7 +132,6 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
             />
           </FormSection>
 
-          {/* Section 3: Booking & Areas */}
           <FormSection title="Booking & Areas" gridCols="1">
             <CheckboxGroup
               label="Supported Booking Types"
@@ -163,14 +151,12 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
             />
           </FormSection>
 
-          {/* --- ✅ MODIFIED SECTION 4: Pricing --- */}
           <FormSection title="Pricing">
             <div className="md:col-span-2 space-y-5">
               <h4 className="text-md font-semibold text-gray-800">
                 Booking Rates
               </h4>
 
-              {/* --- DYNAMICALLY RENDERED PRICES --- */}
               {selectedBookingTypes.length > 0 ? (
                 selectedBookingTypes.map((bt) => (
                   <TextInput
@@ -217,11 +203,8 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
             />
           </FormSection>
 
-          {/* ... (Section 5 and Submit Button remain unchanged) ... */}
-          {/* Section 5: Discounts */}
           <FormSection title="Discounts">
             <div className="md:col-span-2 space-y-5">
-              {/* --- DYNAMICALLY RENDERED DISCOUNTS --- */}
               {discountDurations.map((dd) => (
                 <TextInput
                   key={dd.id}
@@ -262,7 +245,6 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
   );
 }
 
-// ... (Step5Content, Step5 default, and Helper Components remain unchanged) ...
 function Step5Content() {
   const searchParams = useSearchParams();
   const vehicleId = searchParams.get("id");
@@ -290,8 +272,6 @@ export default function Step5() {
     </div>
   );
 }
-
-// --- Helper Components for Layout ---
 
 const FormSection: React.FC<{
   title: string;

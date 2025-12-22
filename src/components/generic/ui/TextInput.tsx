@@ -37,11 +37,15 @@ const TextInput = ({
         <input
           id={id}
           {...props}
+          onWheel={(e) => e.currentTarget.blur()}
           className={`block w-full px-4 py-[15px] text-gray-900 bg-white border
-                     focus:outline-none focus:ring-1
-                     transition duration-150 ease-in-out sm:text-sm ${errorClasses} className`}
+                      focus:outline-none focus:ring-1
+                      transition duration-150 ease-in-out sm:text-sm ${errorClasses}
+                      [&::-webkit-inner-spin-button]:appearance-none 
+                      [&::-webkit-outer-spin-button]:appearance-none 
+                      [appearance:textfield] 
+                      className`}
         />
-        {/* Error message is now conditional */}
         {!hideLabel && error && (
           <p className="mt-1 text-sm text-red-600">{error}</p>
         )}
