@@ -90,6 +90,9 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
   );
   const [isUploading, setIsUploading] = useState(false);
 
+  // New state for drag-and-drop visual feedback
+  const [isDragging, setIsDragging] = useState(false);
+
   const confirmPaymentMutation = useConfirmOfflinePayment();
   const bulkConfirmMutation = useBulkConfirmOfflinePayment();
 
@@ -98,6 +101,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
       setGlobalFile(null);
       setIndividualFiles({});
       setIsUploading(false);
+      setIsDragging(false);
     }
   }, [isOpen]);
 
@@ -112,6 +116,37 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
       else setGlobalFile(file);
     }
   };
+
+  // --- New Drag and Drop Handlers ---
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      // Create a synthetic event to reuse existing handleFileChange logic
+      const syntheticEvent = {
+        target: {
+          files: e.dataTransfer.files,
+        },
+      } as React.ChangeEvent<HTMLInputElement>;
+
+      handleFileChange(syntheticEvent);
+    }
+  };
+  // ----------------------------------
 
   const removeFile = (bookingId?: string) => {
     if (bookingId) {
@@ -228,11 +263,17 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
           <div className="relative">
             <label
               htmlFor="global-proof-upload"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={clsx(
                 "block border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer",
-                globalFile
+                // Added isDragging condition to mimic the hover/active style
+                isDragging ? "border-blue-500 bg-blue-50" : "",
+                globalFile && !isDragging
                   ? "border-green-400 bg-green-50"
-                  : "border-gray-300 hover:border-blue-500 hover:bg-gray-50"
+                  : !isDragging &&
+                      "border-gray-300 hover:border-blue-500 hover:bg-gray-50"
               )}
             >
               <input
@@ -258,8 +299,8 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
                   <UploadCloud className="h-10 w-10 text-gray-400 mb-2" />
                   <span className="font-medium text-blue-600 hover:text-blue-500">
                     {mode === "bulk"
-                      ? "Click to upload Master Proof"
-                      : "Click to upload Proof"}
+                      ? "Click or Drag to upload Master Proof"
+                      : "Click or Drag to upload Proof"}
                   </span>
                 </div>
               )}
