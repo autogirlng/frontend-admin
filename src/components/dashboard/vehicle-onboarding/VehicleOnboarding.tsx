@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react"; // ✅ Added useRef
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
-import { Vehicle, VehicleStatus, AvailabilityStatus } from "./types";
+import { Vehicle, VehicleStatus } from "./types";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
@@ -18,7 +18,6 @@ import {
   Play,
   Plus,
   Edit,
-  Circle,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -31,11 +30,9 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import { ApproveVehicleModal } from "./ApproveVehicleModal";
 import Button from "@/components/generic/ui/Button";
 import { AddVehicleModal } from "./AddVehicleModal";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ManageUnavailabilityModal } from "./ManageUnavailabilityModal";
-import clsx from "clsx";
 
-// --- Define Status Options for Filtering ---
 const statusOptions: Option[] = [
   { id: "", name: "All Statuses" },
   { id: VehicleStatus.DRAFT, name: "Draft" },
@@ -51,62 +48,21 @@ const formatOnboardingStatus = (status: VehicleStatus) => {
     .join(" ");
 };
 
-const formatOperationalStatus = (status: string) => {
-  let colorClasses = "bg-gray-100 text-gray-800";
-  let icon = <Circle className="h-2 w-2 text-gray-500" />;
-
-  switch (status) {
-    case "FREE":
-      colorClasses = "bg-green-100 text-green-800";
-      icon = <Circle className="h-2 w-2 text-green-500 fill-current" />;
-      break;
-    case "BOOKED":
-    case "IN_TRIP":
-      colorClasses = "bg-blue-100 text-blue-800";
-      icon = <Circle className="h-2 w-2 text-blue-500 fill-current" />;
-      break;
-    case "MAINTENANCE":
-    case "COMPANY_USE":
-      colorClasses = "bg-yellow-100 text-yellow-800";
-      icon = <Circle className="h-2 w-2 text-yellow-500 fill-current" />;
-      break;
-    case "UNAVAILABLE":
-      colorClasses = "bg-red-100 text-red-800";
-      icon = <Circle className="h-2 w-2 text-red-500 fill-current" />;
-      break;
-    case "DRAFT":
-    default:
-      icon = <Circle className="h-2 w-2 text-gray-400" />;
-      break;
-  }
-
-  const formattedText = (status || "DRAFT")
-    .split("_")
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
-
-  return (
-    <span
-      className={clsx(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full",
-        colorClasses
-      )}
-    >
-      {icon}
-      {formattedText}
-    </span>
-  );
-};
-
 export default function VehicleOnboarding() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // ✅ 1. Create a ref to target the top of the component
   const topRef = useRef<HTMLDivElement>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<Option | null>(null);
+  const currentPageParam = Number(searchParams.get("page")) || 0;
+  const statusParam = searchParams.get("status") || "";
+  const searchParam = searchParams.get("search") || "";
+
+  const [searchTerm, setSearchTerm] = useState(searchParam);
+
+  const selectedStatusOption =
+    statusOptions.find((opt) => opt.id === statusParam) || statusOptions[0];
 
   const [modal, setModal] = useState<"reject" | "setActive" | null>(null);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
@@ -115,32 +71,53 @@ export default function VehicleOnboarding() {
 
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
+
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Reset pagination to 0 whenever search or status changes
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [debouncedSearchTerm, statusFilter]);
+  const updateURLParams = (updates: Record<string, string | number | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
 
-  // ✅ 2. FIXED: Scroll to the topRef when page changes using scrollIntoView
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === "" || value === 0) {
+        if (key === "page" && value === 0) params.delete(key);
+        else if (value === "") params.delete(key);
+        else params.set(key, String(value));
+      } else {
+        params.set(key, String(value));
+      }
+    });
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  useEffect(() => {
+    if (debouncedSearchTerm !== searchParam) {
+      updateURLParams({ search: debouncedSearchTerm, page: 0 });
+    }
+  }, [debouncedSearchTerm]);
+
+  const handlePageChange = (newPage: number) => {
+    updateURLParams({ page: newPage });
+  };
+
+  const handleStatusChange = (option: Option) => {
+    updateURLParams({ status: option.id, page: 0 });
+  };
+
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [currentPage]);
+  }, [currentPageParam]);
 
-  // --- API Hooks ---
   const {
     data: paginatedData,
     isLoading,
     isError,
     isPlaceholderData,
-  } = useGetVehicles(currentPage, debouncedSearchTerm, statusFilter?.id || "");
+  } = useGetVehicles(currentPageParam, searchParam, statusParam);
 
   const setActiveMutation = useSetVehicleActive();
   const rejectMutation = useUpdateVehicleStatus();
@@ -148,7 +125,6 @@ export default function VehicleOnboarding() {
   const vehicles = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
-  // --- Modal Handling ---
   const openModal = (type: "reject" | "setActive", vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
     setModal(type);
@@ -170,7 +146,6 @@ export default function VehicleOnboarding() {
     setSelectedVehicle(null);
   };
 
-  // --- Action Handlers ---
   const handleSetActive = () => {
     if (!selectedVehicle) return;
     setActiveMutation.mutate(
@@ -187,7 +162,6 @@ export default function VehicleOnboarding() {
     );
   };
 
-  // --- Dynamic Action Menu ---
   const getVehicleActions = (vehicle: Vehicle): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [];
 
@@ -247,7 +221,6 @@ export default function VehicleOnboarding() {
     return actions;
   };
 
-  // --- Table Columns ---
   const columns: ColumnDefinition<Vehicle>[] = useMemo(
     () => [
       {
@@ -314,12 +287,10 @@ export default function VehicleOnboarding() {
 
   return (
     <>
-      {/* ✅ 3. Add the Ref Anchor here at the very top */}
       <div ref={topRef} />
 
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
-        {/* --- Header --- */}
         <div className="flex items-center justify-between mb-8 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -341,7 +312,6 @@ export default function VehicleOnboarding() {
           </div>
         </div>
 
-        {/* --- Filters --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="md:col-span-2 relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -364,12 +334,11 @@ export default function VehicleOnboarding() {
             hideLabel
             placeholder="Filter by status"
             options={statusOptions}
-            selected={statusFilter}
-            onChange={(option) => setStatusFilter(option)}
+            selected={selectedStatusOption}
+            onChange={handleStatusChange}
           />
         </div>
 
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -397,16 +366,14 @@ export default function VehicleOnboarding() {
           </div>
         )}
 
-        {/* --- Pagination --- */}
         <PaginationControls
-          currentPage={currentPage}
+          currentPage={currentPageParam}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
           isLoading={isPlaceholderData}
         />
       </main>
 
-      {/* --- Modals --- */}
       {modal === "reject" && selectedVehicle && (
         <ActionModal
           title="Reject Vehicle"
