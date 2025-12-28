@@ -11,6 +11,9 @@ import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CreateHostModal from "./CreateHostModal";
 import VacationModeModal from "./VacationModeModal";
+// Import the Edit Modal
+import { EditHostModal } from "@/components/dashboard/host-management/EditHostModal";
+
 import {
   AlertCircle,
   Search,
@@ -24,6 +27,7 @@ import {
   PlaneLanding,
   Palmtree,
   Activity,
+  Edit2,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -38,6 +42,9 @@ export default function HostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // New State for Edit Modal
+  const [editModalHost, setEditModalHost] = useState<Host | null>(null);
 
   const [modal, setModal] = useState<"status" | "view" | null>(null);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
@@ -90,6 +97,7 @@ export default function HostsPage() {
     setSelectedHost(null);
     setVacationModalHost(null);
     setEndVacationModalHost(null);
+    setEditModalHost(null); // Clear edit modal state
   };
 
   const handleStatusConfirm = () => {
@@ -120,10 +128,17 @@ export default function HostsPage() {
 
   const getHostActions = (host: Host): ActionMenuItem[] => [
     {
+      label: "Edit Details",
+      icon: Edit2,
+      onClick: () => {
+        // Now opens the modal instead of navigating
+        setEditModalHost(host);
+      },
+    },
+    {
       label: "View Details",
       icon: View,
       onClick: () => {
-        toast.success(`Viewing ${host.fullName}`);
         router.push(`/dashboard/host/${host.id}`);
       },
     },
@@ -318,6 +333,16 @@ export default function HostsPage() {
         <CreateHostModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+        />
+      )}
+
+      {/* --- Edit Host Modal --- */}
+      {/* Conditionally render: only if editModalHost has data */}
+      {editModalHost && (
+        <EditHostModal
+            isOpen={!!editModalHost}
+            onClose={closeModal} // Closes modal and clears state
+            hostData={editModalHost}
         />
       )}
 
