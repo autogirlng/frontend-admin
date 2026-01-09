@@ -13,10 +13,13 @@ import {
   Search,
   View,
   Edit,
+  Download,
   Trash2,
   CheckCircle,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
+import { useCustomerExport } from "./hooks/useCustomerExport";
+import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -63,6 +66,10 @@ export default function CustomersPage() {
 
   const customers = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
+
+  const { handleExportCustomers, isExporting } = useCustomerExport({
+    searchTerm: debouncedSearchTerm,
+  });
 
   // --- Modal Handlers ---
   const openModal = (type: "status" | "view", customer: Customer) => {
@@ -166,6 +173,26 @@ export default function CustomersPage() {
             <p className="text-lg text-gray-600 mt-1">
               Manage all customers on the platform.
             </p>
+          </div>
+
+          {/* ✅ Export Button */}
+          <div>
+            <Button
+              onClick={handleExportCustomers}
+              variant="primary"
+              size="smd"
+              disabled={isLoading || customers.length === 0 || isExporting}
+              className="w-auto min-w-[140px]"
+            >
+               {/* Show spinner or icon based on state */}
+              {isExporting ? (
+                 <span>Exporting...</span>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" /> Export Customers
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
