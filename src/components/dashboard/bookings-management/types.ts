@@ -10,6 +10,7 @@ export enum BookingStatus {
   NO_SHOW = "NO_SHOW",
 }
 
+
 export interface BookingSegment {
   segmentId: string;
   bookingId: string;

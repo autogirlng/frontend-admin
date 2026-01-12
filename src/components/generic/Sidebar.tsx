@@ -22,6 +22,7 @@ import {
   GalleryHorizontal,
   CirclePoundSterling,
 } from "lucide-react";
+import { ReviewIcon } from "./FeedbackIcon";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -65,6 +66,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     { name: "Customers", href: "/dashboard/customers", icon: Users },
     { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
     { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
+    { name: "Reviews & Ratings", href: "/dashboard/reviews", icon: ReviewIcon },
   ];
 
   const settingsLink = {
@@ -177,7 +179,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
               <Link
                 href={settingsLink.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center p-3 rounded-lg transition-colors ${
+                className={` group flex items-center p-3 rounded-lg transition-colors ${
                   pathname === settingsLink.href
                     ? "bg-[#0096FF] text-white"
                     : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
