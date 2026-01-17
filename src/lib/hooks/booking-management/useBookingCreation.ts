@@ -24,7 +24,7 @@ interface DownloadInvoicePayload {
  */
 export function useVehicleSearch(
   filters: VehicleSearchFilters,
-  enabled: boolean
+  enabled: boolean,
 ) {
   return useQuery<PaginatedResponse<VehicleSearchResult>>({
     queryKey: [VEHICLE_SEARCH_KEY, filters],
@@ -62,7 +62,7 @@ export function useVehicleSearch(
 
       return apiClient.get<PaginatedResponse<VehicleSearchResult>>(
         endpoint,
-        false // public endpoint
+        false, // public endpoint
       );
     },
     enabled: enabled,
@@ -82,7 +82,7 @@ export function useBookingCalculation() {
 
 export function useCreateBooking() {
   return useMutation<CreateBookingResponse, Error, CreateBookingPayload>({
-    mutationFn: (payload) => apiClient.post("/bookings", payload, false),
+    mutationFn: (payload) => apiClient.post("/bookings", payload, true),
     onError: (error) => {
       toast.error(`Booking creation failed: ${error.message}`);
     },
@@ -97,7 +97,7 @@ export function useDownloadInvoice() {
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
         payload,
-        defaultFilename
+        defaultFilename,
       );
     },
     onSuccess: () => {
