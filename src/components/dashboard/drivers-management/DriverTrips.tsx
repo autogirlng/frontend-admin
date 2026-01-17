@@ -1,30 +1,24 @@
-// app/dashboard/drivers/[driverId]/trips/page.tsx
 "use client";
 
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { AlertCircle, Eye, Filter } from "lucide-react";
-
 import { BookingType } from "@/components/set-up-management/bookings-types/types";
-
-// Hooks
 import { useGetDriverTrips } from "@/lib/hooks/drivers-management/useDriverTrips";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
-
-// Reusable Components
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
-import Select, { Option } from "@/components/generic/ui/Select"; // Assuming path
+import Select, { Option } from "@/components/generic/ui/Select";
 import { DatePickerWithRange } from "../availability/DatePickerWithRange";
 import CustomLoader from "@/components/generic/CustomLoader";
 import CustomBack from "@/components/generic/CustomBack";
 import Button from "@/components/generic/ui/Button";
 import { BookingStatus, Trip, TripStatus } from "./trip-types";
+import { useGetDriverDetails } from "@/lib/hooks/drivers-management/useDrivers";
 
-// Helper function to convert enums to <Select> options
 const enumToOptions = (e: object): Option[] =>
   Object.entries(e).map(([key, value]) => ({ id: value, name: key }));
 
@@ -32,13 +26,12 @@ const tripStatusOptions: Option[] = enumToOptions(TripStatus);
 const bookingStatusOptions: Option[] = enumToOptions(BookingStatus);
 
 export default function DriverTripsPage() {
+  const router = useRouter();
   const params = useParams();
   const driverId = params.driverId as string;
 
-  // --- State Management ---
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Filter States
   const [filters, setFilters] = useState({
     bookingStatus: null as string | null,
     tripStatus: null as string | null,
@@ -46,7 +39,7 @@ export default function DriverTripsPage() {
     dateRange: null as DateRange | null,
   });
 
-  // --- API Hooks ---
+  const { data: driverDetails } = useGetDriverDetails(driverId);
   const {
     data: paginatedData,
     isLoading,
@@ -64,7 +57,6 @@ export default function DriverTripsPage() {
 
   const { data: bookingTypes = [] } = useGetBookingTypes();
 
-  // --- Derived Data ---
   const trips = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
   const bookingTypeOptions: Option[] = bookingTypes.map((bt: BookingType) => ({
@@ -72,13 +64,12 @@ export default function DriverTripsPage() {
     name: bt.name,
   }));
 
-  // --- Event Handlers ---
   const handleFilterChange = (
     key: "bookingStatus" | "tripStatus" | "bookingTypeID",
-    value: string | null
+    value: string | null,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(0); // Reset to first page on filter change
+    setCurrentPage(0);
   };
 
   const handleDateChange = (dateRange: DateRange | undefined) => {
@@ -96,7 +87,6 @@ export default function DriverTripsPage() {
     setCurrentPage(0);
   };
 
-  // --- Table Column Definitions ---
   const columns: ColumnDefinition<Trip>[] = [
     {
       header: "Customer",
@@ -161,7 +151,7 @@ export default function DriverTripsPage() {
         <Button
           variant="secondary"
           className="w-auto px-3 py-1.5 text-xs"
-          onClick={() => toast.success(`Viewing booking ${item.bookingId}`)}
+          onClick={() => router.push(`/dashboard/bookings/${item.bookingId}`)}
         >
           <Eye className="h-4 w-4 mr-1" />
           View
@@ -175,19 +165,23 @@ export default function DriverTripsPage() {
       <Toaster position="top-right" />
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
-        {/* --- Header --- */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             Driver Trip History
           </h1>
-          <p className="text-lg text-gray-600 mt-1">
-            View all trips associated with this driver.
-            {/* We could fetch driver details, but for now: */}
-            (Driver ID: {driverId})
-          </p>
+          <div className="text-lg text-gray-600 mt-1">
+            {driverDetails && (
+              <p className="text-gray-500 mt-1">
+                Viewing trips for{" "}
+                <span className="font-semibold text-gray-800">
+                  {driverDetails.fullName}
+                </span>{" "}
+                ({driverDetails.driverIdentifier})
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* --- Filter Section --- */}
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-gray-600" />
@@ -228,7 +222,7 @@ export default function DriverTripsPage() {
               selected={
                 filters.bookingTypeID
                   ? bookingTypeOptions.find(
-                      (bt) => bt.id === filters.bookingTypeID
+                      (bt) => bt.id === filters.bookingTypeID,
                     )
                   : null
               }
@@ -250,7 +244,6 @@ export default function DriverTripsPage() {
           </Button>
         </div>
 
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -278,7 +271,6 @@ export default function DriverTripsPage() {
           </div>
         )}
 
-        {/* --- Pagination --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

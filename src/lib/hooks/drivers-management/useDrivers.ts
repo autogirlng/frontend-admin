@@ -12,16 +12,17 @@ import {
   DriverSchedule,
   DriverSchedulePayload,
   PaginatedResponse,
+  DriverTripFilters,
+  DriverTrip,
 } from "@/components/dashboard/drivers-management/types";
 import { VehicleDetail } from "@/components/dashboard/trips-management/types";
 import { VEHICLE_DETAIL_KEY } from "../vehicle-onboarding/details/useVehicleDetailsPage";
 
-// --- Query Keys ---
 export const DRIVERS_QUERY_KEY = "drivers";
 export const DRIVER_SCHEDULE_KEY = "driverSchedule";
 export const DRIVER_DETAIL_KEY = "driverDetail";
+export const DRIVER_TRIPS_KEY = "driverTrips";
 
-// --- GET All "My Drivers" ---
 export function useGetMyDrivers(page: number, searchTerm: string) {
   return useQuery<PaginatedResponse<Driver>>({
     queryKey: [DRIVERS_QUERY_KEY, page, searchTerm],
@@ -39,7 +40,6 @@ export function useGetMyDrivers(page: number, searchTerm: string) {
   });
 }
 
-// --- GET Single Driver Details ---
 export function useGetDriverDetails(driverId: string | null) {
   return useQuery<DriverDetail>({
     queryKey: [DRIVER_DETAIL_KEY, driverId],
@@ -48,7 +48,6 @@ export function useGetDriverDetails(driverId: string | null) {
   });
 }
 
-// --- POST Create Driver ---
 export function useCreateDriver() {
   const queryClient = useQueryClient();
   return useMutation<Driver, Error, DriverPayload>({
@@ -64,7 +63,6 @@ export function useCreateDriver() {
   });
 }
 
-// --- PATCH Update Driver Details ---
 export function useUpdateDriver() {
   const queryClient = useQueryClient();
   return useMutation<
@@ -89,7 +87,6 @@ export function useUpdateDriver() {
   });
 }
 
-// --- PATCH Update Driver Profile Picture ---
 export function useUpdateDriverProfilePicture() {
   const queryClient = useQueryClient();
   return useMutation<DriverDetail, Error, { driverId: string; file: File }>({
@@ -98,14 +95,14 @@ export function useUpdateDriverProfilePicture() {
       formData.append("file", file);
       return apiClient.patchFormData<DriverDetail>(
         `/drivers/${driverId}/profile-picture`,
-        formData
+        formData,
       );
     },
     onSuccess: (updatedDriver) => {
       toast.success("Profile picture updated!");
       queryClient.setQueryData(
         [DRIVER_DETAIL_KEY, updatedDriver.id],
-        updatedDriver
+        updatedDriver,
       );
       queryClient.invalidateQueries({
         queryKey: [DRIVERS_QUERY_KEY],
@@ -118,7 +115,6 @@ export function useUpdateDriverProfilePicture() {
   });
 }
 
-// --- POST Send Schedule Link ---
 export function useSendScheduleLink() {
   return useMutation<unknown, Error, { driverId: string }>({
     mutationFn: ({ driverId }) =>
@@ -130,19 +126,17 @@ export function useSendScheduleLink() {
   });
 }
 
-// --- GET Driver Schedule ---
 export function useGetDriverSchedule(driverId: string, weekStartDate: string) {
   return useQuery<DriverSchedule>({
     queryKey: [DRIVER_SCHEDULE_KEY, driverId, weekStartDate],
     queryFn: () =>
       apiClient.get<DriverSchedule>(
-        `/drivers/${driverId}/schedule?weekStartDate=${weekStartDate}`
+        `/drivers/${driverId}/schedule?weekStartDate=${weekStartDate}`,
       ),
     enabled: !!driverId && !!weekStartDate,
   });
 }
 
-// --- PUT Update Driver Schedule ---
 export function useUpdateDriverSchedule() {
   const queryClient = useQueryClient();
   return useMutation<
@@ -155,7 +149,7 @@ export function useUpdateDriverSchedule() {
     onSuccess: (updatedData) => {
       queryClient.setQueryData(
         [DRIVER_SCHEDULE_KEY, updatedData.driver.id, updatedData.weekStartDate],
-        updatedData
+        updatedData,
       );
       toast.success("Schedule updated successfully.");
     },
@@ -163,7 +157,6 @@ export function useUpdateDriverSchedule() {
   });
 }
 
-// --- PATCH Update Driver Status ---
 export function useUpdateDriverStatus() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, { driverId: string; isActive: boolean }>({
@@ -175,7 +168,7 @@ export function useUpdateDriverStatus() {
         exact: false,
       });
       toast.success(
-        `Driver status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`
+        `Driver status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`,
       );
     },
     onError: (error) =>
@@ -198,7 +191,7 @@ export function useAssignDriverToVehicle() {
 
       queryClient.setQueryData(
         [VEHICLE_DETAIL_KEY, updatedVehicle.id],
-        updatedVehicle
+        updatedVehicle,
       );
 
       queryClient.invalidateQueries({
@@ -217,7 +210,7 @@ export function useUnassignDriverFromVehicle() {
   return useMutation<VehicleDetail, Error, { vehicleId: string }>({
     mutationFn: async ({ vehicleId }) => {
       const result = await apiClient.delete<VehicleDetail>(
-        `/vehicles/${vehicleId}/assign-driver`
+        `/vehicles/${vehicleId}/assign-driver`,
       );
 
       if (result === null) {
@@ -231,7 +224,7 @@ export function useUnassignDriverFromVehicle() {
 
       queryClient.setQueryData(
         [VEHICLE_DETAIL_KEY, updatedVehicle.id],
-        updatedVehicle
+        updatedVehicle,
       );
 
       queryClient.invalidateQueries({
@@ -241,5 +234,32 @@ export function useUnassignDriverFromVehicle() {
     },
     onError: (error) =>
       toast.error(error.message || "Failed to unassign driver."),
+  });
+}
+
+export function useGetDriverTrips(
+  driverId: string,
+  filters: DriverTripFilters,
+) {
+  return useQuery<PaginatedResponse<DriverTrip>>({
+    queryKey: [DRIVER_TRIPS_KEY, driverId, filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", String(filters.page));
+      params.append("size", String(filters.size));
+
+      if (filters.bookingStatus)
+        params.append("bookingStatus", filters.bookingStatus);
+      if (filters.tripStatus) params.append("tripStatus", filters.tripStatus);
+      if (filters.startDate)
+        params.append("startDate", filters.startDate.toISOString());
+      if (filters.endDate)
+        params.append("endDate", filters.endDate.toISOString());
+
+      const endpoint = `/drivers/${driverId}/trips?${params.toString()}`;
+      return apiClient.get<PaginatedResponse<DriverTrip>>(endpoint);
+    },
+    enabled: !!driverId,
+    placeholderData: (previousData) => previousData,
   });
 }
