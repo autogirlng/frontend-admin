@@ -1,4 +1,3 @@
-// app/dashboard/bookings/[bookingId]/page.tsx
 "use client";
 
 import React from "react";
@@ -8,53 +7,90 @@ import { format } from "date-fns";
 import {
   AlertCircle,
   Car,
-  DollarSign,
   User,
   Link as LinkIcon,
   MapPin,
-  Hash,
+  FileText,
+  Info,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  CreditCard,
+  Map as MapIcon,
 } from "lucide-react";
-
-// Hooks
 import { useGetBookingDetails } from "@/lib/hooks/booking-management/useBookingDetails";
-
-// Types
 import { BookingSegment } from "./details-types";
-
-// Components
 import CustomLoader from "@/components/generic/CustomLoader";
 import CustomBack from "@/components/generic/CustomBack";
 
-const DetailItem = ({
+const DetailRow = ({
+  icon: Icon,
   label,
   value,
+  isLink = false,
+  href = "#",
   className = "",
 }: {
+  icon?: any;
   label: string;
   value: React.ReactNode;
+  isLink?: boolean;
+  href?: string;
   className?: string;
 }) => (
-  <div className={className}>
-    <p className="text-sm font-medium text-gray-500">{label}</p>
-    <p className="text-base font-semibold text-gray-900 break-words">
-      {value || <span className="text-gray-400">N/A</span>}
-    </p>
+  <div
+    className={`flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-gray-50 last:border-0 ${className}`}
+  >
+    <div className="flex items-center gap-2 mb-1 sm:mb-0">
+      {Icon && <Icon className="w-4 h-4 text-gray-400" />}
+      <span className="text-sm font-medium text-gray-500">{label}</span>
+    </div>
+    <div className="text-sm font-semibold text-gray-900 text-right break-all sm:break-normal">
+      {isLink ? (
+        <Link
+          href={href}
+          className="text-[#0096FF] hover:underline flex items-center justify-end gap-1"
+        >
+          {value} <LinkIcon className="w-3 h-3" />
+        </Link>
+      ) : (
+        value || <span className="text-gray-300">N/A</span>
+      )}
+    </div>
   </div>
 );
 
-// Helper for status badges
-const StatusBadge = ({ text }: { text: string }) => {
-  let colorClasses = "bg-gray-100 text-gray-800";
-  if (text === "CONFIRMED") colorClasses = "bg-green-100 text-green-800";
-  if (text === "PENDING_PAYMENT")
-    colorClasses = "bg-yellow-100 text-yellow-800";
-  if (text?.includes("CANCELLED")) colorClasses = "bg-red-100 text-red-800";
+const StatusBadge = ({
+  text,
+  size = "md",
+}: {
+  text: string;
+  size?: "sm" | "md";
+}) => {
+  let colorClasses = "bg-gray-100 text-gray-600 border-gray-200";
+  let Icon = Info;
+
+  if (text === "CONFIRMED" || text === "SUCCESSFUL") {
+    colorClasses = "bg-green-50 text-green-700 border-green-200";
+    Icon = CheckCircle2;
+  } else if (text === "PENDING_PAYMENT" || text === "PENDING") {
+    colorClasses = "bg-amber-50 text-amber-700 border-amber-200";
+    Icon = Clock;
+  } else if (text?.includes("CANCELLED") || text === "FAILED") {
+    colorClasses = "bg-red-50 text-red-700 border-red-200";
+    Icon = XCircle;
+  }
+
+  const sizeClasses =
+    size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm";
 
   return (
     <span
-      className={`px-3 py-1 text-sm font-medium rounded-full inline-block ${colorClasses}`}
+      className={`inline-flex items-center gap-1.5 border rounded-full font-medium ${colorClasses} ${sizeClasses}`}
     >
-      {text.replace(/_/g, " ")}
+      <Icon className={size === "sm" ? "w-3 h-3" : "w-4 h-4"} />
+      {text?.replace(/_/g, " ")}
     </span>
   );
 };
@@ -62,195 +98,332 @@ const StatusBadge = ({ text }: { text: string }) => {
 export default function BookingDetailPage() {
   const params = useParams();
   const bookingId = params.bookingId as string;
-
   const { data: booking, isLoading, isError } = useGetBookingDetails(bookingId);
 
-  if (isLoading) {
-    return <CustomLoader />;
-  }
+  if (isLoading) return <CustomLoader />;
 
   if (isError || !booking) {
     return (
-      <main className="py-3 max-w-8xl mx-auto">
+      <main className="py-6 px-4 max-w-7xl mx-auto">
         <CustomBack />
-        <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="h-8 w-8" />
-          <span className="font-semibold">Failed to load booking details.</span>
+        <div className="mt-6 flex flex-col items-center justify-center p-12 text-center bg-red-50 border border-red-100 rounded-2xl">
+          <div className="bg-red-100 p-3 rounded-full mb-3">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-red-900">
+            Failed to load booking
+          </h3>
+          <p className="text-red-600">
+            Please try again later or contact support.
+          </p>
         </div>
       </main>
     );
   }
 
   return (
-    <>
-      <CustomBack />
-      <main className="py-3 max-w-8xl mx-auto space-y-8">
-        {/* --- Header --- */}
-        <div className="md:flex md:items-center md:justify-between">
+    <div className="min-h-screen pb-20">
+      <div className="max-w-8xl mx-auto px-0 sm:px-0 lg:px-0 py-3">
+        <CustomBack />
+        <div className="mt-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Booking Details
-            </h1>
-            <p className="text-lg text-gray-500 mt-1">{booking.bookingId}</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <StatusBadge text={booking.bookingStatus} />
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                Booking Details
+              </h1>
+              <StatusBadge text={booking.bookingStatus} />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm text-gray-500">
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                <FileText className="w-4 h-4 text-gray-400" />
+                <span>Invoice:</span>
+                <span className="font-mono font-medium text-gray-900">
+                  {booking.invoiceNumber}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">ID:</span>
+                <span className="font-mono">{booking.bookingId}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* --- Top Cards Row: Vehicle, Booker, Payment --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Vehicle Section */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <Car className="h-6 w-6 text-[#0096FF]" />
-              <h3 className="text-xl font-semibold text-gray-800">Vehicle</h3>
-            </div>
-            <div className="space-y-3">
-              <Link
-                href={`/dashboard/vehicle-onboarding/${booking.vehicle.id}`}
-                className="group"
-              >
-                <p className="text-sm font-medium text-gray-500">Name</p>
-                <p className="text-lg font-bold text-[#0096FF] group-hover:underline flex items-center gap-2">
-                  {booking.vehicle.vehicleName}
-                  <LinkIcon className="h-4 w-4 text-gray-400" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-6">
+              <div className="p-6 bg-gradient-to-br from-[#0096FF]/5 to-transparent border-b border-gray-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <CreditCard className="w-5 h-5 text-[#0096FF]" />
+                  <h3 className="font-bold text-gray-900">Financial Summary</h3>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Breakdown of costs and payment status
                 </p>
-              </Link>
-              <DetailItem
-                label="Identifier"
-                value={booking.vehicle.vehicleId}
-              />
-              <DetailItem
-                label="License Plate"
-                value={booking.vehicle.licensePlate}
-              />
-            </div>
-          </div>
+              </div>
 
-          {/* Booker Section */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <User className="h-6 w-6 text-[#0096FF]" />
-              <h3 className="text-xl font-semibold text-gray-800">Customer</h3>
-            </div>
-            <div className="space-y-3">
-              <DetailItem label="Full Name" value={booking.booker.fullName} />
-              <DetailItem label="Email" value={booking.booker.email} />
-            </div>
-          </div>
-
-          {/* Payment Section */}
-          <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <DollarSign className="h-6 w-6 text-[#0096FF]" />
-              <h3 className="text-xl font-semibold text-gray-800">Payment</h3>
-            </div>
-            <div className="space-y-3">
-              <DetailItem
-                label="Total Price"
-                value={`₦${booking.totalPrice.toLocaleString()}`}
-              />
-              <DetailItem
-                label="Payment Method"
-                value={booking.paymentMethod}
-              />
-              <DetailItem label="Channel" value={booking.channel} />
-              <DetailItem
-                label="Booked On"
-                value={format(
-                  new Date(booking.bookedAt),
-                  "MMM d, yyyy, h:mm a"
-                )}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* --- Itinerary Section (UPDATED) --- */}
-        <div className="bg-white p-6 border border-gray-200 shadow-sm rounded-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <MapPin className="h-6 w-6 text-[#0096FF]" />
-            <h3 className="text-xl font-semibold text-gray-800">Itinerary</h3>
-          </div>
-          <div className="space-y-6">
-            {booking.segments.map((segment: BookingSegment, index) => (
-              <div
-                key={segment.segmentId}
-                className="flex gap-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="bg-[#0096FF] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">
-                    {index + 1}
+              <div className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span>
+                      ₦{booking.originalPrice?.toLocaleString() ?? "0.00"}
+                    </span>
                   </div>
-                  {index < booking.segments.length - 1 && (
-                    <div className="w-px h-full bg-gray-300 my-2"></div>
+
+                  {booking.discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-red-600 bg-red-50 px-2 py-1 rounded">
+                      <span className="flex items-center gap-1">
+                        Discount
+                        {booking.couponCode && (
+                          <span className="text-[10px] bg-white border border-red-200 px-1 rounded uppercase">
+                            {booking.couponCode}
+                          </span>
+                        )}
+                      </span>
+                      <span>-₦{booking.discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-gray-100 my-2 pt-2 flex justify-between items-end">
+                    <span className="font-bold text-gray-900">Total</span>
+                    <span className="text-2xl font-bold text-[#0096FF]">
+                      ₦{booking.totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-4 rounded-xl border ${
+                    booking.paidAt
+                      ? "bg-green-50 border-green-100"
+                      : "bg-amber-50 border-amber-100"
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                      Payment Status
+                    </span>
+                    {booking.paidAt ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-amber-600" />
+                    )}
+                  </div>
+
+                  {booking.paidAt ? (
+                    <div>
+                      <p className="font-bold text-green-800">
+                        Payment Received
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        {format(
+                          new Date(booking.paidAt),
+                          "MMM d, yyyy • h:mm a"
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="font-bold text-amber-800">
+                        Pending Payment
+                      </p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Customer has not paid yet.
+                      </p>
+                    </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-lg font-semibold">
-                        {segment.bookingTypeName}
-                      </p>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Duration: {segment.duration}
-                      </p>
-                    </div>
-                    {/* ✅ ADDED: Segment Booking Status */}
-                    <StatusBadge text={segment.bookingStatus} />
+
+                <div className="pt-2">
+                  <DetailRow label="Method" value={booking.paymentMethod} />
+                  <DetailRow label="Channel" value={booking.channel} />
+                  <DetailRow
+                    label="Booked Date"
+                    value={format(new Date(booking.bookedAt), "MMM d, yyyy")}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                    <Car className="w-5 h-5 text-[#0096FF]" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <DetailItem
-                      label="From"
-                      value={segment.pickupLocation}
-                      className="mt-2"
-                    />
-                    <DetailItem
-                      label="To"
-                      value={segment.dropoffLocation}
-                      className="mt-2"
-                    />
-                    {/* ✅ ADDED: Start Date Time */}
-                    <DetailItem
-                      label="Start Time"
-                      value={format(
-                        new Date(segment.startDateTime),
-                        "MMM d, yyyy, h:mm a"
-                      )}
-                    />
-                    {/* ✅ ADDED: End Date Time */}
-                    <DetailItem
-                      label="End Time"
-                      value={format(
-                        new Date(segment.endDateTime),
-                        "MMM d, yyyy, h:mm a"
-                      )}
-                    />
-                    {/* ✅ ADDED: Google Maps Link (Now works) */}
-                    <div className="md:col-span-2">
-                      <DetailItem
-                        label="Pickup Coordinates (Lat, Long)"
-                        value={
-                          <a
-                            href={`https://maps.google.com/?q=${segment.pickupLatitude},${segment.pickupLongitude}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#0096FF] hover:underline inline-flex items-center gap-1"
-                          >
-                            {segment.pickupLatitude}, {segment.pickupLongitude}
-                            <LinkIcon className="h-3 w-3" />
-                          </a>
-                        }
-                      />
+                  <div>
+                    <h3 className="font-bold text-gray-900">Vehicle</h3>
+                    <p className="text-xs text-gray-500">Transport Details</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <DetailRow
+                    label="Name"
+                    value={booking.vehicle.vehicleName}
+                    isLink
+                    href={`/dashboard/vehicle-onboarding/${booking.vehicle.id}`}
+                  />
+                  <DetailRow
+                    label="Plate No."
+                    value={booking.vehicle.licensePlate}
+                  />
+                  <DetailRow
+                    label="ID"
+                    value={booking.vehicle.vehicleId}
+                    className="border-none"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <User className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Customer</h3>
+                    <p className="text-xs text-gray-500">Contact Information</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <DetailRow label="Name" value={booking.booker.fullName} />
+                  <DetailRow label="Email" value={booking.booker.email} />
+                  <DetailRow
+                    label="Phone"
+                    value={booking.booker.customerPhone}
+                    className="border-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {(booking.purposeOfRide || booking.extraDetails) && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Info className="w-5 h-5 text-gray-400" />
+                  <h3 className="font-bold text-gray-900">Ride Notes</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {booking.purposeOfRide && (
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                        Purpose
+                      </p>
+                      <p className="text-gray-900 text-sm">
+                        {booking.purposeOfRide}
+                      </p>
                     </div>
+                  )}
+                  {booking.extraDetails && (
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                        Extra Details
+                      </p>
+                      <p className="text-gray-900 text-sm">
+                        {booking.extraDetails}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
+                    <MapIcon className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Itinerary</h3>
+                    <p className="text-xs text-gray-500">
+                      {booking.segments.length} Segment(s)
+                    </p>
                   </div>
                 </div>
               </div>
-            ))}
+
+              <div className="divide-y divide-gray-100">
+                {booking.segments.map((segment: BookingSegment, index) => (
+                  <div
+                    key={segment.segmentId}
+                    className="p-6 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="bg-gray-900 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <h4 className="font-bold text-gray-900">
+                            {segment.bookingTypeName}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            Duration: {segment.duration}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge text={segment.bookingStatus} size="sm" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 relative pl-3 sm:pl-0">
+                      <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-gray-100 sm:hidden"></div>
+
+                      <div className="relative">
+                        <div className="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-green-500 sm:hidden"></div>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> Pickup
+                        </p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">
+                          {segment.pickupLocation}
+                        </p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(
+                            new Date(segment.startDateTime),
+                            "MMM d, h:mm a"
+                          )}
+                        </p>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${segment.pickupLatitude},${segment.pickupLongitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-xs text-[#0096FF] hover:underline"
+                        >
+                          View Map <LinkIcon className="w-3 h-3" />
+                        </a>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-red-500 sm:hidden"></div>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> Dropoff
+                        </p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">
+                          {segment.dropoffLocation}
+                        </p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(
+                            new Date(segment.endDateTime),
+                            "MMM d, h:mm a"
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </div>
   );
 }

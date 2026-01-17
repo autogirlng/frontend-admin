@@ -283,8 +283,18 @@ export default function PaymentsPage() {
       accessorKey: "vehicleName",
       cell: (item) => (
         <div>
-          <div className="font-medium text-gray-900">{item.vehicleName}</div>
-          <div className="text-gray-500">{item.vehicleIdentifier}</div>
+          <div
+            className="font-medium text-gray-900 truncate max-w-[150px]"
+            title={item.vehicleName}
+          >
+            {item.vehicleName}
+          </div>
+          <div
+            className="text-gray-500 truncate max-w-[150px]"
+            title={item.vehicleIdentifier}
+          >
+            {item.vehicleIdentifier}
+          </div>
         </div>
       ),
     },
@@ -314,17 +324,37 @@ export default function PaymentsPage() {
       ),
     },
     {
-      header: "Date",
+      header: "Created",
       accessorKey: "createdAt",
       cell: (item) => {
-        const date = new Date(item.createdAt);
+        const createdDate = new Date(item.createdAt);
         return (
           <div className="flex flex-col">
-            <span className="font-medium text-gray-900">
-              {format(date, "MMM d")}
+            <span className="text-sm text-gray-900">
+              {format(createdDate, "MMM d, yyyy")}
             </span>
             <span className="text-xs text-gray-500">
-              {format(date, "h:mm a")}
+              {format(createdDate, "h:mm a")}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      header: "Paid",
+      accessorKey: "paidAt",
+      cell: (item) => {
+        if (!item.paidAt) {
+          return <span className="text-xs text-gray-400 italic">Not Paid</span>;
+        }
+        const paidDate = new Date(item.paidAt);
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-green-700">
+              {format(paidDate, "MMM d, yyyy")}
+            </span>
+            <span className="text-xs text-green-600">
+              {format(paidDate, "h:mm a")}
             </span>
           </div>
         );
