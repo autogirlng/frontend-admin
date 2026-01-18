@@ -102,7 +102,7 @@ export default function Reviews() {
     const { 
         data: apiResponse, 
         isLoading, 
-        isError,
+        isError, 
         isPlaceholderData 
     } = useReviews({
         page: currentPage,
@@ -217,10 +217,15 @@ export default function Reviews() {
             cell: (item) => (
                 <div>
                     <div className="font-medium text-gray-900">
-                        {item.reviewedBy?.firstName} {item.reviewedBy?.lastName}
+                        {/* ✅ CHECK IS ANONYMOUS */}
+                        {item.isAnonymous 
+                            ? "Anonymous" 
+                            : `${item.reviewedBy?.firstName} ${item.reviewedBy?.lastName}`
+                        }
                     </div>
                     <div className="text-xs text-gray-500">
-                        {item.reviewedBy?.email}
+                        {/* ✅ HIDE EMAIL IF ANONYMOUS */}
+                        {item.isAnonymous ? "" : item.reviewedBy?.email}
                     </div>
                 </div>
             ),

@@ -44,11 +44,22 @@ const StarRating = ({ rating }: { rating: number }) => (
 const ReviewerAvatar = ({
   firstName,
   lastName,
+  isAnonymous // Accept isAnonymous prop
 }: {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  isAnonymous?: boolean;
 }) => {
-  const initials = (firstName[0] || "") + (lastName[0] || "");
+  // If anonymous, don't try to get initials
+  if (isAnonymous) {
+    return (
+        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+             <User className="h-6 w-6 text-gray-500" />
+        </div>
+    )
+  }
+
+  const initials = (firstName?.[0] || "") + (lastName?.[0] || "");
   return (
     <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
       {initials ? (
@@ -82,12 +93,17 @@ export const ReviewDetailsPanel = ({
 
   const isPending = review.status === "PENDING";
 
+  // ✅ SAFE REVIEWER NAME LOGIC
+  const reviewerName = review.isAnonymous 
+    ? "Anonymous User" 
+    : `${review.reviewedBy?.firstName || ""} ${review.reviewedBy?.lastName || ""}`;
+
   // --- Dynamic History Logic ---
   const timelineEvents = [
     {
       status: "Pending",
       date: review.createdAt,
-      actor: review.reviewedBy.firstName + " " + review.reviewedBy.lastName, 
+      actor: reviewerName, // ✅ Use safe name
       title: "Initial Submission",
       reason: null as string | null // Initial submission has no reason
     }
@@ -145,15 +161,19 @@ export const ReviewDetailsPanel = ({
                     {/* Avatar */}
                     <div className="flex items-center space-x-4">
                         <ReviewerAvatar 
-                            firstName={review?.reviewedBy?.firstName || ""} 
-                            lastName={review?.reviewedBy?.lastName || ""} 
+                            firstName={review?.reviewedBy?.firstName} 
+                            lastName={review?.reviewedBy?.lastName} 
+                            isAnonymous={review.isAnonymous} // ✅ Pass prop
                         /> 
                     </div>
                     <div>
                         <h2 className="text-sm font-bold text-gray-900">
-                            {review?.reviewedBy?.firstName} {review?.reviewedBy?.lastName}
+                            {reviewerName} {/* ✅ Use safe name */}
                         </h2>
-                        <p className="text-xs text-gray-500">{review?.reviewedBy?.email}</p>
+                        {/* Only show email if NOT anonymous */}
+                        {!review.isAnonymous && (
+                            <p className="text-xs text-gray-500">{review?.reviewedBy?.email}</p>
+                        )}
                     </div>
                 </div>
                 
