@@ -79,9 +79,11 @@ export function usePaymentExport({
       const exportData = filteredPayments.map((p) => ({
         "Customer Name": p.userName || "Guest",
         "Booking Ref": p.bookingRef || "-",
-        Amount: `₦${p.totalPayable.toLocaleString()}`,
+        Amount: `${p.totalPayable.toLocaleString()}`,
         "Invoice Number": p.invoiceNumber || "-",
-        "Payment Date": format(new Date(p.createdAt), "dd MMM yyyy, HH:mm"),
+        "Payment Date": p.paidAt 
+          ? format(new Date(p.paidAt), "dd MMM yyyy, HH:mm") 
+          : "-",
         Vehicle: p.vehicleName,
         Provider: p.paymentProvider,
         Status: p.paymentStatus,
