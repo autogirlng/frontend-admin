@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ 1. Added useEffect to imports
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -19,7 +18,7 @@ import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce
 import {
   AlertCircle,
   Plus,
-  Send,
+  Map,
   Calendar,
   Search,
   CheckCircle,
@@ -28,7 +27,7 @@ import {
   Unlink,
   Link as LinkIcon,
 } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
@@ -38,6 +37,7 @@ import Link from "next/link";
 import { AssignVehicleModal } from "./AssignVehicleModal";
 
 export default function DriversPage() {
+  const router = useRouter();
   const [modal, setModal] = useState<
     | "create"
     | "schedule"
@@ -56,23 +56,18 @@ export default function DriversPage() {
 
   const topRef = useRef<HTMLDivElement>(null);
 
-  // ✅ 2. FIX: Reset pagination to 0 whenever search changes
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm]);
 
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
 
-  // --- API Hooks ---
   const {
     data: paginatedData,
     isLoading,
@@ -89,7 +84,6 @@ export default function DriversPage() {
   const drivers = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
 
-  // --- Modal Handlers ---
   const openModal = (
     type:
       | "create"
@@ -99,7 +93,7 @@ export default function DriversPage() {
       | "edit"
       | "assignVehicle"
       | "unassignVehicle",
-    driver: Driver | null = null
+    driver: Driver | null = null,
   ) => {
     setSelectedDriver(driver);
     setModal(type);
@@ -109,12 +103,11 @@ export default function DriversPage() {
     setSelectedDriver(null);
   };
 
-  // --- Action Handlers ---
   const handleSendLink = () => {
     if (!selectedDriver) return;
     sendLinkMutation.mutate(
       { driverId: selectedDriver.id },
-      { onSuccess: closeModal }
+      { onSuccess: closeModal },
     );
   };
 
@@ -127,7 +120,7 @@ export default function DriversPage() {
       },
       {
         onSuccess: closeModal,
-      }
+      },
     );
   };
 
@@ -137,13 +130,17 @@ export default function DriversPage() {
       { vehicleId: selectedDriver.assignedVehicleId },
       {
         onSuccess: closeModal,
-      }
+      },
     );
   };
 
-  // --- Define Actions for the Menu ---
   const getDriverActions = (driver: Driver): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
+      {
+        label: "Driver Trips",
+        icon: Map,
+        onClick: () => router.push(`/dashboard/drivers/${driver.id}/trips`),
+      },
       {
         label: "Edit Driver",
         icon: Edit,
@@ -183,7 +180,6 @@ export default function DriversPage() {
     return actions;
   };
 
-  // --- Define Columns for the Table ---
   const columns: ColumnDefinition<Driver>[] = [
     {
       header: "Name",
@@ -248,7 +244,6 @@ export default function DriversPage() {
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
-        {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="my-1">
             <h1 className="text-3xl font-bold text-gray-900">Drivers</h1>
@@ -267,8 +262,6 @@ export default function DriversPage() {
             </Button>
           </div>
         </div>
-
-        {/* --- Search Bar --- */}
         <div className="relative mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -285,8 +278,6 @@ export default function DriversPage() {
             style={{ paddingLeft: 35 }}
           />
         </div>
-
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -315,8 +306,6 @@ export default function DriversPage() {
             />
           </div>
         )}
-
-        {/* --- Pagination Controls --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -325,7 +314,6 @@ export default function DriversPage() {
         />
       </main>
 
-      {/* --- Modals --- */}
       {modal === "create" && <CreateDriverModal onClose={closeModal} />}
 
       {modal === "schedule" && selectedDriver && (

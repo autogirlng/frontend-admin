@@ -90,6 +90,17 @@ export interface UpdateBookingPayload {
   discountAmount?: number;
 }
 
+export interface UpdateBookingResponse {
+  status: string;
+  message: string;
+  data: {
+    bookingId: string;
+    totalPrice: number;
+    status: string;
+  };
+  timestamp: string;
+}
+
 export interface VehiclePricingOption {
   bookingTypeId: string;
   bookingTypeName: string;

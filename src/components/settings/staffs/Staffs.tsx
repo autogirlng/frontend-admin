@@ -13,8 +13,6 @@ import {
 } from "@/lib/hooks/admin/useDepartments";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { AdminUser } from "./types";
-
-// Reusable Components
 import Button from "@/components/generic/ui/Button";
 import TextInput from "@/components/generic/ui/TextInput";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -28,7 +26,6 @@ import { PromoteUserModal } from "./PromoteUserModal";
 import { AdminDetailModal } from "./AdminDetailModal";
 import { AssignDepartmentModal } from "./AssignDepartmentModal";
 
-// Icons
 import {
   AlertCircle,
   Search,
@@ -41,10 +38,14 @@ import {
   View,
   Building,
   UserX,
+  Banknote,
 } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function StaffPage() {
+  const router = useRouter();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -64,23 +65,18 @@ export default function StaffPage() {
 
   const topRef = useRef<HTMLDivElement>(null);
 
-  // ✅ 2. FIX: Reset pagination to 0 whenever search changes
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm]);
 
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
 
-  // --- API Hooks ---
   const {
     data: paginatedData,
     isLoading: isLoadingAdmins,
@@ -103,7 +99,6 @@ export default function StaffPage() {
   const totalPages = paginatedData?.totalPages || 0;
   const isLoading = isLoadingAdmins || isLoadingDepts;
 
-  // --- Modal Handlers ---
   const openModal = (
     type:
       | "create"
@@ -113,7 +108,7 @@ export default function StaffPage() {
       | "view"
       | "assignDept"
       | "unassignDept",
-    admin: AdminUser | null = null
+    admin: AdminUser | null = null,
   ) => {
     setSelectedAdmin(admin);
     setModal(type);
@@ -123,12 +118,11 @@ export default function StaffPage() {
     setSelectedAdmin(null);
   };
 
-  // --- Action Handlers ---
   const handleStatusConfirm = () => {
     if (!selectedAdmin) return;
     updateStatus(
       { userId: selectedAdmin.id, isActive: !selectedAdmin.active },
-      { onSuccess: closeModal }
+      { onSuccess: closeModal },
     );
   };
 
@@ -147,13 +141,18 @@ export default function StaffPage() {
     unassignUser({ userId: selectedAdmin.id }, { onSuccess: closeModal });
   };
 
-  // --- Define Actions for the Menu ---
   const getAdminActions = (admin: AdminUser): ActionMenuItem[] => {
     const actions: ActionMenuItem[] = [
       {
         label: "View Details",
         icon: View,
         onClick: () => openModal("view", admin),
+      },
+      {
+        label: "Commissions",
+        icon: Banknote,
+        onClick: () =>
+          router.push(`/dashboard/settings/staffs/${admin.id}/commissions`),
       },
       admin.departmentName
         ? {
@@ -202,7 +201,6 @@ export default function StaffPage() {
     return actions;
   };
 
-  // --- Define Columns for the Table ---
   const columns: ColumnDefinition<AdminUser>[] = [
     {
       header: "Name",
@@ -251,7 +249,6 @@ export default function StaffPage() {
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
-        {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Staff</h1>
@@ -279,7 +276,6 @@ export default function StaffPage() {
           </div>
         </div>
 
-        {/* --- Search Bar --- */}
         <div className="relative mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -297,7 +293,6 @@ export default function StaffPage() {
           />
         </div>
 
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -325,7 +320,6 @@ export default function StaffPage() {
           </div>
         )}
 
-        {/* --- Pagination --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -334,7 +328,6 @@ export default function StaffPage() {
         />
       </main>
 
-      {/* --- Modals --- */}
       {modal === "create" && <CreateAdminModal onClose={closeModal} />}
 
       {modal === "promote" && <PromoteUserModal onClose={closeModal} />}

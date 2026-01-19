@@ -1,6 +1,3 @@
-// app/dashboard/settings/staffs/types.ts
-
-// The paginated response structure
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -9,7 +6,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// --- Admin User (for the list) ---
 export interface AdminUser {
   id: string;
   firstName: string;
@@ -18,10 +14,9 @@ export interface AdminUser {
   phoneNumber: string;
   userType: "ADMIN";
   active: boolean;
-  departmentName?: string; // ✅ ADDED
+  departmentName?: string;
 }
 
-// --- Admin User Detail (for the modal) ---
 export interface AdminUserDetail {
   userId: string;
   firstName: string;
@@ -42,7 +37,6 @@ export interface AdminUserDetail {
   phoneVerified: boolean;
 }
 
-// --- User Types for Promotion Search ---
 export interface Customer {
   id: string;
   fullName: string;
@@ -59,7 +53,6 @@ export interface Host {
   active: boolean;
 }
 
-// --- API Payloads & Responses ---
 export interface CreateAdminPayload {
   firstName: string;
   lastName: string;
@@ -68,9 +61,23 @@ export interface CreateAdminPayload {
   sendCredentialTo: string[];
 }
 
-// ✅ --- NEW: Department Types ---
 export interface Department {
   id: string;
   name: string;
   parentDepartmentId?: string;
+}
+
+export interface OfflineBooking {
+  bookingId: string;
+  invoiceNumber: string;
+  bookingStatus: string;
+  paymentMethod: string;
+  createdAt: string;
+  firstSegmentStarts: string;
+  customerName: string;
+  vehicleId: string;
+  vehicleName: string;
+  vehicleIdentifier: string;
+  totalPrice: number;
+  hostName: string;
 }

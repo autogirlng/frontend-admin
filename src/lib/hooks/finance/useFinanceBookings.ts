@@ -11,6 +11,7 @@ import {
   UpdateBookingPayload,
   CalculationResponse,
   Vehicle,
+  UpdateBookingResponse,
 } from "@/components/dashboard/finance/bookings/types";
 import { BookingForCalculation } from "@/components/dashboard/finance/booking-calculation-type";
 
@@ -188,7 +189,7 @@ export function useUpdateBooking() {
   const queryClient = useQueryClient();
 
   return useMutation<
-    unknown,
+    UpdateBookingResponse,
     Error,
     { bookingId: string; payload: UpdateBookingPayload }
   >({

@@ -1,6 +1,3 @@
-// .../drivers-management/types.ts
-
-// --- Paginated Response ---
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -9,7 +6,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// --- Driver Types ---
 export interface Driver {
   id: string;
   driverIdentifier: string;
@@ -26,9 +22,9 @@ export interface Driver {
 export interface DriverDetail {
   id: string;
   driverIdentifier: string;
-  fullName: string; // This will be split into first/last name
-  firstName?: string; // Assuming the detail endpoint might send this
-  lastName?: string; // Assuming the detail endpoint might send this
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
   phoneNumber: string;
   ownerType: string;
   ownerName: string;
@@ -53,13 +49,12 @@ export interface UpdateDriverPayload {
   driverIdentifier: string;
 }
 
-// --- Driver Schedule Types ---
 export type Shift = "NONE" | "DAY" | "NIGHT" | "ALL_DAY";
 
 export interface DriverSchedule {
   id: string;
   driver: Driver;
-  weekStartDate: string; // "YYYY-MM-DD"
+  weekStartDate: string;
   mondayShift: Shift;
   tuesdayShift: Shift;
   wednesdayShift: Shift;
@@ -70,7 +65,7 @@ export interface DriverSchedule {
 }
 
 export interface DriverSchedulePayload {
-  weekStartDate: string; // "YYYY-MM-DD"
+  weekStartDate: string;
   mondayShift: Shift;
   tuesdayShift: Shift;
   wednesdayShift: Shift;
@@ -87,4 +82,66 @@ export interface VehicleSearchResult {
   licensePlateNumber?: string;
   ownerName: string;
   status: string;
+}
+
+export enum TripStatus {
+  UPCOMING = "UPCOMING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMING_TO_AN_END = "COMING_TO_AN_END",
+  COMPLETED = "COMPLETED",
+  DELAYED = "DELAYED",
+  EXTENDED = "EXTENDED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum BookingStatus {
+  PENDING_PAYMENT = "PENDING_PAYMENT",
+  CONFIRMED = "CONFIRMED",
+  FAILED_AVAILABILITY = "FAILED_AVAILABILITY",
+  CANCELLED_BY_USER = "CANCELLED_BY_USER",
+  CANCELLED_BY_HOST = "CANCELLED_BY_HOST",
+  CANCELLED_BY_ADMIN = "CANCELLED_BY_ADMIN",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  NO_SHOW = "NO_SHOW",
+  VOID = "VOID",
+  ABANDONED = "ABANDONED",
+}
+
+export interface DriverTrip {
+  id: string;
+  startDateTime: string;
+  endDateTime: string;
+  customerName: string;
+  customerPhoneNumber: string;
+  vehicleId: string;
+  vehicleIdentifier: string;
+  vehicleName: string;
+  hostName: string | null;
+  hostEmail: string | null;
+  hostPhoneNumber: string | null;
+  driverName: string;
+  driverPhoneNumber: string;
+  customerAgentName: string | null;
+  operationsAgentName: string | null;
+  bookingTypeName: string;
+  bookedHours: number;
+  duration: string;
+  city: string;
+  pickupLocation: string;
+  bookingStatus: BookingStatus;
+  tripStatus: TripStatus;
+  totalPrice: number;
+  bookingId: string;
+  createdAt: string;
+  ongoing: boolean;
+}
+
+export interface DriverTripFilters {
+  page: number;
+  size: number;
+  bookingStatus?: string | null;
+  tripStatus?: string | null;
+  startDate?: Date | null;
+  endDate?: Date | null;
 }

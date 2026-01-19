@@ -10,7 +10,6 @@ export enum BookingStatus {
   NO_SHOW = "NO_SHOW",
 }
 
-
 export interface BookingSegment {
   segmentId: string;
   bookingId: string;
@@ -117,6 +116,7 @@ export interface CreateBookingPayload {
   channel: BookingChannel;
   paymentMethod: "OFFLINE";
   discountAmount?: number;
+  isAdmin?: boolean;
 }
 
 export interface CreateBookingResponse {

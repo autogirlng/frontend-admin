@@ -1,44 +1,53 @@
-// app/dashboard/bookings/types.ts
-
-// Booker details from the API response
 export interface Booker {
   fullName: string;
   email: string;
+  customerPhone: string;
+  userId: string;
 }
 
-// Vehicle summary from the API response
 export interface VehicleSummary {
   id: string;
-  vehicleId: string; // This is the identifier like "AG/TYT/..."
+  vehicleId: string;
   vehicleName: string;
   licensePlate: string;
 }
 
-// A single segment of a booking
 export interface BookingSegment {
   segmentId: string;
-  startDateTime: string; // ✅ ADDED
-  endDateTime: string; // ✅ ADDED
+  startDateTime: string;
+  endDateTime: string;
   duration: string;
   pickupLocation: string;
   dropoffLocation: string;
-  pickupLatitude: number; // ✅ ADDED
-  pickupLongitude: number; // ✅ ADDED
+  pickupLatitude: number;
+  pickupLongitude: number;
   bookingTypeName: string;
-  bookingStatus: string; // ✅ ADDED
-  // Other fields are omitted for brevity as they are duplicates
+  bookingStatus: string;
+  bookingTotalPrice: number;
+  vehicle: VehicleSummary;
+  booker: Booker;
 }
 
-// The main structure for the detailed booking response
 export interface BookingDetail {
   bookingId: string;
+  invoiceNumber: string;
   bookingStatus: string;
   paymentMethod: string;
   channel: string;
   bookedAt: string;
+  paidAt?: string;
+
+  originalPrice: number;
+  discountAmount: number;
   totalPrice: number;
+  couponCode?: string;
+
+  purposeOfRide?: string;
+  extraDetails?: string;
+
   calculationId: string;
   booker: Booker;
   vehicle: VehicleSummary;
   segments: BookingSegment[];
+  discounted: boolean;
 }

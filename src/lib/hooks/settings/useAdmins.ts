@@ -10,12 +10,14 @@ import {
   Customer,
   Host,
   AdminUserDetail,
+  OfflineBooking,
 } from "@/components/settings/staffs/types";
 
 export const ADMINS_QUERY_KEY = "admins";
 export const ADMIN_DETAIL_KEY = "adminDetail";
 export const CUSTOMERS_SEARCH_KEY = "customersSearch";
 export const HOSTS_SEARCH_KEY = "hostsSearch";
+export const ADMIN_OFFLINE_BOOKINGS_KEY = "adminOfflineBookings";
 
 export function useGetAdmins(page: number, searchTerm: string) {
   return useQuery<PaginatedResponse<AdminUser>>({
@@ -48,7 +50,7 @@ export function useGetCustomersForPromotion(searchTerm: string) {
     queryKey: [CUSTOMERS_SEARCH_KEY, searchTerm],
     queryFn: () =>
       apiClient.get(
-        `/admin/users/customers?page=0&size=5&searchTerm=${searchTerm}`
+        `/admin/users/customers?page=0&size=5&searchTerm=${searchTerm}`,
       ),
     enabled: searchTerm.length > 2,
   });
@@ -59,7 +61,7 @@ export function useGetHostsForPromotion(searchTerm: string) {
     queryKey: [HOSTS_SEARCH_KEY, searchTerm],
     queryFn: () =>
       apiClient.get(
-        `/admin/users/hosts?page=0&size=5&searchTerm=${searchTerm}`
+        `/admin/users/hosts?page=0&size=5&searchTerm=${searchTerm}`,
       ),
     enabled: searchTerm.length > 2,
   });
@@ -72,7 +74,7 @@ export function useUpdateAdminStatus() {
       apiClient.patch(`/admin/users/${userId}/status`, { isActive }),
     onSuccess: (_, { isActive }) => {
       toast.success(
-        `Admin status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`
+        `Admin status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`,
       );
       queryClient.invalidateQueries({
         queryKey: [ADMINS_QUERY_KEY],
@@ -141,7 +143,7 @@ export function useDownloadCredentials() {
       await apiClient.postAndDownloadFile(
         `/admin/users/admins/${adminId}/download-credentials`,
         {},
-        `${adminName}-credentials.pdf`
+        `${adminName}-credentials.pdf`,
       );
       return null;
     },
@@ -150,5 +152,21 @@ export function useDownloadCredentials() {
     },
     onError: (error) =>
       toast.error(error.message || "Failed to download credentials."),
+  });
+}
+
+export function useGetAdminOfflineBookings(adminId: string, page: number) {
+  return useQuery<PaginatedResponse<OfflineBooking>>({
+    queryKey: [ADMIN_OFFLINE_BOOKINGS_KEY, adminId, page],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("size", "10");
+
+      const endpoint = `/admin/bookings/offline/created-by/${adminId}?${params.toString()}`;
+      return apiClient.get<PaginatedResponse<OfflineBooking>>(endpoint);
+    },
+    enabled: !!adminId,
+    placeholderData: (previousData) => previousData,
   });
 }

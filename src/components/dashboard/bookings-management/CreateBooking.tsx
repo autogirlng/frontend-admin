@@ -14,7 +14,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-// Import Hooks
 import { useDownloadInvoice } from "@/lib/hooks/booking-management/useBookingCreation";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 import { useGetVehicleTypes } from "@/lib/hooks/set-up/vehicle-types/useVehicleTypes";
@@ -27,7 +26,6 @@ import {
   useCreateBooking,
 } from "@/lib/hooks/booking-management/useBookingCreation";
 
-// Import Components
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import TextInput from "@/components/generic/ui/TextInput";
 import Select, { Option } from "@/components/generic/ui/Select";
@@ -37,7 +35,6 @@ import TextAreaInput from "@/components/generic/ui/TextAreaInput";
 import CustomBack from "@/components/generic/CustomBack";
 import { formatPrice } from "@/lib/utils/price-format";
 
-// Import Types
 import {
   VehicleSearchResult,
   BookingSegmentPayload,
@@ -136,7 +133,7 @@ export default function CreateBookingPage() {
   const [bookingResponse, setBookingResponse] =
     useState<CreateBookingResponse | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
-    null
+    null,
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -184,7 +181,7 @@ export default function CreateBookingPage() {
       { id: "", name: "Any Booking Type" },
       ...(bookingTypes?.map((bt) => ({ id: bt.id, name: bt.name })) || []),
     ],
-    [bookingTypes]
+    [bookingTypes],
   );
 
   const vehicleTypeOptions = useMemo(
@@ -192,7 +189,7 @@ export default function CreateBookingPage() {
       { id: "", name: "Any Vehicle Type" },
       ...(vehicleTypes?.map((vt) => ({ id: vt.id, name: vt.name })) || []),
     ],
-    [vehicleTypes]
+    [vehicleTypes],
   );
 
   const vehicleMakeOptions = useMemo(
@@ -200,7 +197,7 @@ export default function CreateBookingPage() {
       { id: "", name: "Any Make" },
       ...(vehicleMakes?.map((vm) => ({ id: vm.id, name: vm.name })) || []),
     ],
-    [vehicleMakes]
+    [vehicleMakes],
   );
 
   const vehicleModelOptions = useMemo(
@@ -208,7 +205,7 @@ export default function CreateBookingPage() {
       { id: "", name: "Any Model" },
       ...(vehicleModels?.map((vm) => ({ id: vm.id, name: vm.name })) || []),
     ],
-    [vehicleModels]
+    [vehicleModels],
   );
 
   const bankAccountOptions: Option[] = useMemo(() => {
@@ -230,7 +227,7 @@ export default function CreateBookingPage() {
   // --- Handlers ---
   const handleFilterChange = (
     field: keyof Omit<VehicleSearchFilters, "page">,
-    value: any
+    value: any,
   ) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -239,7 +236,7 @@ export default function CreateBookingPage() {
     e?.preventDefault();
     if (searchPickupCoords && (!filters.startDate || !filters.endDate)) {
       toast.error(
-        "Dates are required for proximity search (Location selected)."
+        "Dates are required for proximity search (Location selected).",
       );
       return;
     }
@@ -251,17 +248,17 @@ export default function CreateBookingPage() {
   const handleSegmentChange = (
     index: number,
     field: keyof ExtendedBookingSegment,
-    value: any
+    value: any,
   ) => {
     setSegments((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
+      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
     );
   };
 
   const handleSegmentLocationSelect = (
     index: number,
     type: "pickup" | "dropoff",
-    coords: any
+    coords: any,
   ) => {
     setSegments((prev) =>
       prev.map((s, i) => {
@@ -269,7 +266,7 @@ export default function CreateBookingPage() {
         return type === "pickup"
           ? { ...s, pickupCoords: coords }
           : { ...s, dropoffCoords: coords };
-      })
+      }),
     );
   };
 
@@ -285,7 +282,7 @@ export default function CreateBookingPage() {
             { id: Date.now(), name: "", coords: null },
           ],
         };
-      })
+      }),
     );
   };
 
@@ -297,7 +294,7 @@ export default function CreateBookingPage() {
           ...s,
           uiAreaOfUse: s.uiAreaOfUse.filter((a) => a.id !== areaId),
         };
-      })
+      }),
     );
   };
 
@@ -305,7 +302,7 @@ export default function CreateBookingPage() {
     segmentIndex: number,
     areaId: number,
     field: "name" | "coords",
-    value: any
+    value: any,
   ) => {
     setSegments((prev) =>
       prev.map((s, i) => {
@@ -313,10 +310,10 @@ export default function CreateBookingPage() {
         return {
           ...s,
           uiAreaOfUse: s.uiAreaOfUse.map((a) =>
-            a.id === areaId ? { ...a, [field]: value } : a
+            a.id === areaId ? { ...a, [field]: value } : a,
           ),
         };
-      })
+      }),
     );
   };
 
@@ -410,7 +407,7 @@ export default function CreateBookingPage() {
           setCalculationResult(data);
           setStep("confirm");
         },
-      }
+      },
     );
   };
 
@@ -430,6 +427,7 @@ export default function CreateBookingPage() {
       discountAmount: guestDetails.discountAmount
         ? Number(guestDetails.discountAmount)
         : undefined,
+      isAdmin: true,
     };
 
     createBookingMutation.mutate(payload, {
@@ -590,7 +588,7 @@ export default function CreateBookingPage() {
               label="Vehicle Type"
               options={vehicleTypeOptions}
               selected={vehicleTypeOptions.find(
-                (o) => o.id === filters.vehicleTypeId
+                (o) => o.id === filters.vehicleTypeId,
               )}
               onChange={(opt) => handleFilterChange("vehicleTypeId", opt.id)}
               placeholder="Any Type"
@@ -599,7 +597,7 @@ export default function CreateBookingPage() {
               label="Make"
               options={vehicleMakeOptions}
               selected={vehicleMakeOptions.find(
-                (o) => o.id === filters.vehicleMakeId
+                (o) => o.id === filters.vehicleMakeId,
               )}
               onChange={(opt) => handleFilterChange("vehicleMakeId", opt.id)}
               placeholder="Any Make"
@@ -608,7 +606,7 @@ export default function CreateBookingPage() {
               label="Model"
               options={vehicleModelOptions}
               selected={vehicleModelOptions.find(
-                (o) => o.id === filters.vehicleModelId
+                (o) => o.id === filters.vehicleModelId,
               )}
               onChange={(opt) => handleFilterChange("vehicleModelId", opt.id)}
               placeholder="Any Model"
@@ -709,7 +707,7 @@ export default function CreateBookingPage() {
                   src={
                     vehicle.photos.find((p) => p.isPrimary)?.cloudinaryUrl ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      vehicle.name
+                      vehicle.name,
                     )}&background=random&size=96`
                   }
                   alt={vehicle.name}
@@ -761,8 +759,8 @@ export default function CreateBookingPage() {
                       <p className="text-2xl font-bold text-green-700">
                         {formatPrice(
                           Math.min(
-                            ...vehicle.allPricingOptions.map((p) => p.price)
-                          )
+                            ...vehicle.allPricingOptions.map((p) => p.price),
+                          ),
                         )}
                       </p>
                     ) : (
