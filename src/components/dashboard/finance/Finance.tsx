@@ -420,11 +420,11 @@ export default function PaymentsPage() {
               View and manage all payments on the platform.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-wrap items-center gap-4">
             <div className="flex flex-wrap items-center gap-4">
               <Link
                 href="/dashboard/finance/bookings"
-                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1 hover:bg-[#007ACC]"
+                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1"
               >
                 View Bookings
               </Link>
@@ -448,7 +448,6 @@ export default function PaymentsPage() {
             </div>
           </div>
         </div>
-
         <PaymentFilters
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
