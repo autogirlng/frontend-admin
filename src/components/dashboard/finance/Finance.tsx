@@ -420,7 +420,7 @@ export default function PaymentsPage() {
             <div className="flex flex-wrap items-center gap-4">
               <Link
                 href="/dashboard/finance/bookings"
-                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1 rounded hover:bg-[#007ACC]"
+                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1 hover:bg-[#007ACC]"
               >
                 View Bookings
               </Link>
@@ -437,7 +437,7 @@ export default function PaymentsPage() {
             <div className="flex flex-wrap items-center gap-4 mt-2">
               <Link
                 href="/dashboard/bookings/consolidated-invoice"
-                className="bg-[#7796FF] flex py-2 px-6 my-1 text-white hover:bg-[#007ACC] items-center rounded"
+                className="bg-[#7796FF] flex py-2 px-6 my-1 text-white hover:bg-[#007ACC] items-center"
               >
                 <Plus className="mr-2 h-5 w-5" /> Consolidated Invoice
               </Link>
