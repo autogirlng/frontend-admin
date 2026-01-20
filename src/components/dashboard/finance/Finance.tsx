@@ -314,6 +314,10 @@ export default function PaymentsPage() {
           item.amountPaid &&
           item.amountPaid < item.totalPayable &&
           item.amountPaid > 0;
+
+        const isFullyPaid =
+          item.amountPaid && item.amountPaid >= item.totalPayable;
+
         const percentage = isPartial
           ? Math.round((item.amountPaid! / item.totalPayable) * 100)
           : 0;
@@ -337,7 +341,7 @@ export default function PaymentsPage() {
                 </div>
               </div>
             )}
-            {item.amountPaid === item.totalPayable && item.amountPaid > 0 && (
+            {isFullyPaid && (
               <span className="text-[10px] text-green-600 flex items-center gap-1">
                 <CheckCheck className="w-3 h-3" /> Fully Paid
               </span>
