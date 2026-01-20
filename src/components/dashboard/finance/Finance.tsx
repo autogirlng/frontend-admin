@@ -17,10 +17,10 @@ import {
   Plus,
   Edit,
   ExternalLink,
+  Coins,
 } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
-
 import {
   useGetPayments,
   useDownloadInvoice,
@@ -65,11 +65,11 @@ export default function PaymentsPage() {
   });
 
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
-    null
+    null,
   );
   const [paymentToUpdate, setPaymentToUpdate] = useState<Payment | null>(null);
   const [previewConfig, setPreviewConfig] = useState<{
@@ -125,7 +125,7 @@ export default function PaymentsPage() {
 
   const handleFilterChange = (
     key: "paymentStatus" | "paymentMethod",
-    value: string | null
+    value: string | null,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(0);
@@ -143,7 +143,8 @@ export default function PaymentsPage() {
   };
 
   const isRowSelectable = (payment: Payment) =>
-    payment.paymentStatus === "PENDING" &&
+    (payment.paymentStatus === "PENDING" ||
+      payment.paymentStatus === "PARTIALLY_PAID") &&
     payment.paymentProvider === "OFFLINE";
 
   const handleRowSelect = (rowId: string | number) => {
@@ -212,7 +213,10 @@ export default function PaymentsPage() {
       });
     }
 
-    if (payment.paymentStatus === "SUCCESSFUL") {
+    if (
+      payment.paymentStatus === "SUCCESSFUL" ||
+      payment.paymentStatus === "PARTIALLY_PAID"
+    ) {
       actions.push({
         label: "View Receipt",
         icon: View,
@@ -231,12 +235,16 @@ export default function PaymentsPage() {
     }
 
     if (
-      payment.paymentStatus === "PENDING" &&
+      (payment.paymentStatus === "PENDING" ||
+        payment.paymentStatus === "PARTIALLY_PAID") &&
       payment.paymentProvider === "OFFLINE"
     ) {
       actions.push({
-        label: "Approve Payment",
-        icon: Vote,
+        label:
+          payment.paymentStatus === "PARTIALLY_PAID"
+            ? "Update Balance"
+            : "Approve Payment",
+        icon: payment.paymentStatus === "PARTIALLY_PAID" ? Coins : Vote,
         onClick: () =>
           setApprovalModal({ isOpen: true, payment, mode: "single" }),
       });
@@ -274,7 +282,7 @@ export default function PaymentsPage() {
       cell: (item) => (
         <div>
           <div className="font-medium text-gray-900">{item.userName}</div>
-          <div className="text-gray-500">{item.userPhone}</div>
+          <div className="text-gray-500 text-xs">{item.userPhone}</div>
         </div>
       ),
     },
@@ -299,63 +307,92 @@ export default function PaymentsPage() {
       ),
     },
     {
-      header: "Amount",
+      header: "Payment Info",
       accessorKey: "totalPayable",
-      cell: (item) => (
-        <span className="font-semibold">{formatPrice(item.totalPayable)}</span>
-      ),
+      cell: (item) => {
+        const isPartial =
+          item.amountPaid &&
+          item.amountPaid < item.totalPayable &&
+          item.amountPaid > 0;
+        const percentage = isPartial
+          ? Math.round((item.amountPaid! / item.totalPayable) * 100)
+          : 0;
+
+        return (
+          <div className="flex flex-col min-w-[120px]">
+            <span className="font-semibold text-gray-900">
+              {formatPrice(item.totalPayable)}
+            </span>
+            {isPartial && (
+              <div className="w-full mt-1">
+                <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+                  <span>Paid: {formatPrice(item.amountPaid!)}</span>
+                  <span>{percentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div
+                    className="bg-orange-500 h-1.5 rounded-full"
+                    style={{ width: `${percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            {item.amountPaid === item.totalPayable && item.amountPaid > 0 && (
+              <span className="text-[10px] text-green-600 flex items-center gap-1">
+                <CheckCheck className="w-3 h-3" /> Fully Paid
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     { header: "Provider", accessorKey: "paymentProvider" },
     {
       header: "Status",
       accessorKey: "paymentStatus",
-      cell: (item) => (
-        <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-            item.paymentStatus === "SUCCESSFUL"
-              ? "bg-green-100 text-green-800"
-              : item.paymentStatus === "PENDING"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {item.paymentStatus.replace(/_/g, " ")}
-        </span>
-      ),
-    },
-    {
-      header: "Created",
-      accessorKey: "createdAt",
       cell: (item) => {
-        const createdDate = new Date(item.createdAt);
+        let bgClass = "bg-gray-100 text-gray-800";
+        if (item.paymentStatus === "SUCCESSFUL")
+          bgClass = "bg-green-100 text-green-800";
+        else if (item.paymentStatus === "PENDING")
+          bgClass = "bg-yellow-100 text-yellow-800";
+        else if (item.paymentStatus === "PARTIALLY_PAID")
+          bgClass = "bg-orange-100 text-orange-800 border border-orange-200";
+        else if (
+          item.paymentStatus === "FAILED" ||
+          item.paymentStatus === "ABANDONED"
+        )
+          bgClass = "bg-red-100 text-red-800";
+
         return (
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-900">
-              {format(createdDate, "MMM d, yyyy")}
-            </span>
-            <span className="text-xs text-gray-500">
-              {format(createdDate, "h:mm a")}
-            </span>
-          </div>
+          <span
+            className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${bgClass}`}
+          >
+            {item.paymentStatus.replace(/_/g, " ")}
+          </span>
         );
       },
     },
     {
-      header: "Paid",
-      accessorKey: "paidAt",
+      header: "Timestamps",
+      accessorKey: "createdAt",
       cell: (item) => {
-        if (!item.paidAt) {
-          return <span className="text-xs text-gray-400 italic">Not Paid</span>;
-        }
-        const paidDate = new Date(item.paidAt);
+        const createdDate = new Date(item.createdAt);
         return (
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-green-700">
-              {format(paidDate, "MMM d, yyyy")}
+          <div className="flex flex-col text-xs">
+            <span className="text-gray-500">
+              Created:{" "}
+              <span className="text-gray-900">
+                {format(createdDate, "MMM d, HH:mm")}
+              </span>
             </span>
-            <span className="text-xs text-green-600">
-              {format(paidDate, "h:mm a")}
-            </span>
+            {item.paidAt ? (
+              <span className="text-green-600 mt-1">
+                Paid: {format(new Date(item.paidAt), "MMM d, HH:mm")}
+              </span>
+            ) : (
+              <span className="text-gray-400 italic mt-1">Not Paid</span>
+            )}
           </div>
         );
       },
@@ -379,11 +416,11 @@ export default function PaymentsPage() {
               View and manage all payments on the platform.
             </p>
           </div>
-          <div className="flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex flex-wrap items-center gap-4">
               <Link
                 href="/dashboard/finance/bookings"
-                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1"
+                className="text-sm font-medium text-white px-6 py-3 bg-[#0096FF] my-1 rounded hover:bg-[#007ACC]"
               >
                 View Bookings
               </Link>
@@ -400,13 +437,14 @@ export default function PaymentsPage() {
             <div className="flex flex-wrap items-center gap-4 mt-2">
               <Link
                 href="/dashboard/bookings/consolidated-invoice"
-                className="bg-[#7796FF] flex py-2 px-6 my-1 text-white hover:bg-[#007ACC] items-center"
+                className="bg-[#7796FF] flex py-2 px-6 my-1 text-white hover:bg-[#007ACC] items-center rounded"
               >
                 <Plus className="mr-2 h-5 w-5" /> Consolidated Invoice
               </Link>
             </div>
           </div>
         </div>
+
         <PaymentFilters
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -415,6 +453,7 @@ export default function PaymentsPage() {
           handleDateChange={handleDateChange}
           clearFilters={clearFilters}
         />
+
         {selectedPaymentIds.size > 0 && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-6 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
@@ -425,7 +464,9 @@ export default function PaymentsPage() {
                 <p className="font-medium text-green-900">
                   {selectedPaymentIds.size} selected
                 </p>
-                <p className="text-sm text-green-700">Ready for approval</p>
+                <p className="text-sm text-green-700">
+                  Ready for approval (Defaults to Full Payment)
+                </p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -446,7 +487,7 @@ export default function PaymentsPage() {
                 }
               >
                 <CheckCheck className="w-4 h-4 mr-2" />
-                Approve ({selectedPaymentIds.size})
+                Approve All ({selectedPaymentIds.size})
               </Button>
             </div>
           </div>
@@ -461,7 +502,7 @@ export default function PaymentsPage() {
                 setPageSize(Number(e.target.value));
                 setCurrentPage(0);
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-md bg-white"
+              className="px-3 py-1.5 border border-gray-300 bg-white outline-none focus:ring-2 focus:ring-[#0096FF]"
             >
               {[10, 25, 50, 75, 100].map((size) => (
                 <option key={size} value={size}>
@@ -478,7 +519,7 @@ export default function PaymentsPage() {
               {paginatedData
                 ? Math.min(
                     (currentPage + 1) * pageSize,
-                    paginatedData.totalItems
+                    paginatedData.totalItems,
                   )
                 : 0}
             </strong>{" "}
@@ -496,7 +537,7 @@ export default function PaymentsPage() {
           <div
             className={clsx(
               "transition-opacity",
-              isPlaceholderData || isExporting ? "opacity-50" : ""
+              isPlaceholderData || isExporting ? "opacity-50" : "",
             )}
           >
             <CustomTable

@@ -20,6 +20,7 @@ export const BOOKINGS_QUERY_KEY = "financeBookings";
 export interface OfflinePaymentPayload {
   paymentImageUrl: string;
   publicId: string;
+  amountPaid?: number;
 }
 
 export interface BulkOfflinePaymentPayload {
@@ -83,10 +84,10 @@ export function useConfirmOfflinePayment() {
     mutationFn: ({ bookingId, payload }) =>
       apiClient.post(
         `/admin/bookings/${bookingId}/confirm-offline-payment`,
-        payload
+        payload,
       ),
     onSuccess: () => {
-      toast.success("Offline payment confirmed. Booking is now active.");
+      toast.success("Payment recorded successfully.");
       queryClient.invalidateQueries({
         queryKey: [BOOKINGS_QUERY_KEY],
         exact: false,
@@ -112,11 +113,11 @@ export function useBulkConfirmOfflinePayment() {
       if (data.failedConfirmations > 0) {
         toast.error(
           `Bulk action complete: ${data.successfulConfirmations} succeeded, ${data.failedConfirmations} failed.`,
-          { duration: 5000 }
+          { duration: 5000 },
         );
       } else {
         toast.success(
-          `Successfully confirmed ${data.successfulConfirmations} payments.`
+          `Successfully confirmed ${data.successfulConfirmations} payments.`,
         );
       }
       queryClient.invalidateQueries({
@@ -147,7 +148,7 @@ export function useDownloadInvoice() {
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
         {},
-        defaultFilename
+        defaultFilename,
       );
     },
     onSuccess: () => {
@@ -165,7 +166,7 @@ export function useGetBooking(bookingId: string | null) {
     queryFn: async () => {
       if (!bookingId) return null;
       return await apiClient.get<BookingForCalculation>(
-        `/bookings/${bookingId}`
+        `/bookings/${bookingId}`,
       );
     },
     enabled: !!bookingId,
@@ -178,7 +179,7 @@ export function useGetCalculation(calculationId: string | null) {
     queryFn: async () => {
       if (!calculationId) return null;
       return await apiClient.get<CalculationResponse>(
-        `/public/bookings/calculate/${calculationId}`
+        `/public/bookings/calculate/${calculationId}`,
       );
     },
     enabled: !!calculationId,

@@ -5,8 +5,9 @@ import {
   UploadCloud,
   X,
   FileIcon,
-  Paperclip,
   CheckCircle2,
+  DollarSign,
+  AlertCircle,
 } from "lucide-react";
 import clsx from "clsx";
 import { ConfirmModal } from "@/components/generic/ui/CustomModal";
@@ -18,6 +19,8 @@ import {
   OfflinePaymentPayload,
   BulkOfflinePaymentPayload,
 } from "@/lib/hooks/finance/useFinanceBookings";
+import TextInput from "@/components/generic/ui/TextInput";
+import { formatPrice } from "./utils";
 
 const FilePreviewThumbnail = ({
   file,
@@ -86,12 +89,13 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
 }) => {
   const [globalFile, setGlobalFile] = useState<File | null>(null);
   const [individualFiles, setIndividualFiles] = useState<Record<string, File>>(
-    {}
+    {},
   );
   const [isUploading, setIsUploading] = useState(false);
-
-  // New state for drag-and-drop visual feedback
   const [isDragging, setIsDragging] = useState(false);
+
+  const [paymentType, setPaymentType] = useState<"full" | "partial">("full");
+  const [partialAmount, setPartialAmount] = useState<string>("");
 
   const confirmPaymentMutation = useConfirmOfflinePayment();
   const bulkConfirmMutation = useBulkConfirmOfflinePayment();
@@ -102,12 +106,21 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
       setIndividualFiles({});
       setIsUploading(false);
       setIsDragging(false);
+      setPaymentType("full");
+      setPartialAmount("");
     }
   }, [isOpen]);
 
+  const totalPayable = payment?.totalPayable || 0;
+  const alreadyPaid = payment?.amountPaid || 0;
+  const remainingBalance = totalPayable - alreadyPaid;
+
+  const isAmountError =
+    partialAmount !== "" && Number(partialAmount) > remainingBalance;
+
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    bookingId?: string
+    bookingId?: string,
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -117,7 +130,6 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
     }
   };
 
-  // --- New Drag and Drop Handlers ---
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -136,17 +148,12 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      // Create a synthetic event to reuse existing handleFileChange logic
       const syntheticEvent = {
-        target: {
-          files: e.dataTransfer.files,
-        },
+        target: { files: e.dataTransfer.files },
       } as React.ChangeEvent<HTMLInputElement>;
-
       handleFileChange(syntheticEvent);
     }
   };
-  // ----------------------------------
 
   const removeFile = (bookingId?: string) => {
     if (bookingId) {
@@ -167,10 +174,30 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
           setIsUploading(false);
           return;
         }
+
+        let finalAmountPaid: number | undefined = undefined;
+        if (paymentType === "partial") {
+          const amount = parseFloat(partialAmount);
+          if (isNaN(amount) || amount <= 0) {
+            toast.error("Please enter a valid amount.");
+            setIsUploading(false);
+            return;
+          }
+          if (amount > remainingBalance) {
+            toast.error(
+              `Amount cannot exceed remaining balance of ${formatPrice(remainingBalance)}`,
+            );
+            setIsUploading(false);
+            return;
+          }
+          finalAmountPaid = amount;
+        }
+
         const uploaded = await uploadToCloudinary(globalFile);
         const payload: OfflinePaymentPayload = {
           paymentImageUrl: uploaded.url,
           publicId: uploaded.publicId,
+          amountPaid: finalAmountPaid,
         };
 
         await confirmPaymentMutation.mutateAsync({
@@ -183,14 +210,13 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
 
       if (mode === "bulk") {
         const bookingsToProcess = selectedPayments;
+
         if (
           bookingsToProcess.some(
-            (p) => !globalFile && !individualFiles[p.bookingId]
+            (p) => !globalFile && !individualFiles[p.bookingId],
           )
         ) {
-          toast.error(
-            "All bookings must have a proof of payment (either Global or Individual)."
-          );
+          toast.error("All bookings must have a proof of payment.");
           setIsUploading(false);
           return;
         }
@@ -203,22 +229,21 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
         const paymentConfirmations = await Promise.all(
           bookingsToProcess.map(async (booking) => {
             const specificFile = individualFiles[booking.bookingId];
+            let uploadData = globalUploadData;
+
             if (specificFile) {
-              const upload = await uploadToCloudinary(specificFile);
-              return {
-                bookingId: booking.bookingId,
-                paymentImageUrl: upload.url,
-                publicId: upload.publicId,
-              };
-            } else if (globalUploadData) {
-              return {
-                bookingId: booking.bookingId,
-                paymentImageUrl: globalUploadData.url,
-                publicId: globalUploadData.publicId,
-              };
+              uploadData = await uploadToCloudinary(specificFile);
             }
-            throw new Error("Missing file logic error");
-          })
+
+            if (!uploadData) throw new Error("Missing file logic error");
+
+            return {
+              bookingId: booking.bookingId,
+              paymentImageUrl: uploadData.url,
+              publicId: uploadData.publicId,
+              amountPaid: undefined,
+            };
+          }),
         );
 
         const payload: BulkOfflinePaymentPayload = { paymentConfirmations };
@@ -239,7 +264,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
       title={
         mode === "bulk"
           ? `Approve ${selectedPayments.length} Payments`
-          : "Approve Offline Payment"
+          : "Approve Payment"
       }
       isLoading={
         isUploading ||
@@ -248,32 +273,127 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
       }
       variant="primary"
       confirmLabel={
-        isUploading ? "Uploading & Processing..." : "Confirm & Approve"
+        isUploading
+          ? "Processing..."
+          : paymentType === "partial"
+            ? `Record ${formatPrice(Number(partialAmount) || 0)}`
+            : "Confirm Full Payment"
       }
       onConfirm={handleConfirm}
       onCancel={onClose}
       message={
-        <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
-            {mode === "bulk"
-              ? "Upload one 'Master Proof' to apply to all, or override specifically below."
-              : `Upload proof for ${payment?.userName} (Ref: ${payment?.bookingRef}).`}
-          </div>
+        <div className="space-y-6">
+          {mode === "single" && payment && (
+            <div className="bg-gray-50 p-4 border border-gray-200">
+              <div className="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
+                <span className="text-gray-600 text-sm">Total Payable</span>
+                <span className="font-semibold text-gray-900">
+                  {formatPrice(payment.totalPayable)}
+                </span>
+              </div>
 
-          <div className="relative">
+              {payment.paymentStatus === "PARTIALLY_PAID" && (
+                <div className="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
+                  <span className="text-orange-600 text-sm">Already Paid</span>
+                  <span className="font-semibold text-orange-600">
+                    {formatPrice(payment.amountPaid || 0)}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-blue-600 text-sm font-medium">
+                  Remaining Balance
+                </span>
+                <span className="font-bold text-xl text-blue-600">
+                  {formatPrice(remainingBalance)}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <button
+                  onClick={() => setPaymentType("full")}
+                  className={clsx(
+                    "py-2 px-3 text-sm font-medium border transition-colors flex items-center justify-center gap-2",
+                    paymentType === "full"
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50",
+                  )}
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Full Payment
+                </button>
+                <button
+                  onClick={() => setPaymentType("partial")}
+                  className={clsx(
+                    "py-2 px-3 text-sm font-medium border transition-colors flex items-center justify-center gap-2",
+                    paymentType === "partial"
+                      ? "bg-orange-600 text-white border-orange-600"
+                      : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50",
+                  )}
+                >
+                  <DollarSign className="w-4 h-4" /> Part Payment
+                </button>
+              </div>
+
+              {paymentType === "partial" && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-200 mt-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Enter Amount Received
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 text-gray-500 z-10 pointer-events-none">
+                      ₦
+                    </span>
+
+                    <TextInput
+                      id="partial-amount"
+                      label="Enter Amount Received"
+                      hideLabel={true}
+                      type="number"
+                      value={partialAmount}
+                      onChange={(e) => setPartialAmount(e.target.value)}
+                      placeholder="0.00"
+                      max={remainingBalance}
+                      className="pl-10"
+                      error={isAmountError ? "Error" : undefined}
+                    />
+                  </div>
+
+                  {isAmountError ? (
+                    <p className="mt-1 text-sm text-red-600">
+                      Amount exceeds remaining balance
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">
+                      New Balance will be:{" "}
+                      <span className="font-medium">
+                        {formatPrice(
+                          remainingBalance - (Number(partialAmount) || 0),
+                        )}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Proof of Payment {mode === "bulk" && "(Master File)"}
+            </label>
             <label
               htmlFor="global-proof-upload"
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={clsx(
-                "block border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer",
-                // Added isDragging condition to mimic the hover/active style
+                "block border-2 border-dashed p-6 text-center transition-all cursor-pointer relative",
                 isDragging ? "border-blue-500 bg-blue-50" : "",
                 globalFile && !isDragging
                   ? "border-green-400 bg-green-50"
                   : !isDragging &&
-                      "border-gray-300 hover:border-blue-500 hover:bg-gray-50"
+                      "border-gray-300 hover:border-blue-500 hover:bg-gray-50",
               )}
             >
               <input
@@ -290,7 +410,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
                     onRemove={() => removeFile()}
                   />
                   <p className="mt-2 text-sm font-medium text-green-700">
-                    Master Proof Attached
+                    File Attached
                   </p>
                   <p className="text-xs text-gray-500">{globalFile.name}</p>
                 </div>
@@ -308,55 +428,13 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
           </div>
 
           {mode === "bulk" && (
-            <div className="mt-4">
-              <p className="text-sm font-semibold text-gray-700 mb-2">
-                Selected Bookings:
-              </p>
-              <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md divide-y divide-gray-100 bg-white">
-                {selectedPayments.map((p) => {
-                  const hasIndividual = !!individualFiles[p.bookingId];
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-3 hover:bg-gray-50"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">
-                          {p.userName}
-                        </span>
-                        <span className="text-xs font-mono text-gray-500">
-                          {p.bookingRef}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {hasIndividual ? (
-                          <FilePreviewThumbnail
-                            file={individualFiles[p.bookingId]}
-                            onRemove={() => removeFile(p.bookingId)}
-                          />
-                        ) : globalFile ? (
-                          <div className="flex items-center gap-1 text-green-600 px-2 py-1 bg-green-50 rounded text-xs border border-green-100">
-                            <CheckCircle2 className="w-3 h-3" /> Master
-                          </div>
-                        ) : (
-                          <span className="text-xs text-orange-500 italic">
-                            No proof
-                          </span>
-                        )}
-                        <label className="cursor-pointer p-2 hover:bg-gray-200 rounded-full text-gray-500">
-                          <Paperclip className="w-4 h-4" />
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*,application/pdf"
-                            onChange={(e) => handleFileChange(e, p.bookingId)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="bg-yellow-50 p-3 rounded text-xs text-yellow-800 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Bulk approval currently records all selected items as{" "}
+                <strong>Full Payments</strong>. Use single approval for partial
+                payments.
+              </span>
             </div>
           )}
         </div>

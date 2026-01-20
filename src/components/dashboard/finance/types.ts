@@ -33,6 +33,7 @@ export interface Payment {
 export enum PaymentStatus {
   PENDING = "PENDING",
   SUCCESSFUL = "SUCCESSFUL",
+  PARTIALLY_PAID = "PARTIALLY_PAID",
   ABANDONED = "ABANDONED",
   FAILED = "FAILED",
 }

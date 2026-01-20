@@ -18,6 +18,7 @@ import {
   XCircle,
   CreditCard,
   Map as MapIcon,
+  Coins,
 } from "lucide-react";
 import { useGetBookingDetails } from "@/lib/hooks/booking-management/useBookingDetails";
 import { BookingSegment } from "./details-types";
@@ -121,6 +122,9 @@ export default function BookingDetailPage() {
     );
   }
 
+  const isPartiallyPaid =
+    !booking.paidAt && booking.bookingStatus === "CONFIRMED";
+
   return (
     <div className="min-h-screen pb-20">
       <div className="max-w-8xl mx-auto px-0 sm:px-0 lg:px-0 py-3">
@@ -198,7 +202,9 @@ export default function BookingDetailPage() {
                   className={`p-4 rounded-xl border ${
                     booking.paidAt
                       ? "bg-green-50 border-green-100"
-                      : "bg-amber-50 border-amber-100"
+                      : isPartiallyPaid
+                        ? "bg-blue-50 border-blue-100"
+                        : "bg-amber-50 border-amber-100"
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -207,6 +213,8 @@ export default function BookingDetailPage() {
                     </span>
                     {booking.paidAt ? (
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : isPartiallyPaid ? (
+                      <Coins className="w-5 h-5 text-blue-600" />
                     ) : (
                       <Clock className="w-5 h-5 text-amber-600" />
                     )}
@@ -220,8 +228,15 @@ export default function BookingDetailPage() {
                       <p className="text-xs text-green-700 mt-1">
                         {format(
                           new Date(booking.paidAt),
-                          "MMM d, yyyy • h:mm a"
+                          "MMM d, yyyy • h:mm a",
                         )}
+                      </p>
+                    </div>
+                  ) : isPartiallyPaid ? (
+                    <div>
+                      <p className="font-bold text-blue-800">Partially Paid</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Booking confirmed via partial payment.
                       </p>
                     </div>
                   ) : (
@@ -230,7 +245,7 @@ export default function BookingDetailPage() {
                         Pending Payment
                       </p>
                       <p className="text-xs text-amber-700 mt-1">
-                        Customer has not paid yet.
+                        Customer has not paid fully yet.
                       </p>
                     </div>
                   )}
@@ -387,7 +402,7 @@ export default function BookingDetailPage() {
                           <Calendar className="w-3 h-3" />
                           {format(
                             new Date(segment.startDateTime),
-                            "MMM d, h:mm a"
+                            "MMM d, h:mm a",
                           )}
                         </p>
                         <a
@@ -412,7 +427,7 @@ export default function BookingDetailPage() {
                           <Calendar className="w-3 h-3" />
                           {format(
                             new Date(segment.endDateTime),
-                            "MMM d, h:mm a"
+                            "MMM d, h:mm a",
                           )}
                         </p>
                       </div>
