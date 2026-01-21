@@ -7,7 +7,7 @@ import {
   Users,
   SlidersHorizontal,
   Briefcase,
-  CreditCard,
+  ShipWheel,
   Bell,
   Activity,
   Hammer,
@@ -20,8 +20,7 @@ export default function SettingsPage() {
   return (
     <>
       <CustomBack />
-      <main className="py-3 max-w-8xl mx-auto">
-        {/* --- Header --- */}
+      <main className="py-2 max-w-8xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-lg text-gray-600 mt-1">
@@ -110,6 +109,15 @@ export default function SettingsPage() {
             title="Coupons"
             description="Manage discount coupons for your platform."
             iconBgColor="bg-yellow-300"
+          />
+
+          {/* 8. Driver Applicant */}
+          <SettingsCard
+            href="/dashboard/drivers/applications"
+            icon={ShipWheel}
+            title="Driver"
+            description="Manage Driver Application"
+            iconBgColor="bg-pink-300"
           />
         </div>
       </main>
