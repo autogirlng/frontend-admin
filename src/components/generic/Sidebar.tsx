@@ -22,7 +22,6 @@ import {
   GalleryHorizontal,
   CirclePoundSterling,
 } from "lucide-react";
-import { ReviewIcon } from "./FeedbackIcon";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -66,7 +65,6 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     { name: "Customers", href: "/dashboard/customers", icon: Users },
     { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
     { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
-    { name: "Reviews & Ratings", href: "/dashboard/reviews", icon: ReviewIcon },
   ];
 
   const settingsLink = {

@@ -13,6 +13,7 @@ import {
   Hammer,
   Ticket,
   Puzzle,
+  Star,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -115,9 +116,18 @@ export default function SettingsPage() {
           <SettingsCard
             href="/dashboard/drivers/applications"
             icon={ShipWheel}
-            title="Driver"
+            title="Driver Application from Host"
             description="Manage Driver Application"
             iconBgColor="bg-pink-300"
+          />
+
+          {/* 9. Rating and Review */}
+          <SettingsCard
+            href="/dashboard/reviews"
+            icon={Star}
+            title="Rating & Reviews"
+            description="Manage Rating and Reviews"
+            iconBgColor="bg-green-300"
           />
         </div>
       </main>
