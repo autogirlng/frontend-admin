@@ -111,38 +111,12 @@ export function usePreviewConsolidatedReceiptBlob() {
 
 
 // 6. GET Consolidated Invoice By ID
-async function fetchConsolidatedInvoiceById(
-  id: string
-): Promise<ConsolidatedInvoicePayload> {
-  try {
-    const token = localStorage.getItem("user_token");
-    const res = await axios.get<ConsolidatedInvoicePayload>(
-      `${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/consolidated/${id}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return res.data;
-  } catch (err: any) {
-    if (axios.isAxiosError(err)) {
-      throw new Error(
-        err.response?.data?.message ||
-        `Request failed with status ${err.response?.status}`
-      );
-    }
-    throw new Error("Network error");
-  }
-}
 
 
 export function useGetConsolidatedInvoiceById(id: string) {
   return useQuery<ConsolidatedInvoicePayload>({
     queryKey: [CONSOLIDATED_INVOICES_KEY, id],
-    queryFn: () => fetchConsolidatedInvoiceById(id),
+    queryFn: async () => apiClient.getConsolidatedInvoices<ConsolidatedInvoicePayload>(`/admin/invoices/consolidated/${id}`),
     enabled: !!id,
     retry: false,
   });
