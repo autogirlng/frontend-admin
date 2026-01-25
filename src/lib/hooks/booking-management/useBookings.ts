@@ -6,10 +6,8 @@ import {
 } from "@/components/dashboard/bookings-management/types";
 import toast from "react-hot-toast";
 
-// --- Query Key ---
 const BOOKINGS_QUERY_KEY = "bookings";
 
-// Interface for our filter state
 interface BookingFilters {
   page: number;
   status: string;
@@ -35,9 +33,6 @@ interface VehicleOption {
   vehicleIdentifier: string;
 }
 
-/**
- * Fetches a paginated list of booking segments based on filters.
- */
 export function useGetBookingSegments(filters: BookingFilters) {
   const { searchTerm, ...otherFilters } = filters;
 
@@ -46,7 +41,7 @@ export function useGetBookingSegments(filters: BookingFilters) {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", String(otherFilters.page));
-      params.append("size", "10"); // Default page size
+      params.append("size", "10");
       if (searchTerm) {
         params.append("searchTerm", searchTerm);
       }
@@ -66,54 +61,41 @@ export function useGetBookingSegments(filters: BookingFilters) {
   });
 }
 
-// --- Type for Download Mutations ---
 interface DownloadArgs {
   bookingId: string;
-  toastId: string; // To update the loading toast
+  toastId: string;
 }
 
-/**
- * Hook to download an invoice PDF
- */
 export function useDownloadInvoice() {
   return useMutation<void, Error, DownloadArgs>({
     mutationFn: ({ bookingId }) => {
       const filename = `invoice-${bookingId}.pdf`;
-      // We pass an empty object {} as the body
       return apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
         {},
-        filename
+        filename,
       );
     },
     onSuccess: (data, variables) => {
-      // Use toastId to update the correct toast
       toast.success("Invoice download started.", {
         id: variables.toastId,
       });
     },
     onError: (error, variables) => {
       toast.error(`Download failed: ${error.message}`, {
-        id: variables.toastId, // This is now valid
+        id: variables.toastId,
       });
     },
   });
 }
 
-/**
- * Hook to download an receipt PDF
- */
-
 export function useDownloadReceipt() {
   return useMutation<void, Error, DownloadArgs>({
     mutationFn: ({ bookingId }) => {
-      // This function is called by the mutation
       const filename = `receipt-${bookingId}.pdf`;
-
-      // We use your new helper function here!
       return apiClient.getAndDownloadFile(
         `/admin/invoices/${bookingId}/download-receipt`,
-        filename
+        filename,
       );
     },
     onSuccess: (data, variables) => {
@@ -137,7 +119,6 @@ export function useCancelBooking() {
       apiClient.patch(`/admin/bookings/${bookingId}/cancel`, { reason }),
     onSuccess: () => {
       toast.success("Booking cancelled successfully.");
-      // Refresh the list
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error) => {
@@ -153,7 +134,6 @@ export function useDeleteBooking() {
     mutationFn: (bookingId) => apiClient.delete(`/admin/bookings/${bookingId}`),
     onSuccess: () => {
       toast.success("Booking record deleted successfully.");
-      // Refresh the list
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error) => {
@@ -194,7 +174,7 @@ export function useGetVehiclesForDropdown(searchTerm: string = "") {
       }
 
       const response: any = await apiClient.get(
-        `/vehicles?${params.toString()}`
+        `/vehicles?${params.toString()}`,
       );
 
       const vehicles = response.data?.content || response.content || [];
