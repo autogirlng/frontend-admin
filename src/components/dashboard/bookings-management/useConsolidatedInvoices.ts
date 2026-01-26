@@ -2,12 +2,14 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient";
 import {
   ConsolidatedInvoice,
   PaginatedResponse,
   CreateConsolidatedPayload,
+  ConsolidatedInvoicePayload,
 } from "./consolidated-types";
 
 export const CONSOLIDATED_INVOICES_KEY = "consolidatedInvoices";
@@ -104,5 +106,62 @@ export function usePreviewConsolidatedReceiptBlob() {
         `/admin/invoices/consolidated/${id}/receipt?preview=true`
       );
     },
+  });
+}
+
+
+// 6. GET Consolidated Invoice By ID
+async function fetchConsolidatedInvoiceById(
+  id: string
+): Promise<ConsolidatedInvoicePayload> {
+  try {
+    const token = localStorage.getItem("user_token");
+    const res = await axios.get<ConsolidatedInvoicePayload>(
+      `${process.env.NEXT_PUBLIC_API_URL}/admin/invoices/consolidated/${id}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (err: any) {
+    if (axios.isAxiosError(err)) {
+      throw new Error(
+        err.response?.data?.message ||
+        `Request failed with status ${err.response?.status}`
+      );
+    }
+    throw new Error("Network error");
+  }
+}
+
+
+export function useGetConsolidatedInvoiceById(id: string) {
+  return useQuery<ConsolidatedInvoicePayload>({
+    queryKey: [CONSOLIDATED_INVOICES_KEY, id],
+    queryFn: () => fetchConsolidatedInvoiceById(id),
+    enabled: !!id,
+    retry: false,
+  });
+}
+
+// 7. PUT Edit Consolidated Invoice
+export function useEditConsolidatedInvoice(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation<ConsolidatedInvoice, Error, CreateConsolidatedPayload>({
+    mutationFn: (payload) =>
+      apiClient.put(
+        `/admin/invoices/consolidated/${id}`,
+        payload
+      ),
+    onSuccess: () => {
+      toast.success("Consolidated invoice updated successfully.");
+      queryClient.invalidateQueries({ queryKey: [CONSOLIDATED_INVOICES_KEY] });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to update invoice."),
   });
 }

@@ -411,6 +411,7 @@ export default function CreateBookingPage() {
     );
   };
 
+
   const handleCreateBooking = (e: React.FormEvent) => {
     e.preventDefault();
     if (!calculationResult) return;
@@ -691,11 +692,10 @@ export default function CreateBookingPage() {
         )}
 
         <div
-          className={`grid grid-cols-1 gap-6 transition-opacity duration-300 ${
-            isSearchPlaceholder
-              ? "opacity-40 pointer-events-none grayscale"
-              : "opacity-100"
-          }`}
+          className={`grid grid-cols-1 gap-6 transition-opacity duration-300 ${isSearchPlaceholder
+            ? "opacity-40 pointer-events-none grayscale"
+            : "opacity-100"
+            }`}
         >
           {searchResultsData?.content.map((vehicle) => (
             <div
@@ -984,6 +984,18 @@ export default function CreateBookingPage() {
                 +{formatPrice(calculationResult.platformFeeAmount)}
               </span>
             </div>
+
+            {/* VAT Fee */}
+            {calculationResult.vatAmount && calculationResult.vatAmount > 0 && (
+              <div className="flex justify-between items-center text-gray-600 text-sm">
+                <span>VAT<span className="text-xs">{calculationResult?.vatPercentage ? ` (${calculationResult.vatPercentage}%)` : ""}</span></span>
+                <span className="font-medium text-gray-900 text-base">
+                  +{formatPrice(calculationResult?.vatAmount)}
+                </span>
+              </div>
+            )}
+
+
 
             {/* Geofence Surcharge */}
             {calculationResult.geofenceSurcharge > 0 && (

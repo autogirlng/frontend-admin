@@ -11,6 +11,7 @@ import {
   View,
   AlertCircle,
   Layers,
+  Pencil,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
@@ -22,6 +23,7 @@ import {
   useDownloadConsolidatedReceipt,
   usePreviewConsolidatedInvoiceBlob,
   usePreviewConsolidatedReceiptBlob,
+  // useEditConsolidatedInvoice
 } from "./useConsolidatedInvoices";
 import { ConsolidatedInvoice } from "./consolidated-types";
 
@@ -34,6 +36,8 @@ import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import { CreateConsolidatedModal } from "./CreateConsolidatedModal";
 import { DocumentPreviewModal } from "../finance/PreviewModal";
+import { EditConsolidatedModal } from "./EditConsolidatedInvoice";
+import { se } from "date-fns/locale";
 
 // Helper to format currency
 const formatPrice = (price: number) => {
@@ -47,6 +51,7 @@ export default function ConsolidatedInvoices() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isEditConsolidatedModalOpen, setIsEditConsolidatedModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] =
     useState<ConsolidatedInvoice | null>(null);
 
@@ -64,6 +69,7 @@ export default function ConsolidatedInvoices() {
     isPlaceholderData,
   } = useGetConsolidatedInvoices(currentPage);
 
+  // const editMutation = useEditConsolidatedInvoice();
   const confirmMutation = useConfirmConsolidatedInvoice();
   const downloadPdfMutation = useDownloadConsolidatedPdf();
   const downloadReceiptMutation = useDownloadConsolidatedReceipt();
@@ -89,10 +95,10 @@ export default function ConsolidatedInvoices() {
     const actions: ActionMenuItem[] = [];
 
     actions.push({
-        label: "View Invoice",
-        icon: View,
-        onClick: () => setPreviewConfig({ type: "invoice", invoice }),
-      });
+      label: "View Invoice",
+      icon: View,
+      onClick: () => setPreviewConfig({ type: "invoice", invoice }),
+    });
 
     // 1. Download PDF (Always available)
     actions.push({
@@ -134,6 +140,18 @@ export default function ConsolidatedInvoices() {
               invoiceNumber: invoice.invoiceNumber,
             }),
         });
+    }
+
+    // 4. Edit Invoice (Only for Drafts)
+    if (invoice.status === "DRAFT" || invoice.status === "CONFIRMED") {
+      actions.push({
+        label: "Edit Invoice",
+        icon: Pencil,
+        onClick: () => {
+          setIsEditConsolidatedModalOpen(true);
+          setSelectedInvoice(invoice);
+        },
+      });
     }
 
     return actions;
@@ -179,11 +197,10 @@ export default function ConsolidatedInvoices() {
         const isPaid = item.status === "PAID" || item.status === "CONFIRMED";
         return (
           <span
-            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-              isPaid
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
+            className={`px-2 py-0.5 text-xs font-medium rounded-full ${isPaid
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+              }`}
           >
             {item.status}
           </span>
@@ -196,6 +213,7 @@ export default function ConsolidatedInvoices() {
       cell: (item) => <ActionMenu actions={getActions(item)} />,
     },
   ];
+
 
   return (
     <>
@@ -243,9 +261,8 @@ export default function ConsolidatedInvoices() {
 
         {!isError && (invoices.length > 0 || isLoading) && (
           <div
-            className={`transition-opacity ${
-              isPlaceholderData ? "opacity-50" : ""
-            }`}
+            className={`transition-opacity ${isPlaceholderData ? "opacity-50" : ""
+              }`}
           >
             <CustomTable
               data={invoices}
@@ -267,6 +284,10 @@ export default function ConsolidatedInvoices() {
       {/* --- Modals --- */}
       {isCreateModalOpen && (
         <CreateConsolidatedModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
+
+      {isEditConsolidatedModalOpen && (
+        <EditConsolidatedModal onClose={() => setIsEditConsolidatedModalOpen(false)} consolidatedInvoiceId={selectedInvoice?.id} customerName={selectedInvoice?.customerName} />
       )}
 
       {isConfirmModalOpen && selectedInvoice && (
@@ -299,7 +320,7 @@ export default function ConsolidatedInvoices() {
           }
           onClose={() => setPreviewConfig(null)}
           fetchDocument={async () => {
-            const  id  = previewConfig.invoice.id;
+            const id = previewConfig.invoice.id;
             if (previewConfig.type === "invoice") {
               return await previewInvoiceBlob.mutateAsync({ id });
             } else {
@@ -308,6 +329,8 @@ export default function ConsolidatedInvoices() {
           }}
         />
       )}
+
+
     </>
   );
 }

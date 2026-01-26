@@ -95,6 +95,9 @@ export interface CalculateBookingResponse {
   platformFeeAmount: number;
   finalPrice: number;
   appliedGeofenceNames: string[];
+  couponDiscountAmount?: number;
+  vatAmount?: number;
+  vatPercentage?: number;
 }
 
 // --- Booking Creation ---
