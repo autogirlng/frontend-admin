@@ -45,7 +45,6 @@ export function EditConsolidatedModal({
 
     const bookings = bookingData?.content || [];
 
-
     const { data: consolidatedInvoiceData } = useGetConsolidatedInvoiceById(consolidatedInvoiceId || "");
     useEffect(() => {
         if (consolidatedInvoiceData) {

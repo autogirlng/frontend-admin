@@ -1,3 +1,4 @@
+import { ConsolidatedInvoicePayload } from "@/components/dashboard/bookings-management/consolidated-types";
 import { getSession } from "next-auth/react";
 
 class ApiError extends Error {
@@ -207,12 +208,12 @@ export const apiClient = {
     window.URL.revokeObjectURL(url);
   },
 
-    getAndDownloadFile: async (
+  getAndDownloadFile: async (
     endpoint: string,
     defaultFilename: string
   ): Promise<void> => {
     const headers = await getHeaders(); // Get auth headers
-    
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
       {
@@ -234,7 +235,7 @@ export const apiClient = {
     }
 
     const blob = await response.blob();
-    
+
     // Try to get filename from 'Content-Disposition' header
     let filename = defaultFilename;
     const disposition = response.headers.get("content-disposition");
@@ -276,7 +277,7 @@ export const apiClient = {
       try {
         const err = await response.json();
         errorMsg = err.message || errorMsg;
-      } catch {}
+      } catch { }
       throw new Error(errorMsg);
     }
 
@@ -299,10 +300,36 @@ export const apiClient = {
       try {
         const err = await response.json();
         errorMsg = err.message || errorMsg;
-      } catch {}
+      } catch { }
       throw new Error(errorMsg);
     }
 
     return await response.blob();
+  },
+
+  getConsolidatedInvoices: async <T>(endpoint: string, requireAuth: boolean = true): Promise<T> => {
+    const headers = await getHeaders(requireAuth);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+      {
+        method: "GET",
+        headers,
+      }
+    );
+    if (
+      response.status === 204 ||
+      response.headers.get("content-length") === "0"
+    ) {
+      if (!response.ok) {
+        throw new ApiError("API request failed with no content", response);
+      }
+      return null as unknown as T;
+    }
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new ApiError(data.message || "API request failed", response);
+    }
+    return data;
   },
 };
