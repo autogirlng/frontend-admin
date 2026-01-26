@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ 1. Added useEffect to imports
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -47,8 +46,6 @@ import clsx from "clsx";
 import Button from "@/components/generic/ui/Button";
 import TextAreaInput from "@/components/generic/ui/TextAreaInput";
 import { DocumentPreviewModal } from "../finance/PreviewModal";
-
-// --- Helper Functions & Constants ---
 
 const statusOptions: Option[] = [
   { id: "", name: "All Statuses" },
@@ -109,15 +106,17 @@ export function formatBookingStatus(status: BookingStatus) {
   return formatted;
 }
 
-// --- Main Page Component ---
 export default function BookingsPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
   const [bookingTypeFilter, setBookingTypeFilter] = useState<Option | null>(
-    null
+    null,
   );
-  const [previewConfig, setPreviewConfig] = useState<{ type: "invoice" | "receipt"; booking: BookingSegment } | null>(null);
+  const [previewConfig, setPreviewConfig] = useState<{
+    type: "invoice" | "receipt";
+    booking: BookingSegment;
+  } | null>(null);
 
   const previewInvoiceBlob = usePreviewInvoiceBlob();
   const previewReceiptBlob = usePreviewReceiptBlob();
@@ -126,11 +125,10 @@ export default function BookingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // --- Modal States ---
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
-    null
+    null,
   );
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveVehicleSearch, setMoveVehicleSearch] = useState("");
@@ -143,23 +141,18 @@ export default function BookingsPage() {
 
   const topRef = useRef<HTMLDivElement>(null);
 
-  // ✅ 2. FIX: Reset pagination to 0 whenever ANY filter changes
   useEffect(() => {
     setCurrentPage(0);
   }, [debouncedSearchTerm, statusFilter, bookingTypeFilter, dateRange]);
 
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
 
-  // --- API Hooks ---
   const {
     data: paginatedData,
     isLoading,
@@ -207,15 +200,13 @@ export default function BookingsPage() {
 
   const handleDateChange = (newDateRange: DateRange | undefined) => {
     setDateRange(newDateRange);
-    // setCurrentPage(0); // Handled by useEffect now
+    // setCurrentPage(0);
   };
 
   const handleCopyInvoice = (invoiceNumber: string) => {
     navigator.clipboard.writeText(invoiceNumber);
     toast.success("Invoice number copied!");
   };
-
-  // --- Action Handlers ---
 
   const initiateCancel = (id: string) => {
     setSelectedBookingId(id);
@@ -252,7 +243,7 @@ export default function BookingsPage() {
           setSelectedBookingId(null);
           setTargetVehicleId("");
         },
-      }
+      },
     );
   };
 
@@ -269,7 +260,7 @@ export default function BookingsPage() {
           setShowCancelModal(false);
           setSelectedBookingId(null);
         },
-      }
+      },
     );
   };
 
@@ -283,7 +274,6 @@ export default function BookingsPage() {
     });
   };
 
-  // --- Build Actions Menu Items ---
   const getBookingActions = (booking: BookingSegment): ActionMenuItem[] => {
     const canDownloadInvoice = [
       BookingStatus.PENDING_PAYMENT,
@@ -388,7 +378,6 @@ export default function BookingsPage() {
     return actions;
   };
 
-  // --- Table Columns ---
   const columns: ColumnDefinition<BookingSegment>[] = [
     {
       header: "Invoice",
@@ -431,7 +420,7 @@ export default function BookingsPage() {
     },
     {
       header: "Booking Type",
-      accessorKey: "bookingType",
+      accessorKey: "bookingTypeName",
     },
     {
       header: "Status",
@@ -473,7 +462,6 @@ export default function BookingsPage() {
       <Toaster position="top-right" />
       <main className="py-3 max-w-8xl mx-auto relative">
         <div ref={topRef} />
-        {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="my-1">
             <h1 className="text-3xl font-bold text-gray-900">Bookings</h1>
@@ -497,7 +485,6 @@ export default function BookingsPage() {
           </div>
         </div>
 
-        {/* --- Search Bar --- */}
         <div className="relative mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -515,7 +502,6 @@ export default function BookingsPage() {
           />
         </div>
 
-        {/* --- Filters --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Select
             label="Status"
@@ -525,7 +511,7 @@ export default function BookingsPage() {
             selected={statusFilter}
             onChange={(option) => {
               setStatusFilter(option);
-              // setCurrentPage(0); // Handled by useEffect
+              // setCurrentPage(0);
             }}
           />
           <Select
@@ -538,14 +524,13 @@ export default function BookingsPage() {
             selected={bookingTypeFilter}
             onChange={(option) => {
               setBookingTypeFilter(option);
-              // setCurrentPage(0); // Handled by useEffect
+              // setCurrentPage(0);
             }}
             disabled={isLoadingBookingTypes}
           />
           <DatePickerWithRange date={dateRange} setDate={handleDateChange} />
         </div>
 
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -569,7 +554,6 @@ export default function BookingsPage() {
           </div>
         )}
 
-        {/* --- Pagination --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -578,11 +562,12 @@ export default function BookingsPage() {
         />
       </main>
 
-      {/* Document Preview Modal - Works for Invoice & Receipt */}
       {previewConfig && (
         <DocumentPreviewModal
           title={
-            previewConfig.type === "invoice" ? "Invoice Preview" : "Receipt Preview"
+            previewConfig.type === "invoice"
+              ? "Invoice Preview"
+              : "Receipt Preview"
           }
           onClose={() => setPreviewConfig(null)}
           fetchDocument={async () => {
@@ -597,7 +582,6 @@ export default function BookingsPage() {
         />
       )}
 
-      {/* --- CANCEL MODAL --- */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -648,7 +632,6 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {/* --- DELETE MODAL --- */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -697,7 +680,6 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {/* --- MOVE BOOKING MODAL --- */}
       {showMoveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">

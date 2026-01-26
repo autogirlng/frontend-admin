@@ -1029,6 +1029,14 @@ export default function CreateBookingPage() {
               </div>
             )}
 
+            {/* VAT */}
+            <div className="flex justify-between items-center text-gray-600 text-sm">
+              <span>VAT ({calculationResult.vatPercentage}%)</span>
+              <span className="font-medium text-gray-900 text-base">
+                +{formatPrice(calculationResult.vatAmount)}
+              </span>
+            </div>
+
             {/* Divider */}
             <div className="border-t border-dashed border-gray-200 pt-4 mt-2">
               <div className="flex justify-between items-center">

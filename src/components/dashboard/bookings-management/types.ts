@@ -19,6 +19,7 @@ export interface BookingSegment {
   invoiceNumber: string;
   customerName: string;
   bookingType: string;
+  bookingTypeName: string;
   city: string;
   duration: string;
   bookingStatus: BookingStatus;
@@ -33,9 +34,6 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// Create Bookings
-
-// --- Vehicle Search Result Item ---
 export interface VehicleSearchResult {
   id: string;
   vehicleIdentifier: string;
@@ -68,11 +66,10 @@ export interface AreaOfUseItem {
   areaOfUseName: string;
 }
 
-// --- Booking Calculation ---
 export interface BookingSegmentPayload {
   bookingTypeId: string;
-  startDate: string; // YYYY-MM-DD
-  startTime: string; // HH:mm:ss
+  startDate: string;
+  startTime: string;
   pickupLatitude: number;
   pickupLongitude: number;
   dropoffLatitude: number;
@@ -93,6 +90,8 @@ export interface CalculateBookingResponse {
   discountAmount: number;
   geofenceSurcharge: number;
   platformFeeAmount: number;
+  vatPercentage: number;
+  vatAmount: number;
   finalPrice: number;
   appliedGeofenceNames: string[];
   couponDiscountAmount?: number;
@@ -100,7 +99,6 @@ export interface CalculateBookingResponse {
   vatPercentage?: number;
 }
 
-// --- Booking Creation ---
 export type BookingChannel =
   | "WEBSITE"
   | "WHATSAPP"
@@ -126,10 +124,10 @@ export interface CreateBookingResponse {
   bookingId: string;
   vehicleId: string;
   calculationId: string;
-  userId: string; // Can be null if guest booking
+  userId: string;
   status: BookingStatus;
   totalPrice: number;
-  bookedAt: string; // ISO Date string
+  bookedAt: string;
   primaryPhoneNumber: string;
   segments: {
     startDate: string;
