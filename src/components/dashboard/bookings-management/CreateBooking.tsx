@@ -985,17 +985,6 @@ export default function CreateBookingPage() {
               </span>
             </div>
 
-            {/* VAT Fee */}
-            {calculationResult.vatAmount && calculationResult.vatAmount > 0 && (
-              <div className="flex justify-between items-center text-gray-600 text-sm">
-                <span>VAT<span className="text-xs">{calculationResult?.vatPercentage ? ` (${calculationResult.vatPercentage}%)` : ""}</span></span>
-                <span className="font-medium text-gray-900 text-base">
-                  +{formatPrice(calculationResult?.vatAmount)}
-                </span>
-              </div>
-            )}
-
-
 
             {/* Geofence Surcharge */}
             {calculationResult.geofenceSurcharge > 0 && (
