@@ -17,16 +17,6 @@ export interface ConsolidatedInvoice {
   bookings?: any[];
 }
 
-export interface ConsolidatedInvoicePayload {
-
-  id: string;
-  invoiceNumber: string;
-  totalAmount: number;
-  status: "DRAFT" | "PAID" | "CONFIRMED";
-  generatedAt: string;
-  invoiceNumbers: string[];
-
-}
 
 
 export interface CreateConsolidatedPayload {
