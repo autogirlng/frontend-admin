@@ -28,6 +28,7 @@ export interface Payment {
   userName: string;
   paymentImage?: string | null;
   publicId?: string | null;
+  bookingCategory: "SERVICE_PRICING" | "NORMAL";
 }
 
 export enum PaymentStatus {

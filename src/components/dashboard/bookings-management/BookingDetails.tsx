@@ -19,11 +19,13 @@ import {
   CreditCard,
   Map as MapIcon,
   Coins,
+  Tag,
 } from "lucide-react";
 import { useGetBookingDetails } from "@/lib/hooks/booking-management/useBookingDetails";
 import { BookingSegment } from "./details-types";
 import CustomLoader from "@/components/generic/CustomLoader";
 import CustomBack from "@/components/generic/CustomBack";
+import clsx from "clsx";
 
 const DetailRow = ({
   icon: Icon,
@@ -125,17 +127,30 @@ export default function BookingDetailPage() {
   const isPartiallyPaid =
     !booking.paidAt && booking.bookingStatus === "CONFIRMED";
 
+  const isSP = booking.bookingCategory === "SERVICE_PRICING";
+
   return (
     <div className="min-h-screen pb-20">
       <div className="max-w-8xl mx-auto px-0 sm:px-0 lg:px-0 py-3">
         <CustomBack />
         <div className="mt-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                 Booking Details
               </h1>
               <StatusBadge text={booking.bookingStatus} />
+              <span
+                className={clsx(
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold border",
+                  isSP
+                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                    : "bg-blue-50 text-blue-700 border-blue-200",
+                )}
+              >
+                <Tag className="w-3.5 h-3.5" />
+                {booking.bookingCategory?.replace("_", " ") || "NORMAL"}
+              </span>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm text-gray-500">

@@ -24,6 +24,7 @@ export interface BookingSegment {
   duration: string;
   bookingStatus: BookingStatus;
   price: number;
+  bookingCategory: "SERVICE_PRICING" | "NORMAL";
 }
 
 export interface PaginatedResponse<T> {
@@ -95,8 +96,6 @@ export interface CalculateBookingResponse {
   finalPrice: number;
   appliedGeofenceNames: string[];
   couponDiscountAmount?: number;
-  vatAmount?: number;
-  vatPercentage?: number;
 }
 
 export type BookingChannel =

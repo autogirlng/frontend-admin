@@ -279,12 +279,29 @@ export default function PaymentsPage() {
     {
       header: "Customer",
       accessorKey: "userName",
-      cell: (item) => (
-        <div>
-          <div className="font-medium text-gray-900">{item.userName}</div>
-          <div className="text-gray-500 text-xs">{item.userPhone}</div>
-        </div>
-      ),
+      cell: (item) => {
+        const isService = item.bookingCategory === "SERVICE_PRICING";
+
+        return (
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900">{item.userName}</span>
+              <span
+                className={clsx(
+                  "text-[9px] font-extrabold px-1.5 py-0.5 rounded border leading-none cursor-help",
+                  isService
+                    ? "bg-purple-100 text-purple-700 border-purple-200"
+                    : "bg-blue-50 text-blue-600 border-blue-100",
+                )}
+                title={isService ? "Service Pricing" : "Normal Booking"}
+              >
+                {isService ? "SP" : "N"}
+              </span>
+            </div>
+            <div className="text-gray-500 text-xs">{item.userPhone}</div>
+          </div>
+        );
+      },
     },
     {
       header: "Vehicle",

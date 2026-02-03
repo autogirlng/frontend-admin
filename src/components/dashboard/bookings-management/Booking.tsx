@@ -421,6 +421,35 @@ export default function BookingsPage() {
     {
       header: "Booking Type",
       accessorKey: "bookingTypeName",
+      cell: (item) => {
+        const isSP = item.bookingCategory === "SERVICE_PRICING";
+
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-900 whitespace-nowrap">
+              {item.bookingTypeName}
+            </span>
+            <div className="relative group flex items-center">
+              <span
+                className={clsx(
+                  "cursor-help px-1.5 py-0.5 rounded text-[9px] font-extrabold border leading-none uppercase tracking-wide select-none",
+                  isSP
+                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                    : "bg-blue-50 text-blue-700 border-blue-200",
+                )}
+              >
+                {isSP ? "SP" : "N"}
+              </span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block w-max z-50">
+                <div className="bg-gray-900 text-white text-[10px] rounded px-2 py-1 shadow-lg relative">
+                  {isSP ? "Service Pricing Booking" : "Normal Booking"}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       header: "Status",
