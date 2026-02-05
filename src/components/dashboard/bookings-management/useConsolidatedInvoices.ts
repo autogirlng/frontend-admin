@@ -9,7 +9,7 @@ import {
   ConsolidatedInvoice,
   PaginatedResponse,
   CreateConsolidatedPayload,
-  ConsolidatedInvoicePayload,
+  ConfirmConsolidatedInvoicePayload
 } from "./consolidated-types";
 
 export const CONSOLIDATED_INVOICES_KEY = "consolidatedInvoices";
@@ -48,9 +48,9 @@ export function useCreateConsolidatedInvoice() {
 // 3. POST Confirm Invoice
 export function useConfirmConsolidatedInvoice() {
   const queryClient = useQueryClient();
-  return useMutation<unknown, Error, string>({
-    mutationFn: (id: string) =>
-      apiClient.post(`/admin/invoices/consolidated/${id}/confirm`, {}),
+  return useMutation<ConfirmConsolidatedInvoicePayload, Error, ConfirmConsolidatedInvoicePayload>({
+    mutationFn: (payload) =>
+      apiClient.post(`/admin/invoices/consolidated/${payload.id}/confirm`, payload),
     onSuccess: () => {
       toast.success("Invoice confirmed and receipt sent.");
       queryClient.invalidateQueries({ queryKey: [CONSOLIDATED_INVOICES_KEY] });
@@ -114,9 +114,9 @@ export function usePreviewConsolidatedReceiptBlob() {
 
 
 export function useGetConsolidatedInvoiceById(id: string) {
-  return useQuery<ConsolidatedInvoicePayload>({
+  return useQuery<ConsolidatedInvoice>({
     queryKey: [CONSOLIDATED_INVOICES_KEY, id],
-    queryFn: async () => apiClient.getConsolidatedInvoices<ConsolidatedInvoicePayload>(`/admin/invoices/consolidated/${id}`),
+    queryFn: async () => apiClient.getConsolidatedInvoices<ConsolidatedInvoice>(`/admin/invoices/consolidated/${id}`),
     enabled: !!id,
     retry: false,
   });
@@ -139,3 +139,5 @@ export function useEditConsolidatedInvoice(id: string) {
       toast.error(error.message || "Failed to update invoice."),
   });
 }
+
+

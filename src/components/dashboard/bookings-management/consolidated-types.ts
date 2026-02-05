@@ -15,10 +15,17 @@ export interface ConsolidatedInvoice {
   customerName: string;
   bookingCount: number;
   bookings?: any[];
+  invoiceNumbers: string[]
+
 }
 
 
 
 export interface CreateConsolidatedPayload {
   bookingInvoiceNumbers: string[];
+}
+
+export interface ConfirmConsolidatedInvoicePayload extends ConsolidatedInvoice {
+  publicId: string,
+  proofOfPayment: string
 }
