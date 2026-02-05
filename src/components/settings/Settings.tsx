@@ -14,6 +14,7 @@ import {
   Ticket,
   Puzzle,
   Star,
+  ShieldEllipsis,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -128,6 +129,15 @@ export default function SettingsPage() {
             title="Rating & Reviews"
             description="Manage Rating and Reviews"
             iconBgColor="bg-green-300"
+          />
+
+          {/* 10. Special Sale Booking */}
+          <SettingsCard
+            href="/dashboard/set-up/special-sale-booking"
+            icon={ShieldEllipsis}
+            title="Special Sale Booking"
+            description="Manage special sale bookings."
+            iconBgColor="bg-red-300"
           />
         </div>
       </main>
