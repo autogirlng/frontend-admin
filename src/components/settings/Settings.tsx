@@ -14,7 +14,6 @@ import {
   Ticket,
   Puzzle,
   Star,
-  Megaphone
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -129,15 +128,6 @@ export default function SettingsPage() {
             title="Rating & Reviews"
             description="Manage Rating and Reviews"
             iconBgColor="bg-green-300"
-          />
-
-          {/* 9. Rating and Review */}
-          <SettingsCard
-            href="/dashboard/announcement-banner"
-            icon={Megaphone}
-            title="Announcement Banner"
-            description="Manage Announcement Banner on Muvment customer platform"
-            iconBgColor="bg-indigo-300"
           />
         </div>
       </main>

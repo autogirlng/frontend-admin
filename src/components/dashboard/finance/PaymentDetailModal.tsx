@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { X, AlertCircle, ExternalLink, FileText } from "lucide-react";
+import { X, AlertCircle, ExternalLink, FileText, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { useGetPaymentDetails } from "@/lib/hooks/finance/usePayments";
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -93,6 +93,27 @@ export function PaymentDetailModal({
 
     return (
       <div className="space-y-6 p-6 overflow-y-auto">
+        <div className="flex items-start justify-between bg-gray-50 p-4 rounded-lg">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Invoice Amount</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {formatPrice(payment.totalPayable)}
+            </p>
+          </div>
+          <div className="text-right">
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                payment.bookingCategory === "SERVICE_PRICING"
+                  ? "bg-purple-100 text-purple-800"
+                  : "bg-blue-100 text-blue-800"
+              }`}
+            >
+              <Tag className="w-3 h-3" />
+              {payment.bookingCategory?.replace("_", " ") || "NORMAL"}
+            </span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <DetailItem label="Payment ID" value={payment.bookingRef} />
           <DetailItem

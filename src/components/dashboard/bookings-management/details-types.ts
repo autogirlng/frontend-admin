@@ -50,4 +50,5 @@ export interface BookingDetail {
   vehicle: VehicleSummary;
   segments: BookingSegment[];
   discounted: boolean;
+  bookingCategory: "SERVICE_PRICING" | "NORMAL";
 }
