@@ -91,7 +91,7 @@ export function useDownloadInvoice() {
       await apiClient.postAndDownloadFile(
         `/admin/invoices/generate-pdf/${bookingId}`,
         {},
-        defaultFilename
+        defaultFilename,
       );
     },
     onSuccess: () => {
@@ -122,7 +122,7 @@ export function useDownloadPaymentReceipt() {
 
       await apiClient.getAndDownloadFile(
         `/admin/invoices/${bookingId}/download-receipt`,
-        defaultFilename
+        defaultFilename,
       );
     },
     onSuccess: () => {
@@ -138,7 +138,7 @@ export function usePreviewInvoiceBlob() {
   return useMutation<Blob, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
       return await apiClient.postFileAsBlob(
-        `/admin/invoices/generate-pdf/${bookingId}?preview=true`
+        `/admin/invoices/generate-pdf/${bookingId}?preview=true`,
       );
     },
   });
@@ -148,7 +148,7 @@ export function usePreviewReceiptBlob() {
   return useMutation<Blob, Error, { bookingId: string }>({
     mutationFn: async ({ bookingId }) => {
       return await apiClient.getFileAsBlob(
-        `/admin/invoices/${bookingId}/download-receipt?preview=true`
+        `/admin/invoices/${bookingId}/download-receipt?preview=true`,
       );
     },
   });
@@ -165,21 +165,43 @@ export function useApproveOfflinePayment() {
     mutationFn: async ({ bookingId }) => {
       return await apiClient.post(
         `/admin/bookings/${bookingId}/confirm-offline-payment`,
-        {}
+        {},
       );
     },
 
     onSuccess: (data, variables) => {
       toast.success(
-        `Payment approved successfully! Invoice: ${data.invoiceNumber}`
+        `Payment approved successfully! Invoice: ${data.invoiceNumber}`,
       );
       queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
     },
 
     onError: (error) => {
       toast.error(
-        error.message || "Failed to approve payment. Please try again."
+        error.message || "Failed to approve payment. Please try again.",
       );
+    },
+  });
+}
+
+export function useAllocateVehicle() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    void, // response data type
+    Error,
+    { bookingId: string; vehicleId: string }
+  >({
+    mutationFn: async ({ bookingId, vehicleId }) => {
+      await apiClient.post(`/admin/trips/allocate-vehicle/${bookingId}`, {
+        vehicleId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Vehicle allocated successfully.");
+      queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to allocate vehicle.");
     },
   });
 }
