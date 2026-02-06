@@ -37,6 +37,7 @@ import { ActionModal } from "@/components/generic/ui/ActionModal";
 import { CreateConsolidatedModal } from "./CreateConsolidatedModal";
 import { DocumentPreviewModal } from "../finance/PreviewModal";
 import { EditConsolidatedModal } from "./EditConsolidatedInvoice";
+import { ConfirmConsolidatedModal } from "./ConfirmConsolidatedModal";
 import { se } from "date-fns/locale";
 
 // Helper to format currency
@@ -69,6 +70,7 @@ export default function ConsolidatedInvoices() {
     isPlaceholderData,
   } = useGetConsolidatedInvoices(currentPage);
 
+
   // const editMutation = useEditConsolidatedInvoice();
   const confirmMutation = useConfirmConsolidatedInvoice();
   const downloadPdfMutation = useDownloadConsolidatedPdf();
@@ -82,12 +84,12 @@ export default function ConsolidatedInvoices() {
   // --- Handlers ---
   const handleConfirm = () => {
     if (!selectedInvoice) return;
-    confirmMutation.mutate(selectedInvoice.id, {
-      onSuccess: () => {
-        setIsConfirmModalOpen(false);
-        setSelectedInvoice(null);
-      },
-    });
+    // confirmMutation.mutate(selectedInvoice.id, {
+    //   onSuccess: () => {
+    //     setIsConfirmModalOpen(false);
+    //     setSelectedInvoice(null);
+    //   },
+    // });
   };
 
   // --- Column Definition ---
@@ -291,22 +293,11 @@ export default function ConsolidatedInvoices() {
       )}
 
       {isConfirmModalOpen && selectedInvoice && (
-        <ActionModal
-          title="Confirm Consolidated Invoice"
-          message={
-            <>
-              Are you sure you want to confirm invoice{" "}
-              <strong className="text-gray-900">
-                {selectedInvoice.invoiceNumber}
-              </strong>
-              ? This will mark it as PAID and send the receipt.
-            </>
-          }
-          actionLabel="Yes, Confirm"
+        <ConfirmConsolidatedModal
           onClose={() => setIsConfirmModalOpen(false)}
-          onConfirm={handleConfirm}
-          isLoading={confirmMutation.isPending}
-          variant="primary"
+          isOpen={isConfirmModalOpen}
+          invoice={selectedInvoice}
+          onSuccess={() => setIsConfirmModalOpen(false)}
         />
       )}
 

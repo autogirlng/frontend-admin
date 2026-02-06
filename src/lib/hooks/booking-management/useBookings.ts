@@ -188,3 +188,21 @@ export function useGetVehiclesForDropdown(searchTerm: string = "") {
     placeholderData: (previousData) => previousData,
   });
 }
+
+export function useAllocateVehicle() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { bookingId: string; vehicleId: string }>({
+    mutationFn: async ({ bookingId, vehicleId }) => {
+      await apiClient.post(`/admin/trips/allocate-vehicle/${bookingId}`, {
+        vehicleId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Vehicle allocated successfully.");
+      queryClient.invalidateQueries({ queryKey: [BOOKINGS_QUERY_KEY] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to allocate vehicle.");
+    },
+  });
+}

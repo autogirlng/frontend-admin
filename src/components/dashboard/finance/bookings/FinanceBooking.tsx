@@ -293,11 +293,10 @@ export default function FinanceBookingsPage() {
       accessorKey: "paymentMethod",
       cell: (item) => (
         <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-            item.paymentMethod === "ONLINE"
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.paymentMethod === "ONLINE"
               ? "bg-blue-100 text-blue-800"
               : "bg-gray-100 text-gray-800"
-          }`}
+            }`}
         >
           {item.paymentMethod}
         </span>
@@ -308,13 +307,12 @@ export default function FinanceBookingsPage() {
       accessorKey: "bookingStatus",
       cell: (item) => (
         <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-            item.bookingStatus === "CONFIRMED"
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.bookingStatus === "CONFIRMED"
               ? "bg-green-100 text-green-800"
               : item.bookingStatus === "PENDING_PAYMENT"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-gray-100 text-gray-800"
+            }`}
         >
           {item.bookingStatus.replace(/_/g, " ")}
         </span>
@@ -383,9 +381,9 @@ export default function FinanceBookingsPage() {
               selected={
                 filters.bookingStatus
                   ? {
-                      id: filters.bookingStatus,
-                      name: filters.bookingStatus.replace(/_/g, " "),
-                    }
+                    id: filters.bookingStatus,
+                    name: filters.bookingStatus.replace(/_/g, " "),
+                  }
                   : null
               }
               onChange={(option) =>
@@ -400,9 +398,9 @@ export default function FinanceBookingsPage() {
               selected={
                 filters.paymentMethod
                   ? {
-                      id: filters.paymentMethod,
-                      name: filters.paymentMethod,
-                    }
+                    id: filters.paymentMethod,
+                    name: filters.paymentMethod,
+                  }
                   : null
               }
               onChange={(option) =>

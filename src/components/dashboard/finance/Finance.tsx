@@ -18,6 +18,7 @@ import {
   Edit,
   ExternalLink,
   Coins,
+  Car,
 } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
@@ -44,6 +45,7 @@ import { PaymentApprovalModal } from "./payments/PaymentApprovalModal";
 
 import { Payment } from "./types";
 import { formatPrice } from "./payments/utils";
+import { AllocateVehicleModal } from "./AllocateVehicleModal";
 
 export default function PaymentsPage() {
   const router = useRouter();
@@ -72,6 +74,11 @@ export default function PaymentsPage() {
     null,
   );
   const [paymentToUpdate, setPaymentToUpdate] = useState<Payment | null>(null);
+
+  const [bookingToAllocate, setBookingToAllocate] = useState<string | null>(
+    null,
+  );
+
   const [previewConfig, setPreviewConfig] = useState<{
     type: "invoice" | "receipt";
     payment: Payment;
@@ -196,6 +203,17 @@ export default function PaymentsPage() {
           }),
       },
     ];
+
+    const isServicePricing = payment.bookingCategory === "SERVICE_PRICING";
+    const isUnassigned = payment.vehicleIdentifier === "N/A";
+
+    if (isServicePricing && isUnassigned) {
+      actions.unshift({
+        label: "Allocate Vehicle",
+        icon: Car,
+        onClick: () => setBookingToAllocate(payment.bookingId),
+      });
+    }
 
     if (payment.paymentImage && payment.paymentImage !== "string") {
       actions.push({
@@ -620,6 +638,13 @@ export default function PaymentsPage() {
         <UpdateBookingModal
           bookingId={paymentToUpdate.bookingId}
           onClose={() => setPaymentToUpdate(null)}
+        />
+      )}
+
+      {bookingToAllocate && (
+        <AllocateVehicleModal
+          bookingId={bookingToAllocate}
+          onClose={() => setBookingToAllocate(null)}
         />
       )}
     </>

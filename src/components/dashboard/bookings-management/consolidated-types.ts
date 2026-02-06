@@ -15,20 +15,17 @@ export interface ConsolidatedInvoice {
   customerName: string;
   bookingCount: number;
   bookings?: any[];
-}
-
-export interface ConsolidatedInvoicePayload {
-
-  id: string;
-  invoiceNumber: string;
-  totalAmount: number;
-  status: "DRAFT" | "PAID" | "CONFIRMED";
-  generatedAt: string;
-  invoiceNumbers: string[];
+  invoiceNumbers: string[]
 
 }
+
 
 
 export interface CreateConsolidatedPayload {
   bookingInvoiceNumbers: string[];
+}
+
+export interface ConfirmConsolidatedInvoicePayload extends ConsolidatedInvoice {
+  publicId: string,
+  proofOfPayment: string
 }

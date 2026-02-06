@@ -11,6 +11,7 @@ import {
   useDeleteBooking,
   useGetVehiclesForDropdown,
   useMoveBooking,
+  useAllocateVehicle,
 } from "@/lib/hooks/booking-management/useBookings";
 import {
   usePreviewInvoiceBlob,
@@ -35,6 +36,7 @@ import {
   X,
   ArrowRightLeft,
   FileText,
+  Car,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -132,7 +134,12 @@ export default function BookingsPage() {
   );
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [moveVehicleSearch, setMoveVehicleSearch] = useState("");
+
+  const [showAllocateModal, setShowAllocateModal] = useState(false);
+  const [allocateVehicleSearch, setAllocateVehicleSearch] = useState("");
+
   const debouncedMoveSearch = useDebounce(moveVehicleSearch, 500);
+  const debouncedAllocateSearch = useDebounce(allocateVehicleSearch, 500);
 
   const [cancelReason, setCancelReason] = useState("");
 
@@ -170,6 +177,10 @@ export default function BookingsPage() {
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } =
     useGetBookingTypes();
 
+  const activeSearchTerm = showAllocateModal
+    ? debouncedAllocateSearch
+    : debouncedMoveSearch;
+
   const { data: availableVehicles, isLoading: isLoadingVehicles } =
     useGetVehiclesForDropdown(debouncedMoveSearch);
 
@@ -178,6 +189,8 @@ export default function BookingsPage() {
   const cancelBookingMutation = useCancelBooking();
   const deleteBookingMutation = useDeleteBooking();
   const moveBookingMutation = useMoveBooking();
+
+  const allocateVehicleMutation = useAllocateVehicle();
 
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -226,6 +239,12 @@ export default function BookingsPage() {
     setShowMoveModal(true);
   };
 
+  const initiateAllocate = (id: string) => {
+    setSelectedBookingId(id);
+    setTargetVehicleId("");
+    setShowAllocateModal(true);
+  };
+
   const confirmMove = () => {
     if (!selectedBookingId || !targetVehicleId) {
       toast.error("Please select a new vehicle.");
@@ -240,6 +259,23 @@ export default function BookingsPage() {
       {
         onSuccess: () => {
           setShowMoveModal(false);
+          setSelectedBookingId(null);
+          setTargetVehicleId("");
+        },
+      },
+    );
+  };
+
+  const confirmAllocate = () => {
+    if (!selectedBookingId || !targetVehicleId) {
+      toast.error("Please select a vehicle.");
+      return;
+    }
+    allocateVehicleMutation.mutate(
+      { bookingId: selectedBookingId, vehicleId: targetVehicleId },
+      {
+        onSuccess: () => {
+          setShowAllocateModal(false);
           setSelectedBookingId(null);
           setTargetVehicleId("");
         },
@@ -351,7 +387,21 @@ export default function BookingsPage() {
         : []),
     ];
 
-    if (isActive) {
+    const isServicePricing = booking.bookingCategory === "SERVICE_PRICING";
+    const isUnassigned =
+      booking.vehicleId === "N/A" ||
+      booking.vehicleName === "Vehicle not Assigned" ||
+      !booking.vehicleId;
+
+    if (isServicePricing && isUnassigned && isActive) {
+      actions.unshift({
+        label: "Allocate Vehicle",
+        icon: Car,
+        onClick: () => initiateAllocate(booking.bookingId),
+      });
+    }
+
+    if (isActive && !isUnassigned) {
       actions.push({
         label: "Transfer Vehicle",
         icon: ArrowRightLeft,
@@ -795,6 +845,79 @@ export default function BookingsPage() {
                 isLoading={moveBookingMutation.isPending}
               >
                 Confirm Transfer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAllocateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
+              <h3 className="text-lg font-semibold text-indigo-800 flex items-center gap-2">
+                <Car className="w-5 h-5" /> Allocate Vehicle
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAllocateModal(false);
+                  setAllocateVehicleSearch("");
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-sm text-indigo-700">
+                This booking currently has no vehicle. Search for an APPROVED
+                vehicle to assign.
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name or identifier..."
+                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={allocateVehicleSearch}
+                  onChange={(e) => setAllocateVehicleSearch(e.target.value)}
+                  style={{ paddingLeft: 40 }}
+                />
+              </div>
+
+              <Select
+                label="Select Vehicle"
+                hideLabel
+                options={vehicleOptions}
+                selected={vehicleOptions.find((v) => v.id === targetVehicleId)}
+                onChange={(opt) => setTargetVehicleId(opt.id)}
+                placeholder={
+                  isLoadingVehicles
+                    ? "Searching..."
+                    : vehicleOptions.length === 0 && debouncedAllocateSearch
+                      ? "No vehicles found"
+                      : "Select a vehicle"
+                }
+                disabled={isLoadingVehicles}
+              />
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setShowAllocateModal(false)}
+                disabled={allocateVehicleMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={confirmAllocate}
+                isLoading={allocateVehicleMutation.isPending}
+              >
+                Confirm Allocation
               </Button>
             </div>
           </div>
