@@ -23,6 +23,8 @@ import Select, { Option } from "@/components/generic/ui/Select";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomBack from "@/components/generic/CustomBack";
+import Button from "@/components/generic/ui/Button";
+import { DownloadHostInvoiceModal } from "../DownloadHostInvoiceModal";
 
 const formatPrice = (amount: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -44,9 +46,11 @@ export default function HostPayout() {
   const [currentPage, setCurrentPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Option>(statusOptions[0]);
   const [selectedBooking, setSelectedBooking] = useState<PayoutBooking | null>(
-    null
+    null,
   );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isDownloadHostInvoiceModalOpen, setIsDownloadHostInvoiceModalOpen] =
+    useState(false);
 
   const {
     data: payoutData,
@@ -134,7 +138,7 @@ export default function HostPayout() {
             "px-2 py-0.5 rounded-full text-xs font-medium inline-flex items-center gap-1",
             item.hostPaymentStatus === "PAID"
               ? "bg-green-100 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
+              : "bg-yellow-100 text-yellow-800",
           )}
         >
           {item.hostPaymentStatus === "PAID" ? (
@@ -183,9 +187,20 @@ export default function HostPayout() {
     <main className="max-w-8xl mx-auto space-y-8 pb-10">
       <Toaster position="top-right" />
 
-      <div>
-        <CustomBack />
-        <h1 className="text-3xl font-bold text-gray-900">Host Payouts</h1>
+      <div className="flex justify-between">
+        <div>
+          <CustomBack />
+          <h1 className="text-3xl font-bold text-gray-900">Host Payouts</h1>
+        </div>
+        <Button
+          onClick={() => setIsDownloadHostInvoiceModalOpen(true)}
+          variant="primary"
+          size="smd"
+          className="w-auto min-w-[140px] h-[50px] whitespace-nowrap my-1"
+          // disabled={isLoading || payments.length === 0}
+        >
+          Download Host Invoice
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -276,6 +291,14 @@ export default function HostPayout() {
           isLoading={isPlaceholderData}
         />
       </div>
+
+      {isDownloadHostInvoiceModalOpen && (
+        <DownloadHostInvoiceModal
+          isOpen={isDownloadHostInvoiceModalOpen}
+          onClose={() => setIsDownloadHostInvoiceModalOpen(false)}
+          hostId={hostId}
+        />
+      )}
 
       {isConfirmModalOpen && selectedBooking && (
         <ActionModal
