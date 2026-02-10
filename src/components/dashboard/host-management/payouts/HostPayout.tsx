@@ -308,8 +308,8 @@ export default function HostPayout() {
               Are you sure you want to mark invoice{" "}
               <strong className="text-gray-900">
                 {selectedBooking.invoiceNumber}
-              </strong>{" "}
-              as PAID? This will update the host's balance.
+              </strong>
+              {" as PAID? This will update the host's balance. "}
             </>
           }
           actionLabel="Mark as Paid"

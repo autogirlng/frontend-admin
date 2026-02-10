@@ -35,18 +35,19 @@ export const DownloadHostInvoiceModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     let startDate = filters.dateRange?.from;
     let endDate = filters.dateRange?.to;
-    if (startDate && endDate) {
-      startDate = new Date(startDate);
-      endDate = new Date(endDate);
-      downloadHostInvoice({
-        hostId,
-        startDate: encodeURIComponent(startDate.toISOString()),
-        endDate: encodeURIComponent(endDate.toISOString()),
-      });
-    }
+
+    if (!startDate || !endDate) return;
+
+    startDate = new Date(startDate);
+    endDate = new Date(endDate);
+    downloadHostInvoice({
+      hostId,
+      // remove Z at end of ISO string because backend does not accept it with Z attached
+      startDate: startDate.toISOString().replace("Z", ""),
+      endDate: endDate.toISOString().replace("Z", ""),
+    });
   };
 
   const handleDateChange = (dateRange: DateRange | undefined) => {
@@ -70,7 +71,7 @@ export const DownloadHostInvoiceModal = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="p-6 space-y-4">
           <DatePickerWithRange
             setDate={handleDateChange}
             date={filters.dateRange || undefined}
@@ -82,14 +83,14 @@ export const DownloadHostInvoiceModal = ({
               Cancel
             </Button>
             <Button
-              type="submit"
+              onClick={handleSubmit}
               isLoading={isPending}
               disabled={!filters.dateRange?.from || !filters.dateRange?.to}
             >
               Download
             </Button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export function useDownloadHostInvoice() {
             .slice(0, 30) + "_"
         : "";
 
-      const defaultFilename = `host_invoice_${hostId}.pdf`;
+      const defaultFilename = `host_invoice_${safeName}.pdf`;
 
       await apiClient.getAndDownloadFile(
         `/admin/invoices/download/receipt/${hostId}?startDate=${startDate}&endDate=${endDate}`,
@@ -29,7 +29,7 @@ export function useDownloadHostInvoice() {
       );
     },
     onSuccess: () => {
-      toast.success("Host Invoice download started.");
+      toast.success("Host invoice downloaded");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to download invoice.");
