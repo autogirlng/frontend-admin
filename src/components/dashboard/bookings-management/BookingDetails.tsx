@@ -20,6 +20,7 @@ import {
   Map as MapIcon,
   Coins,
   Tag,
+  Globe,
 } from "lucide-react";
 import { useGetBookingDetails } from "@/lib/hooks/booking-management/useBookingDetails";
 import { BookingSegment } from "./details-types";
@@ -447,6 +448,40 @@ export default function BookingDetailPage() {
                         </p>
                       </div>
                     </div>
+                    {segment.areaOfUse && segment.areaOfUse.length > 0 && (
+                      <div className="mt-6 pt-6 border-t border-gray-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-1 rounded bg-blue-50">
+                            <Globe className="w-3.5 h-3.5 text-blue-600" />
+                          </div>
+                          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                            Applied Areas of Use
+                          </h4>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4 grid gap-3 sm:grid-cols-2">
+                          {segment.areaOfUse.map((area, idx) => (
+                            <div key={idx} className="flex items-start gap-2.5">
+                              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 leading-snug">
+                                  {area.areaOfUseName}
+                                </p>
+                                <a
+                                  href={`https://www.google.com/maps/search/?api=1&query=${area.areaOfUseLatitude},${area.areaOfUseLongitude}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-[#0096FF] hover:underline flex items-center gap-1 mt-0.5"
+                                >
+                                  View on Map{" "}
+                                  <LinkIcon className="w-2.5 h-2.5" />
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
