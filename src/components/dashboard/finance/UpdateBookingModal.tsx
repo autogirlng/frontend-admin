@@ -41,7 +41,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   bookingId,
   onClose,
 }) => {
-  // --- Data Fetching ---
   const { data: booking, isLoading: isBookingLoading } =
     useGetBooking(bookingId);
 
@@ -49,16 +48,14 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     useGetCalculation(booking?.calculationId || null);
 
   const { data: vehicle, isLoading: isVehicleLoading } = useGetVehicleDetails(
-    booking?.vehicle?.id || null
+    booking?.vehicle?.id || null,
   );
 
   const updateBookingMutation = useUpdateBooking();
 
-  // --- State ---
   const [formData, setFormData] = useState<UpdateBookingPayload | null>(null);
   const [discountType, setDiscountType] = useState<DiscountType>("coupon");
 
-  // --- Effects ---
   useEffect(() => {
     if (calculation && calculation.requestedSegments && booking) {
       let payloadCoupon = "";
@@ -67,7 +64,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
 
       const bookingData = booking as any;
 
-      // Logic: Determine initial state based on what exists in the booking
       if (bookingData.couponCode) {
         payloadCoupon = bookingData.couponCode;
         initialDiscountType = "coupon";
@@ -97,15 +93,13 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     }
   }, [calculation, booking]);
 
-  // --- Handlers ---
-
   const handleDiscountTypeChange = (type: DiscountType) => {
     setDiscountType(type);
   };
 
   const handleRootFieldChange = (
     field: "couponCode" | "discountAmount",
-    value: string | number
+    value: string | number,
   ) => {
     setFormData((prev) => {
       if (!prev) return null;
@@ -116,7 +110,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   const handleSegmentChange = (
     index: number,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
     setFormData((prev) => {
       if (!prev) return null;
@@ -127,11 +121,10 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     });
   };
 
-  // ... (Location and Area handlers remain standard) ...
   const handleLocationSelect = (
     index: number,
     type: "pickup" | "dropoff",
-    coords: any
+    coords: any,
   ) => {
     setFormData((prev) => {
       if (!prev) return null;
@@ -150,7 +143,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   const handleAreaOfUseChange = (
     segmentIndex: number,
     areaIndex: number,
-    value: string
+    value: string,
   ) => {
     setFormData((prev) => {
       if (!prev) return null;
@@ -168,7 +161,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   const handleAreaOfUseLocationSelect = (
     segmentIndex: number,
     areaIndex: number,
-    coords: any
+    coords: any,
   ) => {
     setFormData((prev) => {
       if (!prev) return null;
@@ -192,7 +185,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
       if (!prev) return null;
       const newSegments = [...prev.segments];
       const newAreas = newSegments[segmentIndex].areaOfUse.filter(
-        (_, i) => i !== areaIndex
+        (_, i) => i !== areaIndex,
       );
       newSegments[segmentIndex] = {
         ...newSegments[segmentIndex],
@@ -222,7 +215,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     e.preventDefault();
     if (!formData) return;
 
-    // Clean payload just before sending
     const finalPayload = {
       ...formData,
       couponCode: discountType === "coupon" ? formData.couponCode : "",
@@ -233,14 +225,12 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
       { bookingId, payload: finalPayload },
       {
         onSuccess: () => {
-          // Close modal immediately on success
           onClose();
         },
-      }
+      },
     );
   };
 
-  // --- Derived State ---
   const bookingTypeOptions =
     vehicle?.allPricingOptions.map((opt) => ({
       id: opt.bookingTypeId,
@@ -256,7 +246,6 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     isSyncing ||
     (!!booking?.vehicle?.id && isVehicleLoading);
 
-  // Safe access to booking data for display
   const bData = booking as any;
   const originalPrice = bData?.originalPrice || 0;
   const currentTotalPrice = bData?.totalPrice || 0;
@@ -304,7 +293,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
               onSubmit={handleSubmit}
               className="space-y-6"
             >
-              {/* --- NEW: FINANCIAL SUMMARY DASHBOARD --- */}
+              {/* --- FINANCIAL SUMMARY DASHBOARD --- */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <Calculator className="w-4 h-4 text-blue-600" />
@@ -428,7 +417,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                         onChange={(e) =>
                           handleRootFieldChange(
                             "discountAmount",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || 0,
                           )
                         }
                         placeholder="0.00"
@@ -441,7 +430,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
               {/* --- SEGMENTS SECTION --- */}
               {formData.segments.map((segment, index) => {
                 const currentType = bookingTypeOptions.find(
-                  (opt) => opt.id === segment.bookingTypeId
+                  (opt) => opt.id === segment.bookingTypeId,
                 );
 
                 return (
@@ -471,7 +460,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                             handleSegmentChange(
                               index,
                               "bookingTypeId",
-                              option.id
+                              option.id,
                             )
                           }
                           placeholder={
@@ -517,7 +506,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                               handleSegmentChange(
                                 index,
                                 "pickupLocationString",
-                                val
+                                val,
                               )
                             }
                             onLocationSelect={(coords) =>
@@ -533,7 +522,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                               handleSegmentChange(
                                 index,
                                 "dropoffLocationString",
-                                val
+                                val,
                               )
                             }
                             onLocationSelect={(coords) =>
@@ -575,14 +564,14 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                                       handleAreaOfUseChange(
                                         index,
                                         areaIndex,
-                                        val
+                                        val,
                                       )
                                     }
                                     onLocationSelect={(coords) =>
                                       handleAreaOfUseLocationSelect(
                                         index,
                                         areaIndex,
-                                        coords
+                                        coords,
                                       )
                                     }
                                     placeholder="Enter area or city"

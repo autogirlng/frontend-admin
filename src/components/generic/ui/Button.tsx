@@ -1,17 +1,14 @@
-// app/components/ui/Button.tsx
 "use client";
 
 import React from "react";
 import clsx from "clsx";
 
-// Define the props for the button
 type ButtonProps = React.ComponentPropsWithoutRef<"button"> & {
   variant?: "primary" | "secondary" | "danger";
-  size?: "sm" | "md" | "smd"  |"lg";
+  size?: "sm" | "md" | "smd" | "lg";
   isLoading?: boolean;
 };
 
-// A simple SVG spinner component
 const Spinner = () => (
   <svg
     className="animate-spin h-5 w-5 text-white"
@@ -45,13 +42,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       ...props
     },
-    ref
+    ref,
   ) => {
-    // Base classes for all buttons
     const baseClasses =
       "inline-flex w-[120px] items-center justify-center font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200";
 
-    // Classes for different variants
     const variantClasses = {
       primary:
         "bg-[#0096FF] text-white hover:bg-[#007ACC] focus:ring-[#007ACC]",
@@ -60,7 +55,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
     };
 
-    // Classes for different sizes
     const sizeClasses = {
       sm: "px-3 py-1.5 text-sm",
       md: "px-4 py-2 text-base",
@@ -68,7 +62,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: "px-6 py-3 text-lg",
     };
 
-    // Classes for disabled and loading states
     const stateClasses = isLoading
       ? "cursor-not-allowed opacity-75"
       : "disabled:cursor-not-allowed disabled:opacity-50";
@@ -83,13 +76,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           variantClasses[variant],
           sizeClasses[size],
           stateClasses,
-          className
+          className,
         )}
       >
         {isLoading ? <Spinner /> : children}
       </button>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

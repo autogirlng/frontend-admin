@@ -40,6 +40,19 @@ export interface BookingFilters {
   paymentMethod: string | null;
 }
 
+export interface BookingConflict {
+  bookingId: string;
+  invoiceNumber: string;
+  customerName: string;
+  customerPhone: string;
+  totalPrice: number;
+  category: string;
+  status: string;
+  earliestStart: string;
+  latestEnd: string;
+  bookedAt: string;
+}
+
 export function useGetFinanceBookings(filters: BookingFilters) {
   const { page, bookingStatus, startDate, endDate, searchTerm, paymentMethod } =
     filters;
@@ -216,5 +229,19 @@ export function useGetVehicleDetails(vehicleId: string | null) {
       return await apiClient.get<Vehicle>(`/public/vehicles/${vehicleId}`);
     },
     enabled: !!vehicleId,
+  });
+}
+
+export function useCheckBookingConflicts(bookingId: string | null) {
+  return useQuery<BookingConflict[]>({
+    queryKey: ["bookingConflicts", bookingId],
+    queryFn: async () => {
+      if (!bookingId) throw new Error("Booking ID required");
+      return apiClient.get<BookingConflict[]>(
+        `/admin/bookings/${bookingId}/conflicts`,
+      );
+    },
+    enabled: !!bookingId,
+    retry: false,
   });
 }
