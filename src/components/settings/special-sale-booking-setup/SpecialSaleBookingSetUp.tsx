@@ -2,7 +2,14 @@
 
 import React, { useState } from "react";
 import { Toaster } from "react-hot-toast";
-import { Plus, Edit, Trash2, Settings, Calendar } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Settings,
+  Calendar,
+  Image as ImageIcon,
+} from "lucide-react";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { ActionMenu } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
@@ -133,6 +140,23 @@ export default function SpecialSaleBookingSetUp() {
   ];
 
   const yearColumns: ColumnDefinition<ServicePricingYear>[] = [
+    {
+      header: "Image",
+      accessorKey: "imageUrl",
+      cell: (item) => (
+        <div className="h-10 w-10 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <ImageIcon className="h-5 w-5 text-gray-400" />
+          )}
+        </div>
+      ),
+    },
     { header: "Name", accessorKey: "name" },
     { header: "Config Name", accessorKey: "servicePricingName" },
     {
