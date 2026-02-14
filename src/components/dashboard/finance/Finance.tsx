@@ -46,6 +46,7 @@ import { PaymentApprovalModal } from "./payments/PaymentApprovalModal";
 import { Payment } from "./types";
 import { formatPrice } from "./payments/utils";
 import { AllocateVehicleModal } from "./AllocateVehicleModal";
+import { PaymentConflictModal } from "./payments/PaymentConflictModal";
 
 export default function PaymentsPage() {
   const router = useRouter();
@@ -83,6 +84,14 @@ export default function PaymentsPage() {
     type: "invoice" | "receipt";
     payment: Payment;
   } | null>(null);
+
+  const [conflictModal, setConflictModal] = useState<{
+    isOpen: boolean;
+    payment: Payment | null;
+  }>({
+    isOpen: false,
+    payment: null,
+  });
 
   const [approvalModal, setApprovalModal] = useState<{
     isOpen: boolean;
@@ -263,8 +272,7 @@ export default function PaymentsPage() {
             ? "Update Balance"
             : "Approve Payment",
         icon: payment.paymentStatus === "PARTIALLY_PAID" ? Coins : Vote,
-        onClick: () =>
-          setApprovalModal({ isOpen: true, payment, mode: "single" }),
+        onClick: () => setConflictModal({ isOpen: true, payment }),
       });
     }
 
@@ -618,6 +626,25 @@ export default function PaymentsPage() {
             return previewConfig.type === "invoice"
               ? await previewInvoiceBlob.mutateAsync({ bookingId })
               : await previewReceiptBlob.mutateAsync({ bookingId });
+          }}
+        />
+      )}
+
+      {conflictModal.isOpen && conflictModal.payment && (
+        <PaymentConflictModal
+          isOpen={conflictModal.isOpen}
+          payment={conflictModal.payment}
+          onClose={() => setConflictModal({ isOpen: false, payment: null })}
+          onProceed={() => {
+            const paymentToApprove = conflictModal.payment;
+            setConflictModal({ isOpen: false, payment: null });
+            setTimeout(() => {
+              setApprovalModal({
+                isOpen: true,
+                payment: paymentToApprove,
+                mode: "single",
+              });
+            }, 100);
           }}
         />
       )}

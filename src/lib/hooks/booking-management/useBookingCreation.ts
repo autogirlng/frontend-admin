@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/apiClient";
 import toast from "react-hot-toast";
 import {
@@ -10,6 +10,7 @@ import {
   CreateBookingResponse,
   VehicleSearchFilters,
 } from "@/components/dashboard/bookings-management/types";
+import { BOOKINGS_QUERY_KEY } from "../finance/useFinanceBookings";
 
 const VEHICLE_SEARCH_KEY = "vehicleSearch";
 
@@ -18,10 +19,6 @@ interface DownloadInvoicePayload {
   companyBankAccountId?: string;
 }
 
-/**
- * Hook for GET /v1/public/vehicles/search
- * Implements the "Swiss Army Knife" logic
- */
 export function useVehicleSearch(
   filters: VehicleSearchFilters,
   enabled: boolean,
@@ -31,9 +28,7 @@ export function useVehicleSearch(
     queryFn: async () => {
       const params = new URLSearchParams();
 
-      // Iterate over filters and append if value exists
       Object.entries(filters).forEach(([key, value]) => {
-        // Skip internal UI fields or empty values
         if (
           value === undefined ||
           value === "" ||
@@ -44,17 +39,14 @@ export function useVehicleSearch(
           return;
         }
 
-        // Handle Time Formatting: Ensure HH:mm:ss format
         if (key === "startTime" || key === "endTime") {
           const timeStr = String(value);
-          // If input is HH:mm, append :00. If already HH:mm:ss, leave it.
           params.append(key, timeStr.length === 5 ? `${timeStr}:00` : timeStr);
         } else {
           params.append(key, String(value));
         }
       });
 
-      // Ensure Pagination defaults
       if (!filters.page) params.set("page", "0");
       if (!params.has("size")) params.set("size", "10");
 
@@ -62,7 +54,7 @@ export function useVehicleSearch(
 
       return apiClient.get<PaginatedResponse<VehicleSearchResult>>(
         endpoint,
-        false, // public endpoint
+        false,
       );
     },
     enabled: enabled,
@@ -81,8 +73,17 @@ export function useBookingCalculation() {
 }
 
 export function useCreateBooking() {
+  const queryClient = useQueryClient();
+
   return useMutation<CreateBookingResponse, Error, CreateBookingPayload>({
     mutationFn: (payload) => apiClient.post("/bookings", payload, true),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [BOOKINGS_QUERY_KEY],
+      });
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      toast.success("Booking created successfully!");
+    },
     onError: (error) => {
       toast.error(`Booking creation failed: ${error.message}`);
     },

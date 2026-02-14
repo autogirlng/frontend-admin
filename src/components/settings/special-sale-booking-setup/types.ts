@@ -33,6 +33,7 @@ export interface ServicePricingYear {
   servicePricingName?: string;
   minYear: number;
   maxYear: number;
+  imageUrl?: string;
 }
 
 export interface ServicePricingYearPayload {
@@ -40,4 +41,5 @@ export interface ServicePricingYearPayload {
   servicePricingId: string;
   minYear: number;
   maxYear: number;
+  imageUrl?: string;
 }

@@ -29,8 +29,8 @@ export function ConfirmModal({
   const isDanger = variant === "danger";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center border border-black justify-center bg-opacity-50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center bg-black/50 backdrop-blur-sm border border-black justify-center bg-opacity-50 p-4">
+      <div className="w-full max-w-md bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3 mb-4">
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -53,21 +53,21 @@ export function ConfirmModal({
         <div className="flex justify-between items-center mt-8">
           <Button
             variant="secondary"
-            size="sm"           /* ← Compact size */
+            size="sm"
             onClick={onCancel}
             disabled={isLoading}
-            className="w-auto min-w-24"  /* ← Remove fixed width */
+            className="w-auto min-w-24"
           >
             {cancelLabel}
           </Button>
 
           <Button
             variant={isDanger ? "danger" : "primary"}
-            size="sm"           /* ← Compact size */
+            size="sm"
             onClick={onConfirm}
             isLoading={isLoading}
             disabled={isLoading}
-            className="w-auto min-w-28 font-medium"  /* ← Slightly wider for "Approve" */
+            className="w-auto min-w-28 font-medium"
           >
             {isLoading ? "Processing..." : confirmLabel}
           </Button>

@@ -12,6 +12,12 @@ export interface VehicleSummary {
   licensePlate: string;
 }
 
+export interface AreaOfUseItem {
+  areaOfUseLatitude: number;
+  areaOfUseLongitude: number;
+  areaOfUseName: string;
+}
+
 export interface BookingSegment {
   segmentId: string;
   startDateTime: string;
@@ -26,6 +32,7 @@ export interface BookingSegment {
   bookingTotalPrice: number;
   vehicle: VehicleSummary;
   booker: Booker;
+  areaOfUse?: AreaOfUseItem[];
 }
 
 export interface BookingDetail {
