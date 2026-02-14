@@ -1,26 +1,159 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #171717;
-  }
+    :root {
+        --background: #ffffff;
+        --foreground: #171717;
+    }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+/* styles/editor.css  — import this in your layout or globals.css */
+
+.tiptap {
+    outline: none;
+}
+
+/* Placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+    pointer-events: none;
+    float: left;
+    height: 0;
+}
+
+/* Typography */
+.tiptap h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 1.5rem 0 0.75rem;
+}
+.tiptap h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 1.25rem 0 0.5rem;
+}
+.tiptap h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+}
+.tiptap p {
+    margin: 0.75rem 0;
+    line-height: 1.75;
+}
+
+/* Lists */
+.tiptap ul,
+.tiptap ol {
+    padding-left: 1.5rem;
+    margin: 0.75rem 0;
+}
+.tiptap ul {
+    list-style-type: disc;
+}
+.tiptap ol {
+    list-style-type: decimal;
+}
+
+/* Task List */
+.tiptap ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+}
+.tiptap ul[data-type="taskList"] li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.tiptap ul[data-type="taskList"] li > label {
+    margin-top: 2px;
+}
+
+/* Blockquote */
+.tiptap blockquote {
+    border-left: 4px solid #6366f1;
+    padding-left: 1rem;
+    color: #6b7280;
+    font-style: italic;
+    margin: 1rem 0;
+}
+
+/* Code */
+.tiptap code {
+    background: #f3f4f6;
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.3rem;
+    font-family: "Fira Code", monospace;
+    font-size: 0.875em;
+}
+
+.tiptap pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.tiptap pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+/* Table */
+.tiptap table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+.tiptap th,
+.tiptap td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+}
+.tiptap th {
+    background: #f9fafb;
+    font-weight: 600;
+}
+
+/* Images */
+.tiptap img {
+    max-width: 100%;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+/* Links */
+.tiptap a {
+    color: #6366f1;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Horizontal Rule */
+.tiptap hr {
+    border: none;
+    border-top: 2px solid #e5e7eb;
+    margin: 2rem 0;
 }

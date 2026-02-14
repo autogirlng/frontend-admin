@@ -15,7 +15,7 @@ import {
   Puzzle,
   Star,
   ShieldEllipsis,
-  Pencil
+  Pencil,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -148,6 +148,15 @@ export default function SettingsPage() {
             title="Customer Banner"
             description="Set top banner on customer homepage."
             iconBgColor="bg-gray-100"
+          />
+
+          {/* 12. Blog Settings */}
+          <SettingsCard
+            href="/dashboard/blog"
+            icon={Pencil}
+            title="Blog Settings"
+            description="Manage blog posts and content."
+            iconBgColor="bg-blue-100"
           />
         </div>
       </main>
