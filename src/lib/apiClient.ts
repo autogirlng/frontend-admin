@@ -1,4 +1,3 @@
-import { ConsolidatedInvoicePayload } from "@/components/dashboard/bookings-management/consolidated-types";
 import { getSession } from "next-auth/react";
 
 class ApiError extends Error {
@@ -50,7 +49,7 @@ export const apiClient = {
       {
         method: "GET",
         headers,
-      }
+      },
     );
     return handleResponse(response);
   },
@@ -58,7 +57,7 @@ export const apiClient = {
   post: async <T>(
     endpoint: string,
     body: any,
-    requireAuth: boolean = true
+    requireAuth: boolean = true,
   ): Promise<T> => {
     const headers = await getHeaders(requireAuth);
     const response = await fetch(
@@ -67,7 +66,7 @@ export const apiClient = {
         method: "POST",
         headers,
         body: JSON.stringify(body),
-      }
+      },
     );
     return handleResponse(response);
   },
@@ -80,7 +79,7 @@ export const apiClient = {
         method: "PUT",
         headers,
         body: JSON.stringify(body),
-      }
+      },
     );
     return handleResponse(response);
   },
@@ -93,7 +92,7 @@ export const apiClient = {
         method: "PATCH",
         headers,
         body: JSON.stringify(body),
-      }
+      },
     );
     return handleResponse(response);
   },
@@ -105,14 +104,14 @@ export const apiClient = {
       {
         method: "DELETE",
         headers,
-      }
+      },
     );
     return handleResponse(response);
   },
 
   patchFormData: async <T>(
     endpoint: string,
-    formData: FormData
+    formData: FormData,
   ): Promise<T> => {
     const session = await getSession();
     const headers: Record<string, string> = {}; // No 'Content-Type'
@@ -127,7 +126,7 @@ export const apiClient = {
         method: "PATCH", // Use PATCH method
         headers,
         body: formData,
-      }
+      },
     );
     return handleResponse(response);
   },
@@ -146,7 +145,7 @@ export const apiClient = {
         method: "POST",
         headers, // Let the browser set the 'Content-Type' for FormData
         body: formData,
-      }
+      },
     );
     return handleResponse(response);
   },
@@ -154,7 +153,7 @@ export const apiClient = {
   postAndDownloadFile: async (
     endpoint: string,
     body: any,
-    defaultFilename: string
+    defaultFilename: string,
   ): Promise<void> => {
     const authHeaders = await getHeaders();
     const response = await fetch(
@@ -166,7 +165,7 @@ export const apiClient = {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -178,7 +177,7 @@ export const apiClient = {
         // Not a JSON error
       }
       throw new Error(
-        errorData?.message || response.statusText || "Failed to download file"
+        errorData?.message || response.statusText || "Failed to download file",
       );
     }
 
@@ -210,7 +209,7 @@ export const apiClient = {
 
   getAndDownloadFile: async (
     endpoint: string,
-    defaultFilename: string
+    defaultFilename: string,
   ): Promise<void> => {
     const headers = await getHeaders(); // Get auth headers
 
@@ -219,7 +218,7 @@ export const apiClient = {
       {
         method: "GET",
         headers, // No body or Content-Type needed for GET
-      }
+      },
     );
 
     if (!response.ok) {
@@ -230,7 +229,7 @@ export const apiClient = {
         // Not a JSON error
       }
       throw new Error(
-        errorData?.message || response.statusText || "Failed to download file"
+        errorData?.message || response.statusText || "Failed to download file",
       );
     }
 
@@ -269,7 +268,7 @@ export const apiClient = {
       {
         method: "GET",
         headers,
-      }
+      },
     );
 
     if (!response.ok) {
@@ -277,7 +276,7 @@ export const apiClient = {
       try {
         const err = await response.json();
         errorMsg = err.message || errorMsg;
-      } catch { }
+      } catch {}
       throw new Error(errorMsg);
     }
 
@@ -292,7 +291,7 @@ export const apiClient = {
         method: "POST",
         headers,
         body: JSON.stringify(body),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -300,21 +299,24 @@ export const apiClient = {
       try {
         const err = await response.json();
         errorMsg = err.message || errorMsg;
-      } catch { }
+      } catch {}
       throw new Error(errorMsg);
     }
 
     return await response.blob();
   },
 
-  getConsolidatedInvoices: async <T>(endpoint: string, requireAuth: boolean = true): Promise<T> => {
+  getConsolidatedInvoices: async <T>(
+    endpoint: string,
+    requireAuth: boolean = true,
+  ): Promise<T> => {
     const headers = await getHeaders(requireAuth);
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
       {
         method: "GET",
         headers,
-      }
+      },
     );
     if (
       response.status === 204 ||
