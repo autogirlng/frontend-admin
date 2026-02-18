@@ -1,47 +1,115 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, Layers } from "lucide-react";
 import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { useGetMyProfile } from "@/lib/hooks/profile/useProfile";
-import { useCreateBlogContent } from "@/lib/hooks/blog/useBlog";
+import {
+  useCreateBlogContent,
+  BlogPost,
+  useFetchBlogCategories,
+  useUpdateBlogContent,
+} from "@/lib/hooks/blog/useBlog";
 
 interface SubmitBlogContentModalProps {
   onClose: () => void;
   consolidatedInvoiceId?: string;
   customerName?: string;
   blogHTML: string;
+  postContent?: BlogPost;
+  update?: boolean;
 }
 
 export function SubmitBlogContentModal({
   onClose,
   blogHTML,
+  postContent,
+  update,
 }: SubmitBlogContentModalProps) {
   const { data: myProfile, isPending } = useGetMyProfile();
-  const { mutate, isPending: creatingBlogPost } = useCreateBlogContent();
+  const { mutate: createBlog, isPending: creatingBlogPost } =
+    useCreateBlogContent();
+  const { mutate: updateBlog, isPending: updatingBlogPost } =
+    useUpdateBlogContent(postContent?.id || "");
+  const router = useRouter();
+
+  const { data: categories } = useFetchBlogCategories();
 
   const [title, setTitle] = useState<string>("");
   const [slug, setSlug] = useState<string>("");
   const [excerpt, setExcerpt] = useState<string>("");
   const [blogCategory, setBlogCategory] = useState<string>("");
-  const [tags, setTags] = useState<string[]>(["Education"]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState<string>("");
+
+  useEffect(() => {
+    if (postContent) {
+      setTitle(postContent.title);
+      setExcerpt(postContent.excerpt);
+      setBlogCategory(postContent.blogCategory.id);
+      setSlug(postContent.slug ?? "");
+      setTags(postContent.tags);
+    }
+  }, [postContent]);
 
   const handleSubmit = async () => {
-    mutate({
+    const blogData = {
       title: title,
-      slug: title.charAt(0),
+      approvalRef: postContent?.approvalRef,
       content: blogHTML,
       excerpt: excerpt,
       authorName: `${myProfile?.firstName} ${myProfile?.lastName}`,
       authorEmail: myProfile?.email || "",
       authorPhoneNumber: myProfile?.phoneNumber || "",
       blogCategory: {
-        id: "0d3436f7-54fa-409a-8c32-4658defb4db6",
+        id: blogCategory,
       },
-      tags: ["Education"],
-    });
+      slug:
+        slug ||
+        title
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, ""),
+      tags: tags,
+    };
+
+    if (update) {
+      updateBlog(
+        {
+          ...blogData,
+        },
+        {
+          onSuccess: () => {
+            router.push("/dashboard/blog");
+          },
+        },
+      );
+    } else {
+      createBlog(
+        {
+          ...blogData,
+        },
+        {
+          onSuccess: () => {
+            router.push("/dashboard/blog");
+          },
+        },
+      );
+    }
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const trimmed = tagInput.trim();
+      if (trimmed && !tags.includes(trimmed)) {
+        setTags([...tags, trimmed]);
+      }
+      setTagInput("");
+    }
   };
 
   if (isPending) {
@@ -90,10 +158,36 @@ export function SubmitBlogContentModal({
                 />
               </div>
 
-              {/* Slug */}
-              {/*<div>
-                <TextInput label="Slug" id="slug" name="slug" />
-              </div>*/}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => setTags(tags.filter((t) => t !== tag))}
+                        className="hover:text-blue-900"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleAddTag}
+                  placeholder="Type a tag and press Enter or comma"
+                  className="w-full border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
               {/* Excerpt */}
               <div>
@@ -105,6 +199,33 @@ export function SubmitBlogContentModal({
                   value={excerpt}
                   onChange={(e) => setExcerpt(e.target.value)}
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="blogCategory"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Category
+                </label>
+                <select
+                  id="blogCategory"
+                  name="blogCategory"
+                  value={blogCategory}
+                  onChange={(e) => setBlogCategory(e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="" disabled>
+                    Select a category
+                  </option>
+                  {categories?.content
+                    ?.filter((cat) => cat.status === "APPROVED")
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               {/* Author Name */}
@@ -139,20 +260,6 @@ export function SubmitBlogContentModal({
                   value={myProfile?.phoneNumber}
                 />
               </div>
-
-              {/* Blog Category */}
-              {/*<div>
-                <label className="text-xs font-medium">Category</label>
-                <select
-                  name="blogCategoryId"
-                  className="w-full border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">Select category</option>
-                  <option value="46818352-f16a-47a1-9793-00c4544c7e2d">
-                    Education
-                  </option>
-                </select>
-              </div>*/}
             </form>
           </div>
         </div>
@@ -170,11 +277,15 @@ export function SubmitBlogContentModal({
             <Button
               variant="primary"
               onClick={handleSubmit}
-              isLoading={creatingBlogPost}
-              disabled={title.length === 0 || excerpt.length === 0}
+              isLoading={creatingBlogPost || updatingBlogPost}
+              disabled={
+                title.length === 0 ||
+                excerpt.length === 0 ||
+                blogCategory.length === 0
+              }
               className="flex-1 sm:flex-none shadow-md shadow-blue-500/20"
             >
-              Submit
+              {update ? "Update" : "Submit"}
             </Button>
           </div>
         </div>

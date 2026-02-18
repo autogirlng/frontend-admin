@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Toolbar } from "./Toolbar";
 import { BubbleToolbar } from "./BubbleToolbar";
-import { useCreateBlogContent } from "@/lib/hooks/blog/useBlog";
+import { useFetchSingleBlogContent } from "@/lib/hooks/blog/useBlog";
 import { useUploadImage } from "@/lib/hooks/blog/useBlog";
 import { SubmitBlogContentModal } from "./SubmitBlogContentModal";
 import UnderlineExt from "@tiptap/extension-underline";
@@ -26,20 +27,26 @@ import { common, createLowlight } from "lowlight";
 import { RichTextEditorProps } from "./types";
 import Button from "@/components/generic/ui/Button";
 import { Toaster } from "react-hot-toast";
+import CustomLoader from "@/components/generic/CustomLoader";
 
 const lowlight = createLowlight(common);
 
 export function Editor({
-  content = "",
   onChange,
   placeholder = "Write something amazing…",
   editable = true,
 }: RichTextEditorProps) {
   const [editorState, setEditorState] = useState({ chars: 0, words: 0 });
+
   const [html, setHTML] = useState<string>("");
   const [isBlogSubmitModalOpen, setIsBlogSubmitModalOpen] =
     useState<boolean>(false);
-  const { mutate } = useCreateBlogContent();
+  const searchParams = useSearchParams();
+  const blogId = searchParams.get("blogId");
+
+  const { data: blogContent, isLoading } = useFetchSingleBlogContent(
+    blogId || "",
+  );
 
   const { uploadImage, isUploading } = useUploadImage();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +70,7 @@ export function Editor({
       Subscript,
       Superscript,
     ],
-    content,
+    content: "",
     onUpdate: ({ editor }) => {
       const text = editor.state.doc.textContent;
       setEditorState({
@@ -74,6 +81,12 @@ export function Editor({
       onChange?.(editor.getHTML(), editor.getJSON());
     },
   });
+
+  useEffect(() => {
+    if (editor && blogContent) {
+      editor.commands.setContent(blogContent.content);
+    }
+  }, [editor, blogContent]);
 
   // Called when the user picks a file from the OS dialog
   const handleFileChange = useCallback(
@@ -111,6 +124,10 @@ export function Editor({
 
   if (!editor) return null;
 
+  if (isLoading) {
+    return <CustomLoader />;
+  }
+
   return (
     <>
       <Toaster position="top-right" />
@@ -146,9 +163,9 @@ export function Editor({
         <Button
           onClick={() => setIsBlogSubmitModalOpen(true)}
           className="mt-3"
-          disabled={html.length === 0}
+          disabled={editorState.words === 0 || editorState.chars === 0}
         >
-          Submit
+          {!!blogId ? "Update" : "Submit"}
         </Button>
       </div>
 
@@ -156,6 +173,8 @@ export function Editor({
         <SubmitBlogContentModal
           blogHTML={html}
           onClose={() => setIsBlogSubmitModalOpen(false)}
+          postContent={blogContent}
+          update={!!blogId}
         />
       )}
     </>

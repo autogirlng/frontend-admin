@@ -1,11 +1,17 @@
 "use client";
 
 import { Editor } from "@/components/dashboard/blog/Editor";
+import CustomLoader from "@/components/generic/CustomLoader";
+import { Suspense } from "react";
 
-export default function BlogPage() {
+const BlogEditPage = () => {
   return (
     <>
-      <Editor />
+      <Suspense fallback={<CustomLoader />}>
+        <Editor />
+      </Suspense>
     </>
   );
-}
+};
+
+export default BlogEditPage;
