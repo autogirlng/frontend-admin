@@ -155,13 +155,16 @@ export function useDownloadCredentials() {
   });
 }
 
-export function useGetAdminOfflineBookings(adminId: string, page: number) {
+export function useGetAdminOfflineBookings(adminId: string, page: number, status?: string | null) {
   return useQuery<PaginatedResponse<OfflineBooking>>({
-    queryKey: [ADMIN_OFFLINE_BOOKINGS_KEY, adminId, page],
+    queryKey: [ADMIN_OFFLINE_BOOKINGS_KEY, adminId, page, status],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", String(page));
       params.append("size", "10");
+      if (status) {
+        params.append("status", status);
+      }
 
       const endpoint = `/admin/bookings/offline/created-by/${adminId}?${params.toString()}`;
       return apiClient.get<PaginatedResponse<OfflineBooking>>(endpoint);

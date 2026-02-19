@@ -11,11 +11,13 @@ import {
 interface UseAdminCommissionExportProps {
   adminId: string;
   adminName?: string;
+  status?: string | null;
 }
 
 export function useAdminCommissionExport({
   adminId,
   adminName,
+  status,
 }: UseAdminCommissionExportProps) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -28,20 +30,32 @@ export function useAdminCommissionExport({
     try {
       const params = new URLSearchParams();
       params.append("page", "0");
-      params.append("size", "10000");
+      params.append("size", "1");
+      if (status) {
+        params.append("status", status);
+      }
 
-      const endpoint = `/admin/bookings/offline/created-by/${adminId}?${params.toString()}`;
-      const res =
-        await apiClient.get<PaginatedResponse<OfflineBooking>>(endpoint);
-      const bookings = res.content || [];
+      // Step 1: Fetch total count
+      const countRes =
+        await apiClient.get<PaginatedResponse<OfflineBooking>>(
+          `/admin/bookings/offline/created-by/${adminId}?${params.toString()}`
+        );
+      const total = countRes.totalItems || 0;
 
-      if (bookings.length === 0) {
+      if (total === 0) {
         toast.error("No commissions found to export", {
           id: "export-commissions",
         });
         setIsExporting(false);
         return;
       }
+
+      // Step 2: Fetch all records using exact total
+      params.set("size", String(total));
+      const endpoint = `/admin/bookings/offline/created-by/${adminId}?${params.toString()}`;
+      const res =
+        await apiClient.get<PaginatedResponse<OfflineBooking>>(endpoint);
+      const bookings = res.content || [];
 
       const dateStr = format(new Date(), "dd-MMM-yyyy");
       const safeName = adminName?.replace(/\s+/g, "_") || "Admin";

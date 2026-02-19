@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { useCustomerExport } from "./hooks/useCustomerExport";
+import { useAllCustomerExport } from "./hooks/useAllCustomerExport";
 import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
@@ -70,6 +71,8 @@ export default function CustomersPage() {
   const { handleExportCustomers, isExporting } = useCustomerExport({
     searchTerm: debouncedSearchTerm,
   });
+
+  const { handleExportAllCustomers, isExportingAll } = useAllCustomerExport();
 
   // --- Modal Handlers ---
   const openModal = (type: "status" | "view", customer: Customer) => {
@@ -167,7 +170,7 @@ export default function CustomersPage() {
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
         {/* --- Header --- */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
             <p className="text-lg text-gray-600 mt-1">
@@ -175,18 +178,32 @@ export default function CustomersPage() {
             </p>
           </div>
 
-          {/* ✅ Export Button */}
-          <div>
+          {/* ✅ Export Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Button
+              onClick={handleExportAllCustomers}
+              variant="secondary"
+              size="smd"
+              disabled={isExportingAll}
+              className="w-full sm:w-auto min-w-[140px] whitespace-nowrap"
+            >
+              {isExportingAll ? (
+                <span>Exporting...</span>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" /> Export All Customers
+                </>
+              )}
+            </Button>
             <Button
               onClick={handleExportCustomers}
               variant="primary"
               size="smd"
               disabled={isLoading || customers.length === 0 || isExporting}
-              className="w-auto min-w-[140px]"
+              className="w-full sm:w-auto min-w-[140px] whitespace-nowrap"
             >
-               {/* Show spinner or icon based on state */}
               {isExporting ? (
-                 <span>Exporting...</span>
+                <span>Exporting...</span>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" /> Export Customers

@@ -8,11 +8,12 @@ import {
   useGetAdminOfflineBookings,
   useGetAdminDetails,
 } from "@/lib/hooks/settings/useAdmins";
-import { OfflineBooking } from "@/components/settings/staffs/types";
+import { OfflineBooking, OfflineBookingStatus } from "@/components/settings/staffs/types";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
+import Select, { Option } from "@/components/generic/ui/Select";
 import { useAdminCommissionExport } from "@/components/settings/staffs/hooks/useAdminCommissionExport";
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -44,6 +45,11 @@ export default function AdminCommissionsPage() {
   const router = useRouter();
   const adminId = params.adminId as string;
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedStatus, setSelectedStatus] = useState<Option | null>(null);
+
+  const statusOptions: Option[] = Object.entries(OfflineBookingStatus).map(
+    ([key, value]) => ({ id: value, name: key.replace(/_/g, " ") })
+  );
 
   const { data: adminData } = useGetAdminDetails(adminId);
 
@@ -51,14 +57,14 @@ export default function AdminCommissionsPage() {
     data: paginatedData,
     isLoading,
     isError,
-  } = useGetAdminOfflineBookings(adminId, currentPage);
+  } = useGetAdminOfflineBookings(adminId, currentPage, selectedStatus?.id || null);
 
   const adminName = adminData
     ? `${adminData.firstName} ${adminData.lastName}`
     : undefined;
 
   const { handleExportCommissions, isExporting } =
-    useAdminCommissionExport({ adminId, adminName });
+    useAdminCommissionExport({ adminId, adminName, status: selectedStatus?.id || null });
 
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -141,7 +147,7 @@ export default function AdminCommissionsPage() {
 
   return (
     <main className="py-1 max-w-8xl mx-auto px-0 sm:px-0 lg:px-0">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <Button
             variant="secondary"
@@ -181,6 +187,34 @@ export default function AdminCommissionsPage() {
             </>
           )}
         </Button>
+      </div>
+
+      {/* --- Status Filter --- */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
+        <div className="w-full sm:w-64">
+          <Select
+            label="Filter by Status"
+            options={statusOptions}
+            selected={selectedStatus}
+            onChange={(option) => {
+              setSelectedStatus(option);
+              setCurrentPage(0);
+            }}
+            placeholder="All Statuses"
+          />
+        </div>
+        {selectedStatus && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSelectedStatus(null);
+              setCurrentPage(0);
+            }}
+          >
+            Clear Filter
+          </Button>
+        )}
       </div>
 
       {isLoading && !paginatedData ? (
