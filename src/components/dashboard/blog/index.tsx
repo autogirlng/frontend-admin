@@ -52,103 +52,110 @@ const Blog = () => {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-50 p-6 md:p-12">
-        <div className="max-w-6xl mx-auto">
-          {/* Header Section */}
-          <header className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+      <div className="min-h-screen bg-gray-50">
+        <div className="relative bg-indigo-900 h-64 w-full overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/50 to-indigo-900"></div>
+
+          <div className="relative max-w-6xl mx-auto px-6 md:px-12 h-full flex items-end pb-12">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-                Manage Posts
+              <h1 className="text-4xl font-bold text-white tracking-tight">
+                Manage Blog
               </h1>
-              <p className="text-gray-500 mt-2">
-                Create, edit, and share your thoughts.
+              <p className="text-indigo-100 mt-2">
+                Create, edit, and share your thoughts with the world.
               </p>
             </div>
-          </header>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Feed */}
-            <div className="lg:col-span-2 space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Recent Stories
-              </h2>
-              {data?.content?.map((post) => {
-                const formattedCreatedAtDate = format(
-                  new Date(post.createdAt),
-                  "MMM dd, yyyy",
-                );
-                return (
-                  <article
-                    key={post.id}
-                    onClick={() => selectArticle(post)}
-                    className="group bg-white p-6  border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  >
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">
-                      {post.excerpt}
-                    </p>
-                    <div className="text-sm text-gray-400 font-medium flex flex-row justify-between">
-                      <span>Published on {formattedCreatedAtDate}</span>
-                      <span
-                        className={`
-                          inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
-                          ${statusStyles[post.status as keyof typeof statusStyles] || statusStyles.DRAFT}
-                        `}
-                      >
-                        {/* Dynamic Dot */}
-                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                        {post.status}
-                      </span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-
-            <aside className="space-y-6">
-              <div className="bg-indigo-900 text-white p-8 shadow-xl relative overflow-hidden">
-                <div className="relative z-10">
-                  <BookOpenIcon className="mb-4 opacity-80" size={32} />
-                  <h3 className="text-xl font-bold mb-2">Ready to write?</h3>
-                  <p className="text-indigo-200 text-sm mb-6">
-                    Your audience is waiting for your next big insight.
-                  </p>
-                  <Link
-                    href={"/dashboard/blog/edit"}
-                    className="w-full bg-white text-indigo-900 py-3 px-3 font-bold hover:bg-indigo-50 transition-colors"
-                  >
-                    Open Editor
-                  </Link>
-                </div>
-                {/* Decorative circle */}
-                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-800 rounded-full opacity-50" />
-              </div>
-
-              <Link
-                href="/dashboard/blog/comment"
-                className="w-full bg-[#0096FF]  hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 rounded"
-              >
-                View Comments
-              </Link>
-
-              <Link
-                href="/dashboard/blog/categories"
-                className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 rounded"
-              >
-                View Categories
-              </Link>
-            </aside>
           </div>
         </div>
-        {approvalModal && (
-          <UpdateBlogStatusModal
-            onClose={() => setApprovalModal("")}
-            id={approvalModal}
-            contentType={BLOG_CONTENT_TYPE.POST}
-          />
-        )}
+
+        <div className="p-6 md:p-12 mt-8">
+          <div className="max-w-6xl mx-auto">
+
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <h2 className="text-xl font-semibold text-gray-800  mb-4">
+                  Recent Stories
+                </h2>
+                {data?.content?.map((post) => {
+                  const formattedCreatedAtDate = format(
+                    new Date(post.createdAt),
+                    "MMM dd, yyyy",
+                  );
+                  return (
+                    <article
+                      key={post.id}
+                      onClick={() => selectArticle(post)}
+                      className="group bg-white p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-gray-600 leading-relaxed mb-4">
+                        {post.excerpt}
+                      </p>
+                      <div className="text-sm text-gray-400 font-medium flex flex-row justify-between">
+                        <span>Published on {formattedCreatedAtDate}</span>
+                        <span
+                          className={`
+                            inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
+                            ${statusStyles[post.status as keyof typeof statusStyles] || statusStyles.DRAFT}
+                          `}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                          {post.status}
+                        </span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <aside className="space-y-6">
+                <div className="bg-white border border-gray-100 p-8 shadow-xl relative overflow-hidden group">
+                  <div className="relative z-10">
+                    <BookOpenIcon className="mb-4 text-indigo-600 opacity-80" size={32} />
+                    <h3 className="text-xl font-bold mb-2 text-gray-900">Ready to write?</h3>
+                    <p className="text-gray-500 text-sm mb-6">
+                      Your audience is waiting for your next big insight.
+                    </p>
+                    <Link
+                      href={"/dashboard/blog/edit"}
+                      className="w-full block text-center bg-indigo-600 text-white py-3 px-3 font-bold hover:bg-indigo-700 transition-colors"
+                    >
+                      Open Editor
+                    </Link>
+                  </div>
+                  {/* Decorative circle */}
+                  <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-50 rounded-full transition-transform group-hover:scale-110" />
+                </div>
+
+                <Link
+                  href="/dashboard/blog/comment"
+                  className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 rounded transition-colors"
+                >
+                  View Comments
+                </Link>
+
+                <Link
+                  href="/dashboard/blog/categories"
+                  className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 rounded transition-colors"
+                >
+                  View Categories
+                </Link>
+              </aside>
+            </div>
+          </div>
+
+          {approvalModal && (
+            <UpdateBlogStatusModal
+              onClose={() => setApprovalModal("")}
+              id={approvalModal}
+              contentType={BLOG_CONTENT_TYPE.POST}
+            />
+          )}
+        </div>
       </div>
     </>
   );
