@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { BookOpenIcon } from "lucide-react";
+import { BookOpenIcon, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -71,8 +71,6 @@ const Blog = () => {
 
         <div className="p-6 md:p-12 mt-8">
           <div className="max-w-6xl mx-auto">
-
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800  mb-4">
@@ -115,28 +113,28 @@ const Blog = () => {
               <aside className="space-y-6">
                 <div className="bg-white border border-gray-100 p-8 shadow-xl relative overflow-hidden group">
                   <div className="relative z-10">
-                    <BookOpenIcon className="mb-4 text-indigo-600 opacity-80" size={32} />
-                    <h3 className="text-xl font-bold mb-2 text-gray-900">Ready to write?</h3>
+                    <BookOpenIcon
+                      className="mb-4 text-indigo-600 opacity-80"
+                      size={32}
+                    />
+                    <h3 className="text-xl font-bold mb-2 text-gray-900">
+                      Ready to write?
+                    </h3>
                     <p className="text-gray-500 text-sm mb-6">
                       Your audience is waiting for your next big insight.
                     </p>
+
                     <Link
-                      href={"/dashboard/blog/edit"}
-                      className="w-full block text-center bg-indigo-600 text-white py-3 px-3 font-bold hover:bg-indigo-700 transition-colors"
+                      href="/dashboard/blog/edit"
+                      className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 px-3 font-bold shadow-md hover:bg-indigo-700 transition-colors"
                     >
-                      Open Editor
+                      <Pencil size={18} />
+                      Write an article
                     </Link>
                   </div>
                   {/* Decorative circle */}
                   <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-50 rounded-full transition-transform group-hover:scale-110" />
                 </div>
-
-                <Link
-                  href="/dashboard/blog/comment"
-                  className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 rounded transition-colors"
-                >
-                  View Comments
-                </Link>
 
                 <Link
                   href="/dashboard/blog/categories"
