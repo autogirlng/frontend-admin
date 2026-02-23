@@ -13,7 +13,8 @@ import { useUploadImage } from "@/lib/hooks/blog/useBlog";
 import { SubmitBlogContentModal } from "./SubmitBlogContentModal";
 import UnderlineExt from "@tiptap/extension-underline";
 import LinkExt from "@tiptap/extension-link";
-import ImageExt from "@tiptap/extension-image";
+// import ImageExt from "@tiptap/extension-image";
+import { CustomImage } from "./CustomImage";
 import TextAlign from "@tiptap/extension-text-align";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
@@ -56,10 +57,18 @@ export function Editor({
     editable,
     extensions: [
       StarterKit.configure({ codeBlock: false }),
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({
+        showOnlyCurrent: false,
+        showOnlyWhenEditable: true,
+        placeholder: ({ node }) => {
+          if (node.type.name === "heading") return "Enter your title…";
+          return "Write something amazing…";
+        },
+      }),
       UnderlineExt,
       LinkExt.configure({ openOnClick: false, autolink: true }),
-      ImageExt.configure({ inline: false, allowBase64: true }),
+      // ImageExt.configure({ inline: false, allowBase64: true }),
+      CustomImage,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       TextStyle,
       Color,
@@ -70,7 +79,18 @@ export function Editor({
       Subscript,
       Superscript,
     ],
-    content: "",
+    content: {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [],
+        },
+      ],
+    },
+
+    autofocus: "start",
     onUpdate: ({ editor }) => {
       const text = editor.state.doc.textContent;
       setEditorState({
