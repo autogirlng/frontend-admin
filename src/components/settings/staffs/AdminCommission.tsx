@@ -3,16 +3,18 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format, isValid } from "date-fns";
-import { ArrowLeft, FileText, Calendar, User } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, User, Download } from "lucide-react";
 import {
   useGetAdminOfflineBookings,
   useGetAdminDetails,
 } from "@/lib/hooks/settings/useAdmins";
-import { OfflineBooking } from "@/components/settings/staffs/types";
+import { OfflineBooking, OfflineBookingStatus } from "@/components/settings/staffs/types";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
+import Select, { Option } from "@/components/generic/ui/Select";
+import { useAdminCommissionExport } from "@/components/settings/staffs/hooks/useAdminCommissionExport";
 
 const StatusBadge = ({ status }: { status: string }) => {
   let colorClass = "bg-gray-100 text-gray-800";
@@ -43,6 +45,11 @@ export default function AdminCommissionsPage() {
   const router = useRouter();
   const adminId = params.adminId as string;
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedStatus, setSelectedStatus] = useState<Option | null>(null);
+
+  const statusOptions: Option[] = Object.entries(OfflineBookingStatus).map(
+    ([key, value]) => ({ id: value, name: key.replace(/_/g, " ") })
+  );
 
   const { data: adminData } = useGetAdminDetails(adminId);
 
@@ -50,7 +57,14 @@ export default function AdminCommissionsPage() {
     data: paginatedData,
     isLoading,
     isError,
-  } = useGetAdminOfflineBookings(adminId, currentPage);
+  } = useGetAdminOfflineBookings(adminId, currentPage, selectedStatus?.id || null);
+
+  const adminName = adminData
+    ? `${adminData.firstName} ${adminData.lastName}`
+    : undefined;
+
+  const { handleExportCommissions, isExporting } =
+    useAdminCommissionExport({ adminId, adminName, status: selectedStatus?.id || null });
 
   const bookings = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -133,28 +147,74 @@ export default function AdminCommissionsPage() {
 
   return (
     <main className="py-1 max-w-8xl mx-auto px-0 sm:px-0 lg:px-0">
-      <div className="flex items-center gap-4 mb-8">
-        <Button
-          variant="secondary"
-          size="sm"
-          className="!w-10 !h-10 !p-0 rounded-full"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Staff Commissions
-          </h1>
-          {adminData && (
-            <p className="text-gray-500 text-sm mt-1">
-              Offline bookings created by{" "}
-              <span className="font-semibold text-gray-800">
-                {adminData.firstName} {adminData.lastName}
-              </span>
-            </p>
-          )}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="!w-10 !h-10 !p-0 rounded-full"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Staff Commissions
+            </h1>
+            {adminData && (
+              <p className="text-gray-500 text-sm mt-1">
+                Offline bookings created by{" "}
+                <span className="font-semibold text-gray-800">
+                  {adminData.firstName} {adminData.lastName}
+                </span>
+              </p>
+            )}
+          </div>
         </div>
+        <Button
+          onClick={handleExportCommissions}
+          variant="primary"
+          size="smd"
+          disabled={isLoading || bookings.length === 0 || isExporting}
+          className="w-auto min-w-[140px] whitespace-nowrap"
+        >
+          {isExporting ? (
+            <span>Exporting...</span>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" />
+              Export Commissions
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* --- Status Filter --- */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
+        <div className="w-full sm:w-64">
+          <Select
+            label="Filter by Status"
+            options={statusOptions}
+            selected={selectedStatus}
+            onChange={(option) => {
+              setSelectedStatus(option);
+              setCurrentPage(0);
+            }}
+            placeholder="All Statuses"
+          />
+        </div>
+        {selectedStatus && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSelectedStatus(null);
+              setCurrentPage(0);
+            }}
+          >
+            Clear Filter
+          </Button>
+        )}
       </div>
 
       {isLoading && !paginatedData ? (
@@ -185,7 +245,7 @@ export default function AdminCommissionsPage() {
                 No Commissions Found
               </h3>
               <p className="text-gray-500 mt-1">
-                This staff member hasn't created any offline bookings yet.
+                This staff member hasn&apos;t created any offline bookings yet.
               </p>
             </div>
           ) : (

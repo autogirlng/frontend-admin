@@ -63,8 +63,8 @@ const states: Option[] = [
 ];
 
 const years: Option[] = Array.from({ length: 20 }, (_, i) => ({
-  id: (2025 - i).toString(),
-  name: (2025 - i).toString(),
+  id: (2026 - i).toString(),
+  name: (2026 - i).toString(),
 }));
 
 const initialState: Step1Data = {
@@ -228,7 +228,7 @@ export default function Step1() {
             router.push(`/dashboard/onboarding/details?id=${res?.id}`);
           },
           onError: handleApiError,
-        }
+        },
       );
     } else {
       createVehicle(
@@ -239,7 +239,7 @@ export default function Step1() {
             router.push(`/dashboard/onboarding/details?id=${res?.id}`);
           },
           onError: handleApiError,
-        }
+        },
       );
     }
   };

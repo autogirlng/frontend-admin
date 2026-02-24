@@ -29,7 +29,7 @@ export function usePaymentExport({
     try {
       const params = new URLSearchParams();
       params.append("page", "0");
-      params.append("size", "10000");
+      params.append("size", "1");
 
       if (filters.paymentStatus)
         params.append("paymentStatus", filters.paymentStatus);
@@ -49,6 +49,20 @@ export function usePaymentExport({
         params.append("searchTerm", searchTerm.trim());
       }
 
+      // Step 1: Fetch total count
+      const countRes = await apiClient.get<PaginatedResponse<Payment>>(
+        `/admin/payments?${params.toString()}`
+      );
+      const total = countRes.totalItems || 0;
+
+      if (total === 0) {
+        toast.error("No payments match the current filters", { id: "export" });
+        setIsExporting(false);
+        return;
+      }
+
+      // Step 2: Fetch all records using exact total
+      params.set("size", String(total));
       const endpoint = `/admin/payments?${params.toString()}`;
       const res = await apiClient.get<PaginatedResponse<Payment>>(endpoint);
       const allPayments = res.content || [];

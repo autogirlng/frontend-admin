@@ -19,25 +19,31 @@ export function useCustomerExport({ searchTerm }: UseCustomerExportProps) {
 
     try {
       const params = new URLSearchParams();
-      // Fetch a large size to get all records, effectively "export all"
       params.append("page", "0");
-      params.append("size", "10000");
+      params.append("size", "1");
 
       if (searchTerm.trim() !== "") {
         params.append("searchTerm", searchTerm.trim());
       }
 
-      // ⚠️ Verify this endpoint matches your useGetCustomers API call
-      const endpoint = `/admin/users/customers?${params.toString()}`;
-      
-      const res = await apiClient.get<PaginatedResponse<Customer>>(endpoint);
-      const customers = res.content || [];
+      // Step 1: Fetch total count
+      const countRes = await apiClient.get<PaginatedResponse<Customer>>(
+        `/admin/users/customers?${params.toString()}`
+      );
+      const total = countRes.totalItems || 0;
 
-      if (customers.length === 0) {
+      if (total === 0) {
         toast.error("No customers found to export", { id: "export-customers" });
         setIsExporting(false);
         return;
       }
+
+      // Step 2: Fetch all records using exact total
+      params.set("size", String(total));
+      const endpoint = `/admin/users/customers?${params.toString()}`;
+      
+      const res = await apiClient.get<PaginatedResponse<Customer>>(endpoint);
+      const customers = res.content || [];
 
       // Generate Filename
       const dateStr = format(new Date(), "dd-MMM-yyyy");
