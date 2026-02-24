@@ -2,17 +2,22 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Layers } from "lucide-react";
+import Image from "next/image";
+import { X, Layers, UploadCloud } from "lucide-react";
 import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { useGetMyProfile } from "@/lib/hooks/profile/useProfile";
+import { BlogPost } from "./types";
 import {
   useCreateBlogContent,
-  BlogPost,
   useFetchBlogCategories,
   useUpdateBlogContent,
 } from "@/lib/hooks/blog/useBlog";
+import clsx from "clsx";
+import { FilePreviewThumbnail } from "@/components/generic/ui/FilePreviewThumbnail";
+import { uploadToCloudinary } from "@/components/dashboard/finance/payments/utils";
+import { CreateBlogPostPayload } from "./types";
 
 interface SubmitBlogContentModalProps {
   onClose: () => void;
@@ -44,6 +49,11 @@ export function SubmitBlogContentModal({
   const [blogCategory, setBlogCategory] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState<string>("");
+  const [coverImageUrl, setCoverImageUrl] = useState<string>("");
+
+  const [globalFile, setGlobalFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (postContent) {
@@ -52,52 +62,66 @@ export function SubmitBlogContentModal({
       setBlogCategory(postContent.blogCategory.id);
       setSlug(postContent.slug ?? "");
       setTags(postContent.tags);
+      setCoverImageUrl(postContent.coverImage || "");
     }
   }, [postContent]);
 
   const handleSubmit = async () => {
-    const blogData = {
-      title: title,
-      approvalRef: postContent?.approvalRef,
-      content: blogHTML,
-      excerpt: excerpt,
-      authorName: `${myProfile?.firstName} ${myProfile?.lastName}`,
-      authorEmail: myProfile?.email || "",
-      authorPhoneNumber: myProfile?.phoneNumber || "",
-      blogCategory: {
-        id: blogCategory,
-      },
-      slug:
-        slug ||
-        title
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, ""),
-      tags: tags,
-    };
+    try {
+      const blogData: CreateBlogPostPayload = {
+        title: title,
+        approvalRef: postContent?.approvalRef,
+        content: blogHTML,
+        excerpt: excerpt,
+        authorName: `${myProfile?.firstName} ${myProfile?.lastName}`,
+        authorEmail: myProfile?.email || "",
+        authorPhoneNumber: myProfile?.phoneNumber || "",
+        blogCategory: {
+          id: blogCategory,
+        },
+        slug:
+          slug ||
+          title
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, ""),
+        tags: tags,
+      };
+      if (globalFile) {
+        setIsUploading(true);
 
-    if (update) {
-      updateBlog(
-        {
-          ...blogData,
-        },
-        {
-          onSuccess: () => {
-            router.push("/dashboard/blog");
+        const uploaded = await uploadToCloudinary(globalFile);
+        if (uploaded?.url) {
+          blogData.coverImage = uploaded.url;
+          blogData.coverImagePublicId = uploaded.publicId;
+        }
+      }
+
+      if (update) {
+        updateBlog(
+          {
+            ...blogData,
           },
-        },
-      );
-    } else {
-      createBlog(
-        {
-          ...blogData,
-        },
-        {
-          onSuccess: () => {
-            router.push("/dashboard/blog");
+          {
+            onSuccess: () => {
+              router.push("/dashboard/blog");
+            },
           },
-        },
-      );
+        );
+      } else {
+        createBlog(
+          {
+            ...blogData,
+          },
+          {
+            onSuccess: () => {
+              router.push("/dashboard/blog");
+            },
+          },
+        );
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -115,6 +139,42 @@ export function SubmitBlogContentModal({
   if (isPending) {
     return <CustomLoader />;
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setGlobalFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const syntheticEvent = {
+        target: { files: e.dataTransfer.files },
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileChange(syntheticEvent);
+    }
+  };
+
+  const removeFile = () => {
+    setGlobalFile(null);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4">
@@ -228,6 +288,93 @@ export function SubmitBlogContentModal({
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Cover Image
+                </label>
+                <label
+                  htmlFor="global-proof-upload"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={clsx(
+                    "block border-2 border-dashed p-6 text-center transition-all relative",
+                    // If coverImageUrl exists, make it look disabled
+                    coverImageUrl
+                      ? "bg-gray-100 border-gray-300 cursor-not-allowed opacity-60"
+                      : "cursor-pointer",
+                    isDragging ? "border-blue-500 bg-blue-50" : "",
+                    globalFile && !isDragging && !coverImageUrl
+                      ? "border-green-400 bg-green-50"
+                      : !isDragging &&
+                          !coverImageUrl &&
+                          "border-gray-300 hover:border-blue-500 hover:bg-gray-50",
+                  )}
+                >
+                  <input
+                    id="global-proof-upload"
+                    type="file"
+                    className="sr-only"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => handleFileChange(e)}
+                    disabled={!!coverImageUrl} // Disabled if coverImageUrl exists
+                  />
+
+                  {/* Show different content based on state */}
+                  {coverImageUrl ? (
+                    // Case 1: There's already a cover image (DISABLED STATE)
+                    <div className="flex flex-col items-center">
+                      <div className="relative">
+                        <Image
+                          src={coverImageUrl}
+                          alt="Cover"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="bg-gray-800/70 text-white text-xs px-2 py-1 rounded-full">
+                            Existing
+                          </span>
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-gray-500">
+                        Cover image already exists
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Remove existing image to upload new one
+                      </p>
+                    </div>
+                  ) : globalFile ? (
+                    // Case 2: New file selected (ENABLED STATE with file)
+                    <div className="flex flex-col items-center">
+                      <FilePreviewThumbnail
+                        file={globalFile}
+                        onRemove={() => removeFile()}
+                      />
+                      <p className="mt-2 text-sm font-medium text-green-700">
+                        File Attached
+                      </p>
+                      <p className="text-xs text-gray-500">{globalFile.name}</p>
+                    </div>
+                  ) : (
+                    // Case 3: No file and no cover image (ENABLED STATE)
+                    <div className="flex flex-col items-center">
+                      <UploadCloud className="h-10 w-10 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium text-blue-600">
+                          Click to upload
+                        </span>{" "}
+                        or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PNG, JPG, GIF up to 10MB
+                      </p>
+                    </div>
+                  )}
+                </label>
+              </div>
+
               {/* Author Name */}
               <div>
                 <TextInput
@@ -277,7 +424,7 @@ export function SubmitBlogContentModal({
             <Button
               variant="primary"
               onClick={handleSubmit}
-              isLoading={creatingBlogPost || updatingBlogPost}
+              isLoading={creatingBlogPost || updatingBlogPost || isUploading}
               disabled={
                 title.length === 0 ||
                 excerpt.length === 0 ||

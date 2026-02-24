@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { BookOpenIcon, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -85,25 +86,40 @@ const Blog = () => {
                     <article
                       key={post.id}
                       onClick={() => selectArticle(post)}
-                      className="group bg-white p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      className="group bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden flex flex-col"
                     >
-                      <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2">
-                        {post.title}
-                      </h3>
-                      <p className="text-gray-600 leading-relaxed mb-4">
-                        {post.excerpt}
-                      </p>
-                      <div className="text-sm text-gray-400 font-medium flex flex-row justify-between">
-                        <span>Published on {formattedCreatedAtDate}</span>
-                        <span
-                          className={`
-                            inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
-                            ${statusStyles[post.status as keyof typeof statusStyles] || statusStyles.DRAFT}
-                          `}
-                        >
-                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                          {post.status}
-                        </span>
+                      {/* Image Container */}
+                      <div className="relative w-full h-52 bg-gray-100">
+                        <Image
+                          src={post.coverImage || "/icons/empty_search.png"}
+                          alt={post.title || "Post cover image"}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          priority={false}
+                        />
+                      </div>
+
+                      <div className="p-6 flex flex-col flex-grow">
+                        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2 line-clamp-2">
+                          {post.title}
+                        </h3>
+                        <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3">
+                          {post.excerpt}
+                        </p>
+
+                        <div className="mt-auto pt-4 border-t border-gray-50 text-sm text-gray-400 font-medium flex flex-row justify-between items-center">
+                          <span>{formattedCreatedAtDate}</span>
+                          <span
+                            className={`
+                              inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border
+                              ${statusStyles[post.status as keyof typeof statusStyles] || statusStyles.DRAFT}
+                            `}
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                            {post.status}
+                          </span>
+                        </div>
                       </div>
                     </article>
                   );
@@ -138,9 +154,16 @@ const Blog = () => {
 
                 <Link
                   href="/dashboard/blog/categories"
-                  className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 rounded transition-colors"
+                  className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 transition-colors"
                 >
                   View Categories
+                </Link>
+
+                <Link
+                  href="/dashboard/blog/comment"
+                  className="w-full bg-[#0096FF] hover:bg-[#007ACC] focus:ring-[#007ACC] block text-center text-white py-2 transition-colors"
+                >
+                  View Comments
                 </Link>
               </aside>
             </div>

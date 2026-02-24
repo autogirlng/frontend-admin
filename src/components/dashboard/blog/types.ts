@@ -53,6 +53,9 @@ export interface CreateBlogPostPayload {
     id: string;
   };
   tags: string[];
+  coverImage?: string;
+  coverImagePublicId?: string;
+  approvalRef?: string;
 }
 
 export interface BlogCategory {
@@ -118,6 +121,8 @@ export interface ModeratedBlogPostContent {
   updatedAt: string;
   blogCategory: BlogCategory;
   tags: string[];
+  coverImage?: string;
+  coverImagePublicId?: string;
 }
 export interface ModeratedBlogPost {
   content: ModeratedBlogPostContent[];
@@ -164,6 +169,7 @@ export interface BlogPost {
   blogCategory: BlogCategory;
   tags: string[];
   metrics: BlogMetrics;
+  coverImage: string;
 }
 
 export interface BlogComment {

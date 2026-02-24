@@ -32,11 +32,7 @@ import CustomLoader from "@/components/generic/CustomLoader";
 
 const lowlight = createLowlight(common);
 
-export function Editor({
-  onChange,
-  placeholder = "Write something amazing…",
-  editable = true,
-}: RichTextEditorProps) {
+export function Editor({ onChange, editable = true }: RichTextEditorProps) {
   const [editorState, setEditorState] = useState({ chars: 0, words: 0 });
 
   const [html, setHTML] = useState<string>("");
@@ -127,7 +123,7 @@ export function Editor({
         editor
           .chain()
           .focus()
-          .undo() // removes the placeholder
+          .undo()
           .setImage({
             src: result.url,
             alt: file.name,
@@ -135,7 +131,6 @@ export function Editor({
           } as any)
           .run();
       } else {
-        // Remove the placeholder on failure
         editor.chain().focus().undo().run();
       }
     },

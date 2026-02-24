@@ -51,7 +51,6 @@ export const CustomImage = Node.create({
     return ["img", mergeAttributes(HTMLAttributes)];
   },
 
-  // ✅ This is what was missing — registers setImage as a command
   addCommands() {
     return {
       setImage:
