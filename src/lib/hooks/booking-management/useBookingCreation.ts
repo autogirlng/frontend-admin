@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/apiClient";
 import toast from "react-hot-toast";
@@ -17,6 +19,17 @@ const VEHICLE_SEARCH_KEY = "vehicleSearch";
 interface DownloadInvoicePayload {
   bookingId: string;
   companyBankAccountId?: string;
+}
+
+export interface TimeSlot {
+  time: string;
+  available: boolean;
+}
+
+export interface TimeSlotsResponse {
+  vehicleId: string;
+  date: string;
+  timeSlots: TimeSlot[];
 }
 
 export function useVehicleSearch(
@@ -107,5 +120,19 @@ export function useDownloadInvoice() {
     onError: (error) => {
       toast.error(error.message || "Failed to download invoice.");
     },
+  });
+}
+
+export function useGetVehicleTimeSlots(vehicleId?: string, date?: string) {
+  return useQuery({
+    queryKey: ["vehicleTimeSlots", vehicleId, date],
+    queryFn: async () => {
+      const data = await apiClient.get<TimeSlotsResponse>(
+        `/public/vehicles/${vehicleId}/time-slots?date=${date}`,
+        false,
+      );
+      return data || null;
+    },
+    enabled: !!vehicleId && !!date,
   });
 }

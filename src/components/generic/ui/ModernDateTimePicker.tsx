@@ -12,6 +12,7 @@ interface DateTimePickerProps {
   onDateChange: (val: string) => void;
   onTimeChange: (val: string) => void;
   required?: boolean;
+  disabledTimes?: string[];
 }
 
 export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -22,6 +23,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
   onDateChange,
   onTimeChange,
   required,
+  disabledTimes = [],
 }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -103,7 +105,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
           if (showTimePicker && timeRef.current)
             updatePosition(timeRef.current);
         },
-        true
+        true,
       );
     }
 
@@ -116,12 +118,12 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
   const daysInMonth = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth() + 1,
-    0
+    0,
   ).getDate();
   const startDay = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth(),
-    1
+    1,
   ).getDay();
 
   const handleDateClick = (day: number) => {
@@ -134,7 +136,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const changeMonth = (offset: number) => {
     const newDate = new Date(
-      currentMonth.setMonth(currentMonth.getMonth() + offset)
+      currentMonth.setMonth(currentMonth.getMonth() + offset),
     );
     setCurrentMonth(new Date(newDate));
   };
@@ -144,7 +146,7 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
     const checkDate = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth(),
-      day
+      day,
     );
     const minimum = new Date(minDate);
     checkDate.setHours(0, 0, 0, 0);
@@ -172,17 +174,39 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
   };
 
   const hours = Array.from({ length: 24 }, (_, i) =>
-    String(i).padStart(2, "0")
+    String(i).padStart(2, "0"),
   );
   const minutes = Array.from({ length: 4 }, (_, i) =>
-    String(i * 15).padStart(2, "0")
+    String(i * 15).padStart(2, "0"),
   );
 
   const handleTimeClick = (type: "hour" | "minute", val: string) => {
     const [currentH, currentM] = (timeValue || "10:00").split(":");
-    if (type === "hour") onTimeChange(`${val}:${currentM || "00"}`);
-    else onTimeChange(`${currentH || "10"}:${val}`);
+
+    if (type === "hour") {
+      let newMin = currentM || "00";
+
+      if (disabledTimes.includes(`${val}:${newMin}`)) {
+        const firstAvailableMin = minutes.find(
+          (m) => !disabledTimes.includes(`${val}:${m}`),
+        );
+        if (firstAvailableMin) {
+          newMin = firstAvailableMin;
+        }
+      }
+      onTimeChange(`${val}:${newMin}`);
+    } else {
+      onTimeChange(`${currentH || "10"}:${val}`);
+    }
   };
+
+  const isHourFullyDisabled = (h: string) => {
+    if (!disabledTimes || disabledTimes.length === 0) return false;
+    return minutes.every((m) => disabledTimes.includes(`${h}:${m}`));
+  };
+
+  const isCurrentTimeDisabled =
+    timeValue && disabledTimes.includes(timeValue) && dateValue;
 
   const CalendarPopup = (
     <div
@@ -242,8 +266,8 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
                   selected
                     ? "bg-blue-600 text-white shadow-md font-medium"
                     : today
-                    ? "text-blue-600 font-bold ring-1 ring-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:bg-gray-100"
+                      ? "text-blue-600 font-bold ring-1 ring-blue-600 bg-blue-50"
+                      : "text-gray-700 hover:bg-gray-100"
                 }
                 ${
                   disabled
@@ -270,40 +294,57 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
         <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
           Hrs
         </div>
-        {hours.map((h) => (
-          <div
-            key={h}
-            onClick={() => handleTimeClick("hour", h)}
-            className={`px-4 py-2 text-sm text-center cursor-pointer hover:bg-blue-50 ${
-              timeValue?.startsWith(h)
-                ? "bg-blue-100 text-blue-700 font-medium"
-                : "text-gray-700"
-            }`}
-          >
-            {h}
-          </div>
-        ))}
+        {hours.map((h) => {
+          const disabled = isHourFullyDisabled(h);
+          return (
+            <div
+              key={h}
+              onClick={() => {
+                if (disabled) return;
+                handleTimeClick("hour", h);
+              }}
+              className={`px-4 py-2 text-sm text-center ${
+                disabled
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                  : timeValue?.startsWith(h)
+                    ? "bg-blue-100 text-blue-700 font-medium cursor-pointer"
+                    : "text-gray-700 cursor-pointer hover:bg-blue-50"
+              }`}
+            >
+              {h}
+            </div>
+          );
+        })}
       </div>
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
           Min
         </div>
-        {minutes.map((m) => (
-          <div
-            key={m}
-            onClick={() => {
-              handleTimeClick("minute", m);
-              setShowTimePicker(false);
-            }}
-            className={`px-4 py-2 text-sm text-center cursor-pointer hover:bg-blue-50 ${
-              timeValue?.endsWith(m)
-                ? "bg-blue-100 text-blue-700 font-medium"
-                : "text-gray-700"
-            }`}
-          >
-            {m}
-          </div>
-        ))}
+        {minutes.map((m) => {
+          const currentH = timeValue?.split(":")[0] || "10";
+          const timeString = `${currentH}:${m}`;
+          const disabled = disabledTimes.includes(timeString);
+
+          return (
+            <div
+              key={m}
+              onClick={() => {
+                if (disabled) return;
+                handleTimeClick("minute", m);
+                setShowTimePicker(false);
+              }}
+              className={`px-4 py-2 text-sm text-center ${
+                disabled
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                  : timeValue?.endsWith(m)
+                    ? "bg-blue-100 text-blue-700 font-medium cursor-pointer"
+                    : "text-gray-700 cursor-pointer hover:bg-blue-50"
+              }`}
+            >
+              {m}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -314,7 +355,11 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
         {label} {required && <span className="text-red-500">*</span>}
       </label>
 
-      <div className="flex flex-col sm:flex-row py-1 border border-gray-300 bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
+      <div
+        className={`flex flex-col sm:flex-row py-1 border bg-white divide-y sm:divide-y-0 sm:divide-x divide-gray-200 transition-colors ${
+          isCurrentTimeDisabled ? "border-red-400" : "border-gray-300"
+        }`}
+      >
         <div
           ref={calendarRef}
           className="relative flex-grow p-2.5 hover:bg-gray-50 cursor-pointer transition-colors group"
@@ -354,17 +399,28 @@ export const ModernDateTimePicker: React.FC<DateTimePickerProps> = ({
           <div className="flex items-center gap-3">
             <Clock
               className={`h-4 w-4 ${
-                showTimePicker
-                  ? "text-blue-600"
-                  : "text-gray-400 group-hover:text-blue-500"
+                isCurrentTimeDisabled
+                  ? "text-red-500"
+                  : showTimePicker
+                    ? "text-blue-600"
+                    : "text-gray-400 group-hover:text-blue-500"
               }`}
             />
             <span
-              className={`text-sm ${
-                timeValue ? "text-gray-900" : "text-gray-400"
+              className={`text-sm flex flex-col leading-tight ${
+                isCurrentTimeDisabled
+                  ? "text-red-500 font-semibold"
+                  : timeValue
+                    ? "text-gray-900"
+                    : "text-gray-400"
               }`}
             >
               {timeValue || "00:00"}
+              {isCurrentTimeDisabled && (
+                <span className="text-[9px] text-red-500 uppercase tracking-wide">
+                  Unavailable
+                </span>
+              )}
             </span>
           </div>
         </div>

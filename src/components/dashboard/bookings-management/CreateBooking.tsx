@@ -24,6 +24,7 @@ import {
   useVehicleSearch,
   useBookingCalculation,
   useCreateBooking,
+  useGetVehicleTimeSlots,
 } from "@/lib/hooks/booking-management/useBookingCreation";
 
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
@@ -96,6 +97,215 @@ const channelOptions: Option[] = [
   { id: "ZOHO_WHATSAPP", name: "Zoho WhatsApp" },
   { id: "TWITTER", name: "Twitter" },
 ];
+
+function convert12hTo24h(time12h: string) {
+  if (!time12h) return "";
+
+  const match = time12h.trim().match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+  if (!match) return time12h;
+
+  let h = parseInt(match[1], 10);
+  const mStr = match[2];
+  const modifier = match[3].toLowerCase();
+
+  if (h === 12) h = 0;
+  if (modifier === "pm") h += 12;
+
+  return `${h.toString().padStart(2, "0")}:${mStr}`;
+}
+
+interface SegmentItemProps {
+  segment: ExtendedBookingSegment;
+  index: number;
+  selectedVehicle: VehicleSearchResult | null;
+  handleSegmentChange: (
+    index: number,
+    field: keyof ExtendedBookingSegment,
+    value: any,
+  ) => void;
+  handleSegmentLocationSelect: (
+    index: number,
+    type: "pickup" | "dropoff",
+    coords: any,
+  ) => void;
+  removeSegment: (index: number) => void;
+  canRemove: boolean;
+  addAreaOfUse: (index: number) => void;
+  removeAreaOfUse: (index: number, areaId: number) => void;
+  updateAreaOfUse: (
+    index: number,
+    areaId: number,
+    field: "name" | "coords",
+    value: any,
+  ) => void;
+}
+
+const SegmentItem = ({
+  segment,
+  index,
+  selectedVehicle,
+  handleSegmentChange,
+  handleSegmentLocationSelect,
+  removeSegment,
+  canRemove,
+  addAreaOfUse,
+  removeAreaOfUse,
+  updateAreaOfUse,
+}: SegmentItemProps) => {
+  const { data: timeSlotsData } = useGetVehicleTimeSlots(
+    selectedVehicle?.id,
+    segment.startDate,
+  );
+
+  const disabledTimes = useMemo(() => {
+    if (!timeSlotsData?.timeSlots) return [];
+
+    const disabled12h = timeSlotsData.timeSlots.filter((t) => !t.available);
+    const disabled24h: string[] = [];
+
+    disabled12h.forEach((t) => {
+      const time24 = convert12hTo24h(t.time);
+      disabled24h.push(time24);
+
+      const [h, m] = time24.split(":");
+      if (m === "00") {
+        disabled24h.push(`${h}:15`);
+      } else if (m === "30") {
+        disabled24h.push(`${h}:45`);
+      }
+    });
+
+    return disabled24h;
+  }, [timeSlotsData]);
+
+  return (
+    <div className="py-4 space-y-4 relative border-b last:border-0">
+      <div className="flex justify-between items-center">
+        <h3 className="font-semibold text-lg text-[#0096FF]">
+          Booking #{index + 1}
+        </h3>
+        {canRemove && (
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            onClick={() => removeSegment(index)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <AddressInput
+          label="Pickup"
+          id={`pickup-${index}`}
+          value={segment.pickupLocationString || ""}
+          onChange={(v) =>
+            handleSegmentChange(index, "pickupLocationString", v)
+          }
+          onLocationSelect={(c) =>
+            handleSegmentLocationSelect(index, "pickup", c)
+          }
+          required
+        />
+        <AddressInput
+          label="Dropoff"
+          id={`dropoff-${index}`}
+          value={segment.dropoffLocationString || ""}
+          onChange={(v) =>
+            handleSegmentChange(index, "dropoffLocationString", v)
+          }
+          onLocationSelect={(c) =>
+            handleSegmentLocationSelect(index, "dropoff", c)
+          }
+          required
+        />
+      </div>
+
+      <ModernDateTimePicker
+        label="Date & Time"
+        dateValue={segment.startDate || ""}
+        timeValue={segment.startTime || ""}
+        onDateChange={(val) => handleSegmentChange(index, "startDate", val)}
+        onTimeChange={(val) => handleSegmentChange(index, "startTime", val)}
+        disabledTimes={disabledTimes}
+        required
+      />
+
+      {selectedVehicle?.allPricingOptions.length ? (
+        <Select
+          label="Booking Type"
+          options={selectedVehicle.allPricingOptions.map((p) => ({
+            id: p.bookingTypeId,
+            name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
+          }))}
+          selected={selectedVehicle.allPricingOptions
+            .map((p) => ({
+              id: p.bookingTypeId,
+              name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
+            }))
+            .find((o) => o.id === segment.bookingTypeId)}
+          onChange={(opt) =>
+            handleSegmentChange(index, "bookingTypeId", opt.id)
+          }
+        />
+      ) : (
+        <p className="text-red-500 text-sm">No pricing options</p>
+      )}
+
+      <div className="py-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-gray-500" /> Areas of Use (Optional)
+          </span>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => addAreaOfUse(index)}
+            className="h-8 text-xs"
+          >
+            <Plus className="w-3 h-3 mr-1" /> Add Area
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {segment.uiAreaOfUse.length === 0 && (
+            <p className="text-xs text-gray-400 italic">
+              No specific areas of use added.
+            </p>
+          )}
+          {segment.uiAreaOfUse.map((area) => (
+            <div key={area.id} className="flex gap-2 items-start">
+              <div className="flex-grow">
+                <AddressInput
+                  label="Area of Use"
+                  id={`area-${area.id}`}
+                  value={area.name}
+                  onChange={(val) =>
+                    updateAreaOfUse(index, area.id, "name", val)
+                  }
+                  onLocationSelect={(coords) =>
+                    updateAreaOfUse(index, area.id, "coords", coords)
+                  }
+                  placeholder="Enter location (e.g. Shoprite Sangotedo)"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => removeAreaOfUse(index, area.id)}
+                className="mt-1 p-2 text-red-500 hover:bg-red-50 rounded"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function CreateBookingPage() {
   const topRef = useRef<HTMLDivElement>(null);
@@ -411,7 +621,6 @@ export default function CreateBookingPage() {
     );
   };
 
-
   const handleCreateBooking = (e: React.FormEvent) => {
     e.preventDefault();
     if (!calculationResult) return;
@@ -692,10 +901,11 @@ export default function CreateBookingPage() {
         )}
 
         <div
-          className={`grid grid-cols-1 gap-6 transition-opacity duration-300 ${isSearchPlaceholder
-            ? "opacity-40 pointer-events-none grayscale"
-            : "opacity-100"
-            }`}
+          className={`grid grid-cols-1 gap-6 transition-opacity duration-300 ${
+            isSearchPlaceholder
+              ? "opacity-40 pointer-events-none grayscale"
+              : "opacity-100"
+          }`}
         >
           {searchResultsData?.content.map((vehicle) => (
             <div
@@ -798,133 +1008,23 @@ export default function CreateBookingPage() {
       <h2 className="text-xl font-semibold mb-2">
         Booking Details: {selectedVehicle?.name}
       </h2>
+
       {segments.map((segment, index) => (
-        <div
+        <SegmentItem
           key={index}
-          className="py-4 space-y-4 relative border-b last:border-0"
-        >
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-lg text-[#0096FF]">
-              Booking #{index + 1}
-            </h3>
-            {segments.length > 1 && (
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                onClick={() => removeSegment(index)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <AddressInput
-              label="Pickup"
-              id={`pickup-${index}`}
-              value={segment.pickupLocationString || ""}
-              onChange={(v) =>
-                handleSegmentChange(index, "pickupLocationString", v)
-              }
-              onLocationSelect={(c) =>
-                handleSegmentLocationSelect(index, "pickup", c)
-              }
-              required
-            />
-            <AddressInput
-              label="Dropoff"
-              id={`dropoff-${index}`}
-              value={segment.dropoffLocationString || ""}
-              onChange={(v) =>
-                handleSegmentChange(index, "dropoffLocationString", v)
-              }
-              onLocationSelect={(c) =>
-                handleSegmentLocationSelect(index, "dropoff", c)
-              }
-              required
-            />
-          </div>
-          <ModernDateTimePicker
-            label="Date & Time"
-            dateValue={segment.startDate || ""}
-            timeValue={segment.startTime || ""}
-            onDateChange={(val) => handleSegmentChange(index, "startDate", val)}
-            onTimeChange={(val) => handleSegmentChange(index, "startTime", val)}
-            required
-          />
-          {selectedVehicle?.allPricingOptions.length ? (
-            <Select
-              label="Booking Type"
-              options={selectedVehicle.allPricingOptions.map((p) => ({
-                id: p.bookingTypeId,
-                name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
-              }))}
-              selected={selectedVehicle.allPricingOptions
-                .map((p) => ({
-                  id: p.bookingTypeId,
-                  name: `${p.bookingTypeName} (${formatPrice(p.price)})`,
-                }))
-                .find((o) => o.id === segment.bookingTypeId)}
-              onChange={(opt) =>
-                handleSegmentChange(index, "bookingTypeId", opt.id)
-              }
-            />
-          ) : (
-            <p className="text-red-500 text-sm">No pricing options</p>
-          )}
-
-          <div className="py-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-gray-500" /> Areas of Use
-                (Optional)
-              </span>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => addAreaOfUse(index)}
-                className="h-8 text-xs"
-              >
-                <Plus className="w-3 h-3 mr-1" /> Add Area
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              {segment.uiAreaOfUse.length === 0 && (
-                <p className="text-xs text-gray-400 italic">
-                  No specific areas of use added.
-                </p>
-              )}
-              {segment.uiAreaOfUse.map((area) => (
-                <div key={area.id} className="flex gap-2 items-start">
-                  <div className="flex-grow">
-                    <AddressInput
-                      label="Area of Use"
-                      id={`area-${area.id}`}
-                      value={area.name}
-                      onChange={(val) =>
-                        updateAreaOfUse(index, area.id, "name", val)
-                      }
-                      onLocationSelect={(coords) =>
-                        updateAreaOfUse(index, area.id, "coords", coords)
-                      }
-                      placeholder="Enter location (e.g. Shoprite Sangotedo)"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeAreaOfUse(index, area.id)}
-                    className="mt-1 p-2 text-red-500 hover:bg-red-50 rounded"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          segment={segment}
+          index={index}
+          selectedVehicle={selectedVehicle}
+          handleSegmentChange={handleSegmentChange}
+          handleSegmentLocationSelect={handleSegmentLocationSelect}
+          removeSegment={removeSegment}
+          canRemove={segments.length > 1}
+          addAreaOfUse={addAreaOfUse}
+          removeAreaOfUse={removeAreaOfUse}
+          updateAreaOfUse={updateAreaOfUse}
+        />
       ))}
+
       <div className="flex gap-2 pt-2">
         <Button
           type="button"
@@ -984,7 +1084,6 @@ export default function CreateBookingPage() {
                 +{formatPrice(calculationResult.platformFeeAmount)}
               </span>
             </div>
-
 
             {/* Geofence Surcharge */}
             {calculationResult.geofenceSurcharge > 0 && (
