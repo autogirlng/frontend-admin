@@ -81,3 +81,20 @@ export type OfflinePaymentApprovalResponse = {
     price: number;
   }>;
 };
+
+export interface BookingSegment {
+  segmentId: string;
+  bookingTypeName: string;
+  startDateTime: string;
+  endDateTime: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  currentVehicleName: string;
+  currentVehicleIdentifier: string;
+}
+
+export interface MoveSegmentsPayload {
+  newVehicleId: string;
+  segmentIds: string[];
+  waivePriceDifference: boolean;
+}

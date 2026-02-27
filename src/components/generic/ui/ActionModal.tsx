@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Button from "./Button";
 import { X, AlertTriangle } from "lucide-react";
 
@@ -12,12 +12,9 @@ interface ActionModalProps {
   onConfirm: () => void;
   isLoading: boolean;
   variant?: "primary" | "danger";
-  children?: React.ReactNode; // For adding custom content, like a <select>
+  children?: React.ReactNode;
 }
 
-/**
- * A generic modal for confirming an action.
- */
 export function ActionModal({
   title,
   message,
@@ -30,7 +27,7 @@ export function ActionModal({
 }: ActionModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-lg bg-white p-6 shadow-xl">
         {/* Header */}
         <button
           onClick={onClose}

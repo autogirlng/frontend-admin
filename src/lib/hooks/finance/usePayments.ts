@@ -6,7 +6,9 @@ import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient";
 import {
   Payment,
+  BookingSegment,
   PaginatedResponse,
+  MoveSegmentsPayload,
 } from "@/components/dashboard/finance/types";
 import { OfflinePaymentApprovalResponse } from "@/components/dashboard/finance/types";
 
@@ -186,11 +188,7 @@ export function useApproveOfflinePayment() {
 
 export function useAllocateVehicle() {
   const queryClient = useQueryClient();
-  return useMutation<
-    void, // response data type
-    Error,
-    { bookingId: string; vehicleId: string }
-  >({
+  return useMutation<void, Error, { bookingId: string; vehicleId: string }>({
     mutationFn: async ({ bookingId, vehicleId }) => {
       await apiClient.post(`/admin/trips/allocate-vehicle/${bookingId}`, {
         vehicleId,
@@ -202,6 +200,53 @@ export function useAllocateVehicle() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to allocate vehicle.");
+    },
+  });
+}
+
+export function useGetBookingSegments(bookingId: string) {
+  return useQuery<BookingSegment[]>({
+    queryKey: ["bookingSegments", bookingId],
+    queryFn: async () => {
+      const data = await apiClient.get<BookingSegment[]>(
+        `/admin/bookings/${bookingId}/segments-lookup`,
+      );
+
+      return data || [];
+    },
+    enabled: !!bookingId,
+  });
+}
+
+export function useMoveBookingSegments() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      payload,
+    }: {
+      bookingId: string;
+      payload: MoveSegmentsPayload;
+    }) => {
+      const response: any = await apiClient.post(
+        `/admin/bookings/${bookingId}/move-segments`,
+        payload,
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(
+        data?.message || "Segments successfully moved to new vehicle.",
+      );
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to transfer booking segments.",
+      );
     },
   });
 }

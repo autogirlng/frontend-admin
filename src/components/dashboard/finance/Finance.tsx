@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Coins,
   Car,
+  ArrowRightLeft,
 } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
@@ -47,6 +48,7 @@ import { Payment } from "./types";
 import { formatPrice } from "./payments/utils";
 import { AllocateVehicleModal } from "./AllocateVehicleModal";
 import { PaymentConflictModal } from "./payments/PaymentConflictModal";
+import { TransferVehicleModal } from "./TransferVehicleModal";
 
 export default function PaymentsPage() {
   const router = useRouter();
@@ -77,6 +79,10 @@ export default function PaymentsPage() {
   const [paymentToUpdate, setPaymentToUpdate] = useState<Payment | null>(null);
 
   const [bookingToAllocate, setBookingToAllocate] = useState<string | null>(
+    null,
+  );
+
+  const [bookingToTransfer, setBookingToTransfer] = useState<string | null>(
     null,
   );
 
@@ -221,6 +227,14 @@ export default function PaymentsPage() {
         label: "Allocate Vehicle",
         icon: Car,
         onClick: () => setBookingToAllocate(payment.bookingId),
+      });
+    }
+
+    if (!isUnassigned) {
+      actions.push({
+        label: "Transfer Vehicle",
+        icon: ArrowRightLeft,
+        onClick: () => setBookingToTransfer(payment.bookingId),
       });
     }
 
@@ -672,6 +686,13 @@ export default function PaymentsPage() {
         <AllocateVehicleModal
           bookingId={bookingToAllocate}
           onClose={() => setBookingToAllocate(null)}
+        />
+      )}
+
+      {bookingToTransfer && (
+        <TransferVehicleModal
+          bookingId={bookingToTransfer}
+          onClose={() => setBookingToTransfer(null)}
         />
       )}
     </>
