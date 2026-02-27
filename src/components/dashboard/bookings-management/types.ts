@@ -173,3 +173,9 @@ export interface VehicleSearchFilters {
   pickupLocationString?: string;
   dropoffLocationString?: string;
 }
+
+export interface MoveSegmentsPayload {
+  newVehicleId: string;
+  segmentIds: string[];
+  waivePriceDifference: boolean;
+}

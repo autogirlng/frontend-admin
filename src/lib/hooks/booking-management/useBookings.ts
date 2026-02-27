@@ -3,6 +3,7 @@ import { apiClient } from "@/lib/apiClient";
 import {
   PaginatedResponse,
   BookingSegment,
+  MoveSegmentsPayload,
 } from "@/components/dashboard/bookings-management/types";
 import toast from "react-hot-toast";
 

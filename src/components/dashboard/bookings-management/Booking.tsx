@@ -10,7 +10,6 @@ import {
   useCancelBooking,
   useDeleteBooking,
   useGetVehiclesForDropdown,
-  useMoveBooking,
   useAllocateVehicle,
 } from "@/lib/hooks/booking-management/useBookings";
 import {
@@ -35,7 +34,6 @@ import {
   Trash2,
   X,
   ArrowRightLeft,
-  FileText,
   Car,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
@@ -48,6 +46,8 @@ import clsx from "clsx";
 import Button from "@/components/generic/ui/Button";
 import TextAreaInput from "@/components/generic/ui/TextAreaInput";
 import { DocumentPreviewModal } from "../finance/PreviewModal";
+
+import { TransferVehicleModal } from "./TransferVehicleModal";
 
 const statusOptions: Option[] = [
   { id: "", name: "All Statuses" },
@@ -132,19 +132,17 @@ export default function BookingsPage() {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null,
   );
-  const [showMoveModal, setShowMoveModal] = useState(false);
-  const [moveVehicleSearch, setMoveVehicleSearch] = useState("");
 
   const [showAllocateModal, setShowAllocateModal] = useState(false);
   const [allocateVehicleSearch, setAllocateVehicleSearch] = useState("");
-
-  const debouncedMoveSearch = useDebounce(moveVehicleSearch, 500);
   const debouncedAllocateSearch = useDebounce(allocateVehicleSearch, 500);
 
-  const [cancelReason, setCancelReason] = useState("");
+  // New state for Segment-based Transfer
+  const [segmentToTransfer, setSegmentToTransfer] =
+    useState<BookingSegment | null>(null);
 
+  const [cancelReason, setCancelReason] = useState("");
   const [targetVehicleId, setTargetVehicleId] = useState<string>("");
-  const [waivePriceDiff, setWaivePriceDiff] = useState<boolean>(false);
 
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -177,19 +175,13 @@ export default function BookingsPage() {
   const { data: bookingTypes, isLoading: isLoadingBookingTypes } =
     useGetBookingTypes();
 
-  const activeSearchTerm = showAllocateModal
-    ? debouncedAllocateSearch
-    : debouncedMoveSearch;
-
   const { data: availableVehicles, isLoading: isLoadingVehicles } =
-    useGetVehiclesForDropdown(debouncedMoveSearch);
+    useGetVehiclesForDropdown(debouncedAllocateSearch);
 
   const downloadInvoiceMutation = useDownloadInvoice();
   const downloadReceiptMutation = useDownloadReceipt();
   const cancelBookingMutation = useCancelBooking();
   const deleteBookingMutation = useDeleteBooking();
-  const moveBookingMutation = useMoveBooking();
-
   const allocateVehicleMutation = useAllocateVehicle();
 
   const bookings = paginatedData?.content || [];
@@ -213,7 +205,6 @@ export default function BookingsPage() {
 
   const handleDateChange = (newDateRange: DateRange | undefined) => {
     setDateRange(newDateRange);
-    // setCurrentPage(0);
   };
 
   const handleCopyInvoice = (invoiceNumber: string) => {
@@ -232,38 +223,10 @@ export default function BookingsPage() {
     setShowDeleteModal(true);
   };
 
-  const initiateMove = (id: string) => {
-    setSelectedBookingId(id);
-    setTargetVehicleId("");
-    setWaivePriceDiff(false);
-    setShowMoveModal(true);
-  };
-
   const initiateAllocate = (id: string) => {
     setSelectedBookingId(id);
     setTargetVehicleId("");
     setShowAllocateModal(true);
-  };
-
-  const confirmMove = () => {
-    if (!selectedBookingId || !targetVehicleId) {
-      toast.error("Please select a new vehicle.");
-      return;
-    }
-    moveBookingMutation.mutate(
-      {
-        bookingId: selectedBookingId,
-        newVehicleId: targetVehicleId,
-        waivePriceDifference: waivePriceDiff,
-      },
-      {
-        onSuccess: () => {
-          setShowMoveModal(false);
-          setSelectedBookingId(null);
-          setTargetVehicleId("");
-        },
-      },
-    );
   };
 
   const confirmAllocate = () => {
@@ -405,7 +368,7 @@ export default function BookingsPage() {
       actions.push({
         label: "Transfer Vehicle",
         icon: ArrowRightLeft,
-        onClick: () => initiateMove(booking.bookingId),
+        onClick: () => setSegmentToTransfer(booking),
       });
     }
 
@@ -590,7 +553,6 @@ export default function BookingsPage() {
             selected={statusFilter}
             onChange={(option) => {
               setStatusFilter(option);
-              // setCurrentPage(0);
             }}
           />
           <Select
@@ -603,7 +565,6 @@ export default function BookingsPage() {
             selected={bookingTypeFilter}
             onChange={(option) => {
               setBookingTypeFilter(option);
-              // setCurrentPage(0);
             }}
             disabled={isLoadingBookingTypes}
           />
@@ -759,101 +720,9 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {showMoveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-blue-50">
-              <h3 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                <ArrowRightLeft className="w-5 h-5" /> Transfer Booking
-              </h3>
-              <button
-                onClick={() => {
-                  setShowMoveModal(false);
-                  setMoveVehicleSearch("");
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-700">
-                Search and select a new vehicle to move this booking to.
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search vehicle name or plate..."
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={moveVehicleSearch}
-                  onChange={(e) => setMoveVehicleSearch(e.target.value)}
-                />
-              </div>
-
-              <Select
-                label="Select Vehicle"
-                hideLabel
-                options={vehicleOptions}
-                selected={vehicleOptions.find((v) => v.id === targetVehicleId)}
-                onChange={(opt) => setTargetVehicleId(opt.id)}
-                placeholder={
-                  isLoadingVehicles
-                    ? "Loading results..."
-                    : "Select from results"
-                }
-                disabled={isLoadingVehicles}
-              />
-              <div
-                className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer"
-                onClick={() => setWaivePriceDiff(!waivePriceDiff)}
-              >
-                <div
-                  className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center ${
-                    waivePriceDiff
-                      ? "bg-blue-600 border-blue-600"
-                      : "bg-white border-gray-400"
-                  }`}
-                >
-                  {waivePriceDiff && (
-                    <X className="w-3 h-3 text-white rotate-45" />
-                  )}
-                </div>
-                <div>
-                  <label className="font-medium text-gray-900 cursor-pointer text-sm">
-                    Waive Price Difference
-                  </label>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    If checked, the customer will not be charged extra.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => setShowMoveModal(false)}
-                disabled={moveBookingMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={confirmMove}
-                isLoading={moveBookingMutation.isPending}
-              >
-                Confirm Transfer
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {showAllocateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white shadow-lg w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
               <h3 className="text-lg font-semibold text-indigo-800 flex items-center gap-2">
                 <Car className="w-5 h-5" /> Allocate Vehicle
@@ -870,7 +739,7 @@ export default function BookingsPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-sm text-indigo-700">
+              <div className="bg-indigo-50 border border-indigo-100 p-3 text-sm text-indigo-700">
                 This booking currently has no vehicle. Search for an APPROVED
                 vehicle to assign.
               </div>
@@ -880,7 +749,7 @@ export default function BookingsPage() {
                 <input
                   type="text"
                   placeholder="Search by name or identifier..."
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-9 pr-3 py-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={allocateVehicleSearch}
                   onChange={(e) => setAllocateVehicleSearch(e.target.value)}
                   style={{ paddingLeft: 40 }}
@@ -904,11 +773,12 @@ export default function BookingsPage() {
               />
             </div>
 
-            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+            <div className="px-2 py-3 flex flex-wrap justify-end gap-3 mt-6">
               <Button
                 variant="secondary"
                 onClick={() => setShowAllocateModal(false)}
                 disabled={allocateVehicleMutation.isPending}
+                className="w-[200px] my-1"
               >
                 Cancel
               </Button>
@@ -916,12 +786,20 @@ export default function BookingsPage() {
                 variant="primary"
                 onClick={confirmAllocate}
                 isLoading={allocateVehicleMutation.isPending}
+                className="w-[200px] my-1"
               >
                 Confirm Allocation
               </Button>
             </div>
           </div>
         </div>
+      )}
+
+      {segmentToTransfer && (
+        <TransferVehicleModal
+          segment={segmentToTransfer}
+          onClose={() => setSegmentToTransfer(null)}
+        />
       )}
     </>
   );
