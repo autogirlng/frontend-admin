@@ -3,10 +3,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient";
-import { Coupon, CreateCouponPayload, PaginatedResponse } from "./types";
+import { 
+  Coupon, 
+  CreateCouponPayload, 
+  PaginatedResponse, 
+  BookingCouponResponse 
+} from "./types";
 
 export const COUPONS_QUERY_KEY = "coupons";
 export const COUPON_DETAIL_KEY = "couponDetail";
+export const BOOKING_BY_COUPON_KEY = "bookingByCoupon";
 
 export function useGetCoupons(page: number) {
   return useQuery<PaginatedResponse<Coupon>>({
@@ -28,6 +34,26 @@ export function useGetCouponDetails(id: string | null) {
     queryKey: [COUPON_DETAIL_KEY, id],
     queryFn: () => apiClient.get<Coupon>(`/admin/coupons/${id}`),
     enabled: !!id,
+  });
+}
+
+/**
+ * Fetches bookings associated with a specific coupon code.
+ * Uses the internal logic of apiClient to handle auth automatically.
+ */
+export function useGetBookingsByCoupon(coupon: string | null, page: number = 0) {
+  return useQuery<BookingCouponResponse>({
+    queryKey: [BOOKING_BY_COUPON_KEY, coupon, page],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("size", "10");
+
+      const endpoint = `/admin/bookings/booking/${coupon}/coupon?${params.toString()}`;
+      return apiClient.get<BookingCouponResponse>(endpoint);
+    },
+    enabled: !!coupon,
+    placeholderData: (previousData) => previousData,
   });
 }
 

@@ -11,6 +11,7 @@ import {
 import { Coupon } from "./types";
 import { CreateCouponModal } from "./CreateCouponModal";
 import { CouponDetailModal } from "./CouponDetailModal";
+import CouponUserDetail from "./CouponUserDetail";
 
 // Components
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -26,6 +27,7 @@ import {
   Ticket,
   Plus,
   Eye,
+  View,
   Trash2,
   Power,
   CheckCircle,
@@ -49,7 +51,7 @@ const formatDiscount = (amount: number, type?: string) => {
 export default function CouponsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [modal, setModal] = useState<
-    "create" | "view" | "delete" | "toggle" | null
+    "create" | "view" | "see" | "delete" | "toggle" | null
   >(null);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
 
@@ -90,9 +92,14 @@ export default function CouponsPage() {
   // --- Columns ---
   const getActions = (coupon: Coupon): ActionMenuItem[] => [
     {
-      label: "View Details",
+      label: "View Coupon Details",
       icon: Eye,
       onClick: () => openModal("view", coupon),
+    },
+    {
+      label: "Bookings Details",
+      icon: View,
+      onClick: () => openModal("see", coupon),
     },
     {
       label: coupon.active ? "Deactivate" : "Activate",
@@ -245,6 +252,24 @@ export default function CouponsPage() {
       {modal === "create" && <CreateCouponModal onClose={closeModal} />}
       {modal === "view" && selectedCoupon && (
         <CouponDetailModal couponId={selectedCoupon.id} onClose={closeModal} />
+      )}
+
+      {/* Bookings Details */}
+      {modal === "see" && selectedCoupon && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Bookings Details</h2>
+              <button
+                onClick={closeModal}
+                className="rounded-full p-1 hover:bg-gray-100"
+              >
+                <XCircle className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <CouponUserDetail couponId={selectedCoupon.id} />
+          </div>
+        </div>
       )}
 
       {/* Delete Modal */}
