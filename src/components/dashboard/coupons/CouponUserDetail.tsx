@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import clsx from "clsx";
-import { AlertCircle, Ticket } from "lucide-react";
+import { AlertCircle, Download, Loader2, Ticket } from "lucide-react";
 
 import { useGetCouponDetails, useGetBookingsByCoupon } from "./useCoupons";
+import { useDownloadInvoice } from "@/lib/hooks/finance/usePayments";
 import { BookingContent, PaginatedResponse } from "./types";
 
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -30,57 +31,91 @@ const statusColor = (status: string) => {
   return "bg-gray-100 text-gray-700";
 };
 
-const columns: ColumnDefinition<BookingContent>[] = [
-  {
-    accessorKey: "bookingRef",
-    header: "Booking Ref",
-  },
-  {
-    accessorKey: "invoiceNumber",
-    header: "Invoice Number",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: (item) => (
-      <span
-        className={clsx(
-          "inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-          statusColor(item.status)
-        )}
-      >
-        {item.status}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "totalPrice",
-    header: "Total Price",
-    cell: (item) => formatCurrency(item.totalPrice),
-  },
-  {
-    accessorKey: "bookedAt",
-    header: "Booked At",
-    cell: (item) => {
-      try {
-        return format(new Date(item.bookedAt), "MMM dd, yyyy");
-      } catch {
-        return item.bookedAt ?? "—";
-      }
-    },
-  },
-  {
-    accessorKey: "user",
-    header: "User",
-    cell: (item) =>
-      item.user
-        ? `${item.user.firstName} ${item.user.lastName}`
-        : "N/A",
-  },
-];
-
 export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [downloadingBookingId, setDownloadingBookingId] = useState<string | null>(null);
+  const downloadInvoiceMutation = useDownloadInvoice();
+
+  const columns: ColumnDefinition<BookingContent>[] = [
+    {
+      accessorKey: "bookingRef",
+      header: "Booking Ref",
+    },
+    {
+      accessorKey: "invoiceNumber",
+      header: "Invoice Number",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: (item) => (
+        <span
+          className={clsx(
+            "inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+            statusColor(item.status)
+          )}
+        >
+          {item.status}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "totalPrice",
+      header: "Total Price",
+      cell: (item) => formatCurrency(item.totalPrice),
+    },
+    {
+      accessorKey: "bookedAt",
+      header: "Booked At",
+      cell: (item) => {
+        try {
+          return format(new Date(item.bookedAt), "MMM dd, yyyy");
+        } catch {
+          return item.bookedAt ?? "—";
+        }
+      },
+    },
+    {
+      accessorKey: "user",
+      header: "User",
+      cell: (item) =>
+        item.user
+          ? `${item.user.firstName} ${item.user.lastName}`
+          : item.guestFullName?.trim() || "N/A",
+    },
+    {
+      accessorKey: "bookingId",
+      header: "Action",
+      cell: (item) => {
+        const isDownloading =
+          downloadInvoiceMutation.isPending &&
+          downloadingBookingId === item.bookingId;
+        return (
+          <button
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-[#0096FF] hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isDownloading}
+            onClick={() => {
+              setDownloadingBookingId(item.bookingId);
+              downloadInvoiceMutation.mutate({
+                bookingId: item.bookingId,
+                invoiceNumber: item.invoiceNumber,
+                userName: item.user
+                  ? `${item.user.firstName} ${item.user.lastName}`
+                  : item.guestFullName?.trim() || undefined,
+              });
+            }}
+          >
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Invoice
+          </button>
+        );
+      },
+    },
+  ];
 
   const {
     data: coupon,
