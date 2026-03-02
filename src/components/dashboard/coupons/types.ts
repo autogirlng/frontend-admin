@@ -33,3 +33,54 @@ export interface CreateCouponPayload {
   startDate?: string;
   expiryDate?: string;
 }
+
+export interface BookingSegment {
+  areaOfUse: {
+    areaOfUseName: string;
+    areaOfUseLatitude: number;
+    areaOfUseLongitude: number;
+  }[];
+  startDate: string;
+  startTime: string;
+  bookingTypeId: string;
+  pickupLatitude: number;
+  dropoffLatitude: number;
+  pickupLongitude: number;
+  dropoffLongitude: number;
+  pickupLocationString: string;
+  dropoffLocationString: string;
+}
+
+export interface BookingContent {
+  bookingId: string;
+  invoiceNumber: string;
+  vehicleId: string;
+  calculationId: string;
+  status: string;
+  totalPrice: number;
+  bookedAt: string;
+  primaryPhoneNumber: string;
+  guestFullName?: string;
+  guestEmail?: string;
+  extraDetails: string;
+  purposeOfRide: string;
+  bookingRef: string;
+  segments: BookingSegment[];
+  bookingForOthers: boolean;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    userType: string;
+    active: boolean;
+  };
+}
+
+export interface BookingCouponResponse {
+  status: string;
+  message: string;
+  data: PaginatedResponse<BookingContent>;
+  timestamp: string;
+}
