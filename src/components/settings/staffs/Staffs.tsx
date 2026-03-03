@@ -74,7 +74,7 @@ function ExportDropdown({
       <Button
         variant="secondary"
         size="smd"
-        className="w-auto min-w-[140px] whitespace-nowrap"
+        className="w-full sm:w-auto min-w-[140px] whitespace-nowrap"
         onClick={() => setOpen((prev) => !prev)}
         disabled={disabled || isExporting}
       >
@@ -333,7 +333,7 @@ export default function StaffPage() {
               Manage all admin accounts and permissions.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <ExportDropdown
               onExport={handleExportStaff}
               isExporting={isExporting}
@@ -341,7 +341,7 @@ export default function StaffPage() {
             />
             <Button
               variant="secondary"
-              className="w-auto"
+              className="w-full sm:w-auto"
               onClick={() => openModal("promote")}
             >
               <ArrowUpCircle className="h-4 w-4 mr-2" />
@@ -349,7 +349,7 @@ export default function StaffPage() {
             </Button>
             <Button
               variant="primary"
-              className="w-auto"
+              className="w-full sm:w-auto"
               onClick={() => openModal("create")}
             >
               <Plus className="h-4 w-4 mr-2" />
