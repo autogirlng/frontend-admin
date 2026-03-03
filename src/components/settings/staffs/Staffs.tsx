@@ -25,6 +25,7 @@ import { CreateAdminModal } from "./CreateAdminModal";
 import { PromoteUserModal } from "./PromoteUserModal";
 import { AdminDetailModal } from "./AdminDetailModal";
 import { AssignDepartmentModal } from "./AssignDepartmentModal";
+import { useStaffExport, ExportFormat } from "./hooks/useStaffExport";
 
 import {
   AlertCircle,
@@ -39,9 +40,81 @@ import {
   Building,
   UserX,
   Banknote,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+
+function ExportDropdown({
+  onExport,
+  isExporting,
+  disabled,
+}: {
+  onExport: (format: ExportFormat) => void;
+  isExporting: boolean;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <Button
+        variant="secondary"
+        size="smd"
+        className="w-auto min-w-[140px] whitespace-nowrap"
+        onClick={() => setOpen((prev) => !prev)}
+        disabled={disabled || isExporting}
+      >
+        {isExporting ? (
+          <span>Exporting...</span>
+        ) : (
+          <>
+            <Download className="mr-2 h-4 w-4" />
+            Export Staff
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </>
+        )}
+      </Button>
+      {open && (
+        <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <button
+            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+            onClick={() => {
+              setOpen(false);
+              onExport("xlsx");
+            }}
+          >
+            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+            Export as Excel
+          </button>
+          <button
+            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
+            onClick={() => {
+              setOpen(false);
+              onExport("csv");
+            }}
+          >
+            <FileText className="h-4 w-4 text-blue-600" />
+            Export as CSV
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function StaffPage() {
   const router = useRouter();
@@ -94,6 +167,10 @@ export default function StaffPage() {
     useDownloadCredentials();
   const { mutate: unassignUser, isPending: isUnassigning } =
     useUnassignDepartment();
+
+  const { handleExportStaff, isExporting } = useStaffExport({
+    searchTerm: debouncedSearchTerm,
+  });
 
   const admins = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -257,6 +334,11 @@ export default function StaffPage() {
             </p>
           </div>
           <div className="flex gap-3">
+            <ExportDropdown
+              onExport={handleExportStaff}
+              isExporting={isExporting}
+              disabled={isLoading || !admins.length}
+            />
             <Button
               variant="secondary"
               className="w-auto"
