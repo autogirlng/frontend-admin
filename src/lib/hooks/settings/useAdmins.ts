@@ -86,6 +86,26 @@ export function useUpdateAdminStatus() {
   });
 }
 
+export function useDeleteAdmin() {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, string>({
+    mutationFn: (userId: string) => 
+      apiClient.delete(`/admin/users/${userId}`),
+    onSuccess: () => {
+      toast.success("Admin user deleted successfully");
+      // Invalidate the admins list to refresh the UI
+      queryClient.invalidateQueries({
+        queryKey: [ADMINS_QUERY_KEY],
+        exact: false,
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete admin user.");
+    },
+  });
+}
+
 export function useCreateAdmin() {
   const queryClient = useQueryClient();
   return useMutation<AdminUser, Error, CreateAdminPayload>({
