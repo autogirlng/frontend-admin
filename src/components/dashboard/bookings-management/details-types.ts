@@ -58,4 +58,6 @@ export interface BookingDetail {
   segments: BookingSegment[];
   discounted: boolean;
   bookingCategory: "SERVICE_PRICING" | "NORMAL";
+  servicePricingName?: string;
+  rideType?: string;
 }

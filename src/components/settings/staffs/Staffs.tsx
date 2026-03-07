@@ -6,6 +6,7 @@ import {
   useUpdateAdminStatus,
   useResendCredentials,
   useDownloadCredentials,
+  useDeleteAdmin,
 } from "@/lib/hooks/settings/useAdmins";
 import {
   useGetDepartments,
@@ -32,6 +33,7 @@ import {
   Search,
   CheckCircle,
   Trash2,
+  ShieldBan,
   Plus,
   Send,
   Download,
@@ -130,6 +132,7 @@ export default function StaffPage() {
     | "view"
     | "assignDept"
     | "unassignDept"
+    | "delete"
     | null
   >(null);
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
@@ -167,6 +170,7 @@ export default function StaffPage() {
     useDownloadCredentials();
   const { mutate: unassignUser, isPending: isUnassigning } =
     useUnassignDepartment();
+  const { mutate: deleteAdmin, isPending: isDeleting } = useDeleteAdmin();
 
   const { handleExportStaff, isExporting } = useStaffExport({
     searchTerm: debouncedSearchTerm,
@@ -184,7 +188,8 @@ export default function StaffPage() {
       | "resend"
       | "view"
       | "assignDept"
-      | "unassignDept",
+      | "unassignDept"
+      | "delete",
     admin: AdminUser | null = null,
   ) => {
     setSelectedAdmin(admin);
@@ -216,6 +221,11 @@ export default function StaffPage() {
   const handleUnassignConfirm = () => {
     if (!selectedAdmin) return;
     unassignUser({ userId: selectedAdmin.id }, { onSuccess: closeModal });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedAdmin) return;
+    deleteAdmin(selectedAdmin.id, { onSuccess: closeModal });
   };
 
   const getAdminActions = (admin: AdminUser): ActionMenuItem[] => {
@@ -265,7 +275,7 @@ export default function StaffPage() {
       admin.active
         ? {
             label: "Deactivate",
-            icon: Trash2,
+            icon: ShieldBan,
             onClick: () => openModal("status", admin),
             danger: true,
           }
@@ -274,6 +284,12 @@ export default function StaffPage() {
             icon: CheckCircle,
             onClick: () => openModal("status", admin),
           },
+      {
+        label: "Delete",
+        icon: Trash2,
+        onClick: () => openModal("delete", admin),
+        danger: true,
+      },
     ];
     return actions;
   };
@@ -484,6 +500,26 @@ export default function StaffPage() {
           onConfirm={handleResendConfirm}
           isLoading={isResending}
           variant="primary"
+        />
+      )}
+
+      {modal === "delete" && selectedAdmin && (
+        <ActionModal
+          title="Delete Admin"
+          message={
+            <>
+              Are you sure you want to delete{" "}
+              <strong className="text-gray-900">
+                {selectedAdmin.firstName} {selectedAdmin.lastName}
+              </strong>
+              ? This action cannot be undone.
+            </>
+          }
+          actionLabel="Delete"
+          onClose={closeModal}
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleting}
+          variant="danger"
         />
       )}
     </>

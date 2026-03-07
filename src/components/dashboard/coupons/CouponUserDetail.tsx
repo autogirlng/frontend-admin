@@ -1,13 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
-import { format } from "date-fns";
+import React, { useState, useEffect, useRef } from "react";
+import { format, startOfMonth } from "date-fns";
+import { DateRange } from "react-day-picker";
 import clsx from "clsx";
-import { AlertCircle, Download, Loader2, Ticket } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Ticket,
+  X,
+} from "lucide-react";
 
 import { useGetCouponDetails, useGetBookingsByCoupon } from "./useCoupons";
+import { useCouponBookingsExport } from "./useCouponBookingsExport";
 import { useDownloadInvoice } from "@/lib/hooks/finance/usePayments";
 import { BookingContent, PaginatedResponse } from "./types";
+import { DatePickerWithRange } from "@/components/dashboard/availability/DatePickerWithRange";
 
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
@@ -34,7 +46,37 @@ const statusColor = (status: string) => {
 export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [downloadingBookingId, setDownloadingBookingId] = useState<string | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const downloadInvoiceMutation = useDownloadInvoice();
+
+  // Date filter — default to start of current month → today
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: new Date(),
+  });
+
+  // Reset pagination when filter changes
+  const handleDateChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    setCurrentPage(0);
+  };
+
+  const clearFilter = () => {
+    setDateRange(undefined);
+    setCurrentPage(0);
+  };
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const columns: ColumnDefinition<BookingContent>[] = [
     {
@@ -125,8 +167,22 @@ export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
 
   const couponCode = coupon?.code ?? null;
 
+  // Format dates for the API query
+  const startDateStr = dateRange?.from
+    ? dateRange.from.toISOString().replace("Z", "")
+    : undefined;
+  const endDateStr = dateRange?.to
+    ? dateRange.to.toISOString().replace("Z", "")
+    : undefined;
+
   const { data, isLoading, isError, isPlaceholderData } =
-    useGetBookingsByCoupon(couponCode, currentPage);
+    useGetBookingsByCoupon(couponCode, currentPage, startDateStr, endDateStr);
+
+  const { handleExport, isExporting } = useCouponBookingsExport({
+    couponCode,
+    startDate: startDateStr,
+    endDate: endDateStr,
+  });
 
   // apiClient.handleResponse already unwraps the outer envelope (returns data.data),
   // so `data` here is PaginatedResponse<BookingContent> directly.
@@ -156,7 +212,7 @@ export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
     );
   }
 
-  if (bookings.length === 0) {
+  if (bookings.length === 0 && !dateRange?.from) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
         <Ticket className="mb-3 h-10 w-10 text-gray-400" />
@@ -170,20 +226,101 @@ export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Ticket className="h-5 w-5 text-gray-500" />
-        <h2 className="text-lg font-semibold text-gray-900">
-          Bookings for coupon: <span className="text-[#F4A100]">{couponCode ?? couponId}</span>
-        </h2>
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Ticket className="h-5 w-5 text-gray-500" />
+          <h2 className="text-lg font-semibold text-gray-900">
+            Bookings for coupon:{" "}
+            <span className="text-[#F4A100]">{couponCode ?? couponId}</span>
+          </h2>
+        </div>
+
+        {/* Export dropdown */}
+        <div className="relative" ref={exportMenuRef}>
+          <button
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
+            disabled={isExporting || bookings.length === 0}
+            onClick={() => setExportMenuOpen((prev) => !prev)}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Export
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+
+          {exportMenuOpen && (
+            <div className="absolute right-0 z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+              <button
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  setExportMenuOpen(false);
+                  handleExport("xlsx");
+                }}
+              >
+                <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                Export as Excel
+              </button>
+              <button
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  setExportMenuOpen(false);
+                  handleExport("csv");
+                }}
+              >
+                <FileText className="h-4 w-4 text-blue-600" />
+                Export as CSV
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className={clsx(isPlaceholderData && "opacity-50")}>
-        <CustomTable
-          data={bookings}
-          columns={columns}
-          getUniqueRowId={(item) => item.bookingId}
-        />
+      {/* Filter bar */}
+      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center">
+        <div className="flex-1">
+          <DatePickerWithRange date={dateRange} setDate={handleDateChange} />
+        </div>
+        {dateRange?.from && (
+          <button
+            className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+            onClick={clearFilter}
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear Filter
+          </button>
+        )}
       </div>
+
+      {/* Empty state when filtered */}
+      {bookings.length === 0 && dateRange?.from && (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
+          <Ticket className="mb-3 h-8 w-8 text-gray-400" />
+          <h3 className="text-base font-medium text-gray-900">
+            No bookings in this date range
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Try adjusting the filter or{" "}
+            <button className="text-[#0096FF] underline" onClick={clearFilter}>
+              clear the filter
+            </button>{" "}
+            to see all bookings.
+          </p>
+        </div>
+      )}
+
+      {bookings.length > 0 && (
+        <div className={clsx(isPlaceholderData && "opacity-50")}>
+          <CustomTable
+            data={bookings}
+            columns={columns}
+            getUniqueRowId={(item) => item.bookingId}
+          />
+        </div>
+      )}
 
       {totalPages > 1 && (
         <PaginationControls
@@ -196,5 +333,3 @@ export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
     </div>
   );
 }
-
-//changes

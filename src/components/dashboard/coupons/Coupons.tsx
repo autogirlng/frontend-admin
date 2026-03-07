@@ -256,10 +256,10 @@ export default function CouponsPage() {
 
       {/* Bookings Details */}
       {modal === "see" && selectedCoupon && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-4 sm:p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Bookings Details</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Bookings Details</h2>
               <button
                 onClick={closeModal}
                 className="rounded-full p-1 hover:bg-gray-100"

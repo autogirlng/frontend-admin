@@ -27,7 +27,7 @@ export function ActionModal({
 }: ActionModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-lg bg-white p-4 sm:p-6 shadow-xl">
         {/* Header */}
         <button
           onClick={onClose}
@@ -66,13 +66,13 @@ export function ActionModal({
         {children && <div className="mt-4">{children}</div>}
 
         {/* Footer Buttons */}
-        <div className="flex flex-wrap justify-end gap-3 mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
           <Button
             type="button"
             variant="secondary"
             onClick={onClose}
             disabled={isLoading}
-            className="w-[200px] my-1"
+            className="w-full sm:w-[200px]"
           >
             Cancel
           </Button>
@@ -81,7 +81,7 @@ export function ActionModal({
             variant={variant}
             onClick={onConfirm}
             isLoading={isLoading}
-            className="w-[200px] my-1"
+            className="w-full sm:w-[200px]"
           >
             {actionLabel}
           </Button>
