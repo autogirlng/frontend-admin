@@ -332,6 +332,50 @@ export default function BookingDetailPage() {
               </div>
             </div>
 
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                  <Tag className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Booking Info</h3>
+                  <p className="text-xs text-gray-500">Category &amp; pricing details</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Booking Category</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {booking.bookingCategory?.replace(/_/g, " ") || "N/A"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Service Pricing</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {booking.servicePricingName || "N/A"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Ride Type</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {booking.rideType || "N/A"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Discounted</p>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      booking.discounted
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {booking.discounted ? "Yes" : "No"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {(booking.purposeOfRide || booking.extraDetails) && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-4">

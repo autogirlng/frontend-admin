@@ -39,15 +39,22 @@ export function useGetCouponDetails(id: string | null) {
 
 /**
  * Fetches bookings associated with a specific coupon code.
- * Uses the internal logic of apiClient to handle auth automatically.
+ * Supports optional date-range filtering via startDate / endDate.
  */
-export function useGetBookingsByCoupon(coupon: string | null, page: number = 0) {
+export function useGetBookingsByCoupon(
+  coupon: string | null,
+  page: number = 0,
+  startDate?: string,
+  endDate?: string,
+) {
   return useQuery<BookingCouponResponse>({
-    queryKey: [BOOKING_BY_COUPON_KEY, coupon, page],
+    queryKey: [BOOKING_BY_COUPON_KEY, coupon, page, startDate, endDate],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", String(page));
       params.append("size", "10");
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
 
       const endpoint = `/admin/bookings/booking/${coupon}/coupon?${params.toString()}`;
       return apiClient.get<BookingCouponResponse>(endpoint);
