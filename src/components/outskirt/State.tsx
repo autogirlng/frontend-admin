@@ -330,10 +330,10 @@ export default function State() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <ToastContainer />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-8xl mx-auto py-2">
         <nav className="flex items-center gap-1.5 text-xs text-slate-400 mb-6">
           <button
             onClick={() => router.push("/dashboard/outskirts/country")}
