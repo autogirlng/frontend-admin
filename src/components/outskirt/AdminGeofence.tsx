@@ -3,11 +3,11 @@
 import { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useGeofenceManager } from "@/lib/hooks/outskirt/useGeofenceManager";
 import { parseWktToLatLngRings } from "./geo";
-import type { AreaType } from "./geo";
+import type { AreaType, GeofenceArea } from "./geo";
 import type { ExistingPolygon } from "./BoundaryMap";
 import {
   Loader2,
@@ -21,6 +21,7 @@ import {
   Search,
   PanelLeftClose,
   PanelLeftOpen,
+  Edit,
 } from "lucide-react";
 import CustomLoader from "@/components/generic/CustomLoader";
 import AddressInput from "@/components/generic/ui/AddressInput";
@@ -35,20 +36,21 @@ const AREA_CONFIG: Record<
     color: "#f97316",
     badgeCls: "bg-orange-50 text-orange-600 border-orange-100",
     activeCls:
-      "bg-orange-50 border-orange-300 text-orange-700 ring-1 ring-orange-200",
+      "bg-orange-50 border-orange-300 text-orange-700 ring-1 ring-orange-200 rounded",
   },
   EXTREME: {
     label: "Extreme",
     color: "#ef4444",
     badgeCls: "bg-red-50 text-red-600 border-red-100",
-    activeCls: "bg-red-50 border-red-300 text-red-700 ring-1 ring-red-200",
+    activeCls:
+      "bg-red-50 border-red-300 text-red-700 ring-1 ring-red-200 rounded",
   },
   NO_GO_AREA: {
     label: "No-Go Zone",
     color: "#7c3aed",
     badgeCls: "bg-purple-50 text-purple-600 border-purple-100",
     activeCls:
-      "bg-purple-50 border-purple-300 text-purple-700 ring-1 ring-purple-200",
+      "bg-purple-50 border-purple-300 text-purple-700 ring-1 ring-purple-200 rounded",
   },
 };
 
@@ -78,6 +80,10 @@ export default function AdminGeofence() {
     handleShapeCreated,
     handleSaveArea,
     isSaving,
+    updateAreaTypeAsync,
+    isUpdatingType,
+    transferAreaAsync,
+    isTransferring,
     handleDeleteArea,
     isDeleting,
   } = useGeofenceManager();
@@ -88,6 +94,10 @@ export default function AdminGeofence() {
     lat: number;
     lng: number;
   } | null>(null);
+
+  const [editingArea, setEditingArea] = useState<GeofenceArea | null>(null);
+  const [editType, setEditType] = useState<AreaType>("OUTSKIRT");
+  const [editStateId, setEditStateId] = useState<string>("");
 
   useEffect(() => {
     const countryId = searchParams.get("countryId");
@@ -104,6 +114,41 @@ export default function AdminGeofence() {
         setFlyToLocation({ lat: rings[0][0][0], lng: rings[0][0][1] });
     }
   }, [selectedState]);
+
+  const openEditModal = (area: GeofenceArea) => {
+    setEditingArea(area);
+    setEditType(area.areaType);
+    setEditStateId(area.stateId);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingArea) return;
+    try {
+      let changed = false;
+
+      if (editType !== editingArea.areaType) {
+        await updateAreaTypeAsync({ id: editingArea.id, areaType: editType });
+        changed = true;
+      }
+
+      if (editStateId !== editingArea.stateId) {
+        await transferAreaAsync({
+          id: editingArea.id,
+          newStateId: editStateId,
+        });
+        changed = true;
+      }
+
+      if (changed) {
+        toast.success("Area updated successfully!");
+      } else {
+        toast.info("No changes made.");
+      }
+      setEditingArea(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update area.");
+    }
+  };
 
   const BoundaryMapNoSSR = useMemo(
     () =>
@@ -173,7 +218,7 @@ export default function AdminGeofence() {
 
       <div
         className={clsx(
-          "fixed top-0 right-0 h-full z-40 bg-white shadow-2xl flex flex-col",
+          "fixed top-0 right-0 h-full z-30 bg-white shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           "w-full md:w-[420px]",
           isSidebarOpen ? "translate-x-0" : "translate-x-full",
@@ -389,7 +434,7 @@ export default function AdminGeofence() {
                       type="button"
                       onClick={() => setNewAreaType(type)}
                       className={clsx(
-                        "py-2 px-1.5 text-xs font-medium border transition-all text-center leading-tight",
+                        "py-2 px-1.5 text-[11px] font-medium border transition-all text-center leading-tight rounded",
                         newAreaType === type
                           ? AREA_CONFIG[type].activeCls
                           : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50",
@@ -496,6 +541,15 @@ export default function AdminGeofence() {
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
+
+                      <button
+                        onClick={() => openEditModal(area)}
+                        className="p-1.5 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                        title="Edit area"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+
                       <button
                         onClick={() => handleDeleteArea(area.id)}
                         disabled={isDeleting}
@@ -516,7 +570,7 @@ export default function AdminGeofence() {
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className={clsx(
-          "absolute top-4 right-4 z-30 flex items-center gap-2 px-4 py-3 font-medium text-sm transition-all duration-300 shadow-md",
+          "absolute top-4 right-4 z-20 flex items-center gap-2 px-4 py-3 font-medium text-sm transition-all duration-300 shadow-md",
           isSidebarOpen
             ? "bg-white text-slate-600 hover:bg-slate-50 md:mr-[420px]"
             : "bg-blue-600 text-white hover:bg-blue-700",
@@ -531,6 +585,103 @@ export default function AdminGeofence() {
           {isSidebarOpen ? "Close" : "Manage Areas"}
         </span>
       </button>
+
+      {editingArea && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-slate-800">Edit Details</h3>
+              <button
+                onClick={() => setEditingArea(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">
+                  Area Name
+                </label>
+                <input
+                  type="text"
+                  value={editingArea.name}
+                  disabled
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded px-3 py-2 text-sm cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-2">
+                  Area Type
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(AREA_CONFIG) as AreaType[]).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setEditType(type)}
+                      className={clsx(
+                        "py-2 px-1.5 text-[11px] font-medium border transition-all text-center leading-tight rounded",
+                        editType === type
+                          ? AREA_CONFIG[type].activeCls
+                          : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50",
+                      )}
+                    >
+                      {AREA_CONFIG[type].label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">
+                  Assigned State
+                </label>
+                <div className="relative">
+                  <select
+                    value={editStateId}
+                    onChange={(e) => setEditStateId(e.target.value)}
+                    className="w-full appearance-none bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  >
+                    {states.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+                {editStateId !== editingArea.stateId && (
+                  <p className="text-[11px] text-amber-600 mt-1.5 font-medium">
+                    ⚠️ Transferring will move this area out of the current view.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingArea(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isUpdatingType || isTransferring}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {(isUpdatingType || isTransferring) && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -563,7 +714,7 @@ function StepLabel({
 
 function selectCls(active: boolean) {
   return clsx(
-    "w-full appearance-none px-4 py-2.5 pr-10 text-sm border bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition",
+    "w-full appearance-none px-4 py-2.5 pr-10 text-sm border bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition rounded",
     active ? "border-blue-300" : "border-slate-300",
   );
 }

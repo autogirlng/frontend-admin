@@ -68,6 +68,30 @@ export function useGeofenceManager() {
     onError: (err: any) => toast.error(err.message || "Failed to create area."),
   });
 
+  const { mutateAsync: updateAreaTypeAsync, isPending: isUpdatingType } =
+    useMutation({
+      mutationFn: ({ id, areaType }: { id: string; areaType: AreaType }) =>
+        apiClient.put<GeofenceArea>(`/geofence-areas/${id}`, { areaType }),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["geofenceAreas", selectedStateId],
+        });
+      },
+    });
+
+  const { mutateAsync: transferAreaAsync, isPending: isTransferring } =
+    useMutation({
+      mutationFn: ({ id, newStateId }: { id: string; newStateId: string }) =>
+        apiClient.patch<GeofenceArea>(`/geofence-areas/${id}/transfer`, {
+          newStateId,
+        }),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["geofenceAreas", selectedStateId],
+        });
+      },
+    });
+
   const { mutate: deleteArea, isPending: isDeleting } = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/geofence-areas/${id}`),
     onSuccess: () => {
@@ -153,6 +177,13 @@ export function useGeofenceManager() {
     handleShapeCreated,
     handleSaveArea,
     isSaving,
+
+    updateAreaTypeAsync,
+    isUpdatingType,
+
+    transferAreaAsync,
+    isTransferring,
+
     handleDeleteArea,
     isDeleting,
   };
