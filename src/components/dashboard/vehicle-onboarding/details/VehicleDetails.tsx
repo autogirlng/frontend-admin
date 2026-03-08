@@ -29,7 +29,6 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-// Reusable Components
 import CustomLoader from "@/components/generic/CustomLoader";
 import CustomBack from "@/components/generic/CustomBack";
 import Button from "@/components/generic/ui/Button";
@@ -37,8 +36,6 @@ import {
   useGetVehicleBookings,
   useGetVehicleDetails,
 } from "@/lib/hooks/vehicle-onboarding/details/useVehicleDetailsPage";
-
-// --- Helper Components ---
 
 const StatusBadge = ({ status }: { status: string }) => {
   let colorClasses = "bg-gray-100 text-gray-700 border-gray-300";
@@ -80,9 +77,9 @@ const DetailItem = ({
     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
       {label}
     </p>
-    <p className="text-sm font-medium text-gray-900 wrap-break-words">
+    <div className="text-sm font-medium text-gray-900 break-words">
       {value || <span className="text-gray-400 italic">Not specified</span>}
-    </p>
+    </div>
   </div>
 );
 
@@ -145,13 +142,11 @@ const StatCard = ({
   );
 };
 
-// --- Main Page Component ---
 export default function VehicleDetailPage() {
   const params = useParams();
   const router = useRouter();
   const vehicleId = params.vehicleId as string;
 
-  // --- API Hooks ---
   const {
     data: vehicle,
     isLoading: isLoadingVehicle,
@@ -161,24 +156,20 @@ export default function VehicleDetailPage() {
   const { data: bookingsData, isLoading: isLoadingBookings } =
     useGetVehicleBookings(vehicleId, 0, 5);
 
-  // --- CAROUSEL STATE ---
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const isSharing = useRef(false);
 
-  // Ensure activeIndex resets if vehicle loads or photos change
   useEffect(() => {
     setActiveIndex(0);
   }, [vehicle?.photos]);
 
-  // Auto-Play Logic
   useEffect(() => {
-    // Only auto-play if not hovered and multiple photos exist
     if (!isHovered && vehicle?.photos && vehicle.photos.length > 1) {
       autoPlayRef.current = setInterval(() => {
         setActiveIndex((prev) => (prev + 1) % vehicle.photos.length);
-      }, 4000); // 4 Seconds per slide
+      }, 4000);
     }
 
     return () => {
@@ -194,7 +185,7 @@ export default function VehicleDetailPage() {
   const prevSlide = () => {
     if (!vehicle?.photos) return;
     setActiveIndex(
-      (prev) => (prev - 1 + vehicle.photos.length) % vehicle.photos.length
+      (prev) => (prev - 1 + vehicle.photos.length) % vehicle.photos.length,
     );
   };
 
@@ -221,7 +212,6 @@ export default function VehicleDetailPage() {
     try {
       isSharing.current = true;
 
-      // Prioritize standard Web Share API for Links
       if (navigator.share) {
         await navigator.share({
           title: vehicle.name,
@@ -229,12 +219,10 @@ export default function VehicleDetailPage() {
           url: shareUrl,
         });
       } else {
-        // Fallback to clipboard
         await navigator.clipboard.writeText(shareUrl);
         toast.success("Link copied to clipboard!");
       }
     } catch (err) {
-      // Ignore AbortError (user closed share sheet)
       if (err instanceof Error && err.name !== "AbortError") {
         console.error("Share error:", err);
         toast.error("Failed to share");
@@ -258,12 +246,10 @@ export default function VehicleDetailPage() {
     );
   }
 
-  // Current photo for the big display
   const currentPhoto = vehicle.photos?.[activeIndex];
 
   return (
-    <main className="min-h-screen">
-      {/* Header Section */}
+    <main className="min-h-screen pb-24">
       <div className="bg-linear-to-r from-[#0096FF] to-[#0077CC] text-white">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <CustomBack />
@@ -281,9 +267,7 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 -mt-5 pb-12">
-        {/* Quick Stats */}
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 -mt-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             icon={CalendarDays}
@@ -311,17 +295,13 @@ export default function VehicleDetailPage() {
           />
         </div>
 
-        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Photos & Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* --- CAROUSEL COMPONENT --- */}
             <div
               className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden group"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
-              {/* 1. BIG PICTURE (Auto-Scrolls / Controlled) */}
               <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
                 {currentPhoto ? (
                   <img
@@ -336,7 +316,6 @@ export default function VehicleDetailPage() {
                   </div>
                 )}
 
-                {/* Controls (Arrows) - Only show if > 1 photo */}
                 {vehicle.photos.length > 1 && (
                   <>
                     <button
@@ -360,7 +339,6 @@ export default function VehicleDetailPage() {
                   </>
                 )}
 
-                {/* Share Button (Top Left) */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -372,7 +350,6 @@ export default function VehicleDetailPage() {
                   <Share2 className="h-5 w-5" />
                 </button>
 
-                {/* Slide Counter (Bottom Right) */}
                 {vehicle.photos.length > 0 && (
                   <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full">
                     {activeIndex + 1} / {vehicle.photos.length}
@@ -380,7 +357,6 @@ export default function VehicleDetailPage() {
                 )}
               </div>
 
-              {/* 2. THUMBNAILS (Control the Big Picture) */}
               {vehicle.photos.length > 0 && (
                 <div className="p-4 bg-gray-50 border-t border-gray-200 overflow-x-auto">
                   <div className="flex gap-2 min-w-min">
@@ -408,16 +384,13 @@ export default function VehicleDetailPage() {
                 </div>
               )}
             </div>
-            {/* --- END CAROUSEL --- */}
 
-            {/* Description */}
             <InfoCard icon={Info} title="About This Vehicle">
               <p className="text-sm text-gray-700 leading-relaxed">
                 {vehicle.description || "No description provided."}
               </p>
             </InfoCard>
 
-            {/* Vehicle Specifications */}
             <InfoCard icon={Gauge} title="Specifications">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                 <DetailItem
@@ -436,7 +409,24 @@ export default function VehicleDetailPage() {
                   label="State of Registration"
                   value={vehicle.stateOfRegistration}
                 />
-                <DetailItem label="Color ID" value={vehicle.vehicleColorId} />
+                <DetailItem
+                  label="Color"
+                  value={
+                    vehicle.vehicleColor ? (
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-4 h-4 rounded-full border border-gray-300 shadow-inner"
+                          style={{
+                            backgroundColor: vehicle.vehicleColor.hexCode,
+                          }}
+                        />
+                        {vehicle.vehicleColor.name}
+                      </div>
+                    ) : (
+                      vehicle.vehicleColorId
+                    )
+                  }
+                />
                 <DetailItem
                   label="Upgraded Vehicle"
                   value={
@@ -460,10 +450,9 @@ export default function VehicleDetailPage() {
               </div>
             </InfoCard>
 
-            {/* Features */}
             <InfoCard icon={CheckCircle} title="Features & Amenities">
               <div className="flex flex-wrap gap-2">
-                {vehicle.features.length > 0 ? (
+                {vehicle.features?.length > 0 ? (
                   vehicle.features.map((feature) => (
                     <span
                       key={feature.id}
@@ -481,7 +470,6 @@ export default function VehicleDetailPage() {
               </div>
             </InfoCard>
 
-            {/* Location & Documents */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InfoCard icon={MapPin} title="Location">
                 <div className="space-y-4">
@@ -506,10 +494,10 @@ export default function VehicleDetailPage() {
 
               <InfoCard icon={FileText} title="Documents">
                 <div className="space-y-2">
-                  {vehicle.documents.length > 0 ? (
-                    vehicle.documents.map((doc) => (
+                  {vehicle.documents?.length > 0 ? (
+                    vehicle.documents.map((doc, index) => (
                       <a
-                        key={doc.cloudinaryPublicId}
+                        key={doc.id || index}
                         href={doc.cloudinaryUrl}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -531,9 +519,7 @@ export default function VehicleDetailPage() {
             </div>
           </div>
 
-          {/* Right Column - Pricing & Rules */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Pricing */}
             <InfoCard icon={DollarSign} title="Pricing">
               <div className="space-y-4">
                 <div>
@@ -541,7 +527,7 @@ export default function VehicleDetailPage() {
                     Base Rates
                   </h4>
                   <div className="space-y-2">
-                    {vehicle.supportedBookingTypes.map((type) => (
+                    {vehicle.supportedBookingTypes?.map((type) => (
                       <div
                         key={type.id}
                         className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
@@ -597,7 +583,6 @@ export default function VehicleDetailPage() {
               </div>
             </InfoCard>
 
-            {/* Booking Rules */}
             <InfoCard icon={CalendarDays} title="Booking Rules">
               <div className="space-y-4">
                 <DetailItem
@@ -657,7 +642,6 @@ export default function VehicleDetailPage() {
               </div>
             </InfoCard>
 
-            {/* Compliance */}
             <InfoCard icon={Shield} title="Compliance & Safety">
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -704,10 +688,37 @@ export default function VehicleDetailPage() {
                 </div>
               </div>
             </InfoCard>
+
+            <InfoCard icon={MapPin} title="Supported Travel States">
+              {vehicle.supportedStates?.length > 0 ? (
+                <ul className="space-y-2">
+                  {vehicle.supportedStates.map((state, index) => (
+                    <li
+                      key={state.id || index}
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
+                      <span className="text-sm font-medium text-gray-800">
+                        {state.stateName || "Unknown State"}
+                      </span>
+                      <span className="text-sm text-gray-500 font-semibold">
+                        {state.surchargeFee > 0
+                          ? `+₦${state.surchargeFee.toLocaleString()}`
+                          : "Base Fare"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-lg text-center">
+                  <p className="text-sm text-gray-500 italic">
+                    No specific states configured.
+                  </p>
+                </div>
+              )}
+            </InfoCard>
           </div>
         </div>
 
-        {/* Booking History */}
         <div className="mt-6">
           <InfoCard icon={List} title="Recent Bookings">
             {isLoadingBookings && <CustomLoader />}
@@ -755,7 +766,7 @@ export default function VehicleDetailPage() {
                         className="w-auto px-4 py-2 text-sm"
                         onClick={() =>
                           router.push(
-                            `/dashboard/bookings/${booking.bookingId}`
+                            `/dashboard/bookings/${booking.bookingId}`,
                           )
                         }
                       >
@@ -781,75 +792,173 @@ export default function VehicleDetailPage() {
           </InfoCard>
         </div>
 
-        {/* Admin Data - Collapsible Section */}
         <details className="mt-6 group">
-          <summary className="cursor-pointer list-none">
+          <summary className="cursor-pointer list-none outline-none focus:outline-none">
             <InfoCard
               icon={Wrench}
               title="Advanced Information"
               className="group-open:rounded-b-none"
             >
-              <p className="text-xs text-gray-500">
-                Click to expand technical details and IDs
+              <p className="text-xs text-gray-500 flex items-center justify-between">
+                <span>
+                  Click to expand technical details and internal records
+                </span>
+                <ChevronRight className="w-4 h-4 transform group-open:rotate-90 transition-transform" />
               </p>
             </InfoCard>
           </summary>
-          <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl p-6 space-y-6">
-            <div>
-              <h4 className="text-sm font-bold text-gray-700 mb-4">
-                System IDs
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailItem label="Vehicle UUID" value={vehicle.id} />
-                <DetailItem label="Owner ID" value={vehicle.ownerId} />
-                <DetailItem
-                  label="Vehicle Type ID"
-                  value={vehicle.vehicleTypeId}
-                />
-                <DetailItem label="Make ID" value={vehicle.vehicleMakeId} />
-                <DetailItem label="Model ID" value={vehicle.vehicleModelId} />
+          <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl p-6 space-y-8 shadow-inner">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-500" /> Owner Profile
+                </h4>
+                {vehicle.owner ? (
+                  <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                    <DetailItem
+                      label="Full Name"
+                      value={`${vehicle.owner.firstName} ${vehicle.owner.lastName}`}
+                    />
+                    <DetailItem
+                      label="Email"
+                      value={
+                        <span className="flex items-center gap-2">
+                          {vehicle.owner.email}
+                          {vehicle.owner.emailVerified && (
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                          )}
+                        </span>
+                      }
+                    />
+                    <DetailItem
+                      label="Phone"
+                      value={
+                        <span className="flex items-center gap-2">
+                          {vehicle.owner.phoneNumber}
+                          {vehicle.owner.phoneVerified && (
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                          )}
+                        </span>
+                      }
+                    />
+                    <DetailItem
+                      label="Account Type"
+                      value={vehicle.owner.userType}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg">
+                    Owner details unavailable (ID: {vehicle.ownerId})
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+                  <Car className="w-4 h-4 text-purple-500" /> Assigned Driver
+                </h4>
+                {vehicle.assignedDriver ? (
+                  <div className="flex items-start gap-4 bg-gray-50 p-4 rounded-lg">
+                    {vehicle.assignedDriver.profilePictureUrl ? (
+                      <img
+                        src={vehicle.assignedDriver.profilePictureUrl}
+                        alt="Driver"
+                        className="w-16 h-16 rounded-full object-cover border border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                        <Users className="w-8 h-8" />
+                      </div>
+                    )}
+                    <div className="space-y-2 flex-1">
+                      <DetailItem
+                        label="Name"
+                        value={vehicle.assignedDriver.fullName}
+                      />
+                      <DetailItem
+                        label="Driver ID"
+                        value={vehicle.assignedDriver.driverIdentifier}
+                      />
+                      <DetailItem
+                        label="Phone"
+                        value={vehicle.assignedDriver.phoneNumber}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg">
+                    No driver assigned to this vehicle.
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-200">
-              <h4 className="text-sm font-bold text-gray-700 mb-4">
-                Additional Data
+            <div>
+              <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-orange-500" /> Vehicle Metatdata
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+                <DetailItem
+                  label="Make"
+                  value={vehicle.vehicleMake?.name || vehicle.vehicleMakeId}
+                />
+                <DetailItem
+                  label="Model"
+                  value={vehicle.vehicleModel?.name || vehicle.vehicleModelId}
+                />
+                <DetailItem
+                  label="Vehicle Type ID"
+                  value={vehicle.vehicleTypeName}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100">
+                Configurations & Rules
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
                     Discounts
                   </p>
-                  {vehicle.discounts.length > 0 ? (
-                    <ul className="space-y-1">
+                  {vehicle.discounts?.length > 0 ? (
+                    <ul className="space-y-2">
                       {vehicle.discounts.map((d) => (
                         <li
-                          key={d.discountDurationId}
-                          className="text-sm text-gray-700"
+                          key={d.id || d.discountDurationId}
+                          className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0 last:pb-0"
                         >
-                          <span className="font-semibold">{d.percentage}%</span>
-                          <span className="text-xs text-gray-500 ml-2">
-                            (ID: {d.discountDurationId.slice(0, 8)}...)
+                          <span className="text-gray-700">
+                            {d.discountDurationName || d.discountDurationId}
+                          </span>
+                          <span className="font-bold text-gray-900">
+                            {d.percentage}% Off
                           </span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">No discounts</p>
+                    <p className="text-sm text-gray-500 italic">
+                      No discounts configured
+                    </p>
                   )}
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
                     Out-of-Bounds Areas
                   </p>
-                  {vehicle.outOfBoundsAreaIds.length > 0 ? (
-                    <ul className="space-y-1">
-                      {vehicle.outOfBoundsAreaIds.map((id) => (
-                        <li key={id} className="text-sm text-gray-700">
-                          {id.slice(0, 8)}...
-                        </li>
+                  {vehicle.outOfBoundsAreas?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {vehicle.outOfBoundsAreas.map((area) => (
+                        <span
+                          key={area.id}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                        >
+                          <X className="w-3 h-3 mr-1" /> {area.name}
+                        </span>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="text-sm text-gray-500 italic">
                       No restricted areas

@@ -1,4 +1,3 @@
-// lib/hooks/vehicles/useVehicleDetailsPage.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -10,14 +9,9 @@ import {
   PaginatedResponse,
 } from "@/components/dashboard/vehicle-onboarding/details/types";
 
-// Query Keys
 export const VEHICLE_DETAIL_KEY = "vehicleDetail";
 export const VEHICLE_BOOKINGS_KEY = "vehicleBookings";
 
-/**
- * Fetches the details for a single vehicle.
- * @param vehicleId The ID of the vehicle to fetch.
- */
 export function useGetVehicleDetails(vehicleId: string | null) {
   return useQuery<VehicleDetail>({
     queryKey: [VEHICLE_DETAIL_KEY, vehicleId],
@@ -31,16 +25,10 @@ export function useGetVehicleDetails(vehicleId: string | null) {
   });
 }
 
-/**
- * Fetches the booking history for a single vehicle.
- * @param vehicleId The ID of the vehicle.
- * @param page The page number to fetch.
- * @param size The number of items per page.
- */
 export function useGetVehicleBookings(
   vehicleId: string | null,
   page: number,
-  size: number
+  size: number,
 ) {
   return useQuery<PaginatedResponse<VehicleBookingSegment>>({
     queryKey: [VEHICLE_BOOKINGS_KEY, vehicleId, page, size],
@@ -51,7 +39,6 @@ export function useGetVehicleBookings(
       const params = new URLSearchParams();
       params.append("page", String(page));
       params.append("size", String(size));
-      // Add other filters as needed later
 
       const endpoint = `/bookings/${vehicleId}/bookings?${params.toString()}`;
       return apiClient.get<PaginatedResponse<VehicleBookingSegment>>(endpoint);
@@ -68,14 +55,9 @@ export interface VehicleBookingsFilters {
   endDate: Date | null;
 }
 
-/**
- * Fetches a full, paginated, and filterable list of bookings for a vehicle.
- * @param vehicleId The ID of the vehicle.
- * @param filters The filter and pagination state.
- */
 export function useGetVehicleBookingsPaginated(
   vehicleId: string | null,
-  filters: VehicleBookingsFilters
+  filters: VehicleBookingsFilters,
 ) {
   const { page, bookingStatus, bookingTypeId, startDate, endDate } = filters;
 
@@ -83,7 +65,7 @@ export function useGetVehicleBookingsPaginated(
     queryKey: [
       VEHICLE_BOOKINGS_KEY,
       vehicleId,
-      "paginated", // Differentiator key
+      "paginated",
       page,
       bookingStatus,
       bookingTypeId,
@@ -95,7 +77,7 @@ export function useGetVehicleBookingsPaginated(
 
       const params = new URLSearchParams();
       params.append("page", String(page));
-      params.append("size", "10"); // Default to 10 per page
+      params.append("size", "10");
 
       if (bookingStatus) params.append("bookingStatus", bookingStatus);
       if (bookingTypeId) params.append("bookingTypeId", bookingTypeId);

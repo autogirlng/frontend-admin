@@ -1,6 +1,3 @@
-// app/dashboard/vehicles/types.ts
-
-// --- Generic Paginated Response ---
 export interface PaginatedResponse<T> {
   content: T[];
   currentPage: number;
@@ -9,14 +6,15 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// --- Vehicle Detail Types (for GET /vehicles/{vehicleId}) ---
 export interface VehiclePhoto {
+  id?: string;
   cloudinaryUrl: string;
   cloudinaryPublicId: string;
   isPrimary: boolean;
 }
 
 export interface VehicleDocument {
+  id?: string;
   documentType: string;
   cloudinaryUrl: string;
   cloudinaryPublicId: string;
@@ -36,14 +34,71 @@ export interface BookingTypeSummary {
 }
 
 export interface VehiclePricing {
+  id?: string;
   bookingTypeId: string;
+  bookingTypeName?: string;
   price: number;
   platformFeeType: string;
 }
 
 export interface VehicleDiscount {
+  id?: string;
   discountDurationId: string;
+  discountDurationName?: string;
   percentage: number;
+}
+
+export interface VehicleOwner {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  userType: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+}
+
+export interface VehicleMake {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface VehicleModel {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface VehicleColor {
+  id: string;
+  name: string;
+  hexCode: string;
+}
+
+export interface AssignedDriver {
+  id: string;
+  driverIdentifier: string;
+  fullName: string;
+  phoneNumber: string;
+  ownerType: string;
+  ownerName: string;
+  profilePictureUrl: string;
+  active: boolean;
+}
+
+export interface SupportedState {
+  id?: string;
+  stateId: string;
+  stateName: string;
+  countryName?: string;
+  surchargeFee: number;
+}
+
+export interface OutOfBoundsArea {
+  id: string;
+  name: string;
 }
 
 export interface VehicleDetail {
@@ -56,6 +111,7 @@ export interface VehicleDetail {
   latitude: number;
   longitude: number;
   vehicleTypeId: string;
+  vehicleTypeName: string;
   vehicleMakeId: string;
   vehicleModelId: string;
   yearOfRelease: number;
@@ -77,16 +133,23 @@ export interface VehicleDetail {
   outskirtFee: number;
   extremeFee: number;
   isVehicleUpgraded: boolean;
+
   photos: VehiclePhoto[];
   documents: VehicleDocument[];
   features: VehicleFeature[];
   supportedBookingTypes: BookingTypeSummary[];
   pricing: VehiclePricing[];
   discounts: VehicleDiscount[];
-  outOfBoundsAreaIds: string[];
+
+  owner?: VehicleOwner;
+  vehicleMake?: VehicleMake;
+  vehicleModel?: VehicleModel;
+  vehicleColor?: VehicleColor;
+  assignedDriver?: AssignedDriver;
+  supportedStates: SupportedState[];
+  outOfBoundsAreas: OutOfBoundsArea[];
 }
 
-// --- Vehicle Bookings Types (for GET /bookings/{vehicleId}/bookings) ---
 export interface VehicleBookingSegment {
   segmentId: string;
   bookingId: string;

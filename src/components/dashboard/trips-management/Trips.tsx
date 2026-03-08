@@ -14,6 +14,7 @@ import {
   FileText,
   Edit,
   Search,
+  BellRing,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -30,6 +31,7 @@ import {
   usePreviewReceiptBlob,
 } from "@/lib/hooks/finance/usePayments";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
+import { useGetUnallocatedCount } from "@/lib/hooks/trips-management/useUnallocatedBookings";
 
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
@@ -115,6 +117,8 @@ export default function TripsPage() {
     searchTerm: debouncedSearchTerm,
   });
 
+  const { data: unallocatedCount = 0 } = useGetUnallocatedCount();
+
   const { data: bookingTypes = [] } = useGetBookingTypes();
   const downloadInvoiceMutation = useDownloadTripInvoice();
   const downloadReceiptMutation = useDownloadTripReceipt();
@@ -136,7 +140,7 @@ export default function TripsPage() {
 
   const handleFilterChange = (
     key: "bookingStatus" | "tripStatus" | "bookingTypeId",
-    value: string | null
+    value: string | null,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(0);
@@ -166,7 +170,7 @@ export default function TripsPage() {
 
   const openModal = (
     type: "assignDriver" | "assignAgents" | "editTrip",
-    trip: Trip
+    trip: Trip,
   ) => {
     setSelectedTrip(trip);
     setModal(type);
@@ -355,13 +359,34 @@ export default function TripsPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <main className="py-3 max-w-8xl mx-auto">
+      <main className="py-0 max-w-8xl mx-auto relative">
         <div ref={topRef} />
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Trips</h1>
-          <p className="text-lg text-gray-600 mt-1">
-            Manage all trips on the platform.
-          </p>
+
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Trips</h1>
+            <p className="text-lg text-gray-600 mt-1">
+              Manage all trips on the platform.
+            </p>
+          </div>
+
+          {unallocatedCount > 0 && (
+            <button
+              onClick={() => router.push("/dashboard/trips/unallocated")}
+              className="relative p-3 bg-white border border-red-200 rounded-full shadow-sm hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 group"
+              title={`${unallocatedCount} unallocated hourly bookings`}
+            >
+              <BellRing className="w-6 h-6 text-red-500 animate-bounce" />
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-600 rounded-full">
+                {unallocatedCount > 99 ? "99+" : unallocatedCount}
+              </span>
+
+              <div className="absolute right-0 top-full mt-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                You have {unallocatedCount} hourly booking(s) pending vehicle
+                allocation. Click to view.
+              </div>
+            </button>
+          )}
         </div>
 
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
@@ -422,7 +447,7 @@ export default function TripsPage() {
               selected={
                 filters.bookingTypeId
                   ? bookingTypeOptions.find(
-                      (bt) => bt.id === filters.bookingTypeId
+                      (bt) => bt.id === filters.bookingTypeId,
                     )
                   : null
               }
@@ -461,7 +486,7 @@ export default function TripsPage() {
           <div
             className={clsx(
               "transition-opacity",
-              isActionLoading ? "opacity-50" : ""
+              isActionLoading ? "opacity-50" : "",
             )}
           >
             <CustomTable
