@@ -8,6 +8,8 @@ import { toast } from "react-toastify";
 import { apiClient } from "@/lib/apiClient";
 import { Option } from "@/components/generic/ui/Select";
 
+export type Country = { id: string; name: string };
+export type GeoState = { id: string; name: string };
 export type BookingType = {
   id: string;
   name: string;
@@ -24,11 +26,8 @@ export type DiscountDuration = {
   minDays: number;
   maxDays: number;
 };
-type PublicDataApiResponse<T> = {
-  status: string;
-  message: string;
-  data: T;
-};
+
+type PublicDataApiResponse<T> = { status: string; message: string; data: T };
 
 type VehicleConfigData = {
   id: string;
@@ -43,27 +42,24 @@ type VehicleConfigData = {
   outOfBoundsAreaIds: string[] | null;
   outskirtFee: number | null;
   extremeFee: number | null;
-  pricing:
+  pricing: { bookingTypeId: string; price: number }[] | null;
+  discounts: { discountDurationId: string; percentage: number }[] | null;
+  supportedStates:
     | {
-        bookingTypeId: string;
-        price: number;
-      }[]
-    | null;
-  discounts:
-    | {
-        discountDurationId: string;
-        percentage: number;
+        id?: string;
+        stateId: string;
+        stateName?: string;
+        surchargeFee: number;
       }[]
     | null;
   extraHourlyRate: number | null;
 };
 
-type DurationState = {
-  value: number | "";
-  unit: string;
-};
+type DurationState = { value: number | ""; unit: string };
 type PriceState = { [bookingTypeId: string]: string };
 type DiscountState = { [discountDurationId: string]: string };
+type StateFeeState = { [stateId: string]: string };
+
 type Step5FormData = {
   maxTripDuration: DurationState;
   advanceNotice: DurationState;
@@ -71,22 +67,24 @@ type Step5FormData = {
   willProvideFuel: "yes" | "no" | "";
   supportedBookingTypeIds: string[];
   outOfBoundsAreaIds: string[];
+  supportedStateIds: string[];
+  stateSurchargeFees: StateFeeState;
   outskirtFee: string;
   extremeFee: string;
   extraHourlyRate: string;
   pricing: PriceState;
   discounts: DiscountState;
 };
+
 type PricePayload = {
   bookingTypeId: string;
   bookingTypeName: string;
   price: number;
   platformFeeType: string;
 };
-type DiscountPayload = {
-  discountDurationId: string;
-  percentage: number;
-};
+type DiscountPayload = { discountDurationId: string; percentage: number };
+type SupportedStatePayload = { stateId: string; surchargeFee: number };
+
 type UpdateConfigPayload = {
   maxTripDurationUnit: string;
   maxTripDurationValue: number;
@@ -96,6 +94,7 @@ type UpdateConfigPayload = {
   willProvideFuel: boolean;
   supportedBookingTypeIds: string[];
   outOfBoundsAreaIds: string[];
+  supportedStates: SupportedStatePayload[];
   outskirtFee: number;
   extremeFee: number;
   extraHourlyRate: number;
@@ -110,6 +109,8 @@ const initialState: Step5FormData = {
   willProvideFuel: "",
   supportedBookingTypeIds: [],
   outOfBoundsAreaIds: [],
+  supportedStateIds: [],
+  stateSurchargeFees: {},
   outskirtFee: "",
   extremeFee: "",
   extraHourlyRate: "",
@@ -119,19 +120,10 @@ const initialState: Step5FormData = {
 
 async function fetchApiData<T>(endpoint: string): Promise<T[]> {
   const res = await apiClient.get<T[] | PublicDataApiResponse<T[]>>(endpoint);
-
-  if (!res) {
-    throw new Error(`Failed to fetch ${endpoint}: No response`);
-  }
-  if (Array.isArray(res)) {
-    return res;
-  }
-  if (res && "data" in res && Array.isArray(res.data)) {
-    return res.data;
-  }
-  if (res && "data" in res) {
-    return res.data as T[];
-  }
+  if (!res) throw new Error(`Failed to fetch ${endpoint}: No response`);
+  if (Array.isArray(res)) return res;
+  if (res && "data" in res && Array.isArray(res.data)) return res.data;
+  if (res && "data" in res) return res.data as T[];
   return res as T[];
 }
 
@@ -143,19 +135,57 @@ export function useVehicleStep5(vehicleId: string) {
   const [formData, setFormData] = useState<Step5FormData>(initialState);
   const [originalData, setOriginalData] = useState<Step5FormData | null>(null);
 
-  const { data: bookingTypes, isLoading: isLoadingBookingTypes } = useQuery({
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(
+    null,
+  );
+  const [activeGeofenceStateId, setActiveGeofenceStateId] = useState<
+    string | null
+  >(null);
+
+  const [stateNameMap, setStateNameMap] = useState<Record<string, string>>({});
+  const [geofenceNameMap, setGeofenceNameMap] = useState<
+    Record<string, string>
+  >({});
+
+  const { data: countries, isLoading: isLoadingCountries } = useQuery({
+    queryKey: ["countries"],
+    queryFn: () => fetchApiData<Country>("/countries"),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const {
+    data: states,
+    isLoading: isLoadingStates,
+    isFetching: isFetchingStates,
+  } = useQuery({
+    queryKey: ["states", selectedCountryId],
+    queryFn: () =>
+      fetchApiData<GeoState>(`/states/country/${selectedCountryId}`),
+    enabled: !!selectedCountryId,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const {
+    data: geofenceAreas,
+    isLoading: isLoadingGeofence,
+    isFetching: isFetchingGeofences,
+  } = useQuery({
+    queryKey: ["geofenceAreas", activeGeofenceStateId],
+    queryFn: () =>
+      fetchApiData<GeofenceArea>(
+        `/geofence-areas?stateId=${activeGeofenceStateId}`,
+      ),
+    enabled: !!activeGeofenceStateId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: bookingTypes } = useQuery({
     queryKey: ["bookingTypes"],
     queryFn: () => fetchApiData<BookingType>("/booking-types"),
     staleTime: 1000 * 60 * 60,
   });
 
-  const { data: geofenceAreas, isLoading: isLoadingGeofence } = useQuery({
-    queryKey: ["geofenceAreas"],
-    queryFn: () => fetchApiData<GeofenceArea>("/geofence-areas"),
-    staleTime: 1000 * 60 * 60,
-  });
-
-  const { data: discountDurations, isLoading: isLoadingDiscounts } = useQuery({
+  const { data: discountDurations } = useQuery({
     queryKey: ["discountDurations"],
     queryFn: () => fetchApiData<DiscountDuration>("/discount-durations"),
     staleTime: 1000 * 60 * 60,
@@ -174,17 +204,30 @@ export function useVehicleStep5(vehicleId: string) {
   });
 
   useEffect(() => {
+    if (states) {
+      setStateNameMap((prev) => {
+        const next = { ...prev };
+        states.forEach((s) => (next[s.id] = s.name));
+        return next;
+      });
+    }
+  }, [states]);
+
+  useEffect(() => {
+    if (geofenceAreas) {
+      setGeofenceNameMap((prev) => {
+        const next = { ...prev };
+        geofenceAreas.forEach((g) => (next[g.id] = g.name));
+        return next;
+      });
+    }
+  }, [geofenceAreas]);
+
+  useEffect(() => {
     if (vehicleDetails && bookingTypes && discountDurations && !originalData) {
-      const vehicleIdentifier = vehicleDetails.vehicleIdentifier || "";
-      const isHostVehicle = vehicleIdentifier.startsWith("HST");
-
-      let rawOutskirt = vehicleDetails.outskirtFee || 0;
-      let rawExtreme = vehicleDetails.extremeFee || 0;
-
-      if (isHostVehicle) {
-        rawOutskirt = Math.max(0, rawOutskirt - 5000);
-        rawExtreme = Math.max(0, rawExtreme - 5000);
-      }
+      const isHostVehicle = (vehicleDetails.vehicleIdentifier || "").startsWith(
+        "HST",
+      );
 
       const initialPrices: PriceState = {};
       bookingTypes.forEach((bt) => {
@@ -202,6 +245,18 @@ export function useVehicleStep5(vehicleId: string) {
         initialDiscounts[dd.id] = String(existing?.percentage || "");
       });
 
+      const initialSupportedStateIds: string[] = [];
+      const initialStateSurchargeFees: StateFeeState = {};
+      const newMap: Record<string, string> = {};
+
+      (vehicleDetails.supportedStates || []).forEach((ss) => {
+        initialSupportedStateIds.push(ss.stateId);
+        initialStateSurchargeFees[ss.stateId] = String(ss.surchargeFee || 0);
+        if (ss.stateName) newMap[ss.stateId] = ss.stateName;
+      });
+
+      setStateNameMap((prev) => ({ ...prev, ...newMap }));
+
       const prefilledState: Step5FormData = {
         maxTripDuration: {
           value: vehicleDetails.maxTripDurationValue ?? "",
@@ -218,8 +273,20 @@ export function useVehicleStep5(vehicleId: string) {
             .map((t) => t.id)
             .sort() || [],
         outOfBoundsAreaIds: (vehicleDetails.outOfBoundsAreaIds || []).sort(),
-        outskirtFee: String(rawOutskirt || ""),
-        extremeFee: String(rawExtreme || ""),
+        supportedStateIds: initialSupportedStateIds.sort(),
+        stateSurchargeFees: initialStateSurchargeFees,
+        outskirtFee: String(
+          Math.max(
+            0,
+            (vehicleDetails.outskirtFee || 0) - (isHostVehicle ? 5000 : 0),
+          ) || "",
+        ),
+        extremeFee: String(
+          Math.max(
+            0,
+            (vehicleDetails.extremeFee || 0) - (isHostVehicle ? 5000 : 0),
+          ) || "",
+        ),
         extraHourlyRate: String(vehicleDetails.extraHourlyRate || ""),
         pricing: initialPrices,
         discounts: initialDiscounts,
@@ -231,12 +298,8 @@ export function useVehicleStep5(vehicleId: string) {
   }, [vehicleDetails, bookingTypes, discountDurations, originalData]);
 
   const { mutate: updateConfiguration, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: UpdateConfigPayload) => {
-      return apiClient.patch(
-        `/vehicles/configuration?id=${vehicleId}`,
-        payload,
-      );
-    },
+    mutationFn: (payload: UpdateConfigPayload) =>
+      apiClient.patch(`/vehicles/configuration?id=${vehicleId}`, payload),
     onSuccess: () => {
       toast.success("Configuration saved successfully!");
       queryClient.invalidateQueries({
@@ -244,9 +307,8 @@ export function useVehicleStep5(vehicleId: string) {
       });
       router.push(`/dashboard/onboarding/submit-review?id=${vehicleId}`);
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to save configuration.");
-    },
+    onError: (err: any) =>
+      toast.error(err.message || "Failed to save configuration."),
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,14 +328,14 @@ export function useVehicleStep5(vehicleId: string) {
     value: number | "",
     unit: string,
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: { value, unit },
-    }));
+    setFormData((prev) => ({ ...prev, [field]: { value, unit } }));
   };
 
   const handleCheckboxChange = (
-    field: "supportedBookingTypeIds" | "outOfBoundsAreaIds",
+    field:
+      | "supportedBookingTypeIds"
+      | "outOfBoundsAreaIds"
+      | "supportedStateIds",
     id: string,
     isChecked: boolean,
   ) => {
@@ -301,36 +363,28 @@ export function useVehicleStep5(vehicleId: string) {
     }));
   };
 
+  const handleStateFeeChange = (stateId: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      stateSurchargeFees: { ...prev.stateSurchargeFees, [stateId]: value },
+    }));
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-
     if (JSON.stringify(formData) === JSON.stringify(originalData)) {
       toast.info("No changes detected. Proceeding to next step.");
       router.push(`/dashboard/onboarding/submit-review?id=${vehicleId}`);
       return;
     }
-
     if (!bookingTypes || !discountDurations || !vehicleDetails) {
       toast.error("Data is still loading, please wait.");
       return;
     }
 
-    const vehicleIdentifier = vehicleDetails.vehicleIdentifier || "";
-    const isHostVehicle = vehicleIdentifier.startsWith("HST");
-
-    const platformFeeType = isHostVehicle ? "HOST_FEE" : "AUTOGIRL_FEE";
-
-    const baseOutskirtFee = Number(formData.outskirtFee || 0);
-    const baseExtremeFee = Number(formData.extremeFee || 0);
-
-    const finalOutskirtFee = isHostVehicle
-      ? baseOutskirtFee + 5000
-      : baseOutskirtFee;
-
-    const finalExtremeFee = isHostVehicle
-      ? baseExtremeFee + 5000
-      : baseExtremeFee;
-
+    const isHostVehicle = (vehicleDetails.vehicleIdentifier || "").startsWith(
+      "HST",
+    );
     const payload: UpdateConfigPayload = {
       maxTripDurationUnit: formData.maxTripDuration.unit,
       maxTripDurationValue: Number(formData.maxTripDuration.value || 0),
@@ -340,23 +394,27 @@ export function useVehicleStep5(vehicleId: string) {
       willProvideFuel: formData.willProvideFuel === "yes",
       supportedBookingTypeIds: formData.supportedBookingTypeIds,
       outOfBoundsAreaIds: formData.outOfBoundsAreaIds,
-
-      outskirtFee: finalOutskirtFee,
-      extremeFee: finalExtremeFee,
-
+      supportedStates: formData.supportedStateIds.map((id) => ({
+        stateId: id,
+        surchargeFee: Number(formData.stateSurchargeFees[id] || 0),
+      })),
+      outskirtFee:
+        Number(formData.outskirtFee || 0) + (isHostVehicle ? 5000 : 0),
+      extremeFee: Number(formData.extremeFee || 0) + (isHostVehicle ? 5000 : 0),
       extraHourlyRate: Number(formData.extraHourlyRate || 0),
-
       pricing: Object.entries(formData.pricing)
-        .filter(([id]) => formData.supportedBookingTypeIds.includes(id))
-        .filter(([, price]) => price !== "")
+        .filter(
+          ([id]) =>
+            formData.supportedBookingTypeIds.includes(id) &&
+            formData.pricing[id] !== "",
+        )
         .map(([id, price]) => ({
           bookingTypeId: id,
           price: Number(price),
           bookingTypeName:
             bookingTypes.find((bt) => bt.id === id)?.name || "Unknown",
-          platformFeeType: platformFeeType,
+          platformFeeType: isHostVehicle ? "HOST_FEE" : "AUTOGIRL_FEE",
         })),
-
       discounts: Object.entries(formData.discounts)
         .filter(([, percentage]) => percentage && Number(percentage) > 0)
         .map(([id, percentage]) => ({
@@ -364,37 +422,38 @@ export function useVehicleStep5(vehicleId: string) {
           percentage: Number(percentage),
         })),
     };
-
     updateConfiguration(payload);
   };
 
-  const isLoading =
-    isLoadingBookingTypes ||
-    isLoadingGeofence ||
-    isLoadingDiscounts ||
-    isLoadingVehicle;
-  const isLoadingSession = sessionStatus === "loading";
-
-  const bookingTypeOptions: Option[] =
-    bookingTypes?.map((t) => ({ id: t.id, name: t.name })) || [];
-  const geofenceAreaOptions: Option[] =
-    geofenceAreas?.map((a) => ({ id: a.id, name: a.name })) || [];
+  const isLoading = isLoadingVehicle;
 
   return {
     formData,
     isLoading,
-    isLoadingSession,
+    isLoadingSession: sessionStatus === "loading",
     isUpdating,
     bookingTypes: bookingTypes || [],
-    bookingTypeOptions,
-    geofenceAreaOptions,
+    bookingTypeOptions:
+      bookingTypes?.map((t) => ({ id: t.id, name: t.name })) || [],
+    countries: countries || [],
+    states: states || [],
+    geofenceAreas: geofenceAreas || [],
     discountDurations: discountDurations || [],
+    selectedCountryId,
+    setSelectedCountryId,
+    activeGeofenceStateId,
+    setActiveGeofenceStateId,
+    stateNameMap,
+    geofenceNameMap,
+    isFetchingStates,
+    isFetchingGeofences,
     handleInputChange,
     handleSelectChange,
     handleDurationChange,
     handleCheckboxChange,
     handlePriceChange,
     handleDiscountChange,
+    handleStateFeeChange,
     handleSubmit,
   };
 }
