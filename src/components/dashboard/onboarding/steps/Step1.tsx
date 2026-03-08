@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Step1Data } from "../types/form";
@@ -18,6 +19,7 @@ import Stepper from "@/components/generic/Stepper";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
 import CustomBack from "@/components/generic/CustomBack";
+import { toast } from "react-toastify";
 
 const currentStep = 1;
 
@@ -209,7 +211,9 @@ export default function Step1() {
         JSON.stringify(coords) !== JSON.stringify(originalCoords);
 
       if (!hasDataChanged && !hasCoordsChanged) {
+        toast.info("No changes detected. Proceeding to next step.");
         router.push(`/dashboard/onboarding/details?id=${vehicleId}`);
+        return;
       }
     }
 
@@ -328,7 +332,6 @@ export default function Step1() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              {/* Vehicle Listing Name */}
               <TextInput
                 id="vehicleListingName"
                 label="Vehicle Listing Name"
@@ -339,7 +342,6 @@ export default function Step1() {
                 error={errors.vehicleListingName}
               />
 
-              {/* City */}
               <Select
                 label="City"
                 options={states}
@@ -349,7 +351,6 @@ export default function Step1() {
                 placeholder="Select city/state"
               />
 
-              {/* Address (Google Maps Autocomplete) */}
               <div className="md:col-span-2">
                 <AddressInput
                   id="address"
@@ -361,7 +362,6 @@ export default function Step1() {
                 />
               </div>
 
-              {/* Vehicle Type */}
               <Select
                 label="Vehicle Type"
                 options={
@@ -377,7 +377,6 @@ export default function Step1() {
                 error={errors.vehicleTypeId}
               />
 
-              {/* Vehicle Make */}
               <Select
                 label="Vehicle Make"
                 options={
@@ -393,7 +392,6 @@ export default function Step1() {
                 error={errors.vehicleMakeId}
               />
 
-              {/* Vehicle Model */}
               <Select
                 label="Vehicle Model"
                 options={
@@ -411,7 +409,6 @@ export default function Step1() {
                 error={errors.vehicleModelId}
               />
 
-              {/* Year of Release */}
               <Select
                 label="Year of Release"
                 options={years}
@@ -421,7 +418,6 @@ export default function Step1() {
                 error={errors.yearOfRelease}
               />
 
-              {/* Insurance */}
               <Select
                 label="Has Insurance?"
                 options={[
@@ -433,7 +429,6 @@ export default function Step1() {
                 error={errors.hasInsurance}
               />
 
-              {/* Tracker */}
               <Select
                 label="Has Tracker?"
                 options={[
@@ -445,7 +440,6 @@ export default function Step1() {
                 error={errors.hasTracker}
               />
 
-              {/* Is Vehicle Upgraded? */}
               <Select
                 label="Is Vehicle Upgraded?"
                 options={[
@@ -457,10 +451,9 @@ export default function Step1() {
                   const isUpgraded = option.id === "yes";
                   updateData({
                     isVehicleUpgraded: option.id,
-                    // Reset upgradedYear if 'No' is selected
                     upgradedYear: isUpgraded ? data.upgradedYear : "",
                   });
-                  // Clear errors if user selects 'no'
+
                   if (!isUpgraded && errors.upgradedYear) {
                     setErrors((prev) => {
                       const newErrors = { ...prev };
@@ -472,7 +465,6 @@ export default function Step1() {
                 error={errors.isVehicleUpgraded}
               />
 
-              {/* Upgraded Year (Conditional) */}
               {data.isVehicleUpgraded === "yes" && (
                 <Select
                   label="Upgraded Year"
@@ -491,7 +483,6 @@ export default function Step1() {
         </div>
       </main>
 
-      {/* Fixed bottom bar for the button */}
       <div className="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-gray-200 shadow-[0_-2px_6px_rgba(0,0,0,0.05)]">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-end py-4">

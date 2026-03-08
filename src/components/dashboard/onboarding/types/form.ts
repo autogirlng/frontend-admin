@@ -1,5 +1,3 @@
-// types/form.ts
-
 export type Step1Data = {
   vehicleListingName: string;
   locationCityId: string;

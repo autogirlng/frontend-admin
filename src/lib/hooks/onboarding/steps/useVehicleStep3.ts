@@ -1,4 +1,3 @@
-// lib/hooks/onboarding/steps/useVehicleStep3.ts
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
@@ -8,47 +7,39 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { apiClient } from "@/lib/apiClient";
 
-// --- Type Definitions ---
-
-// The structure of a photo object in your API
 type VehiclePhoto = {
   cloudinaryUrl: string;
   cloudinaryPublicId: string;
   isPrimary: boolean;
 };
 
-// The state for a file being managed
 type FileState = {
-  file?: File; // The raw file, present for new uploads
-  preview: string; // The URL.createObjectURL or existing cloudinaryUrl
-  publicId?: string; // The Cloudinary ID
-  isUploading: boolean; // Show spinner?
-  isUploaded: boolean; // Is it on Cloudinary?
+  file?: File;
+  preview: string;
+  publicId?: string;
+  isUploading: boolean;
+  isUploaded: boolean;
 };
 
-// GET /vehicles/{id} (structure of relevant photo fields)
 type VehicleDetails = {
   id: string;
   photos: VehiclePhoto[] | null;
 };
 
-// PATCH /vehicles/photos payload
 type UpdatePhotosPayload = {
   photos: VehiclePhoto[];
 };
 
-// --- Cloudinary Upload Function ---
-// This runs on the client, independent of our backend
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
 
 async function uploadToCloudinary(
-  file: File
+  file: File,
 ): Promise<{ url: string; publicId: string }> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append(
     "upload_preset",
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ""
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "",
   );
 
   const response = await fetch(CLOUDINARY_URL, {
@@ -67,18 +58,18 @@ async function uploadToCloudinary(
   };
 }
 
-// --- The Hook ---
 export function useVehiclePhotos(vehicleId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
 
-  // This state holds all photos (existing and new)
   const [photos, setPhotos] = useState<FileState[]>([]);
   const [primaryPhotoId, setPrimaryPhotoId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- Data Fetching: Get existing photos ---
+  const [originalPayload, setOriginalPayload] =
+    useState<UpdatePhotosPayload | null>(null);
+
   const { data: vehicleDetails, isLoading: isLoadingVehicle } = useQuery({
     queryKey: ["vehicleDetails", vehicleId],
     queryFn: async () => {
@@ -89,10 +80,11 @@ export function useVehiclePhotos(vehicleId: string) {
     enabled: !!vehicleId && sessionStatus === "authenticated",
   });
 
-  // --- Prefill: Load existing photos into state ---
   useEffect(() => {
-    if (vehicleDetails?.photos) {
-      const existingPhotos: FileState[] = vehicleDetails.photos.map((p) => ({
+    if (vehicleDetails && !originalPayload) {
+      const existingPhotosRaw = vehicleDetails.photos || [];
+
+      const existingPhotos: FileState[] = existingPhotosRaw.map((p) => ({
         preview: p.cloudinaryUrl,
         publicId: p.cloudinaryPublicId,
         isUploading: false,
@@ -100,19 +92,26 @@ export function useVehiclePhotos(vehicleId: string) {
       }));
       setPhotos(existingPhotos);
 
-      const primary = vehicleDetails.photos.find((p) => p.isPrimary);
-      setPrimaryPhotoId(
-        primary?.cloudinaryPublicId || existingPhotos[0]?.publicId || null
-      );
-    }
-  }, [vehicleDetails]);
+      const primary = existingPhotosRaw.find((p) => p.isPrimary);
+      const initialPrimaryId =
+        primary?.cloudinaryPublicId || existingPhotos[0]?.publicId || null;
+      setPrimaryPhotoId(initialPrimaryId);
 
-  // --- Mutation: Save to our backend ---
+      setOriginalPayload({
+        photos: existingPhotos.map((p) => ({
+          cloudinaryUrl: p.preview,
+          cloudinaryPublicId: p.publicId!,
+          isPrimary: p.publicId === initialPrimaryId,
+        })),
+      });
+    }
+  }, [vehicleDetails, originalPayload]);
+
   const { mutate: updateVehiclePhotos } = useMutation({
     mutationFn: (payload: UpdatePhotosPayload) => {
       return apiClient.patch(
         `/vehicles/photos?vehicleId=${vehicleId}`,
-        payload
+        payload,
       );
     },
     onSuccess: () => {
@@ -120,19 +119,15 @@ export function useVehiclePhotos(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: ["vehicleDetails", vehicleId],
       });
-      router.push(`/dashboard/onboarding/pricing?id=${vehicleId}`); // Go to next step
+      router.push(`/dashboard/onboarding/pricing?id=${vehicleId}`);
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to save photos.");
-    },
-    onSettled: () => {
       setIsSubmitting(false);
     },
   });
 
-  // --- Core Upload Handler ---
   const onFilesDrop = (acceptedFiles: File[]) => {
-    // 1. Create temporary preview states
     const newFileStates: FileState[] = acceptedFiles.map((file) => ({
       file: file,
       preview: URL.createObjectURL(file),
@@ -140,50 +135,61 @@ export function useVehiclePhotos(vehicleId: string) {
       isUploaded: false,
     }));
 
-    // Add new files to the list
     setPhotos((prev) => [...prev, ...newFileStates]);
 
-    // 2. Start uploading each file
     newFileStates.forEach((fileState) => {
       uploadToCloudinary(fileState.file!)
         .then((result) => {
-          // 3. Update the file's state with Cloudinary data
           setPhotos((prev) =>
             prev.map((p) =>
-              p.preview === fileState.preview // Find by preview URL
+              p.preview === fileState.preview
                 ? {
                     ...p,
-                    preview: result.url, // Update preview to permanent URL
+                    preview: result.url,
                     publicId: result.publicId,
                     isUploading: false,
                     isUploaded: true,
-                    file: undefined, // Clear raw file from memory
+                    file: undefined,
                   }
-                : p
-            )
+                : p,
+            ),
           );
 
-          // If this is the very first photo, make it primary
           setPrimaryPhotoId((prev) => prev || result.publicId);
         })
         .catch((err) => {
           toast.error(`Failed to upload ${fileState.file!.name}`);
-          // Remove the failed upload from state
           setPhotos((prev) =>
-            prev.filter((p) => p.preview !== fileState.preview)
+            prev.filter((p) => p.preview !== fileState.preview),
           );
         });
     });
   };
 
-  // --- Other Handlers ---
-  const onRemovePhoto = (publicIdToRemove: string) => {
-    // TODO: Add call to Cloudinary 'delete' API if you want
-    setPhotos((prev) => prev.filter((p) => p.publicId !== publicIdToRemove));
+  const onRemovePhoto = async (publicIdToRemove: string) => {
+    const remainingPhotos = photos.filter(
+      (p) => p.publicId !== publicIdToRemove,
+    );
+    setPhotos(remainingPhotos);
 
-    // If we removed the primary photo, set a new primary
     if (primaryPhotoId === publicIdToRemove) {
-      setPrimaryPhotoId(photos[0]?.publicId || null);
+      setPrimaryPhotoId(remainingPhotos[0]?.publicId || null);
+    }
+
+    try {
+      const res = await fetch("/api/cloudinary/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ publicId: publicIdToRemove }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to delete from Cloudinary API");
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
     }
   };
 
@@ -191,40 +197,43 @@ export function useVehiclePhotos(vehicleId: string) {
     setPrimaryPhotoId(publicIdToSet);
   };
 
-  // --- Submit Handler ---
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // Check if any files are still uploading
     const stillUploading = photos.some((p) => p.isUploading);
     if (stillUploading) {
       toast.warn("Please wait for all uploads to complete.");
-      setIsSubmitting(false);
       return;
     }
 
     if (photos.length === 0) {
       toast.error("Please upload at least one photo.");
-      setIsSubmitting(false);
       return;
     }
 
     if (!primaryPhotoId) {
       toast.error("Please set a primary photo.");
-      setIsSubmitting(false);
       return;
     }
 
-    // Format the payload for our backend
     const payload: UpdatePhotosPayload = {
       photos: photos.map((p) => ({
-        cloudinaryUrl: p.preview, // This is now the permanent URL
+        cloudinaryUrl: p.preview,
         cloudinaryPublicId: p.publicId!,
         isPrimary: p.publicId === primaryPhotoId,
       })),
     };
 
+    if (
+      originalPayload &&
+      JSON.stringify(originalPayload) === JSON.stringify(payload)
+    ) {
+      toast.info("No changes detected. Proceeding to next step.");
+      router.push(`/dashboard/onboarding/pricing?id=${vehicleId}`);
+      return;
+    }
+
+    setIsSubmitting(true);
     updateVehiclePhotos(payload);
   };
 

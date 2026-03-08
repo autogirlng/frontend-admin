@@ -1,11 +1,8 @@
-// app/hooks/useVehicleStep1.ts
 "use client";
 import { useMutation } from "@tanstack/react-query";
-import { apiClient } from "@/lib/apiClient"; // assuming your apiClient file path
+import { apiClient } from "@/lib/apiClient";
 import type { Step1Data } from "@/components/dashboard/onboarding/types/form";
 
-// Define the payload structure. Note the new fields.
-// This type isn't strictly necessary inside the hook but clarifies the API contract.
 type CreateVehiclePayload = {
   name: string;
   city: string;
@@ -22,26 +19,19 @@ type CreateVehiclePayload = {
   upgradedYear: number;
 };
 
-// Define the payload for the new endpoint
 type CreateVehicleForHostPayload = CreateVehiclePayload & {
   hostId: string;
 };
 
-// Define the input type for the mutation function
 type MutationInput = Step1Data & {
   latitude: number;
   longitude: number;
-  hostId?: string; // ✅ Optional hostId
+  hostId?: string;
 };
 
 export function useVehicleStep1() {
-  return useMutation<
-    { id: string }, // Expected return type
-    unknown,
-    MutationInput // ✅ Updated input type
-  >({
+  return useMutation<{ id: string }, unknown, MutationInput>({
     mutationFn: async (data: MutationInput) => {
-      // Base payload with all fields
       const payload: any = {
         name: data.vehicleListingName,
         city: data.locationCityId,
@@ -55,15 +45,12 @@ export function useVehicleStep1() {
         hasInsurance: data.hasInsurance === "yes",
         hasTracker: data.hasTracker === "yes",
         isVehicleUpgraded: data.isVehicleUpgraded === "yes",
-        // Send 0 or null if not upgraded, assuming API expects a number.
-        // Adjust default (e.g., to null) if API allows.
         upgradedYear:
           data.isVehicleUpgraded === "yes" ? Number(data.upgradedYear) : 0,
       };
 
       let endpoint = "/vehicles";
 
-      // ✅ Conditional endpoint and payload logic
       if (data.hostId) {
         endpoint = "/vehicles/onboard-for-host";
         payload.hostId = data.hostId;

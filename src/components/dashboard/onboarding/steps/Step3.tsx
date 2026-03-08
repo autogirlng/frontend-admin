@@ -1,4 +1,3 @@
-// app/components/steps/Step4.tsx
 "use client";
 
 import React, { Suspense } from "react";
@@ -8,15 +7,14 @@ import TipsSidebar from "@/components/generic/TipsSidebar";
 import Button from "@/components/generic/ui/Button";
 import {
   useVehicleDocuments,
-  documentList, // Import the list from the hook
-} from "@/lib/hooks/onboarding/steps/useVehicleStep4"; // Our new hook
+  documentList,
+} from "@/lib/hooks/onboarding/steps/useVehicleStep4";
 import FileUploadCard from "@/components/generic/ui/FileUploadCardCustom";
 import Link from "next/link";
 import CustomLoader from "@/components/generic/CustomLoader";
 
-const currentStep = 3; // This is Step 4
+const currentStep = 3;
 
-// --- Child Form Component ---
 function DocumentUploadForm({ vehicleId }: { vehicleId: string }) {
   const {
     docStates,
@@ -41,7 +39,7 @@ function DocumentUploadForm({ vehicleId }: { vehicleId: string }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {documentList.map((docConfig) => {
               const state = docStates[docConfig.type];
-              if (!state) return null; // Don't render if state isn't initialized
+              if (!state) return null;
 
               return (
                 <FileUploadCard
@@ -81,7 +79,6 @@ function DocumentUploadForm({ vehicleId }: { vehicleId: string }) {
   );
 }
 
-// --- Main Page Component ---
 function Step4Content() {
   const searchParams = useSearchParams();
   const vehicleId = searchParams.get("id");

@@ -1,4 +1,3 @@
-// app/components/steps/Step3.tsx
 "use client";
 
 import React, { Suspense } from "react";
@@ -8,15 +7,14 @@ import TipsSidebar from "@/components/generic/TipsSidebar";
 import Button from "@/components/generic/ui/Button";
 import ImageDropzone from "@/components/generic/ui/ImageDropzone";
 import { useVehiclePhotos } from "@/lib/hooks/onboarding/steps/useVehicleStep3";
-import { Loader2, X, Check, Star, Camera, UploadCloud } from "lucide-react"; // Added Camera, UploadCloud
+import { Loader2, X, Check, Star, Camera } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 import CustomLoader from "@/components/generic/CustomLoader";
 
 const currentStep = 4;
-const REQUIRED_PHOTO_COUNT = 6; // Define the requirement as a constant
+const REQUIRED_PHOTO_COUNT = 6;
 
-// --- PhotoPreviewCard Component (No changes needed, it's good) ---
 const PhotoPreviewCard: React.FC<{
   previewUrl: string;
   publicId: string | undefined;
@@ -40,9 +38,7 @@ const PhotoPreviewCard: React.FC<{
         className="w-full h-full object-cover"
       />
 
-      {/* Overlay for actions */}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-        {/* Only show actions if upload is complete */}
         {publicId && !isUploading && (
           <>
             <button
@@ -68,7 +64,6 @@ const PhotoPreviewCard: React.FC<{
         )}
       </div>
 
-      {/* Status Indicator */}
       {isUploading && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
           <Loader2 className="w-8 h-8 text-white animate-spin" />
@@ -84,8 +79,6 @@ const PhotoPreviewCard: React.FC<{
   );
 };
 
-// --- [NEW] Empty Placeholder Slot ---
-// This component shows the empty states in the grid.
 const EmptySlotPlaceholder: React.FC = () => {
   return (
     <div className="relative aspect-video w-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center">
@@ -95,8 +88,6 @@ const EmptySlotPlaceholder: React.FC = () => {
   );
 };
 
-// --- [NEW] Photo Progress Tracker ---
-// This component visually tracks the 6-photo requirement.
 const PhotoProgressTracker: React.FC<{
   photos: ReturnType<typeof useVehiclePhotos>["photos"];
   primaryPhotoId: string | null;
@@ -105,7 +96,7 @@ const PhotoProgressTracker: React.FC<{
 }> = ({ photos, primaryPhotoId, onRemove, onSetPrimary }) => {
   const filledSlots = photos.map((photo) => (
     <PhotoPreviewCard
-      key={photo.preview} // Use preview as key before publicId exists
+      key={photo.preview}
       previewUrl={photo.preview}
       publicId={photo.publicId}
       isUploading={photo.isUploading}
@@ -128,7 +119,6 @@ const PhotoProgressTracker: React.FC<{
   );
 };
 
-// --- [MODIFIED] Child Form Component ---
 function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
   const {
     photos,
@@ -150,11 +140,9 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
   const hasMetRequirement = photoCount === REQUIRED_PHOTO_COUNT;
   const canUploadMore = photoCount < REQUIRED_PHOTO_COUNT;
 
-  // Modify the submit handler to prevent submission if requirement isn't met
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!hasMetRequirement) {
-      // This is an extra safeguard, the button should be disabled anyway
       alert(`You must upload exactly ${REQUIRED_PHOTO_COUNT} photos.`);
       return;
     }
@@ -167,7 +155,6 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
       className="grid grid-cols-1 lg:grid-cols-3 gap-12"
     >
       <div className="lg:col-span-2 space-y-8">
-        {/* --- 1. Clear Instructions --- */}
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">
             Upload Your Vehicle Photos
@@ -179,7 +166,6 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
           </p>
         </div>
 
-        {/* --- 2. Conditional Dropzone --- */}
         {canUploadMore && (
           <div>
             <h3 className="text-lg font-medium text-gray-800">
@@ -188,16 +174,10 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
             <p className="text-sm text-gray-500 mb-4">
               You can drag & drop files or click to select.
             </p>
-            <ImageDropzone
-              onDrop={onFilesDrop}
-              // You might need to add a 'disabled' prop to ImageDropzone
-              // or handle it in the onDrop function to reject files if
-              // (files.length + photoCount) > REQUIRED_PHOTO_COUNT
-            />
+            <ImageDropzone onDrop={onFilesDrop} />
           </div>
         )}
 
-        {/* --- 3. Visual Progress Grid --- */}
         {!canUploadMore && (
           <div className="p-4 bg-green-50 border border-green-200 text-green-700 flex items-center gap-3">
             <Check className="w-5 h-5" />
@@ -217,7 +197,6 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
           />
         </div>
 
-        {/* --- 4. Navigation & Submission --- */}
         <div className="md:col-span-2 flex flex-col items-end gap-4 pt-4">
           <div className="flex justify-between w-full">
             <Link
@@ -236,7 +215,6 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
             </Button>
           </div>
 
-          {/* --- 5. Submission Helper Text --- */}
           {!hasMetRequirement && (
             <p className="text-sm text-red-500 text-right">
               You must upload exactly {REQUIRED_PHOTO_COUNT} photos to continue.
@@ -252,7 +230,6 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
   );
 }
 
-// --- Main Page Component (No changes) ---
 function Step3Content() {
   const searchParams = useSearchParams();
   const vehicleId = searchParams.get("id");
@@ -272,8 +249,7 @@ export default function Step3() {
   return (
     <div className="relative min-h-screen pb-24 bg-white">
       <Stepper currentStep={currentStep} />
-      {/* Reduced top margin for a tighter layout */}
-      <main className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-8xl mx-auto mt-3">
         <Suspense fallback={<CustomLoader />}>
           <Step3Content />
         </Suspense>

@@ -1,4 +1,5 @@
 // app/components/generic/ui/FileUploadCard.tsx
+
 "use client";
 
 import React from "react";
@@ -14,7 +15,7 @@ import {
 import {
   DocumentUploadState,
   uploadToCloudinary,
-} from "@/lib/hooks/onboarding/steps/useVehicleStep4"; // Import from our new hook
+} from "@/lib/hooks/onboarding/steps/useVehicleStep4";
 
 type FileUploadCardProps = {
   label: string;
@@ -40,17 +41,14 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
     const file = acceptedFiles[0];
     if (!file) return;
 
-    // 1. Set state to "uploading"
     onStateChange({
       status: "uploading",
       fileName: file.name,
       errorMessage: "",
     });
 
-    // 2. Start upload
     uploadToCloudinary(file)
       .then((result) => {
-        // 3. Set state to "success"
         onStateChange({
           status: "success",
           cloudinaryUrl: result.url,
@@ -58,7 +56,6 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
         });
       })
       .catch((err) => {
-        // 4. Set state to "error"
         onStateChange({
           status: "error",
           errorMessage: err.message || "Upload failed. Please try again.",
@@ -67,8 +64,7 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
   };
 
   const onRemove = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent dropzone from opening
-    // TODO: Call Cloudinary delete API if needed
+    e.stopPropagation();
     onStateChange({
       status: "idle",
       fileName: null,
@@ -99,7 +95,6 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
     >
       <input {...getInputProps()} />
 
-      {/* Label and Compulsory Badge */}
       <div className="absolute top-2 left-2 text-left">
         <p className="text-sm font-semibold text-gray-800">{label}</p>
         {isCompulsory && (
@@ -107,7 +102,6 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
         )}
       </div>
 
-      {/* Card Body (Status-dependent) */}
       <div className="mt-10">
         {status === "idle" && (
           <div className="text-gray-500">
@@ -140,7 +134,6 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
         )}
       </div>
 
-      {/* Remove Button */}
       {status === "success" && (
         <button
           type="button"
@@ -152,7 +145,6 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
         </button>
       )}
 
-      {/* Error Message */}
       {status === "error" && errorMessage && (
         <p className="text-xs text-red-600 mt-2">{errorMessage}</p>
       )}

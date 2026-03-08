@@ -1,4 +1,3 @@
-// lib/hooks/onboarding/steps/useVehicleStep4.ts
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
@@ -8,16 +7,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { apiClient } from "@/lib/apiClient";
 
-// --- Type Definitions ---
-
-// The structure of a document object in your API
 type VehicleDocument = {
   documentType: string;
   cloudinaryUrl: string;
   cloudinaryPublicId: string;
 };
 
-// The state for *each* file upload card
 export type DocumentUploadState = {
   documentType: string;
   cloudinaryUrl: string | null;
@@ -27,18 +22,15 @@ export type DocumentUploadState = {
   errorMessage?: string;
 };
 
-// GET /vehicles/{id} (structure of relevant document fields)
 type VehicleDetails = {
   id: string;
   documents: VehicleDocument[] | null;
 };
 
-// PATCH /vehicles/documents payload
 type UpdateDocumentsPayload = {
-  documents: VehicleDocument[]; // ✅ FIX: This should be an array
+  documents: VehicleDocument[];
 };
 
-// The list of documents required (from your component)
 export const documentList = [
   {
     type: "VEHICLE_REGISTRATION",
@@ -72,17 +64,16 @@ export const documentList = [
   },
 ];
 
-// --- Cloudinary Upload Function (Same as Step 3) ---
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
 
 export async function uploadToCloudinary(
-  file: File
+  file: File,
 ): Promise<{ url: string; publicId: string }> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append(
     "upload_preset",
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ""
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "",
   );
 
   const response = await fetch(CLOUDINARY_URL, {
@@ -102,21 +93,21 @@ export async function uploadToCloudinary(
   };
 }
 
-// --- The Hook ---
 export function useVehicleDocuments(vehicleId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { status: sessionStatus } = useSession();
 
-  // State is a map of documentType -> DocumentUploadState
   const [docStates, setDocStates] = useState<
     Record<string, DocumentUploadState>
   >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- Data Fetching: Get existing documents ---
+  const [originalPayload, setOriginalPayload] =
+    useState<UpdateDocumentsPayload | null>(null);
+
   const { data: vehicleDetails, isLoading: isLoadingVehicle } = useQuery({
-    queryKey: ["vehicleDetails", vehicleId], // Re-uses Step 3's query if fresh
+    queryKey: ["vehicleDetails", vehicleId],
     queryFn: async () => {
       const res = await apiClient.get<VehicleDetails>(`/vehicles/${vehicleId}`);
       if (!res) throw new Error("Vehicle not found");
@@ -125,43 +116,52 @@ export function useVehicleDocuments(vehicleId: string) {
     enabled: !!vehicleId && sessionStatus === "authenticated",
   });
 
-  // --- Prefill: Load existing documents into state ---
   useEffect(() => {
-    // Initialize state from the static list
-    const initialState: Record<string, DocumentUploadState> = {};
-    documentList.forEach((doc) => {
-      // Find this doc in the *already fetched* vehicle data
-      const existingDoc = vehicleDetails?.documents?.find(
-        (d) => d.documentType === doc.type
-      );
+    if (vehicleDetails && !originalPayload) {
+      const initialState: Record<string, DocumentUploadState> = {};
+      const initialPayloadDocs: VehicleDocument[] = [];
 
-      if (existingDoc) {
-        initialState[doc.type] = {
-          documentType: doc.type,
-          cloudinaryUrl: existingDoc.cloudinaryUrl,
-          cloudinaryPublicId: existingDoc.cloudinaryPublicId,
-          fileName: "Uploaded Document", // We don't have the original filename
-          status: "success",
-        };
-      } else {
-        initialState[doc.type] = {
-          documentType: doc.type,
-          cloudinaryUrl: null,
-          cloudinaryPublicId: null,
-          fileName: null,
-          status: "idle",
-        };
-      }
-    });
-    setDocStates(initialState);
-  }, [vehicleDetails]);
+      documentList.forEach((doc) => {
+        const existingDoc = vehicleDetails?.documents?.find(
+          (d) => d.documentType === doc.type,
+        );
 
-  // --- Mutation: Save to our backend ---
+        if (existingDoc) {
+          initialState[doc.type] = {
+            documentType: doc.type,
+            cloudinaryUrl: existingDoc.cloudinaryUrl,
+            cloudinaryPublicId: existingDoc.cloudinaryPublicId,
+            fileName: "Uploaded Document",
+            status: "success",
+          };
+
+          initialPayloadDocs.push({
+            documentType: doc.type,
+            cloudinaryUrl: existingDoc.cloudinaryUrl,
+            cloudinaryPublicId: existingDoc.cloudinaryPublicId,
+          });
+        } else {
+          initialState[doc.type] = {
+            documentType: doc.type,
+            cloudinaryUrl: null,
+            cloudinaryPublicId: null,
+            fileName: null,
+            status: "idle",
+          };
+        }
+      });
+
+      setDocStates(initialState);
+
+      setOriginalPayload({ documents: initialPayloadDocs });
+    }
+  }, [vehicleDetails, originalPayload]);
+
   const { mutate: updateVehicleDocuments } = useMutation({
     mutationFn: (payload: UpdateDocumentsPayload) => {
       return apiClient.patch(
         `/vehicles/documents?vehicleId=${vehicleId}`,
-        payload
+        payload,
       );
     },
     onSuccess: () => {
@@ -169,21 +169,34 @@ export function useVehicleDocuments(vehicleId: string) {
       queryClient.invalidateQueries({
         queryKey: ["vehicleDetails", vehicleId],
       });
-      router.push(`/dashboard/onboarding/photos?id=${vehicleId}`); // Go to next step
+      router.push(`/dashboard/onboarding/photos?id=${vehicleId}`);
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to save documents.");
-    },
-    onSettled: () => {
       setIsSubmitting(false);
     },
   });
 
-  // --- Handler for a single card to update its state ---
   const updateDocumentState = (
     docType: string,
-    newState: Partial<DocumentUploadState>
+    newState: Partial<DocumentUploadState>,
   ) => {
+    const currentState = docStates[docType];
+
+    if (
+      newState.status === "idle" &&
+      currentState?.cloudinaryPublicId &&
+      !newState.cloudinaryPublicId
+    ) {
+      fetch("/api/cloudinary/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicId: currentState.cloudinaryPublicId }),
+      }).catch((err) =>
+        console.error("Failed to delete document from Cloudinary", err),
+      );
+    }
+
     setDocStates((prev) => ({
       ...prev,
       [docType]: {
@@ -193,19 +206,22 @@ export function useVehicleDocuments(vehicleId: string) {
     }));
   };
 
-  // --- Submit Handler ---
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // 1. Validation
     const missingDocs: string[] = [];
+    let hasActiveUploads = false;
+
     documentList.forEach((doc) => {
+      const state = docStates[doc.type];
+
+      if (state?.status === "uploading") {
+        hasActiveUploads = true;
+      }
+
       if (doc.isCompulsory) {
-        const state = docStates[doc.type];
         if (!state || state.status !== "success") {
           missingDocs.push(doc.label);
-          // Set error state for the card
           updateDocumentState(doc.type, {
             status: "error",
             errorMessage: "This document is required.",
@@ -214,16 +230,21 @@ export function useVehicleDocuments(vehicleId: string) {
       }
     });
 
-    if (missingDocs.length > 0) {
-      toast.error(`Missing compulsory documents: ${missingDocs.join(", ")}`);
-      setIsSubmitting(false);
+    if (hasActiveUploads) {
+      toast.warn("Please wait for all uploads to complete.");
       return;
     }
 
-    // 2. Format Payload
+    if (missingDocs.length > 0) {
+      toast.error(`Missing compulsory documents: ${missingDocs.join(", ")}`);
+      return;
+    }
+
     const payload: UpdateDocumentsPayload = {
       documents: Object.values(docStates)
-        .filter((state) => state.status === "success") // Only send uploaded docs
+        .filter(
+          (state) => state.status === "success" && state.cloudinaryPublicId,
+        )
         .map((state) => ({
           documentType: state.documentType,
           cloudinaryUrl: state.cloudinaryUrl!,
@@ -231,7 +252,20 @@ export function useVehicleDocuments(vehicleId: string) {
         })),
     };
 
-    // 3. Submit
+    const sortDocs = (docs: VehicleDocument[]) =>
+      [...docs].sort((a, b) => a.documentType.localeCompare(b.documentType));
+
+    if (
+      originalPayload &&
+      JSON.stringify(sortDocs(originalPayload.documents)) ===
+        JSON.stringify(sortDocs(payload.documents))
+    ) {
+      toast.info("No changes detected. Proceeding to next step.");
+      router.push(`/dashboard/onboarding/photos?id=${vehicleId}`);
+      return;
+    }
+
+    setIsSubmitting(true);
     updateVehicleDocuments(payload);
   };
 
@@ -240,7 +274,7 @@ export function useVehicleDocuments(vehicleId: string) {
     isLoading: isLoadingVehicle,
     isLoadingSession: sessionStatus === "loading",
     isSubmitting,
-    updateDocumentState, // Pass this to the cards
+    updateDocumentState,
     handleSubmit,
   };
 }
