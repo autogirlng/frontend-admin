@@ -1,4 +1,5 @@
 "use client";
+
 import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import TextInput from "@/components/generic/ui/TextInput";
@@ -189,7 +190,7 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
             ) : null}
 
             {formData.supportedStateIds.length > 0 && (
-              <div className="mt-6 p-5 bg-gray-50 border border-gray-200">
+              <div className="mt-6 p-5 bg-gray-50 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-800 mb-4">
                   3. Set State Surcharge Fees
                 </h4>

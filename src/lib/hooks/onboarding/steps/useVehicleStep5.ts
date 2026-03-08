@@ -39,7 +39,7 @@ type VehicleConfigData = {
   willProvideDriver: boolean;
   willProvideFuel: boolean;
   supportedBookingTypes: { id: string }[] | null;
-  outOfBoundsAreaIds: string[] | null;
+  outOfBoundsAreas: { id: string; name: string }[] | null;
   outskirtFee: number | null;
   extremeFee: number | null;
   pricing: { bookingTypeId: string; price: number }[] | null;
@@ -257,6 +257,16 @@ export function useVehicleStep5(vehicleId: string) {
 
       setStateNameMap((prev) => ({ ...prev, ...newMap }));
 
+      const initialGeofenceIds: string[] = [];
+      const initialGeofenceNameMap: Record<string, string> = {};
+
+      (vehicleDetails.outOfBoundsAreas || []).forEach((area) => {
+        initialGeofenceIds.push(area.id);
+        initialGeofenceNameMap[area.id] = area.name;
+      });
+
+      setGeofenceNameMap((prev) => ({ ...prev, ...initialGeofenceNameMap }));
+
       const prefilledState: Step5FormData = {
         maxTripDuration: {
           value: vehicleDetails.maxTripDurationValue ?? "",
@@ -272,7 +282,7 @@ export function useVehicleStep5(vehicleId: string) {
           (vehicleDetails.supportedBookingTypes || [])
             .map((t) => t.id)
             .sort() || [],
-        outOfBoundsAreaIds: (vehicleDetails.outOfBoundsAreaIds || []).sort(),
+        outOfBoundsAreaIds: initialGeofenceIds.sort(),
         supportedStateIds: initialSupportedStateIds.sort(),
         stateSurchargeFees: initialStateSurchargeFees,
         outskirtFee: String(
@@ -372,11 +382,13 @@ export function useVehicleStep5(vehicleId: string) {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+
     if (JSON.stringify(formData) === JSON.stringify(originalData)) {
       toast.info("No changes detected. Proceeding to next step.");
       router.push(`/dashboard/onboarding/submit-review?id=${vehicleId}`);
       return;
     }
+
     if (!bookingTypes || !discountDurations || !vehicleDetails) {
       toast.error("Data is still loading, please wait.");
       return;
