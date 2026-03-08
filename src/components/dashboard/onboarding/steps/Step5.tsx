@@ -45,7 +45,7 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
 
   const selectedBookingTypes = React.useMemo(() => {
     return bookingTypes.filter((bt) =>
-      formData.supportedBookingTypeIds.includes(bt.id)
+      formData.supportedBookingTypeIds.includes(bt.id),
     );
   }, [bookingTypes, formData.supportedBookingTypeIds]);
 
@@ -71,14 +71,14 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
                 handleDurationChange(
                   "maxTripDuration",
                   newValue,
-                  formData.maxTripDuration.unit
+                  formData.maxTripDuration.unit,
                 )
               }
               onUnitChange={(newOption) =>
                 handleDurationChange(
                   "maxTripDuration",
                   formData.maxTripDuration.value,
-                  newOption?.id || "DAYS"
+                  newOption?.id || "DAYS",
                 )
               }
             />
@@ -92,14 +92,14 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
                 handleDurationChange(
                   "advanceNotice",
                   newValue,
-                  formData.advanceNotice.unit
+                  formData.advanceNotice.unit,
                 )
               }
               onUnitChange={(newOption) =>
                 handleDurationChange(
                   "advanceNotice",
                   formData.advanceNotice.value,
-                  newOption?.id || "DAYS"
+                  newOption?.id || "DAYS",
                 )
               }
             />
@@ -286,7 +286,7 @@ const FormSection: React.FC<{
     <div
       className={clsx(
         "grid grid-cols-1 gap-x-6 gap-y-5",
-        gridCols === "2" && "md:grid-cols-2"
+        gridCols === "2" && "md:grid-cols-2",
       )}
     >
       {children}

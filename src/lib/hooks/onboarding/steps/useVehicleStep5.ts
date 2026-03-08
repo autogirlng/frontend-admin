@@ -165,7 +165,7 @@ export function useVehicleStep5(vehicleId: string) {
     queryKey: ["vehicleDetails", vehicleId],
     queryFn: async () => {
       const res = await apiClient.get<VehicleConfigData>(
-        `/vehicles/${vehicleId}`
+        `/vehicles/${vehicleId}`,
       );
       if (!res) throw new Error("Vehicle not found");
       return res;
@@ -189,7 +189,7 @@ export function useVehicleStep5(vehicleId: string) {
       const initialPrices: PriceState = {};
       bookingTypes.forEach((bt) => {
         const existing = (vehicleDetails.pricing || []).find(
-          (p) => p.bookingTypeId === bt.id
+          (p) => p.bookingTypeId === bt.id,
         );
         initialPrices[bt.id] = String(existing?.price || "");
       });
@@ -197,7 +197,7 @@ export function useVehicleStep5(vehicleId: string) {
       const initialDiscounts: DiscountState = {};
       discountDurations.forEach((dd) => {
         const existing = (vehicleDetails.discounts || []).find(
-          (d) => d.discountDurationId === dd.id
+          (d) => d.discountDurationId === dd.id,
         );
         initialDiscounts[dd.id] = String(existing?.percentage || "");
       });
@@ -234,7 +234,7 @@ export function useVehicleStep5(vehicleId: string) {
     mutationFn: (payload: UpdateConfigPayload) => {
       return apiClient.patch(
         `/vehicles/configuration?id=${vehicleId}`,
-        payload
+        payload,
       );
     },
     onSuccess: () => {
@@ -256,7 +256,7 @@ export function useVehicleStep5(vehicleId: string) {
 
   const handleSelectChange = (
     field: "willProvideDriver" | "willProvideFuel",
-    option: Option | null
+    option: Option | null,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: option ? option.id : "" }));
   };
@@ -264,7 +264,7 @@ export function useVehicleStep5(vehicleId: string) {
   const handleDurationChange = (
     field: "maxTripDuration" | "advanceNotice",
     value: number | "",
-    unit: string
+    unit: string,
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -275,7 +275,7 @@ export function useVehicleStep5(vehicleId: string) {
   const handleCheckboxChange = (
     field: "supportedBookingTypeIds" | "outOfBoundsAreaIds",
     id: string,
-    isChecked: boolean
+    isChecked: boolean,
   ) => {
     setFormData((prev) => {
       const oldList = prev[field] as string[];

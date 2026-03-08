@@ -1,11 +1,11 @@
 import { Suspense } from "react";
+import State from "@/components/outskirt/State";
 import CustomLoader from "@/components/generic/CustomLoader";
-import AdminGeofence from "@/components/outskirt/AdminGeofence";
 
-export default function AdminGeofencePage() {
+export default function StatePage() {
   return (
     <Suspense fallback={<CustomLoader />}>
-      <AdminGeofence />
+      <State />
     </Suspense>
   );
 }

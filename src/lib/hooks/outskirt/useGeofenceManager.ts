@@ -1,114 +1,119 @@
-// lib/hooks/admin/useGeofenceManager.ts
 "use client";
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify"; // Using react-toastify as in our other hooks
+import { toast } from "react-toastify";
 import { apiClient } from "@/lib/apiClient";
-
-// --- Type Definitions ---
-
-export type Coordinate = {
-  latitude: number;
-  longitude: number;
-};
-
-export type GeofenceArea = {
-  id: string;
-  name: string;
-  areaType: "OUTSKIRT" | "EXTREME";
-  coordinates: Coordinate[];
-};
-
-type NewGeofencePayload = {
-  name: string;
-  areaType: "OUTSKIRT" | "EXTREME";
-  coordinates: Coordinate[];
-};
-
-// --- The Hook ---
+import type {
+  Country,
+  GeoState,
+  GeofenceArea,
+  GeofencePayload,
+  Coordinate,
+  AreaType,
+} from "@/components/outskirt/geo";
+import { latLngsToCoordinates } from "@/components/outskirt/geo";
 
 export function useGeofenceManager() {
   const queryClient = useQueryClient();
 
-  // Form State
-  const [newName, setNewName] = useState("");
-  const [newAreaType, setNewAreaType] = useState<"OUTSKIRT" | "EXTREME">(
-    "OUTSKIRT"
+  const [selectedCountryId, setSelectedCountryId] = useState<string | null>(
+    null,
   );
+  const [selectedStateId, setSelectedStateId] = useState<string | null>(null);
+
+  const [newName, setNewName] = useState("");
+  const [newAreaType, setNewAreaType] = useState<AreaType>("OUTSKIRT");
   const [newCoordinates, setNewCoordinates] = useState<Coordinate[]>([]);
 
-  // --- Data Fetching ---
-  const {
-    data: areas,
-    isLoading,
-    error,
-  } = useQuery<GeofenceArea[]>({
-    queryKey: ["geofenceAreas"],
-    queryFn: () => apiClient.get<GeofenceArea[]>("/geofence-areas"),
+  const { data: countries, isLoading: isLoadingCountries } = useQuery<
+    Country[]
+  >({
+    queryKey: ["countries"],
+    queryFn: () => apiClient.get<Country[]>("/countries"),
   });
 
-  // --- Mutations ---
+  const { data: states, isLoading: isLoadingStates } = useQuery<GeoState[]>({
+    queryKey: ["states", selectedCountryId],
+    queryFn: () =>
+      apiClient.get<GeoState[]>(`/states/country/${selectedCountryId}`),
+    enabled: !!selectedCountryId,
+  });
 
-  // Create Area
+  const {
+    data: areas,
+    isLoading: isLoadingAreas,
+    error,
+  } = useQuery<GeofenceArea[]>({
+    queryKey: ["geofenceAreas", selectedStateId],
+    queryFn: () =>
+      apiClient.get<GeofenceArea[]>(
+        `/geofence-areas?stateId=${selectedStateId}`,
+      ),
+    enabled: !!selectedStateId,
+  });
+
   const { mutate: createArea, isPending: isSaving } = useMutation({
-    mutationFn: (payload: NewGeofencePayload) => {
-      return apiClient.post<GeofenceArea>("/geofence-areas", payload);
-    },
+    mutationFn: (payload: GeofencePayload) =>
+      apiClient.post<GeofenceArea>("/geofence-areas", payload),
     onSuccess: () => {
       toast.success("Geofenced area created successfully!");
-      queryClient.invalidateQueries({ queryKey: ["geofenceAreas"] });
-      // Reset form
+      queryClient.invalidateQueries({
+        queryKey: ["geofenceAreas", selectedStateId],
+      });
       setNewName("");
       setNewAreaType("OUTSKIRT");
       setNewCoordinates([]);
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to create area.");
-    },
+    onError: (err: any) => toast.error(err.message || "Failed to create area."),
   });
 
-  // Delete Area
   const { mutate: deleteArea, isPending: isDeleting } = useMutation({
-    mutationFn: (id: string) => {
-      return apiClient.delete(`/geofence-areas/${id}`);
-    },
+    mutationFn: (id: string) => apiClient.delete(`/geofence-areas/${id}`),
     onSuccess: () => {
       toast.success("Area deleted successfully!");
-      queryClient.invalidateQueries({ queryKey: ["geofenceAreas"] });
+      queryClient.invalidateQueries({
+        queryKey: ["geofenceAreas", selectedStateId],
+      });
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to delete area.");
-    },
+    onError: (err: any) => toast.error(err.message || "Failed to delete area."),
   });
 
-  // --- Handlers ---
+  const handleCountrySelect = (countryId: string) => {
+    setSelectedCountryId(countryId);
+    setSelectedStateId(null);
+    setNewCoordinates([]);
+  };
 
-  const handleShapeCreated = (coords: [number, number][]) => {
-    // Convert [lat, lng] to { latitude, longitude }
-    const formattedCoords: Coordinate[] = coords.map((c) => ({
-      latitude: c[0],
-      longitude: c[1],
-    }));
-    setNewCoordinates(formattedCoords);
+  const handleStateSelect = (stateId: string) => {
+    setSelectedStateId(stateId);
+    setNewCoordinates([]);
+  };
+
+  const handleShapeCreated = (latlngs: [number, number][]) => {
+    const coords = latLngsToCoordinates(latlngs);
+    setNewCoordinates(coords);
     toast.success("Shape drawn! Add a name and type, then save.");
   };
 
   const handleSaveArea = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedStateId) {
+      toast.error("Please select a state first.");
+      return;
+    }
     if (!newName.trim() || newCoordinates.length < 3) {
       toast.error(
-        "Please draw a shape (at least 3 points) and provide a name."
+        "Please draw a shape (at least 3 points) and provide a name.",
       );
       return;
     }
-
-    const payload: NewGeofencePayload = {
+    createArea({
       name: newName,
       areaType: newAreaType,
+      stateId: selectedStateId,
       coordinates: newCoordinates,
-    };
-    createArea(payload);
+    });
   };
 
   const handleDeleteArea = (id: string) => {
@@ -116,25 +121,39 @@ export function useGeofenceManager() {
     deleteArea(id);
   };
 
+  const selectedCountry =
+    countries?.find((c) => c.id === selectedCountryId) ?? null;
+  const selectedState = states?.find((s) => s.id === selectedStateId) ?? null;
+
   return {
-    areas: areas || [],
-    isLoading,
+    countries: countries ?? [],
+    states: states ?? [],
+    areas: areas ?? [],
+
+    selectedCountryId,
+    selectedStateId,
+    selectedCountry,
+    selectedState,
+
+    isLoadingCountries,
+    isLoadingStates,
+    isLoadingAreas,
+    isLoading: isLoadingCountries,
     error,
 
-    // Form state and handlers
+    handleCountrySelect,
+    handleStateSelect,
+
     newName,
     setNewName,
     newAreaType,
     setNewAreaType,
     newCoordinates,
 
-    // Map handler
     handleShapeCreated,
-
-    // Action handlers
     handleSaveArea,
     isSaving,
     handleDeleteArea,
-    isDeleting, // You can use this to disable delete buttons
+    isDeleting,
   };
 }

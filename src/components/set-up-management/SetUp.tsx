@@ -52,9 +52,9 @@ const setupItems: SetupItem[] = [
     icon: Clock,
   },
   {
-    title: "Outskirts and Extreme Locations",
+    title: "GeoSpatial Functions",
     description: "Define operational zones and boundaries.",
-    href: "/dashboard/outskirts",
+    href: "/dashboard/outskirts/country",
     icon: MapPin,
   },
   {

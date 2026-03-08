@@ -119,7 +119,7 @@ function VehicleDetailsForm({ vehicleId }: { vehicleId: string }) {
               states.find(
                 (s) =>
                   s.id.toLowerCase() ===
-                  formData.stateOfRegistration?.toLowerCase()
+                  formData.stateOfRegistration?.toLowerCase(),
               ) || null
             }
             onChange={(option) =>
