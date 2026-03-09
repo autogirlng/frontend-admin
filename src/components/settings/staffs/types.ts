@@ -82,12 +82,10 @@ export interface OfflineBooking {
   hostName: string;
 }
 
-export enum OfflineBookingStatus {
-  CONFIRMED = "CONFIRMED",
+export enum OfflineBookingStatus { 
   SUCCESSFUL = "SUCCESSFUL",
-  COMPLETED = "COMPLETED",
   PENDING = "PENDING",
-  PENDING_PAYMENT = "PENDING_PAYMENT",
-  CANCELLED = "CANCELLED",
+  PARTIALLY_PAID = "PARTIALLY_PAID",
+  ABANDONED = "ABANDONED",
   FAILED = "FAILED",
 }

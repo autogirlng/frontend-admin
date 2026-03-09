@@ -59,7 +59,8 @@ export function useAdminCommissionExport({
 
       const dateStr = format(new Date(), "dd-MMM-yyyy");
       const safeName = adminName?.replace(/\s+/g, "_") || "Admin";
-      const filename = `Admin_Commissions_${safeName}_${dateStr}.xlsx`;
+      const safeStatus = status ? `_${status.replace(/\s+/g, "_")}` : "";
+      const filename = `Admin_Commissions_${safeName}${safeStatus}_${dateStr}.xlsx`;
 
       const exportData = bookings.map((b) => ({
         "Booking Ref": b.invoiceNumber || "-",
