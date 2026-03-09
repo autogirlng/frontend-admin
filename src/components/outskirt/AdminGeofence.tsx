@@ -588,7 +588,7 @@ export default function AdminGeofence() {
 
       {editingArea && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-sm p-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-slate-800">Edit Details</h3>
               <button
@@ -608,7 +608,7 @@ export default function AdminGeofence() {
                   type="text"
                   value={editingArea.name}
                   disabled
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded px-3 py-2 text-sm cursor-not-allowed"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-500 px-3 py-2 text-sm cursor-not-allowed"
                 />
               </div>
 
@@ -623,7 +623,7 @@ export default function AdminGeofence() {
                       type="button"
                       onClick={() => setEditType(type)}
                       className={clsx(
-                        "py-2 px-1.5 text-[11px] font-medium border transition-all text-center leading-tight rounded",
+                        "py-2 px-1.5 text-[11px] font-medium border transition-all text-center leading-tight",
                         editType === type
                           ? AREA_CONFIG[type].activeCls
                           : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50",
@@ -643,7 +643,7 @@ export default function AdminGeofence() {
                   <select
                     value={editStateId}
                     onChange={(e) => setEditStateId(e.target.value)}
-                    className="w-full appearance-none bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    className="w-full appearance-none bg-white border border-slate-300 text-slate-800 px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   >
                     {states.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -664,14 +664,14 @@ export default function AdminGeofence() {
             <div className="mt-8 flex justify-end gap-3">
               <button
                 onClick={() => setEditingArea(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={isUpdatingType || isTransferring}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {(isUpdatingType || isTransferring) && (
                   <Loader2 className="h-4 w-4 animate-spin" />
