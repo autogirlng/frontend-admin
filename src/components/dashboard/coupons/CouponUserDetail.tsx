@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { format, startOfMonth } from "date-fns";
+import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import clsx from "clsx";
 import {
@@ -50,11 +50,8 @@ export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const downloadInvoiceMutation = useDownloadInvoice();
 
-  // Date filter — default to start of current month → today
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: new Date(),
-  });
+  // Date filter — no default, only applied when user selects a range
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   // Reset pagination when filter changes
   const handleDateChange = (range: DateRange | undefined) => {
@@ -167,12 +164,12 @@ export default function CouponUserDetail({ couponId }: CouponUserDetailProps) {
 
   const couponCode = coupon?.code ?? null;
 
-  // Format dates for the API query
+  // Format dates as YYYY-MM-DD for the API query
   const startDateStr = dateRange?.from
-    ? dateRange.from.toISOString().replace("Z", "")
+    ? format(dateRange.from, "yyyy-MM-dd")
     : undefined;
   const endDateStr = dateRange?.to
-    ? dateRange.to.toISOString().replace("Z", "")
+    ? format(dateRange.to, "yyyy-MM-dd")
     : undefined;
 
   const { data, isLoading, isError, isPlaceholderData } =

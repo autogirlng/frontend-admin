@@ -16,6 +16,7 @@ import {
   Star,
   ShieldEllipsis,
   Pencil,
+  Mail,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -156,6 +157,15 @@ export default function SettingsPage() {
             icon={Pencil}
             title="Blog Settings"
             description="Manage blog posts and content."
+            iconBgColor="bg-blue-100"
+          />
+
+          {/* 13. Contact-Form Settings */}
+          <SettingsCard
+            href="/dashboard/settings/contact"
+            icon={Mail}
+            title="Contact-Form Settings"
+            description="Manage contact form submissions from your platform."
             iconBgColor="bg-blue-100"
           />
         </div>
