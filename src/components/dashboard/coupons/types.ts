@@ -5,6 +5,7 @@ export interface PaginatedResponse<T> {
   currentPage: number;
   pageSize: number;
   totalItems: number;
+  totalElements: number;
   totalPages: number;
 }
 

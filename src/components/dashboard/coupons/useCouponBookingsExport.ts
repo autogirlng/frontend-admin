@@ -35,7 +35,7 @@ export function useCouponBookingsExport({
       const countRes = await apiClient.get<PaginatedResponse<BookingContent>>(
         `/admin/bookings/booking/${couponCode}/coupon?${params.toString()}`
       );
-      const total = countRes.totalItems || 0;
+      const total = countRes.totalElements || 0;
 
       if (total === 0) {
         toast.error("No bookings found to export.", { id: "export-bookings" });
@@ -70,8 +70,10 @@ export function useCouponBookingsExport({
       // Step 4: Generate file
       const dateStr = format(new Date(), "dd-MMM-yyyy");
       const safeCode = couponCode.replace(/[^a-zA-Z0-9]/g, "_");
+      const rangePart =
+        startDate && endDate ? `_${startDate}_to_${endDate}` : "";
       const ext = fileType === "csv" ? "csv" : "xlsx";
-      const filename = `Coupon_${safeCode}_Bookings_${dateStr}.${ext}`;
+      const filename = `Coupon_${safeCode}_Bookings${rangePart}_${dateStr}.${ext}`;
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
