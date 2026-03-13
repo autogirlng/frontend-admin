@@ -41,8 +41,9 @@ export function useMarkContactFormRead() {
   const queryClient = useQueryClient();
 
   return useMutation<unknown, Error, string>({
+    // Changed from .put to .patch to match your new endpoint
     mutationFn: (id: string) =>
-      apiClient.put(`/contact-form/${id}`, { isRead: true }),
+      apiClient.patch(`/contact-form/${id}`, { isRead: true }),
     onSuccess: () => {
       toast.success("Marked as read.");
       queryClient.invalidateQueries({ queryKey: [CONTACT_FORMS_KEY] });
