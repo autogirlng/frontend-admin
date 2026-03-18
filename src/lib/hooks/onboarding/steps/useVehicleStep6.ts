@@ -109,7 +109,7 @@ export function useVehicleStep6(vehicleId: string) {
         queryKey: ["vehicleDetails", vehicleId],
       });
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      router.push("/dashboard/vehicles");
+      router.push("/dashboard/vehicle-onboarding");
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to submit for review.");
