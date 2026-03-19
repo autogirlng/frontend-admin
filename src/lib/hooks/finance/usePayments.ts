@@ -24,6 +24,14 @@ export interface PaymentFilters {
   searchTerm: string;
 }
 
+export interface SplitMovePayload {
+  newVehicleId: string;
+  sliceStartTime: string;
+  sliceEndTime: string;
+  newBookingTypeId: string;
+  waivePriceDifference: boolean;
+}
+
 export function useGetPayments(filters: PaymentFilters) {
   const {
     page,
@@ -246,6 +254,41 @@ export function useMoveBookingSegments() {
       toast.error(
         error?.response?.data?.message ||
           "Failed to transfer booking segments.",
+      );
+    },
+  });
+}
+
+export function useSplitMoveBookingSegment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      segmentId,
+      payload,
+    }: {
+      bookingId: string;
+      segmentId: string;
+      payload: SplitMovePayload;
+    }) => {
+      const response: any = await apiClient.post(
+        `/admin/bookings/${bookingId}/segments/${segmentId}/split-move`,
+        payload,
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(
+        data?.message || "Segment successfully split and moved to new vehicle.",
+      );
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to split and transfer segment.",
       );
     },
   });
