@@ -23,13 +23,18 @@ const ORG_KEYS = {
 };
 
 // 1. Get All Organizations
-export function useGetOrganizations(page: number, size: number = 10) {
+export function useGetOrganizations(page: number, searchTerm: string = "", size: number = 10) {
   return useQuery<PaginatedData<Organization>>({
-    queryKey: [ORG_KEYS.list, page, size],
-    queryFn: () =>
-      apiClient.get<PaginatedData<Organization>>(
-        `/admin/organizations?page=${page}&size=${size}`
-      ),
+    queryKey: [ORG_KEYS.list, page, searchTerm, size],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("size", String(size));
+      if (searchTerm) params.append("searchTerm", searchTerm);
+      return apiClient.get<PaginatedData<Organization>>(
+        `/admin/organizations?${params.toString()}`
+      );
+    },
     placeholderData: (previousData) => previousData,
   });
 }
@@ -106,13 +111,18 @@ export function useGetOrganizationTransactions(orgId: string | null, page: numbe
 /**
  * GET /v1/admin/organizations/kyc-pending
  */
-export function useGetPendingKycOrganizations(page: number, size: number = 10) {
+export function useGetPendingKycOrganizations(page: number, searchTerm: string = "", size: number = 10) {
   return useQuery<PaginatedData<Organization>>({
-    queryKey: [ORG_KEYS.pendingKyc, page, size],
-    queryFn: () =>
-      apiClient.get<PaginatedData<Organization>>(
-        `/admin/organizations/kyc-pending?page=${page}&size=${size}`
-      ),
+    queryKey: [ORG_KEYS.pendingKyc, page, searchTerm, size],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("size", String(size));
+      if (searchTerm) params.append("searchTerm", searchTerm);
+      return apiClient.get<PaginatedData<Organization>>(
+        `/admin/organizations/kyc-pending?${params.toString()}`
+      );
+    },
     placeholderData: (previousData) => previousData,
   });
 }

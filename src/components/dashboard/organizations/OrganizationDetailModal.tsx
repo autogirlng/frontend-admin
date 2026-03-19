@@ -21,7 +21,6 @@ import {
   XCircle,
   Shield,
 } from "lucide-react";
-import { dummyOrganizationDetail } from "./dummyData";
 import { useGetOrganizationDetails } from "@/lib/hooks/organizations/useOrganizations";
 import CustomLoader from "@/components/generic/CustomLoader";
 

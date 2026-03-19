@@ -24,6 +24,8 @@ import {
   Wallet,
   ArrowUpCircle,
   ArrowDownCircle,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
@@ -36,13 +38,12 @@ import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { StatCard } from "@/components/dashboard/dashboard/StatsCard";
-import { OrganizationDetailModal } from "./OrganizationDetailModal";
-import { KycHistoryModal } from "./KycHistoryModal";
-import { MembersModal } from "./MembersModal";
 import CustomLoader from "@/components/generic/CustomLoader";
 import {
   useGetOrganizations,
   useGetCorporateStats,
+  useGetPendingKycOrganizations,
+  useReviewKyc,
 } from "@/lib/hooks/organizations/useOrganizations";
 
 const formatDate = (dateStr: string) => {
@@ -73,48 +74,56 @@ const getKycStatusClasses = (status: string) => {
 export default function Organizations() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [modal, setModal] = useState<
-    "detail" | "kyc" | "members" | null
-  >(null);
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [rejectingOrg, setRejectingOrg] = useState<Organization | null>(null);
+  const [rejectRemarks, setRejectRemarks] = useState("");
 
-  const { data: orgData, isLoading: orgsLoading } = useGetOrganizations(0, 10);
+  const { data: orgData, isLoading: orgsLoading } = useGetOrganizations(0, searchTerm, 10);
   const { data: stats, isLoading: statsLoading } = useGetCorporateStats();
+  const { data: pendingData, isLoading: pendingLoading } = useGetPendingKycOrganizations(0, "", 10);
+  const reviewKycMutation = useReviewKyc();
 
-  const organizations = orgData?.content ?? [];
+  const organizations = useMemo(() => orgData?.content ?? [], [orgData?.content]);
+  const pendingOrgs = useMemo(() => pendingData?.content ?? [], [pendingData?.content]);
 
-  const filteredOrgs = useMemo(() => {
-    if (!searchTerm.trim()) return organizations;
-    const term = searchTerm.toLowerCase();
-    return organizations.filter(
-      (org) =>
-        org.name.toLowerCase().includes(term) ||
-        org.rcNumber.toLowerCase().includes(term) ||
-        org.industry.toLowerCase().includes(term) ||
-        org.creatorEmail.toLowerCase().includes(term)
+  const handleApprove = (org: Organization) => {
+    reviewKycMutation.mutate(
+      {
+        orgId: org.organizationId,
+        payload: { status: "APPROVED", remarks: "" },
+      },
+      {
+        onSuccess: () => toast.success("KYC approved successfully"),
+        onError: () => toast.error("Failed to approve KYC"),
+      }
     );
-  }, [searchTerm, organizations]);
-
-  const previewOrgs = filteredOrgs.slice(0, 10);
-
-  const openModal = (
-    type: "detail" | "kyc" | "members",
-    org: Organization
-  ) => {
-    setSelectedOrg(org);
-    setModal(type);
   };
 
-  const closeModal = () => {
-    setModal(null);
-    setSelectedOrg(null);
+  const handleRejectSubmit = () => {
+    if (!rejectingOrg || !rejectRemarks.trim()) return;
+    reviewKycMutation.mutate(
+      {
+        orgId: rejectingOrg.organizationId,
+        payload: { status: "REJECTED", remarks: rejectRemarks },
+      },
+      {
+        onSuccess: () => {
+          toast.success("KYC rejected successfully");
+          setRejectingOrg(null);
+          setRejectRemarks("");
+        },
+        onError: () => toast.error("Failed to reject KYC"),
+      }
+    );
   };
 
   const getOrgActions = (org: Organization): ActionMenuItem[] => [
     {
       label: "Organization Details",
       icon: View,
-      onClick: () => openModal("detail", org),
+      onClick: () =>
+        router.push(
+          `/dashboard/organizations/${org.organizationId}/details`
+        ),
     },
     {
       label: "Booking Details",
@@ -127,7 +136,10 @@ export default function Organizations() {
     {
       label: "KYC History",
       icon: FileText,
-      onClick: () => openModal("kyc", org),
+      onClick: () =>
+        router.push(
+          `/dashboard/organizations/${org.organizationId}/kyc-history`
+        ),
     },
     {
       label: "Transactions",
@@ -140,7 +152,28 @@ export default function Organizations() {
     {
       label: "Members",
       icon: Users,
-      onClick: () => openModal("members", org),
+      onClick: () =>
+        router.push(
+          `/dashboard/organizations/${org.organizationId}/members`
+        ),
+    },
+  ];
+
+  const getPendingOrgActions = (org: Organization): ActionMenuItem[] => [
+    ...getOrgActions(org),
+    {
+      label: "Approve",
+      icon: CheckCircle,
+      onClick: () => handleApprove(org),
+    },
+    {
+      label: "Reject",
+      icon: XCircle,
+      onClick: () => {
+        setRejectingOrg(org);
+        setRejectRemarks("");
+      },
+      danger: true,
     },
   ];
 
@@ -213,6 +246,15 @@ export default function Organizations() {
       header: "Actions",
       accessorKey: "organizationId",
       cell: (item) => <ActionMenu actions={getOrgActions(item)} />,
+    },
+  ];
+
+  const pendingColumns: ColumnDefinition<Organization>[] = [
+    ...columns.slice(0, -1),
+    {
+      header: "Actions",
+      accessorKey: "organizationId",
+      cell: (item) => <ActionMenu actions={getPendingOrgActions(item)} />,
     },
   ];
 
@@ -322,15 +364,26 @@ export default function Organizations() {
               style={{ paddingLeft: 35 }}
             />
           </div>
-          <Button
-            variant="primary"
-            size="smd"
-            onClick={() => router.push("/dashboard/organizations/all")}
-            className="w-full sm:w-auto min-w-50 whitespace-nowrap"
-          >
-            View All Organizations
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="secondary"
+              size="smd"
+              onClick={() => router.push("/dashboard/organizations/pending-approvals")}
+              className="w-full sm:w-auto whitespace-nowrap"
+            >
+              <Clock className="mr-2 h-4 w-4" />
+              Pending Approvals
+            </Button>
+            <Button
+              variant="primary"
+              size="smd"
+              onClick={() => router.push("/dashboard/organizations/all")}
+              className="w-full sm:w-auto min-w-50 whitespace-nowrap"
+            >
+              View All Organizations
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Table */}
@@ -338,42 +391,94 @@ export default function Organizations() {
           <div className="flex justify-center py-10">
             <CustomLoader size="sm" showText={false} />
           </div>
-        ) : previewOrgs.length === 0 ? (
+        ) : organizations.length === 0 ? (
           <div className="flex justify-center p-10 text-gray-500">
             <p>No organizations found.</p>
           </div>
         ) : (
           <CustomTable
-            data={previewOrgs}
+            data={organizations}
             columns={columns}
             getUniqueRowId={(item) => item.organizationId}
           />
         )}
 
+        {/* Pending Approvals Preview */}
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Pending Approvals
+            </h2>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => router.push("/dashboard/organizations/pending-approvals")}
+              className="whitespace-nowrap"
+            >
+              View All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+          {pendingLoading ? (
+            <div className="flex justify-center py-8">
+              <CustomLoader size="sm" showText={false} />
+            </div>
+          ) : pendingOrgs.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 p-8 text-gray-500">
+              <AlertCircle className="h-6 w-6" />
+              <p>No pending approvals.</p>
+            </div>
+          ) : (
+            <CustomTable
+              data={pendingOrgs}
+              columns={pendingColumns}
+              getUniqueRowId={(item) => item.organizationId}
+            />
+          )}
+        </div>
 
+        {/* Reject Modal */}
+        {rejectingOrg && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => { setRejectingOrg(null); setRejectRemarks(""); }}
+            />
+            <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                Reject KYC
+              </h4>
+              <p className="text-sm text-gray-500 mb-4">
+                Organization: {rejectingOrg.name}
+              </p>
+              <div className="space-y-4">
+                <TextInput
+                  label="Remarks (required)"
+                  id="reject-remarks-org"
+                  type="text"
+                  placeholder="Enter rejection reason..."
+                  value={rejectRemarks}
+                  onChange={(e) => setRejectRemarks(e.target.value)}
+                  className="w-full"
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="secondary" size="sm" onClick={() => { setRejectingOrg(null); setRejectRemarks(""); }}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!rejectRemarks.trim() || reviewKycMutation.isPending}
+                    onClick={handleRejectSubmit}
+                  >
+                    {reviewKycMutation.isPending ? "Submitting..." : "Confirm Rejection"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
-
-      {/* Modals */}
-      {modal === "detail" && selectedOrg && (
-        <OrganizationDetailModal
-          organizationId={selectedOrg.organizationId}
-          onClose={closeModal}
-        />
-      )}
-      {modal === "kyc" && selectedOrg && (
-        <KycHistoryModal
-          organizationId={selectedOrg.organizationId}
-          organizationName={selectedOrg.name}
-          onClose={closeModal}
-        />
-      )}
-      {modal === "members" && selectedOrg && (
-        <MembersModal
-          organizationId={selectedOrg.organizationId}
-          organizationName={selectedOrg.name}
-          onClose={closeModal}
-        />
-      )}
     </>
   );
 }

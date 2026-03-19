@@ -5,17 +5,22 @@ import {
   useGetOrganizationTransactions, 
   useGetOrganizationDetails 
 } from "@/lib/hooks/organizations/useOrganizations";
+import { useOrganizationTransactionsExport } from "@/lib/hooks/organizations/useOrganizationTransactionsExport";
 import { OrganizationTransaction } from "./types";
 import TextInput from "@/components/generic/ui/TextInput";
-import { Search, Download, AlertCircle } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Search, Download, AlertCircle, Copy } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+
+const handleCopyReference = (reference: string) => {
+  navigator.clipboard.writeText(reference);
+  toast.success("Reference copied!");
+};
 import Button from "@/components/generic/ui/Button";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
-
-const PAGE_SIZE = 10;
 
 const formatPrice = (price: number = 0) => `₦${price.toLocaleString()}`;
 
@@ -37,7 +42,6 @@ export default function OrganizationTransactions({
 }: OrganizationTransactionsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [isExporting, setIsExporting] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   // --- API Hooks ---
@@ -46,12 +50,17 @@ export default function OrganizationTransactions({
     data: transactionData, 
     isLoading, 
     isError 
-  } = useGetOrganizationTransactions(organizationId, currentPage, PAGE_SIZE);
+  } = useGetOrganizationTransactions(organizationId, currentPage);
 
   // FIXED: Removed .data layer because the hook returns PaginatedData/OrganizationDetail directly
   const orgName = orgDetails?.name || "Organization";
-  const transactions = transactionData?.content || [];
+  const transactions = useMemo(() => transactionData?.content || [], [transactionData?.content]);
   const totalPages = transactionData?.totalPages || 0;
+
+  const { handleExport, isExporting } = useOrganizationTransactionsExport({
+    organizationId,
+    orgName,
+  });
 
   useEffect(() => {
     if (topRef.current) {
@@ -77,45 +86,29 @@ export default function OrganizationTransactions({
     setCurrentPage(0);
   }, [searchTerm]);
 
-  const handleExport = async () => {
-    setIsExporting(true);
-    toast.loading("Preparing export...", { id: "export-org-txns" });
-    try {
-      const { default: XLSX } = await import("xlsx");
-      
-      // FIXED: Explicitly typed 't' here as well
-      const exportData = filteredTransactions.map((t: OrganizationTransaction) => ({
-        Amount: t.amount,
-        "Balance Before": t.balanceBefore,
-        "Balance After": t.balanceAfter,
-        Type: t.transactionType,
-        Reference: t.reference,
-        Description: t.description,
-        "Staff Name": t.staffName,
-        Date: formatDate(t.createdAt),
-      }));
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      
-      ws["!cols"] = [
-        { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 },
-        { wch: 25 }, { wch: 35 }, { wch: 20 }, { wch: 20 }
-      ];
-
-      XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-      const dateStr = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
-      XLSX.writeFile(wb, `${orgName.replace(/\s+/g, '_')}_Transactions_${dateStr}.xlsx`);
-      
-      toast.success("Export Complete!", { id: "export-org-txns" });
-    } catch (error) {
-      toast.error("Export failed.", { id: "export-org-txns" });
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   const columns: ColumnDefinition<OrganizationTransaction>[] = [
+    {
+      header: "Reference",
+      accessorKey: "reference",
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <span className="text-gray-700 text-xs font-mono truncate max-w-40 block">
+            {item.reference}
+          </span>
+          {item.reference && (
+            <button
+              onClick={() => handleCopyReference(item.reference)}
+              className="text-gray-400 hover:text-[#0096FF] transition-colors p-1 rounded hover:bg-blue-50"
+              title="Copy Reference"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      ),
+    },
     {
       header: "Amount",
       accessorKey: "amount",
@@ -150,15 +143,6 @@ export default function OrganizationTransactions({
         </span>
       ),
     },
-    {
-      header: "Reference",
-      accessorKey: "reference",
-      cell: (item) => (
-        <span className="text-gray-500 text-xs font-mono truncate max-w-40 block">
-          {item.reference}
-        </span>
-      ),
-    },
     { header: "Description", accessorKey: "description" },
     { header: "Staff", accessorKey: "staffName" },
     {
@@ -189,7 +173,7 @@ export default function OrganizationTransactions({
             onClick={handleExport}
             variant="primary"
             size="smd"
-            disabled={isExporting || filteredTransactions.length === 0}
+            disabled={isExporting}
             className="w-full sm:w-auto min-w-35 whitespace-nowrap"
           >
             {isExporting ? (

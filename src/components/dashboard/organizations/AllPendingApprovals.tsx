@@ -6,24 +6,24 @@ import { Organization } from "./types";
 import TextInput from "@/components/generic/ui/TextInput";
 import {
   Search,
-  Download,
   View,
-  ShoppingCart,
   FileText,
   CreditCard,
   Users,
+  ShoppingCart,
   AlertCircle,
   Copy,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import Button from "@/components/generic/ui/Button";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
-import { useGetOrganizations } from "@/lib/hooks/organizations/useOrganizations";
-import { useOrganizationsExport } from "@/lib/hooks/organizations/useOrganizationsExport";
+import Button from "@/components/generic/ui/Button";
+import { useGetPendingKycOrganizations, useReviewKyc } from "@/lib/hooks/organizations/useOrganizations";
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-NG", {
@@ -50,17 +50,25 @@ const handleCopyRcNumber = (rcNumber: string) => {
   toast.success("RC number copied!");
 };
 
-export default function AllOrganizations() {
+export default function AllPendingApprovals() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const topRef = useRef<HTMLDivElement>(null);
+  const [rejectingOrg, setRejectingOrg] = useState<Organization | null>(null);
+  const [rejectRemarks, setRejectRemarks] = useState("");
 
-  const { data: orgData, isLoading } = useGetOrganizations(currentPage, searchTerm);
-  const organizations = useMemo(() => orgData?.content ?? [], [orgData?.content]);
+  const reviewKycMutation = useReviewKyc();
+
+  const { data: orgData, isLoading } = useGetPendingKycOrganizations(
+    currentPage,
+    searchTerm
+  );
+  const organizations = useMemo(
+    () => orgData?.content ?? [],
+    [orgData?.content]
+  );
   const totalPages = orgData?.totalPages ?? 0;
-
-  const { handleExport, isExporting } = useOrganizationsExport();
 
   useEffect(() => {
     if (topRef.current) {
@@ -73,6 +81,37 @@ export default function AllOrganizations() {
   useEffect(() => {
     setCurrentPage(0);
   }, [searchTerm]);
+
+  const handleApprove = (org: Organization) => {
+    reviewKycMutation.mutate(
+      {
+        orgId: org.organizationId,
+        payload: { status: "APPROVED", remarks: "" },
+      },
+      {
+        onSuccess: () => toast.success("KYC approved successfully"),
+        onError: () => toast.error("Failed to approve KYC"),
+      }
+    );
+  };
+
+  const handleRejectSubmit = () => {
+    if (!rejectingOrg || !rejectRemarks.trim()) return;
+    reviewKycMutation.mutate(
+      {
+        orgId: rejectingOrg.organizationId,
+        payload: { status: "REJECTED", remarks: rejectRemarks },
+      },
+      {
+        onSuccess: () => {
+          toast.success("KYC rejected successfully");
+          setRejectingOrg(null);
+          setRejectRemarks("");
+        },
+        onError: () => toast.error("Failed to reject KYC"),
+      }
+    );
+  };
 
   const getOrgActions = (org: Organization): ActionMenuItem[] => [
     {
@@ -114,6 +153,20 @@ export default function AllOrganizations() {
         router.push(
           `/dashboard/organizations/${org.organizationId}/members`
         ),
+    },
+    {
+      label: "Approve",
+      icon: CheckCircle,
+      onClick: () => handleApprove(org),
+    },
+    {
+      label: "Reject",
+      icon: XCircle,
+      onClick: () => {
+        setRejectingOrg(org);
+        setRejectRemarks("");
+      },
+      danger: true,
     },
   ];
 
@@ -168,21 +221,6 @@ export default function AllOrganizations() {
       cell: (item) => <span>{formatDate(item.createdAt)}</span>,
     },
     {
-      header: "Status",
-      accessorKey: "active",
-      cell: (item) => (
-        <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-            item.active
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {item.active ? "Active" : "Inactive"}
-        </span>
-      ),
-    },
-    {
       header: "Actions",
       accessorKey: "organizationId",
       cell: (item) => <ActionMenu actions={getOrgActions(item)} />,
@@ -196,30 +234,13 @@ export default function AllOrganizations() {
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              All Organizations
-            </h1>
-            <p className="text-lg text-gray-600 mt-1">
-              Manage all organizations on the platform.
-            </p>
-          </div>
-          <Button
-            onClick={handleExport}
-            variant="primary"
-            size="smd"
-            disabled={isExporting}
-            className="w-full sm:w-auto min-w-35 whitespace-nowrap"
-          >
-            {isExporting ? (
-              <span>Exporting...</span>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" /> Export Organizations
-              </>
-            )}
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Pending Approvals
+          </h1>
+          <p className="text-lg text-gray-600 mt-1">
+            Organizations with pending KYC verification.
+          </p>
         </div>
 
         {/* Search */}
@@ -228,8 +249,8 @@ export default function AllOrganizations() {
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <TextInput
-            label="Search Organizations"
-            id="search-all-orgs"
+            label="Search Pending Organizations"
+            id="search-pending-orgs"
             hideLabel
             type="text"
             placeholder="Search by name, RC number, industry, or email..."
@@ -248,7 +269,7 @@ export default function AllOrganizations() {
         ) : organizations.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-10 text-gray-500">
             <AlertCircle className="h-8 w-8" />
-            <p>No organizations found.</p>
+            <p>No pending approvals found.</p>
           </div>
         ) : (
           <CustomTable
@@ -264,6 +285,48 @@ export default function AllOrganizations() {
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
+
+        {/* Reject Modal */}
+        {rejectingOrg && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => { setRejectingOrg(null); setRejectRemarks(""); }}
+            />
+            <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                Reject KYC
+              </h4>
+              <p className="text-sm text-gray-500 mb-4">
+                Organization: {rejectingOrg.name}
+              </p>
+              <div className="space-y-4">
+                <TextInput
+                  label="Remarks (required)"
+                  id="reject-remarks"
+                  type="text"
+                  placeholder="Enter rejection reason..."
+                  value={rejectRemarks}
+                  onChange={(e) => setRejectRemarks(e.target.value)}
+                  className="w-full"
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="secondary" size="sm" onClick={() => { setRejectingOrg(null); setRejectRemarks(""); }}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!rejectRemarks.trim() || reviewKycMutation.isPending}
+                    onClick={handleRejectSubmit}
+                  >
+                    {reviewKycMutation.isPending ? "Submitting..." : "Confirm Rejection"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );

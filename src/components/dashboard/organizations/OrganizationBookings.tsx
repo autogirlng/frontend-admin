@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Booking } from "./types";
 import TextInput from "@/components/generic/ui/TextInput";
 import { Search, Download, AlertCircle } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import Button from "@/components/generic/ui/Button";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
@@ -14,8 +14,7 @@ import {
   useGetOrganizationBookings,
   useGetOrganizationDetails,
 } from "@/lib/hooks/organizations/useOrganizations";
-
-const PAGE_SIZE = 10;
+import { useOrganizationBookingsExport } from "@/lib/hooks/organizations/useOrganizationBookingsExport";
 
 const formatPrice = (price: number = 0) => `₦${price.toLocaleString()}`;
 
@@ -52,14 +51,18 @@ export default function OrganizationBookings({
 }: OrganizationBookingsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [isExporting, setIsExporting] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   const { data: orgDetail } = useGetOrganizationDetails(organizationId);
-  const { data: bookingsData, isLoading } = useGetOrganizationBookings(organizationId, currentPage, PAGE_SIZE);
+  const { data: bookingsData, isLoading } = useGetOrganizationBookings(organizationId, currentPage);
   const orgName = orgDetail?.name ?? "Organization";
-  const allBookings = bookingsData?.content ?? [];
+  const allBookings = useMemo(() => bookingsData?.content ?? [], [bookingsData?.content]);
   const totalPages = bookingsData?.totalPages ?? 0;
+
+  const { handleExport, isExporting } = useOrganizationBookingsExport({
+    organizationId,
+    orgName,
+  });
 
   useEffect(() => {
     if (topRef.current) {
@@ -85,43 +88,7 @@ export default function OrganizationBookings({
     setCurrentPage(0);
   }, [searchTerm]);
 
-  const handleExport = async () => {
-    setIsExporting(true);
-    toast.loading("Preparing export...", { id: "export-org-bookings" });
-    try {
-      const { default: XLSX } = await import("xlsx");
-      const exportData = filteredBookings.map((b) => ({
-        "Invoice #": b.invoiceNumber,
-        "Booking Ref": b.bookingRef,
-        User: `${b.user.firstName} ${b.user.lastName}`,
-        Status: b.status,
-        "Total Price": b.totalPrice,
-        "Booked At": formatDate(b.bookedAt),
-        Pickup: b.segments[0]?.pickupLocationString || "N/A",
-        Dropoff: b.segments[0]?.dropoffLocationString || "N/A",
-      }));
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      ws["!cols"] = [
-        { wch: 15 },
-        { wch: 18 },
-        { wch: 20 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 20 },
-      ];
-      XLSX.utils.book_append_sheet(wb, ws, "Bookings");
-      const dateStr = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
-      XLSX.writeFile(wb, `${orgName}_Bookings_${dateStr}.xlsx`);
-      toast.success("Export Complete!", { id: "export-org-bookings" });
-    } catch {
-      toast.error("Export failed.", { id: "export-org-bookings" });
-    } finally {
-      setIsExporting(false);
-    }
-  };
+
 
   const columns: ColumnDefinition<Booking>[] = [
     { header: "Invoice #", accessorKey: "invoiceNumber" },
@@ -198,7 +165,7 @@ export default function OrganizationBookings({
             onClick={handleExport}
             variant="primary"
             size="smd"
-            disabled={isExporting || filteredBookings.length === 0}
+            disabled={isExporting}
             className="w-full sm:w-auto min-w-35 whitespace-nowrap"
           >
             {isExporting ? (
