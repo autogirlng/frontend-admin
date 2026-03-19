@@ -173,7 +173,7 @@ export function TransferVehicleModal({
       variant="primary"
     >
       {step === 1 ? (
-        <div className="space-y-4 pt-4 text-left">
+        <div className="space-y-4 pt-4 text-left max-h-[calc(100vh-16rem)] overflow-y-auto pr-2">
           <label
             className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
               transferMode === "FULL"
@@ -233,7 +233,7 @@ export function TransferVehicleModal({
           </label>
         </div>
       ) : (
-        <div className="space-y-5 pt-4 text-left">
+        <div className="space-y-5 pt-4 text-left max-h-[calc(100vh-16rem)] overflow-y-auto pr-2">
           <button
             type="button"
             onClick={() => setStep(1)}
@@ -247,7 +247,7 @@ export function TransferVehicleModal({
               <h4 className="text-sm font-semibold text-gray-800 border-b border-gray-200 pb-2">
                 Split Configuration
               </h4>
-              <div className="grid grid-cols-1 gap-4 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <ModernDateTimePicker
                   label="Slice Start Time"
                   dateValue={sliceStartDate}
