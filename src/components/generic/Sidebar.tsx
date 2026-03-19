@@ -21,6 +21,7 @@ import {
   UserStar,
   GalleryHorizontal,
   CirclePoundSterling,
+  Building2,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -63,6 +64,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     },
     { name: "Hosts", href: "/dashboard/host", icon: CarFront },
     { name: "Customers", href: "/dashboard/customers", icon: Users },
+    { name: "Organizations", href: "/dashboard/organizations", icon: Building2 },
     { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
     { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
   ];
