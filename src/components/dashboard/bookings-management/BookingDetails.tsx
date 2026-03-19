@@ -339,30 +339,40 @@ export default function BookingDetailPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900">Booking Info</h3>
-                  <p className="text-xs text-gray-500">Category &amp; pricing details</p>
+                  <p className="text-xs text-gray-500">
+                    Category & pricing details
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Booking Category</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                    Booking Category
+                  </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {booking.bookingCategory?.replace(/_/g, " ") || "N/A"}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Service Pricing</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                    Service Pricing
+                  </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {booking.servicePricingName || "N/A"}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Ride Type</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                    Ride Type
+                  </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {booking.rideType || "N/A"}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">Discounted</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                    Discounted
+                  </p>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                       booking.discounted
@@ -440,6 +450,15 @@ export default function BookingDetailPage() {
                           <p className="text-xs text-gray-500">
                             Duration: {segment.duration}
                           </p>
+                          {segment.vehicle && (
+                            <p className="text-xs font-medium text-[#0096FF] mt-1 flex items-center gap-1.5">
+                              <Car className="w-3.5 h-3.5" />
+                              {segment.vehicle.vehicleName}
+                              <span className="text-gray-400 font-normal">
+                                ({segment.vehicle.licensePlate})
+                              </span>
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
