@@ -45,7 +45,6 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // New state to control desktop minimization
   const [isMinimized, setIsMinimized] = useState(false);
 
   const mainNavLinks = [
@@ -64,7 +63,11 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     },
     { name: "Hosts", href: "/dashboard/host", icon: CarFront },
     { name: "Customers", href: "/dashboard/customers", icon: Users },
-    { name: "Organizations", href: "/dashboard/organizations", icon: Building2 },
+    {
+      name: "Organizations",
+      href: "/dashboard/organizations",
+      icon: Building2,
+    },
     { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
     { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
   ];
@@ -101,23 +104,19 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
       <aside
         className={`fixed top-0 left-0 h-full flex-shrink-0 bg-white text-gray-800 flex flex-col z-40 transition-transform duration-300 ease-in-out md:transition-width md:relative md:translate-x-0 border-r border-gray-200 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${
-          isMinimized ? "w-20" : "w-64" // Apply dynamic width on desktop
-        }`}
+        } ${isMinimized ? "w-20" : "w-64"}`}
       >
-        <div className="h-16 flex items-center justify-between p-4">
+        <div className="h-16 flex-shrink-0 flex items-center justify-between p-4">
           <div className="flex items-center justify-center">
             <Image
               src="/images/muvment.png"
               alt="Muvment"
               width={152}
               height={152}
-              className={isMinimized ? "hidden" : "block"} // Hide logo when minimized
+              className={isMinimized ? "hidden" : "block"}
             />
           </div>
-          {/* Group toggle buttons */}
           <div>
-            {/* Desktop Toggle Button */}
             <button
               onClick={() => setIsMinimized(!isMinimized)}
               className="hidden md:block text-gray-600 hover:text-green-600"
@@ -129,7 +128,6 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
                 }`}
               />
             </button>
-            {/* Mobile Close Button */}
             <button
               onClick={() => setSidebarOpen(false)}
               className="md:hidden text-gray-600 hover:text-green-600"
@@ -138,7 +136,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
             </button>
           </div>
         </div>
-        <nav className="flex-grow p-4">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
           <ul>
             {mainNavLinks.map((link) => {
               const isActive = pathname === link.href;
@@ -151,18 +149,14 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
                       isActive
                         ? "bg-[#0096FF] text-white"
                         : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
-                    } ${
-                      isMinimized ? "justify-center" : "" // Center icon
-                    }`}
+                    } ${isMinimized ? "justify-center" : ""}`}
                   >
                     <link.icon
-                      className={`h-5 w-5 ${
-                        isMinimized ? "mr-0" : "mr-3" // Remove margin
-                      }`}
+                      className={`h-5 w-5 ${isMinimized ? "mr-0" : "mr-3"}`}
                     />
                     <span
                       className={`font-medium ${
-                        isMinimized ? "hidden" : "block" // Hide text
+                        isMinimized ? "hidden" : "block"
                       }`}
                     >
                       {link.name}
@@ -173,7 +167,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
             })}
           </ul>
         </nav>
-        <div className="p-4 border-t border-gray-200">
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
           <ul>
             <li className="mb-2">
               <Link
@@ -183,19 +177,13 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
                   pathname === settingsLink.href
                     ? "bg-[#0096FF] text-white"
                     : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
-                } ${
-                  isMinimized ? "justify-center" : "" // Center icon
-                }`}
+                } ${isMinimized ? "justify-center" : ""}`}
               >
                 <settingsLink.icon
-                  className={`h-5 w-5 ${
-                    isMinimized ? "mr-0" : "mr-3" // Remove margin
-                  }`}
+                  className={`h-5 w-5 ${isMinimized ? "mr-0" : "mr-3"}`}
                 />
                 <span
-                  className={`font-medium ${
-                    isMinimized ? "hidden" : "block" // Hide text
-                  }`}
+                  className={`font-medium ${isMinimized ? "hidden" : "block"}`}
                 >
                   {settingsLink.name}
                 </span>
@@ -204,11 +192,10 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
           </ul>
           {session?.user && (
             <div className="relative" ref={dropdownRef}>
-              {/* Dropdown Menu */}
               <div
                 className={`absolute bottom-full mb-2 w-full transition-opacity duration-200 ${
                   isDropdownOpen ? "opacity-100 block" : "opacity-0 hidden"
-                } ${isMinimized ? "w-48 -left-1/2" : "w-full"}`} // Adjust dropdown when minimized
+                } ${isMinimized ? "w-48 -left-1/2" : "w-full"}`}
               >
                 <div className="bg-white rounded-lg shadow-lg border border-gray-200 py-2">
                   <Link
@@ -228,7 +215,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
               </div>
               <div
                 className={`mt-4 flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer ${
-                  isMinimized ? "justify-center" : "" // Center avatar
+                  isMinimized ? "justify-center" : ""
                 }`}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
@@ -236,9 +223,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
                   {getInitials(session.user.name ?? "")}
                 </div>
                 <div
-                  className={`ml-3 flex-1 ${
-                    isMinimized ? "hidden" : "block" // Hide text block
-                  }`}
+                  className={`ml-3 flex-1 ${isMinimized ? "hidden" : "block"}`}
                 >
                   <p className="text-sm font-semibold text-gray-800 truncate">
                     {session.user.name}

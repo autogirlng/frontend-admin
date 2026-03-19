@@ -455,7 +455,7 @@ export default function BookingDetailPage() {
                               <Car className="w-3.5 h-3.5" />
                               {segment.vehicle.vehicleName}
                               <span className="text-gray-400 font-normal">
-                                ({segment.vehicle.licensePlate})
+                                ({segment.vehicle.vehicleId})
                               </span>
                             </p>
                           )}
