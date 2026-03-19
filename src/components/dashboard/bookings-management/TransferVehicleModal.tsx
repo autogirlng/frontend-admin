@@ -21,6 +21,8 @@ import {
   useSplitMoveBookingSegment,
 } from "@/lib/hooks/finance/usePayments";
 
+import { ModernDateTimePicker } from "@/components/generic/ui/ModernDateTimePicker";
+
 interface TransferVehicleModalProps {
   segment: BookingSegment;
   onClose: () => void;
@@ -37,8 +39,12 @@ export function TransferVehicleModal({
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [waivePriceDifference, setWaivePriceDifference] = useState(true);
 
-  const [sliceStartTime, setSliceStartTime] = useState("");
-  const [sliceEndTime, setSliceEndTime] = useState("");
+  const [sliceStartDate, setSliceStartDate] = useState("");
+  const [sliceStartTimeStr, setSliceStartTimeStr] = useState("");
+
+  const [sliceEndDate, setSliceEndDate] = useState("");
+  const [sliceEndTimeStr, setSliceEndTimeStr] = useState("");
+
   const [newBookingTypeId, setNewBookingTypeId] = useState("");
 
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -91,7 +97,13 @@ export function TransferVehicleModal({
         { onSuccess: onClose },
       );
     } else {
-      if (!sliceStartTime || !sliceEndTime || !newBookingTypeId) {
+      if (
+        !sliceStartDate ||
+        !sliceStartTimeStr ||
+        !sliceEndDate ||
+        !sliceEndTimeStr ||
+        !newBookingTypeId
+      ) {
         toast.error("Please fill in all split transfer fields.");
         return;
       }
@@ -99,10 +111,19 @@ export function TransferVehicleModal({
       let formattedStart = "";
       let formattedEnd = "";
       try {
-        formattedStart = new Date(sliceStartTime).toISOString();
-        formattedEnd = new Date(sliceEndTime).toISOString();
+        formattedStart = new Date(
+          `${sliceStartDate}T${sliceStartTimeStr}:00`,
+        ).toISOString();
+        formattedEnd = new Date(
+          `${sliceEndDate}T${sliceEndTimeStr}:00`,
+        ).toISOString();
       } catch (e) {
         toast.error("Invalid date or time selected.");
+        return;
+      }
+
+      if (new Date(formattedEnd) <= new Date(formattedStart)) {
+        toast.error("End time must be after the start time.");
         return;
       }
 
@@ -176,8 +197,8 @@ export function TransferVehicleModal({
                 Transfer (Full)
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                Transfer the entire remaining segment to a new vehicle
-                seamlessly.
+                Transfer the trip 'E.g: Day 2' to a different vehicle entirely,
+                keeping the same dates and times.
               </p>
             </div>
           </label>
@@ -206,7 +227,7 @@ export function TransferVehicleModal({
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 Split this segment by a specific date & time and move the new
-                slice to a different vehicle.
+                slice to a different vehicle. 'E.g: Used in Monthly Bookings.'
               </p>
             </div>
           </label>
@@ -226,29 +247,24 @@ export function TransferVehicleModal({
               <h4 className="text-sm font-semibold text-gray-800 border-b border-gray-200 pb-2">
                 Split Configuration
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    Slice Start Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#0096FF] focus:border-[#0096FF] text-gray-700"
-                    value={sliceStartTime}
-                    onChange={(e) => setSliceStartTime(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    Slice End Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#0096FF] focus:border-[#0096FF] text-gray-700"
-                    value={sliceEndTime}
-                    onChange={(e) => setSliceEndTime(e.target.value)}
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-4 pt-1">
+                <ModernDateTimePicker
+                  label="Slice Start Time"
+                  dateValue={sliceStartDate}
+                  timeValue={sliceStartTimeStr}
+                  onDateChange={setSliceStartDate}
+                  onTimeChange={setSliceStartTimeStr}
+                  required
+                />
+
+                <ModernDateTimePicker
+                  label="Slice End Time"
+                  dateValue={sliceEndDate}
+                  timeValue={sliceEndTimeStr}
+                  onDateChange={setSliceEndDate}
+                  onTimeChange={setSliceEndTimeStr}
+                  required
+                />
               </div>
               <Select
                 label="New Booking Type"
