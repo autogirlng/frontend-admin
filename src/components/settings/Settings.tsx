@@ -7,7 +7,6 @@ import {
   Users,
   SlidersHorizontal,
   Briefcase,
-  ShipWheel,
   Bell,
   Activity,
   Hammer,
@@ -16,7 +15,6 @@ import {
   Star,
   ShieldEllipsis,
   Pencil,
-  Mail,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -115,15 +113,6 @@ export default function SettingsPage() {
             iconBgColor="bg-yellow-300"
           />
 
-          {/* 8. Driver Applicant */}
-          <SettingsCard
-            href="/dashboard/drivers/applications"
-            icon={ShipWheel}
-            title="Driver Application from Host"
-            description="Manage Driver Application"
-            iconBgColor="bg-pink-300"
-          />
-
           {/* 9. Rating and Review */}
           <SettingsCard
             href="/dashboard/reviews"
@@ -157,15 +146,6 @@ export default function SettingsPage() {
             icon={Pencil}
             title="Blog Settings"
             description="Manage blog posts and content."
-            iconBgColor="bg-blue-100"
-          />
-
-          {/* 13. Contact-Form Settings */}
-          <SettingsCard
-            href="/dashboard/settings/contact"
-            icon={Mail}
-            title="Contact-Form Settings"
-            description="Manage contact form submissions from your platform."
             iconBgColor="bg-blue-100"
           />
         </div>

@@ -22,6 +22,8 @@ import {
   GalleryHorizontal,
   CirclePoundSterling,
   Building2,
+  Mail,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -70,6 +72,12 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     },
     { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
     { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
+    {
+      name: "Driver Application",
+      href: "/dashboard/drivers/applications",
+      icon: BriefcaseBusiness,
+    },
+    { name: "Contact Us", href: "/dashboard/settings/contact", icon: Mail },
   ];
 
   const settingsLink = {
