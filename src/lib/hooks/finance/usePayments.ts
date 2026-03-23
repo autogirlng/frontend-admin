@@ -207,7 +207,7 @@ export function useAllocateVehicle() {
       queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to allocate vehicle.");
+      toast.error(error?.message || "Failed to allocate vehicle.");
     },
   });
 }
@@ -251,10 +251,7 @@ export function useMoveBookingSegments() {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to transfer booking segments.",
-      );
+      toast.error(error?.message || "Failed to transfer booking segments.");
     },
   });
 }
@@ -286,10 +283,7 @@ export function useSplitMoveBookingSegment() {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to split and transfer segment.",
-      );
+      toast.error(error?.message || "Failed to split and transfer segment.");
     },
   });
 }
