@@ -211,6 +211,47 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
     });
   };
 
+  const handleAddNewTrip = () => {
+    setFormData((prev) => {
+      const newSegment = {
+        bookingTypeId: "",
+        startDate: "",
+        startTime: "",
+        pickupLatitude: 0,
+        pickupLongitude: 0,
+        dropoffLatitude: 0,
+        dropoffLongitude: 0,
+        pickupLocationString: "",
+        dropoffLocationString: "",
+        areaOfUse: [],
+      };
+
+      if (prev) {
+        return {
+          ...prev,
+          segments: [...prev.segments, newSegment],
+        };
+      }
+
+      return {
+        couponCode: "",
+        discountAmount: 0,
+        segments: [newSegment],
+      };
+    });
+  };
+
+  const handleRemoveTrip = (indexToRemove: number) => {
+    setFormData((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        segments: prev.segments.filter((_, index) => index !== indexToRemove),
+      };
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData) return;
@@ -440,7 +481,7 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                   >
                     <div className="bg-gray-50/80 p-3 border-b border-gray-100 flex items-center gap-2">
                       <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
-                        Booking #{index + 1}
+                        Trip #{index + 1}
                       </span>
                       <div className="h-px bg-gray-200 flex-1"></div>
                     </div>
@@ -597,12 +638,33 @@ export const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
                           </div>
                         )}
                       </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="md"
+                          onClick={() => handleRemoveTrip(index)}
+                          className="ml-auto sm:w-40 mt-3 whitespace-nowrap"
+                        >
+                          Remove Trip
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </form>
           )}
+          <div className="flex justify-end">
+            <Button
+              size="md"
+              onClick={handleAddNewTrip}
+              className="ml-auto sm:w-40 mt-3 whitespace-nowrap"
+            >
+              Add New Trip
+            </Button>
+          </div>
         </div>
 
         {/* --- Footer --- */}

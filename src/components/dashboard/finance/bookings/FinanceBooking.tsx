@@ -69,7 +69,7 @@ export default function FinanceBookingsPage() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedBookingIds, setSelectedBookingIds] = useState(
-    new Set<string>()
+    new Set<string>(),
   );
 
   // Filter States
@@ -120,7 +120,7 @@ export default function FinanceBookingsPage() {
   // --- Event Handlers ---
   const handleFilterChange = (
     key: "bookingStatus" | "paymentMethod",
-    value: string | null
+    value: string | null,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(0);
@@ -202,7 +202,7 @@ export default function FinanceBookingsPage() {
           closeConfirmModal();
           setSelectedBookingIds(new Set());
         },
-      }
+      },
     );
   };
 
@@ -293,10 +293,11 @@ export default function FinanceBookingsPage() {
       accessorKey: "paymentMethod",
       cell: (item) => (
         <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.paymentMethod === "ONLINE"
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+            item.paymentMethod === "ONLINE"
               ? "bg-blue-100 text-blue-800"
               : "bg-gray-100 text-gray-800"
-            }`}
+          }`}
         >
           {item.paymentMethod}
         </span>
@@ -307,12 +308,13 @@ export default function FinanceBookingsPage() {
       accessorKey: "bookingStatus",
       cell: (item) => (
         <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.bookingStatus === "CONFIRMED"
+          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+            item.bookingStatus === "CONFIRMED"
               ? "bg-green-100 text-green-800"
               : item.bookingStatus === "PENDING_PAYMENT"
                 ? "bg-yellow-100 text-yellow-800"
                 : "bg-gray-100 text-gray-800"
-            }`}
+          }`}
         >
           {item.bookingStatus.replace(/_/g, " ")}
         </span>
@@ -381,9 +383,9 @@ export default function FinanceBookingsPage() {
               selected={
                 filters.bookingStatus
                   ? {
-                    id: filters.bookingStatus,
-                    name: filters.bookingStatus.replace(/_/g, " "),
-                  }
+                      id: filters.bookingStatus,
+                      name: filters.bookingStatus.replace(/_/g, " "),
+                    }
                   : null
               }
               onChange={(option) =>
@@ -398,9 +400,9 @@ export default function FinanceBookingsPage() {
               selected={
                 filters.paymentMethod
                   ? {
-                    id: filters.paymentMethod,
-                    name: filters.paymentMethod,
-                  }
+                      id: filters.paymentMethod,
+                      name: filters.paymentMethod,
+                    }
                   : null
               }
               onChange={(option) =>
@@ -467,7 +469,7 @@ export default function FinanceBookingsPage() {
           <div
             className={clsx(
               "transition-opacity",
-              isLoadingTable ? "opacity-50" : ""
+              isLoadingTable ? "opacity-50" : "",
             )}
           >
             <CustomTable
