@@ -210,10 +210,13 @@ export function useUpdateBooking() {
     mutationFn: async ({ bookingId, payload }) => {
       return await apiClient.patch(`/admin/bookings/${bookingId}`, payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Booking updated successfully.");
       queryClient.invalidateQueries({ queryKey: [BOOKINGS_QUERY_KEY] });
       queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({
+        queryKey: ["booking-details", variables.bookingId],
+      });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update booking.");
