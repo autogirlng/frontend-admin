@@ -58,6 +58,7 @@ export default function TripsPage() {
   const router = useRouter();
 
   const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -109,6 +110,7 @@ export default function TripsPage() {
     isPlaceholderData,
   } = useGetTrips({
     page: currentPage,
+    size: pageSize,
     bookingStatus: filters.bookingStatus,
     tripStatus: filters.tripStatus,
     bookingTypeId: filters.bookingTypeId,
@@ -467,6 +469,40 @@ export default function TripsPage() {
           >
             Clear Filters
           </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(0);
+              }}
+              className="px-3 py-1.5 border border-gray-300 bg-white outline-none focus:ring-2 focus:ring-[#0096FF]"
+            >
+              {[10, 25, 50, 75, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span>entries</span>
+          </div>
+          <span className="text-sm text-gray-600">
+            Showing{" "}
+            <strong>
+              {paginatedData ? currentPage * pageSize + 1 : 0} -{" "}
+              {paginatedData
+                ? Math.min(
+                    (currentPage + 1) * pageSize,
+                    paginatedData.totalItems,
+                  )
+                : 0}
+            </strong>{" "}
+            of <strong>{paginatedData?.totalItems || 0}</strong>
+          </span>
         </div>
 
         {isLoading && !paginatedData && <CustomLoader />}
