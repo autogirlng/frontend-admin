@@ -11,6 +11,7 @@ const BOOKINGS_QUERY_KEY = "bookings";
 
 interface BookingFilters {
   page: number;
+  size: number;
   status: string;
   bookingTypeId: string;
   startDate: string;
@@ -42,7 +43,7 @@ export function useGetBookingSegments(filters: BookingFilters) {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", String(otherFilters.page));
-      params.append("size", "10");
+      params.append("size", String(otherFilters.size));
       if (searchTerm) {
         params.append("searchTerm", searchTerm);
       }
