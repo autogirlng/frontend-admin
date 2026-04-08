@@ -49,6 +49,7 @@ import { formatPrice } from "./payments/utils";
 import { AllocateVehicleModal } from "./AllocateVehicleModal";
 import { PaymentConflictModal } from "./payments/PaymentConflictModal";
 import { TransferVehicleModal } from "./TransferVehicleModal";
+import { MovePendingBookingModal } from "./MovePendingBookingModal";
 
 export default function PaymentsPage() {
   const router = useRouter();
@@ -85,6 +86,10 @@ export default function PaymentsPage() {
   const [bookingToTransfer, setBookingToTransfer] = useState<string | null>(
     null,
   );
+
+  const [bookingToMovePending, setBookingToMovePending] = useState<
+    string | null
+  >(null);
 
   const [previewConfig, setPreviewConfig] = useState<{
     type: "invoice" | "receipt";
@@ -230,7 +235,7 @@ export default function PaymentsPage() {
       });
     }
 
-    if (!isUnassigned) {
+    if (!isUnassigned && payment.paymentStatus !== "PENDING") {
       actions.push({
         label: "Transfer Vehicle",
         icon: ArrowRightLeft,
@@ -251,6 +256,12 @@ export default function PaymentsPage() {
         label: "Update Booking",
         icon: Edit,
         onClick: () => setPaymentToUpdate(payment),
+      });
+
+      actions.push({
+        label: "Transfer Vehicle *",
+        icon: ArrowRightLeft,
+        onClick: () => setBookingToMovePending(payment.bookingId),
       });
     }
 
@@ -693,6 +704,13 @@ export default function PaymentsPage() {
         <TransferVehicleModal
           bookingId={bookingToTransfer}
           onClose={() => setBookingToTransfer(null)}
+        />
+      )}
+
+      {bookingToMovePending && (
+        <MovePendingBookingModal
+          bookingId={bookingToMovePending}
+          onClose={() => setBookingToMovePending(null)}
         />
       )}
     </>
