@@ -1,9 +1,22 @@
 export type RideType = "BASIC" | "EXECUTIVE";
 
+export interface Organization {
+  organizationId: string;
+  name: string;
+  rcNumber: string;
+  industry: string;
+  kycStatus: string;
+  creatorEmail: string;
+  createdAt: string;
+  active: boolean;
+}
+
 export interface PricingItem {
   bookingTypeId: string;
   bookingTypeName?: string;
   price: number;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 export interface ServicePricing {
