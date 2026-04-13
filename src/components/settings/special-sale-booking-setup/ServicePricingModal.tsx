@@ -177,8 +177,9 @@ export function ServicePricingModal({
   const [rideType, setRideType] = useState<RideType>("BASIC");
   const [outskirtFee, setOutskirtFee] = useState<string>("0");
   const [extremeFee, setExtremeFee] = useState<string>("0");
-  const [pricingItems, setPricingItems] = useState<PricingItem[]>([
-    { bookingTypeId: "", organizationId: "", organizationName: "", price: 0 },
+
+  const [pricingItems, setPricingItems] = useState<any[]>([
+    { bookingTypeId: "", organizationId: "", organizationName: "", price: "" },
   ]);
 
   const createMutation = useCreateServicePricing();
@@ -204,7 +205,7 @@ export function ServicePricingModal({
                 bookingTypeId: "",
                 organizationId: "",
                 organizationName: "",
-                price: 0,
+                price: "",
               },
             ],
       );
@@ -224,7 +225,12 @@ export function ServicePricingModal({
   const addItem = () => {
     setPricingItems([
       ...pricingItems,
-      { bookingTypeId: "", organizationId: "", organizationName: "", price: 0 },
+      {
+        bookingTypeId: "",
+        organizationId: "",
+        organizationName: "",
+        price: "",
+      },
     ]);
   };
 
@@ -239,9 +245,15 @@ export function ServicePricingModal({
       rideType,
       outskirtFee: Number(outskirtFee),
       extremeFee: Number(extremeFee),
-      pricingItems: pricingItems.filter(
-        (item) => item.bookingTypeId && item.price >= 0,
-      ),
+      pricingItems: pricingItems
+        .filter(
+          (item) =>
+            item.bookingTypeId && item.price !== "" && Number(item.price) >= 0,
+        )
+        .map((item) => ({
+          ...item,
+          price: Number(item.price),
+        })),
     };
 
     if (isEditMode && initialData) {
@@ -349,6 +361,7 @@ export function ServicePricingModal({
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+
                 <div className="w-full sm:flex-1">
                   <Select
                     label="Booking Type"
@@ -363,6 +376,7 @@ export function ServicePricingModal({
                     placeholder="Select Type"
                   />
                 </div>
+
                 <div className="w-full sm:flex-1">
                   <SearchableOrganizationSelect
                     hideLabel={index > 0}
@@ -379,7 +393,7 @@ export function ServicePricingModal({
                     }}
                   />
                 </div>
-                <div className="w-full sm:w-32">
+                <div className="w-full sm:w-44">
                   <TextInput
                     id={`price-${index}`}
                     label="Price"
@@ -387,11 +401,16 @@ export function ServicePricingModal({
                     type="number"
                     value={item.price}
                     onChange={(e) =>
-                      handleItemChange(index, "price", Number(e.target.value))
+                      handleItemChange(
+                        index,
+                        "price",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
                     }
                     placeholder="0.00"
                   />
                 </div>
+
                 <div className="hidden sm:block">
                   <button
                     type="button"
