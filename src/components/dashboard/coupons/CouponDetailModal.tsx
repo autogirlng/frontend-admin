@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Tag, Calendar, Users, AlertCircle } from "lucide-react";
+import { X, Tag, Calendar, Users, AlertCircle, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { useGetCouponDetails } from "./useCoupons";
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -43,7 +43,7 @@ export function CouponDetailModal({
   const renderContent = () => {
     if (isLoading)
       return (
-        <div className="h-64">
+        <div className="h-64 flex items-center justify-center">
           <CustomLoader />
         </div>
       );
@@ -97,6 +97,14 @@ export function CouponDetailModal({
                   : "Fixed Amount (₦)"
               }
             />
+            {coupon.organizationName && (
+              <DetailItem
+                icon={Building2}
+                label="Organization"
+                value={coupon.organizationName}
+              />
+            )}
+
             <DetailItem
               icon={Users}
               label="Usage Count"
@@ -151,7 +159,7 @@ export function CouponDetailModal({
           <h3 className="text-xl font-semibold">Coupon Details</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
