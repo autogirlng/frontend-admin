@@ -20,14 +20,12 @@ interface SearchableOrgSelectProps {
   value?: string;
   valueName?: string;
   onChange: (id: string, name: string) => void;
-  hideLabel?: boolean;
 }
 
 function SearchableOrganizationSelect({
   value,
   valueName,
   onChange,
-  hideLabel,
 }: SearchableOrgSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,19 +53,17 @@ function SearchableOrganizationSelect({
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      {!hideLabel && (
-        <div className="flex items-center">
-          <label className="block text-sm font-medium text-gray-700">
-            Organization
-          </label>
-          <Info
-            className="w-4 h-4 ml-1 opacity-0 pointer-events-none"
-            aria-hidden="true"
-          />
-        </div>
-      )}
+      <div className="flex items-center">
+        <label className="block text-sm font-medium text-gray-700">
+          Organization
+        </label>
+        <Info
+          className="w-4 h-4 ml-1 opacity-0 pointer-events-none"
+          aria-hidden="true"
+        />
+      </div>
 
-      <div className={!hideLabel ? "mt-1" : ""}>
+      <div className="mt-1">
         <div
           onClick={() => setIsOpen(!isOpen)}
           className={`
@@ -327,10 +323,10 @@ export function ServicePricingModal({
           />
         </div>
 
-        <div className="border-t pt-4">
+        <div className="border-t pt-5 mt-2">
           <div className="flex justify-between items-center mb-4">
-            <label className="text-sm font-medium text-gray-700">
-              Pricing Items
+            <label className="text-base font-semibold text-gray-900">
+              Pricing Details
             </label>
             <Button
               variant="secondary"
@@ -338,34 +334,33 @@ export function ServicePricingModal({
               onClick={addItem}
               className="w-auto h-8 text-xs"
             >
-              <Plus className="w-3 h-3 mr-1" /> Add Item
+              <Plus className="w-3 h-3 mr-1" /> Add Rule
             </Button>
           </div>
 
-          <div className="space-y-4 sm:space-y-3">
+          <div className="space-y-4">
             {pricingItems.map((item, index) => (
               <div
                 key={index}
-                className="flex flex-col sm:flex-row gap-4 sm:gap-2 sm:items-end p-4 sm:p-0 bg-gray-50 border border-gray-200 rounded-xl sm:bg-transparent sm:border-none sm:rounded-none relative"
+                className="p-4 sm:p-5 bg-gray-50 border border-gray-200 relative"
               >
-                <div className="flex justify-between items-center w-full sm:hidden border-b border-gray-200 pb-2 mb-1">
-                  <span className="font-semibold text-gray-700 text-sm">
-                    Pricing Item {index + 1}
+                <div className="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
+                  <span className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                    Rule {index + 1}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeItem(index)}
                     disabled={pricingItems.length === 1}
-                    className="text-red-500 hover:text-red-700 disabled:opacity-50 p-1"
+                    className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded transition-colors disabled:opacity-30"
+                    title="Remove Rule"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-
-                <div className="w-full sm:flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <Select
                     label="Booking Type"
-                    hideLabel={index > 0}
                     options={bookingTypeOptions}
                     selected={bookingTypeOptions.find(
                       (b) => b.id === item.bookingTypeId,
@@ -375,11 +370,7 @@ export function ServicePricingModal({
                     }
                     placeholder="Select Type"
                   />
-                </div>
-
-                <div className="w-full sm:flex-1">
                   <SearchableOrganizationSelect
-                    hideLabel={index > 0}
                     value={item.organizationId}
                     valueName={item.organizationName}
                     onChange={(id, name) => {
@@ -393,11 +384,10 @@ export function ServicePricingModal({
                     }}
                   />
                 </div>
-                <div className="w-full sm:w-44">
+                <div className="w-full sm:w-1/2 sm:pr-2">
                   <TextInput
                     id={`price-${index}`}
                     label="Price"
-                    hideLabel={index > 0}
                     type="number"
                     value={item.price}
                     onChange={(e) =>
@@ -409,17 +399,6 @@ export function ServicePricingModal({
                     }
                     placeholder="0.00"
                   />
-                </div>
-
-                <div className="hidden sm:block">
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    disabled={pricingItems.length === 1}
-                    className="h-[52px] px-3 flex items-center justify-center text-red-500 hover:bg-red-50 rounded border border-transparent transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
             ))}
