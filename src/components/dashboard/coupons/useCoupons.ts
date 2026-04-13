@@ -3,11 +3,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient";
-import { 
-  Coupon, 
-  CreateCouponPayload, 
-  PaginatedResponse, 
-  BookingCouponResponse 
+import {
+  Coupon,
+  CreateCouponPayload,
+  PaginatedResponse,
+  BookingCouponResponse,
 } from "./types";
 
 export const COUPONS_QUERY_KEY = "coupons";
@@ -37,10 +37,6 @@ export function useGetCouponDetails(id: string | null) {
   });
 }
 
-/**
- * Fetches bookings associated with a specific coupon code.
- * Supports optional date-range filtering via startDate / endDate.
- */
 export function useGetBookingsByCoupon(
   coupon: string | null,
   page: number = 0,
