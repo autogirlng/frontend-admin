@@ -19,6 +19,8 @@ export interface Coupon {
   usageCount: number;
   specificUserId: string | null;
   specificUserName: string | null;
+  organizationId?: string | null;
+  organizationName?: string | null;
   startDate: string | null;
   expiryDate: string | null;
   active: boolean;
@@ -31,6 +33,7 @@ export interface CreateCouponPayload {
   couponType: CouponType;
   usageLimit?: number;
   specificUserId?: string;
+  organizationId?: string;
   startDate?: string;
   expiryDate?: string;
 }

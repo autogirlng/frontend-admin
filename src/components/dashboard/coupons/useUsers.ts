@@ -23,13 +23,13 @@ export interface CustomersData {
 export const useGetCustomers = (
   searchTerm: string = "",
   page: number = 0,
-  size: number = 10
+  size: number = 10,
 ) => {
   return useQuery<CustomersData, Error>({
     queryKey: ["customers", searchTerm, page, size],
     queryFn: () =>
       apiClient.get<CustomersData>(
-        `/admin/users/customers?searchTerm=${searchTerm}&page=${page}&size=${size}`
+        `/admin/users/customers?searchTerm=${searchTerm}&page=${page}&size=${size}`,
       ),
   });
 };

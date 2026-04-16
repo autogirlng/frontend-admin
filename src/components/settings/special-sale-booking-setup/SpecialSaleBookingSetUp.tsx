@@ -109,7 +109,8 @@ export default function SpecialSaleBookingSetUp() {
               key={i}
               className="px-2 py-1 bg-gray-50 rounded text-xs border border-gray-100"
             >
-              {pi.bookingTypeName || "Item"}:{" "}
+              {pi.bookingTypeName || "Item"}
+              {pi.organizationName ? ` (${pi.organizationName})` : ""}:{" "}
               <span className="font-semibold">{formatPrice(pi.price)}</span>
             </span>
           ))}

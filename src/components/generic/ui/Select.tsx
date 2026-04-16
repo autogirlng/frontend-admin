@@ -86,7 +86,7 @@ const Select = ({
              transition duration-150 ease-in-out`,
             errorClasses,
             disabledClasses,
-            className
+            className,
           )}
         >
           <span className="block truncate">
@@ -100,7 +100,7 @@ const Select = ({
             <ChevronDown
               className={clsx(
                 "h-5 w-5 text-black transform transition-transform",
-                isOpen && "rotate-180"
+                isOpen && "rotate-180",
               )}
             />
           </span>
@@ -125,7 +125,9 @@ const Select = ({
                 <span
                   className={clsx(
                     "block truncate",
-                    selected?.id === option.id ? "font-semibold" : "font-normal"
+                    selected?.id === option.id
+                      ? "font-semibold"
+                      : "font-normal",
                   )}
                 >
                   {option.name}

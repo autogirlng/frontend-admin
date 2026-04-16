@@ -9,6 +9,7 @@ import {
   BookingSegment,
   PaginatedResponse,
   MoveSegmentsPayload,
+  MovePendingBookingPayload,
 } from "@/components/dashboard/finance/types";
 import { OfflinePaymentApprovalResponse } from "@/components/dashboard/finance/types";
 
@@ -284,6 +285,37 @@ export function useSplitMoveBookingSegment() {
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to split and transfer segment.");
+    },
+  });
+}
+
+export function useMovePendingBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      payload,
+    }: {
+      bookingId: string;
+      payload: MovePendingBookingPayload;
+    }) => {
+      const response: any = await apiClient.post(
+        `/admin/bookings/${bookingId}/move-segment`,
+        payload,
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(
+        data?.message ||
+          "Pending booking successfully moved to the new vehicle.",
+      );
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Failed to move pending booking.");
     },
   });
 }

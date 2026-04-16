@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   Tag,
@@ -9,6 +9,9 @@ import {
   DollarSign,
   Search,
   Percent,
+  ChevronDown,
+  Loader2,
+  Info,
 } from "lucide-react";
 import { useCreateCoupon } from "./useCoupons";
 import { CreateCouponPayload, CouponType } from "./types";
@@ -19,6 +22,145 @@ import { ModernDateTimePicker } from "@/components/generic/ui/ModernDateTimePick
 import Select, { Option } from "@/components/generic/ui/Select";
 import { useGetCustomers } from "./useUsers";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
+import { useGetOrganizations } from "@/components/settings/special-sale-booking-setup/useSpecialSales";
+
+interface SearchableOrgSelectProps {
+  value?: string;
+  valueName?: string;
+  onChange: (id: string, name: string) => void;
+}
+
+function SearchableOrganizationSelect({
+  value,
+  valueName,
+  onChange,
+}: SearchableOrgSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
+
+  const { data: orgs = [], isFetching } = useGetOrganizations(
+    debouncedSearch,
+    0,
+    10,
+  );
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="relative w-full">
+      <div className="flex items-center">
+        <label className="block text-sm font-medium text-gray-700">
+          Link Organization (Optional)
+        </label>
+        <Info
+          className="w-4 h-4 ml-1 opacity-0 pointer-events-none"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div className="mt-1">
+        <div
+          onClick={() => setIsOpen(!isOpen)}
+          className={`
+            w-full px-4 text-left bg-white border transition duration-150 ease-in-out sm:text-sm 
+            flex items-center justify-between cursor-pointer focus:outline-none
+            h-[52px]
+            ${
+              isOpen
+                ? "border-[#0096FF] ring-1 ring-[#0096FF]"
+                : "border-gray-300 hover:border-[#0096FF]"
+            }
+          `}
+        >
+          <span
+            className={`truncate pr-4 ${value ? "text-gray-900" : "text-gray-400"}`}
+          >
+            {valueName || "Search and select an organization"}
+          </span>
+          <ChevronDown
+            className={`flex-shrink-0 w-4 h-4 text-gray-500 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 shadow-xl max-h-72 flex flex-col rounded-md overflow-hidden">
+          <div className="sticky top-0 bg-gray-50 p-2 border-b border-gray-200 z-10">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:border-[#0096FF] focus:ring-1 focus:ring-[#0096FF]"
+                placeholder="Search organizations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+              {isFetching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0096FF] animate-spin" />
+              )}
+            </div>
+          </div>
+
+          <div className="overflow-y-auto py-1">
+            {orgs.length === 0 && !isFetching ? (
+              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                No organizations found.
+              </div>
+            ) : (
+              orgs.map((org) => (
+                <div
+                  key={org.organizationId}
+                  className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                    value === org.organizationId
+                      ? "bg-blue-50 font-medium text-[#0096FF]"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() => {
+                    onChange(org.organizationId, org.name);
+                    setIsOpen(false);
+                    setSearchTerm("");
+                  }}
+                >
+                  {org.name}
+                </div>
+              ))
+            )}
+
+            {value && (
+              <div
+                className="px-4 py-2.5 text-sm text-red-500 cursor-pointer hover:bg-red-50 border-t border-gray-100 font-medium mt-1 flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange("", "");
+                  setIsOpen(false);
+                }}
+              >
+                Clear Selection
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface CreateCouponModalProps {
   onClose: () => void;
@@ -37,6 +179,9 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
   const [expiryTime, setExpiryTime] = useState("");
 
   const [specificUserId, setSpecificUserId] = useState<Option | null>(null);
+  const [organizationId, setOrganizationId] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
+
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const debouncedUserSearch = useDebounce(userSearchTerm, 500);
 
@@ -77,6 +222,7 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
       couponType,
       ...(usageLimit && { usageLimit: Number(usageLimit) }),
       ...(specificUserId && { specificUserId: specificUserId.id }),
+      ...(organizationId && { organizationId }),
       ...(startIso && { startDate: startIso }),
       ...(expiryIso && { expiryDate: expiryIso }),
     };
@@ -126,7 +272,6 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
                 <DollarSign className="h-4 w-4 text-green-500" /> Value & Code
               </h4>
 
-              {/* Type Selector Toggle */}
               <div className="flex p-1 bg-gray-100 rounded-lg">
                 <button
                   type="button"
@@ -163,7 +308,6 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
                   className="font-mono tracking-wider uppercase"
                 />
                 <TextInput
-                  // Dynamic Label based on type
                   label={
                     couponType === "PERCENTAGE"
                       ? "Percentage Discount (%) *"
@@ -175,7 +319,6 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
                   value={discountAmount}
                   onChange={(e) => setDiscountAmount(e.target.value)}
                   required
-                  // Optional: Add max value validation for percentage
                   max={couponType === "PERCENTAGE" ? 100 : undefined}
                 />
               </div>
@@ -203,8 +346,18 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
                 value={usageLimit}
                 onChange={(e) => setUsageLimit(e.target.value)}
               />
+              <div className="pt-2">
+                <SearchableOrganizationSelect
+                  value={organizationId}
+                  valueName={organizationName}
+                  onChange={(id, name) => {
+                    setOrganizationId(id);
+                    setOrganizationName(name);
+                  }}
+                />
+              </div>
 
-              <div className="space-y-2 pt-2 border-t border-gray-50">
+              <div className="space-y-2 pt-4 border-t border-gray-50 mt-2">
                 <label className="text-sm font-medium text-gray-700">
                   Filter Specific User (Optional)
                 </label>

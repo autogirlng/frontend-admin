@@ -8,10 +8,26 @@ import {
   ServicePricingPayload,
   ServicePricingYear,
   ServicePricingYearPayload,
+  Organization,
 } from "./types";
 
 export const SERVICE_PRICING_KEY = ["servicePricing"];
 export const SERVICE_PRICING_YEARS_KEY = ["servicePricingYears"];
+export const ORGANIZATIONS_KEY = ["organizations"];
+
+export function useGetOrganizations(searchTerm = "", page = 0, size = 100) {
+  return useQuery({
+    queryKey: [...ORGANIZATIONS_KEY, page, size, searchTerm],
+    queryFn: async () => {
+      const response: any = await apiClient.get(
+        `/admin/organizations?page=${page}&size=${size}&searchTerm=${searchTerm}`,
+      );
+      return (response?.content ||
+        response?.data?.content ||
+        []) as Organization[];
+    },
+  });
+}
 
 export function useGetServicePricing() {
   return useQuery<ServicePricing[]>({

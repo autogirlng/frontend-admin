@@ -15,6 +15,7 @@ export const TRIPS_QUERY_KEY = "trips";
 
 export interface TripFilters {
   page: number;
+  size: number;
   bookingStatus: string | null;
   tripStatus: string | null;
   bookingTypeId: string | null;
@@ -26,6 +27,7 @@ export interface TripFilters {
 export function useGetTrips(filters: TripFilters) {
   const {
     page,
+    size,
     bookingStatus,
     tripStatus,
     bookingTypeId,
@@ -38,6 +40,7 @@ export function useGetTrips(filters: TripFilters) {
     queryKey: [
       TRIPS_QUERY_KEY,
       page,
+      size,
       bookingStatus,
       tripStatus,
       bookingTypeId,
@@ -48,7 +51,7 @@ export function useGetTrips(filters: TripFilters) {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", String(page));
-      params.append("size", "10");
+      params.append("size", String(size));
 
       if (bookingStatus) params.append("bookingStatus", bookingStatus);
       if (tripStatus) params.append("tripStatus", tripStatus);

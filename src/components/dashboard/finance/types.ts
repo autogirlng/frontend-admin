@@ -98,3 +98,8 @@ export interface MoveSegmentsPayload {
   segmentIds: string[];
   waivePriceDifference: boolean;
 }
+
+export interface MovePendingBookingPayload {
+  newVehicleId: string;
+  waivePriceDifference: boolean;
+}
