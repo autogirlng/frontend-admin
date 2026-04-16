@@ -52,7 +52,7 @@ const AddressInput = ({
           new window.google.maps.places.AutocompleteService();
         const dummyMap = document.createElement("div");
         placesService.current = new window.google.maps.places.PlacesService(
-          dummyMap
+          dummyMap,
         );
       }
     };
@@ -71,7 +71,7 @@ const AddressInput = ({
     };
 
     const existingScript = document.querySelector(
-      'script[src*="maps.googleapis.com"]'
+      'script[src*="maps.googleapis.com"]',
     );
 
     if (!existingScript) {
@@ -92,7 +92,7 @@ const AddressInput = ({
     setIsLoading(true);
     const handler = setTimeout(() => {
       autocompleteService.current.getPlacePredictions(
-        { input: value, componentRestrictions: { country: "ng" } },
+        { input: value, componentRestrictions: { country: ["", "ng"] } },
         (predictions: any[], status: string) => {
           if (status !== "OK" || !predictions) {
             setSuggestions([]);
@@ -104,11 +104,11 @@ const AddressInput = ({
             predictions.map((p) => ({
               description: p.description,
               place_id: p.place_id,
-            }))
+            })),
           );
           setIsOpen(true);
           setIsLoading(false);
-        }
+        },
       );
     }, 400);
 
@@ -156,7 +156,7 @@ const AddressInput = ({
         } else {
           console.error("Failed to get place details:", status);
         }
-      }
+      },
     );
   };
 
