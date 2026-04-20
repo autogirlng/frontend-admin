@@ -92,7 +92,7 @@ const AddressInput = ({
     setIsLoading(true);
     const handler = setTimeout(() => {
       autocompleteService.current.getPlacePredictions(
-        { input: value, componentRestrictions: { country: ["", "ng"] } },
+        { input: value, componentRestrictions: { country: ["bj", "ng"] } },
         (predictions: any[], status: string) => {
           if (status !== "OK" || !predictions) {
             setSuggestions([]);
