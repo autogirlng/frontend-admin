@@ -39,7 +39,7 @@ export function usePaymentExport({
       if (filters.dateRange?.from) {
         params.append(
           "startDate",
-          format(filters.dateRange.from, "yyyy-MM-dd")
+          format(filters.dateRange.from, "yyyy-MM-dd"),
         );
       }
       if (filters.dateRange?.to) {
@@ -51,7 +51,7 @@ export function usePaymentExport({
 
       // Step 1: Fetch total count
       const countRes = await apiClient.get<PaginatedResponse<Payment>>(
-        `/admin/payments?${params.toString()}`
+        `/admin/payments?${params.toString()}`,
       );
       const total = countRes.totalItems || 0;
 
@@ -92,11 +92,13 @@ export function usePaymentExport({
 
       const exportData = filteredPayments.map((p) => ({
         "Customer Name": p.userName || "Guest",
+        Email: p.userEmail || "-",
+        Phone: p.userPhone || "-",
         "Booking Ref": p.bookingRef || "-",
         Amount: `${p.totalPayable.toLocaleString()}`,
         "Invoice Number": p.invoiceNumber || "-",
-        "Payment Date": p.paidAt 
-          ? format(new Date(p.paidAt), "dd MMM yyyy, HH:mm") 
+        "Payment Date": p.paidAt
+          ? format(new Date(p.paidAt), "dd MMM yyyy, HH:mm")
           : "-",
         Vehicle: p.vehicleName,
         Provider: p.paymentProvider,
@@ -107,6 +109,8 @@ export function usePaymentExport({
       const ws = XLSX.utils.json_to_sheet(exportData);
       ws["!cols"] = [
         { wch: 22 },
+        { wch: 30 },
+        { wch: 18 },
         { wch: 18 },
         { wch: 15 },
         { wch: 20 },
