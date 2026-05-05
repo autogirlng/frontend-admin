@@ -44,7 +44,6 @@ export function SubmitBlogContentModal({
   const { data: categories } = useFetchBlogCategories();
 
   const [title, setTitle] = useState<string>("");
-  const [slug, setSlug] = useState<string>("");
   const [excerpt, setExcerpt] = useState<string>("");
   const [blogCategory, setBlogCategory] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
@@ -60,7 +59,6 @@ export function SubmitBlogContentModal({
       setTitle(postContent.title);
       setExcerpt(postContent.excerpt);
       setBlogCategory(postContent.blogCategory.id);
-      setSlug(postContent.slug ?? "");
       setTags(postContent.tags);
       setCoverImageUrl(postContent.coverImage || "");
     }
@@ -79,14 +77,9 @@ export function SubmitBlogContentModal({
         blogCategory: {
           id: blogCategory,
         },
-        slug:
-          slug ||
-          title
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, ""),
         tags: tags,
       };
+
       if (globalFile) {
         setIsUploading(true);
 
@@ -179,7 +172,6 @@ export function SubmitBlogContentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4">
       <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl bg-white sm:rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
-        {/* --- Header (Fixed) --- */}
         <div className="flex-none flex items-center justify-between p-4 border-b border-gray-100 bg-white z-10">
           <div>
             <h3 className="text-lg font-bold text-gray-900 leading-tight flex items-center gap-2">
@@ -193,21 +185,13 @@ export function SubmitBlogContentModal({
           <button
             onClick={onClose}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
-            // disabled={createMutation.isPending}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        {/* --- Scrollable Body --- */}
         <div className="flex-1 overflow-y-auto bg-gray-50/50 flex flex-col">
-          {/* Sticky Search Bar within body */}
-
-          {/* List Content */}
           <div className="p-4 space-y-2 flex-1">
-            {/*<div className="font-bold text-xs  mb-2">FORM: </div>*/}
             <form className="space-y-3">
-              {/* Title */}
               <div>
                 <TextInput
                   label="Title"
@@ -248,8 +232,6 @@ export function SubmitBlogContentModal({
                   className="w-full border border-gray-300 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
-              {/* Excerpt */}
               <div>
                 <TextInput
                   label="Excerpt"
@@ -299,7 +281,6 @@ export function SubmitBlogContentModal({
                   onDrop={handleDrop}
                   className={clsx(
                     "block border-2 border-dashed p-6 text-center transition-all relative",
-                    // If coverImageUrl exists, make it look disabled
                     coverImageUrl
                       ? "bg-gray-100 border-gray-300 cursor-not-allowed opacity-60"
                       : "cursor-pointer",
@@ -317,12 +298,10 @@ export function SubmitBlogContentModal({
                     className="sr-only"
                     accept="image/*,application/pdf"
                     onChange={(e) => handleFileChange(e)}
-                    disabled={!!coverImageUrl} // Disabled if coverImageUrl exists
+                    disabled={!!coverImageUrl}
                   />
 
-                  {/* Show different content based on state */}
                   {coverImageUrl ? (
-                    // Case 1: There's already a cover image (DISABLED STATE)
                     <div className="flex flex-col items-center">
                       <div className="relative">
                         <Image
@@ -346,7 +325,6 @@ export function SubmitBlogContentModal({
                       </p>
                     </div>
                   ) : globalFile ? (
-                    // Case 2: New file selected (ENABLED STATE with file)
                     <div className="flex flex-col items-center">
                       <FilePreviewThumbnail
                         file={globalFile}
@@ -358,7 +336,6 @@ export function SubmitBlogContentModal({
                       <p className="text-xs text-gray-500">{globalFile.name}</p>
                     </div>
                   ) : (
-                    // Case 3: No file and no cover image (ENABLED STATE)
                     <div className="flex flex-col items-center">
                       <UploadCloud className="h-10 w-10 text-gray-400 mb-2" />
                       <p className="text-sm text-gray-600">
@@ -374,8 +351,6 @@ export function SubmitBlogContentModal({
                   )}
                 </label>
               </div>
-
-              {/* Author Name */}
               <div>
                 <TextInput
                   label="Author Name"
@@ -385,8 +360,6 @@ export function SubmitBlogContentModal({
                   disabled={true}
                 />
               </div>
-
-              {/* Author Email */}
               <div>
                 <TextInput
                   label="Author Email"
@@ -396,8 +369,6 @@ export function SubmitBlogContentModal({
                   disabled={true}
                 />
               </div>
-
-              {/* Author Phone */}
               <div>
                 <TextInput
                   type="tel"
@@ -410,8 +381,6 @@ export function SubmitBlogContentModal({
             </form>
           </div>
         </div>
-
-        {/* --- Footer (Fixed) --- */}
         <div className="flex-none p-4 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex w-full sm:w-auto gap-3">
             <Button

@@ -43,7 +43,6 @@ export enum BLOG_CONTENT_TYPE {
 
 export interface CreateBlogPostPayload {
   title: string;
-  slug: string;
   content: string;
   excerpt: string;
   authorName: string;

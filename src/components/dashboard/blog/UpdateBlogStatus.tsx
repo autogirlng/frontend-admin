@@ -3,11 +3,8 @@
 import React from "react";
 import { X, Layers } from "lucide-react";
 import Button from "@/components/generic/ui/Button";
-
-import {
-  BLOG_CONTENT_TYPE,
-  useApproveBlogContent,
-} from "@/lib/hooks/blog/useBlog";
+import { useApproveBlogContent } from "@/lib/hooks/blog/useBlog";
+import { BLOG_CONTENT_TYPE } from "./types";
 
 interface UpdateBlogStatusModalModalProps {
   onClose: () => void;
