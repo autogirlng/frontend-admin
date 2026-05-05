@@ -205,7 +205,8 @@ export default function VehicleDetailPage() {
     const baseUrl =
       process.env.NEXT_PUBLIC_CUSTOMER_APP_URL ||
       "https://muvment-customer-app.vercel.app";
-    const shareUrl = `${baseUrl}/booking/details/${vehicle.id}`;
+
+    const shareUrl = `${baseUrl}/booking/details/${vehicle.slug}`;
 
     const shareText = `Check out this ${vehicle.name} on Muvment!`;
 

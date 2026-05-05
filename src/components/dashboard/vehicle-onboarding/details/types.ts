@@ -103,6 +103,7 @@ export interface OutOfBoundsArea {
 
 export interface VehicleDetail {
   id: string;
+  slug: string;
   vehicleIdentifier: string;
   ownerId: string;
   name: string;
