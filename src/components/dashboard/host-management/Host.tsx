@@ -28,6 +28,7 @@ import {
   Palmtree,
   Activity,
   Edit2,
+  FileText,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -147,6 +148,13 @@ export default function HostsPage() {
       icon: Wallet,
       onClick: () => {
         router.push(`/dashboard/host/payouts/${host.id}`);
+      },
+    },
+    {
+      label: "Manage MOUs",
+      icon: FileText,
+      onClick: () => {
+        router.push(`/dashboard/host/mou/${host.id}`);
       },
     },
     {
