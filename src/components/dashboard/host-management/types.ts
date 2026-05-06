@@ -52,3 +52,20 @@ export interface HostVehicle {
     | "COMPANY_USE";
   operationalStatus: string; // e.g., "FREE", "BOOKED", "DRAFT", "MAINTENANCE"
 }
+
+export interface MOUData {
+  id: string;
+  address: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  mouVersion: string;
+  fullName: string;
+  createdAt: string;
+  updatedAt: string;
+  reason?: string;
+  updatedById?: string;
+}
+
+export interface UpdateMOUStatusPayload {
+  status: "APPROVED" | "REJECTED";
+  reason: string;
+}
