@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useGetHosts } from "@/lib/hooks/host-management/useHosts";
+import {
+  useGetCountries,
+  useGetHosts,
+  useGetStatesByCountry,
+} from "@/lib/hooks/host-management/useHosts";
+import type { HostLocationFilters } from "@/lib/hooks/host-management/useHosts";
 import { useSendCredentials } from "@/lib/hooks/host-management/useSendCredentials";
 import { useUpdateHostStatus } from "@/lib/hooks/host-management/useUpdateHostStatus";
 import { useEndVacationMode } from "./useVacationMode";
@@ -39,11 +44,43 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils/price-format";
+import Select, { Option } from "@/components/generic/ui/Select";
+import { parseWktToLatLngRings } from "@/components/outskirt/geo";
+import type { GeoState } from "@/components/outskirt/geo";
+
+const getStateFilterCoordinates = (
+  state: GeoState | undefined,
+): HostLocationFilters => {
+  const coordinates = parseWktToLatLngRings(state?.polygon ?? "")
+    .flat()
+    .filter(([latitude, longitude]) =>
+      Number.isFinite(latitude) && Number.isFinite(longitude),
+    );
+
+  if (coordinates.length === 0) {
+    return {};
+  }
+
+  const totals = coordinates.reduce(
+    (acc, [latitude, longitude]) => ({
+      latitude: acc.latitude + latitude,
+      longitude: acc.longitude + longitude,
+    }),
+    { latitude: 0, longitude: 0 },
+  );
+
+  return {
+    latitude: totals.latitude / coordinates.length,
+    longitude: totals.longitude / coordinates.length,
+  };
+};
 
 export default function HostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
+  const [selectedState, setSelectedState] = useState<Option | null>(null);
 
   // New State for Edit Modal
   const [editModalHost, setEditModalHost] = useState<Host | null>(null);
@@ -62,7 +99,7 @@ export default function HostsPage() {
 
   useEffect(() => {
     setCurrentPage(0);
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, selectedState]);
 
   useEffect(() => {
     if (topRef.current) {
@@ -72,12 +109,25 @@ export default function HostsPage() {
     }
   }, [currentPage]);
 
+  const { data: countries, isLoading: isLoadingCountries } = useGetCountries();
+  const { data: states, isLoading: isLoadingStates } = useGetStatesByCountry(
+    selectedCountry?.id ?? null,
+  );
+  const selectedGeoState = states?.find(
+    (state) => state.id === selectedState?.id,
+  );
+  const hostLocationFilters = getStateFilterCoordinates(selectedGeoState);
+
   const {
     data: paginatedData,
     isLoading,
     isError,
     isPlaceholderData,
-  } = useGetHosts(currentPage, debouncedSearchTerm);
+  } = useGetHosts({
+    page: currentPage,
+    searchTerm: debouncedSearchTerm,
+    ...hostLocationFilters,
+  });
 
   const { mutate: sendCredentials, isPending: isSendingCredentials } =
     useSendCredentials();
@@ -88,6 +138,31 @@ export default function HostsPage() {
 
   const hosts = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
+  const countryOptions =
+    countries
+      ?.filter((country) => country.active)
+      .map((country) => ({ id: country.id, name: country.name })) ?? [];
+  const stateOptions =
+    states
+      ?.filter((state) => state.active)
+      .map((state) => ({ id: state.id, name: state.name })) ?? [];
+
+  const handleCountryChange = (option: Option) => {
+    setSelectedCountry(option);
+    setSelectedState(null);
+    setCurrentPage(0);
+  };
+
+  const handleStateChange = (option: Option) => {
+    setSelectedState(option);
+    setCurrentPage(0);
+  };
+
+  const clearLocationFilters = () => {
+    setSelectedCountry(null);
+    setSelectedState(null);
+    setCurrentPage(0);
+  };
 
   const openModal = (type: "status" | "view", host: Host) => {
     setSelectedHost(host);
@@ -307,6 +382,45 @@ export default function HostsPage() {
             className="w-full"
             style={{ paddingLeft: 35 }}
           />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 mb-4">
+          <Select
+            label="Country"
+            hideLabel
+            placeholder={
+              isLoadingCountries ? "Loading countries..." : "Filter by country"
+            }
+            options={countryOptions}
+            selected={selectedCountry}
+            onChange={handleCountryChange}
+            disabled={isLoadingCountries}
+          />
+          <Select
+            label="State"
+            hideLabel
+            placeholder={
+              isLoadingStates
+                ? "Loading states..."
+                : selectedCountry
+                  ? "Filter by state"
+                  : "Select a country first"
+            }
+            options={stateOptions}
+            selected={selectedState}
+            onChange={handleStateChange}
+            disabled={!selectedCountry || isLoadingStates}
+          />
+          {(selectedCountry || selectedState) && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={clearLocationFilters}
+              className="w-full md:w-auto"
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         {/* --- Table Display --- */}
