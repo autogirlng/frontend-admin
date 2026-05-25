@@ -13,6 +13,7 @@ export interface Host {
   phoneNumber: string;
   totalVehicles: number;
   totalBookings: number;
+  totalPendingBalance: number;
   active: boolean;
   vacationMode: boolean;
 }

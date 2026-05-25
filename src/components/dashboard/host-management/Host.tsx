@@ -30,7 +30,7 @@ import {
   Edit2,
   FileText,
 } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { ActionModal } from "@/components/generic/ui/ActionModal";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
@@ -38,6 +38,7 @@ import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import { useRouter } from "next/navigation";
+import { formatPrice } from "@/lib/utils/price-format";
 
 export default function HostsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -215,6 +216,15 @@ export default function HostsPage() {
       accessorKey: "totalBookings",
       cell: (item) => (
         <span className="font-medium text-gray-700">{item.totalBookings}</span>
+      ),
+    },
+    {
+      header: "Pending Payments",
+      accessorKey: "totalPendingBalance",
+      cell: (item) => (
+        <span className="font-medium text-gray-700">
+          {formatPrice(item.totalPendingBalance)}
+        </span>
       ),
     },
 
