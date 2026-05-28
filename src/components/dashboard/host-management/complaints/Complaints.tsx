@@ -100,10 +100,9 @@ const TypeBadge = ({ type }: { type: ComplaintType }) => (
   </span>
 );
 
-const ComplaintTextCell = ({ title, description }: Complaint) => (
+const ComplaintTextCell = ({ title }: Complaint) => (
   <div className="max-w-[360px]">
     <p className="font-medium text-gray-900 truncate">{title}</p>
-    <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
   </div>
 );
 
