@@ -22,7 +22,7 @@ export function useGetComplaints(filters: ComplaintsFilterParams) {
       params.append("page", String(page));
       params.append("size", String(size));
 
-      const endpoint = `/v1/complaints?${params.toString()}`;
+      const endpoint = `/complaints?${params.toString()}`;
       return apiClient.get<PaginatedResponse<Complaint>>(endpoint);
     },
     placeholderData: (previousData) => previousData,
@@ -33,7 +33,7 @@ export function useGetComplaints(filters: ComplaintsFilterParams) {
 export function useGetComplaintDetails(complaintId: string | null) {
   return useQuery<Complaint, Error>({
     queryKey: [COMPLAINT_DETAIL_KEY, complaintId],
-    queryFn: () => apiClient.get<Complaint>(`/v1/complaints/${complaintId}`),
+    queryFn: () => apiClient.get<Complaint>(`/complaints/${complaintId}`),
     enabled: !!complaintId,
   });
 }
@@ -54,7 +54,7 @@ export function useUpdateComplaintStatus() {
       id: string;
       payload: UpdateComplaintPayload;
     }) => {
-      return apiClient.patch<Complaint>(`/v1/complaints/${id}/status`, payload);
+      return apiClient.patch<Complaint>(`/complaints/${id}/status`, payload);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
