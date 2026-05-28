@@ -11,6 +11,7 @@ interface ActionModalProps {
   onClose: () => void;
   onConfirm: () => void;
   isLoading: boolean;
+  isConfirmDisabled?: boolean;
   variant?: "primary" | "danger";
   children?: React.ReactNode;
 }
@@ -22,6 +23,7 @@ export function ActionModal({
   onClose,
   onConfirm,
   isLoading,
+  isConfirmDisabled = false,
   variant = "primary",
   children,
 }: ActionModalProps) {
@@ -81,6 +83,7 @@ export function ActionModal({
             variant={variant}
             onClick={onConfirm}
             isLoading={isLoading}
+            disabled={isConfirmDisabled}
             className="w-full sm:w-[200px]"
           >
             {actionLabel}
