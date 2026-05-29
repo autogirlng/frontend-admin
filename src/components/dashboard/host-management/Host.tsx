@@ -34,6 +34,7 @@ import {
   Activity,
   Edit2,
   FileText,
+  MessageSquareWarning,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -355,7 +356,15 @@ export default function HostsPage() {
               Manage all hosts on the platform.
             </p>
           </div>
-          <div className="my-1">
+          <div className="my-1 flex flex-wrap gap-3">
+            <Button
+              onClick={() => router.push("/dashboard/host/complaints")}
+              variant="secondary"
+              className="w-auto"
+            >
+              <MessageSquareWarning className="h-4 w-4 mr-2" />
+              View Complaints
+            </Button>
             <Button
               onClick={() => setIsCreateModalOpen(true)}
               className="w-auto"

@@ -91,11 +91,14 @@ export function ActionMenu({ actions }: ActionMenuProps) {
           <button
             key={action.label}
             onClick={() => {
+              if (action.disabled) return;
               action.onClick();
               setIsOpen(false);
             }}
+            disabled={action.disabled}
             className={clsx(
               "flex w-full items-center px-4 py-2 text-sm",
+              action.disabled && "cursor-not-allowed opacity-50",
               action.danger
                 ? "text-red-700 hover:bg-red-50"
                 : "text-gray-700 hover:bg-gray-100"
