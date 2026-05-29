@@ -46,10 +46,10 @@ export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
   // --- Data Fetching for Forms ---
   const { data: paginatedData, isLoading: isVehicleSearchLoading } =
     useGetVehicles(0, debouncedSearchTerm, "");
-  const { data: hostData, isLoading: isHostSearchLoading } = useGetHosts(
-    0,
-    debouncedHostSearchTerm
-  );
+  const { data: hostData, isLoading: isHostSearchLoading } = useGetHosts({
+    page: 0,
+    searchTerm: debouncedHostSearchTerm.trim(),
+  });
   const bulkCreateMutation = useBulkCreateVehicles();
 
   // --- Memoized Options for Selects ---
@@ -201,8 +201,8 @@ export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
       </div>
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
-          This will clone an existing vehicle's details (features, photos, etc.)
-          to create multiple new ones.
+          This will clone an existing vehicle&apos;s details (features, photos,
+          etc.) to create multiple new ones.
         </p>
         <TextInput
           label="Search for Vehicle to Clone"
