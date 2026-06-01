@@ -18,7 +18,7 @@ import { Payment } from "../types";
 interface PaymentConflictModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onProceed: () => void;
+  onProceed: (forceApprove: boolean) => void;
   payment: Payment;
 }
 
@@ -36,6 +36,10 @@ export function PaymentConflictModal({
 
   const hasProceeded = useRef(false);
 
+  const hasConfirmedConflict = conflicts.some(
+    (conflict) => conflict.status === "CONFIRMED",
+  );
+
   useEffect(() => {
     if (
       !isLoading &&
@@ -44,7 +48,7 @@ export function PaymentConflictModal({
       !hasProceeded.current
     ) {
       hasProceeded.current = true;
-      onProceed();
+      onProceed(false);
     }
   }, [isLoading, isError, conflicts, onProceed]);
 
@@ -164,7 +168,7 @@ export function PaymentConflictModal({
 
           <Button
             variant="danger"
-            onClick={onProceed}
+            onClick={() => onProceed(hasConfirmedConflict)}
             className="w-[150px] py-2 text-xs px-3 flex items-center justify-center gap-1"
           >
             Ignore & Approve Anyway

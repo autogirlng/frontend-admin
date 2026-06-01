@@ -108,10 +108,12 @@ export default function PaymentsPage() {
     isOpen: boolean;
     payment: Payment | null;
     mode: "single" | "bulk";
+    forceApprove?: boolean;
   }>({
     isOpen: false,
     payment: null,
     mode: "single",
+    forceApprove: false,
   });
 
   const {
@@ -660,7 +662,7 @@ export default function PaymentsPage() {
           isOpen={conflictModal.isOpen}
           payment={conflictModal.payment}
           onClose={() => setConflictModal({ isOpen: false, payment: null })}
-          onProceed={() => {
+          onProceed={(forceApprove) => {
             const paymentToApprove = conflictModal.payment;
             setConflictModal({ isOpen: false, payment: null });
             setTimeout(() => {
@@ -668,6 +670,7 @@ export default function PaymentsPage() {
                 isOpen: true,
                 payment: paymentToApprove,
                 mode: "single",
+                forceApprove,
               });
             }, 100);
           }}
@@ -679,6 +682,7 @@ export default function PaymentsPage() {
         mode={approvalModal.mode}
         payment={approvalModal.payment}
         selectedPayments={payments.filter((p) => selectedPaymentIds.has(p.id))}
+        forceApprove={approvalModal.forceApprove}
         onClose={() => setApprovalModal((prev) => ({ ...prev, isOpen: false }))}
         onSuccess={() => {
           setApprovalModal((prev) => ({ ...prev, isOpen: false }));

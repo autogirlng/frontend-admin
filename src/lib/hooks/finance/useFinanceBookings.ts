@@ -21,6 +21,7 @@ export interface OfflinePaymentPayload {
   paymentImageUrl: string;
   publicId: string;
   amountPaid?: number;
+  forceApprove?: boolean;
 }
 
 export interface BulkOfflinePaymentPayload {

@@ -76,6 +76,7 @@ interface PaymentApprovalModalProps {
   payment: Payment | null;
   selectedPayments: Payment[];
   mode: "single" | "bulk";
+  forceApprove?: boolean;
   onSuccess: () => void;
 }
 
@@ -85,6 +86,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
   payment,
   selectedPayments,
   mode,
+  forceApprove,
   onSuccess,
 }) => {
   const [globalFile, setGlobalFile] = useState<File | null>(null);
@@ -200,6 +202,10 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
           amountPaid: finalAmountPaid,
         };
 
+        if (forceApprove) {
+          payload.forceApprove = true;
+        }
+
         await confirmPaymentMutation.mutateAsync({
           bookingId: payment.bookingId,
           payload,
@@ -264,25 +270,49 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
       title={
         mode === "bulk"
           ? `Approve ${selectedPayments.length} Payments`
-          : "Approve Payment"
+          : forceApprove
+            ? "Force Approve Payment ⚠️"
+            : "Approve Payment"
       }
       isLoading={
         isUploading ||
         confirmPaymentMutation.isPending ||
         bulkConfirmMutation.isPending
       }
-      variant="primary"
+      variant={forceApprove ? "danger" : "primary"}
       confirmLabel={
         isUploading
           ? "Processing..."
           : paymentType === "partial"
-            ? `Record ${formatPrice(Number(partialAmount) || 0)}`
-            : "Confirm Full Payment"
+            ? forceApprove
+              ? `Force Record ${formatPrice(Number(partialAmount) || 0)}`
+              : `Record ${formatPrice(Number(partialAmount) || 0)}`
+            : forceApprove
+              ? "Force Confirm Full Payment"
+              : "Confirm Full Payment"
       }
       onConfirm={handleConfirm}
       onCancel={onClose}
       message={
         <div className="space-y-6">
+          {forceApprove && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-md flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-red-800 text-sm">
+                  Force Approval Active
+                </h4>
+                <p className="text-xs text-red-700 mt-1">
+                  You are forcing this payment approval despite existing
+                  confirmed schedule conflicts.{" "}
+                  <strong>
+                    This booking will not be assigned to this vehicle to avoid
+                    conflicts, But we are aware.
+                  </strong>
+                </p>
+              </div>
+            </div>
+          )}
           {mode === "single" && payment && (
             <div className="bg-gray-50 p-4 border border-gray-200">
               <div className="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
