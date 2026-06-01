@@ -46,7 +46,6 @@ import clsx from "clsx";
 import Button from "@/components/generic/ui/Button";
 import TextAreaInput from "@/components/generic/ui/TextAreaInput";
 import { DocumentPreviewModal } from "../finance/PreviewModal";
-
 import { TransferVehicleModal } from "./TransferVehicleModal";
 
 const statusOptions: Option[] = [
@@ -358,7 +357,15 @@ export default function BookingsPage() {
       booking.vehicleName === "Vehicle not Assigned" ||
       !booking.vehicleId;
 
-    if (isServicePricing && isUnassigned && isActive) {
+    const isForceApprovedNormal =
+      booking.bookingCategory === "NORMAL" &&
+      (booking.forceApproved || !!booking.intendedVehicleName);
+
+    if (
+      isActive &&
+      isUnassigned &&
+      (isServicePricing || isForceApprovedNormal)
+    ) {
       actions.unshift({
         label: "Allocate Vehicle",
         icon: Car,
@@ -421,17 +428,43 @@ export default function BookingsPage() {
     {
       header: "Vehicle",
       accessorKey: "vehicleName",
-      cell: (item) => (
-        <div>
-          <div className="font-medium">{item.vehicleName}</div>
-          <div
-            className="text-xs text-gray-500 truncate w-32"
-            title={item.vehicleId}
-          >
-            {item.vehicleId}
+      cell: (item) => {
+        const isUnassigned =
+          item.vehicleId === "N/A" ||
+          item.vehicleName === "Vehicle not Assigned" ||
+          !item.vehicleId;
+        const hasIntended = !!item.intendedVehicleName;
+        if (isUnassigned && hasIntended) {
+          return (
+            <div className="flex flex-col">
+              <div
+                className="font-medium text-amber-600 flex items-center gap-1 truncate max-w-[150px]"
+                title={`Needs Allocation. Intended: ${item.intendedVehicleName}`}
+              >
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                <span className="truncate">{item.intendedVehicleName}</span>
+              </div>
+              <div
+                className="text-amber-600/80 text-[10px] truncate max-w-[150px] font-medium"
+                title={item.intendedVehicleIdentifier || ""}
+              >
+                {item.intendedVehicleIdentifier} (Intended)
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div>
+            <div className="font-medium">{item.vehicleName}</div>
+            <div
+              className="text-xs text-gray-500 truncate w-32"
+              title={item.vehicleId}
+            >
+              {item.vehicleId}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       header: "Booking Type",

@@ -25,6 +25,9 @@ export interface BookingSegment {
   bookingStatus: BookingStatus;
   price: number;
   bookingCategory: "SERVICE_PRICING" | "NORMAL";
+  intendedVehicleName?: string | null;
+  intendedVehicleIdentifier?: string | null;
+  forceApproved?: boolean;
 }
 
 export interface PaginatedResponse<T> {
