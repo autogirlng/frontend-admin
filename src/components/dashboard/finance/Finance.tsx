@@ -20,6 +20,7 @@ import {
   Coins,
   Car,
   ArrowRightLeft,
+  AlertCircle,
 } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
@@ -227,9 +228,15 @@ export default function PaymentsPage() {
     ];
 
     const isServicePricing = payment.bookingCategory === "SERVICE_PRICING";
-    const isUnassigned = payment.vehicleIdentifier === "N/A";
+    const isUnassigned =
+      payment.vehicleIdentifier === "N/A" || !payment.vehicleIdentifier;
 
-    if (isServicePricing && isUnassigned) {
+    const isForceApprovedNormal =
+      payment.bookingCategory === "NORMAL" &&
+      payment.paymentProvider === "OFFLINE" &&
+      (payment.forceApproved || !!payment.intendedVehicleName);
+
+    if (isUnassigned && (isServicePricing || isForceApprovedNormal)) {
       actions.unshift({
         label: "Allocate Vehicle",
         icon: Car,
@@ -359,22 +366,47 @@ export default function PaymentsPage() {
     {
       header: "Vehicle",
       accessorKey: "vehicleName",
-      cell: (item) => (
-        <div>
-          <div
-            className="font-medium text-gray-900 truncate max-w-[150px]"
-            title={item.vehicleName}
-          >
-            {item.vehicleName}
+      cell: (item) => {
+        const isUnassigned =
+          item.vehicleIdentifier === "N/A" || !item.vehicleIdentifier;
+        const hasIntended = !!item.intendedVehicleName;
+
+        if (isUnassigned && hasIntended) {
+          return (
+            <div className="flex flex-col">
+              <div
+                className="font-medium text-amber-600 flex items-center gap-1 truncate max-w-[150px]"
+                title={`Needs Allocation. Intended: ${item.intendedVehicleName}`}
+              >
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                <span className="truncate">{item.intendedVehicleName}</span>
+              </div>
+              <div
+                className="text-amber-600/80 text-[10px] truncate max-w-[150px] font-medium"
+                title={item.intendedVehicleIdentifier || ""}
+              >
+                {item.intendedVehicleIdentifier} (Intended)
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div>
+            <div
+              className="font-medium text-gray-900 truncate max-w-[150px]"
+              title={item.vehicleName}
+            >
+              {item.vehicleName}
+            </div>
+            <div
+              className="text-gray-500 truncate max-w-[150px]"
+              title={item.vehicleIdentifier}
+            >
+              {item.vehicleIdentifier}
+            </div>
           </div>
-          <div
-            className="text-gray-500 truncate max-w-[150px]"
-            title={item.vehicleIdentifier}
-          >
-            {item.vehicleIdentifier}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       header: "Payment Info",

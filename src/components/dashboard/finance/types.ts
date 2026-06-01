@@ -29,6 +29,10 @@ export interface Payment {
   paymentImage?: string | null;
   publicId?: string | null;
   bookingCategory: "SERVICE_PRICING" | "NORMAL";
+  intendedVehicleName?: string | null;
+  intendedVehicleIdentifier?: string | null;
+  intendedVehicleId?: string | null;
+  forceApproved?: boolean;
 }
 
 export enum PaymentStatus {
