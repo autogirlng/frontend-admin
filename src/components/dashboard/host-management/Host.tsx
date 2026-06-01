@@ -35,6 +35,7 @@ import {
   Edit2,
   FileText,
   MessageSquareWarning,
+  Gavel,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -364,6 +365,14 @@ export default function HostsPage() {
             >
               <MessageSquareWarning className="h-4 w-4 mr-2" />
               View Complaints
+            </Button>
+            <Button
+              onClick={() => router.push("/dashboard/host/disputes")}
+              variant="secondary"
+              className="w-auto"
+            >
+              <Gavel className="h-4 w-4 mr-2" />
+              View Disputes
             </Button>
             <Button
               onClick={() => setIsCreateModalOpen(true)}
