@@ -9,6 +9,7 @@ export interface PaginatedResponse<T> {
 export interface Payment {
   id: string;
   bookingId: string;
+  bookingStatus: string;
   paymentStatus: string;
   paymentProvider: string;
   transactionReference: string;
