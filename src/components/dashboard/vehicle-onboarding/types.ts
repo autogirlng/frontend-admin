@@ -22,7 +22,6 @@ export interface Vehicle {
   licensePlateNumber?: string;
   ownerName: string;
   status: VehicleStatus;
-  // operationalStatus: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -93,8 +92,8 @@ export type UnavailabilityReason =
   | "UNAVAILABLE";
 
 export interface CreateUnavailabilityPayload {
-  startDateTime: string; // ISO 8601 string (e.g., "2025-11-12T12:21:00")
-  endDateTime: string; // ISO 8601 string
+  startDateTime: string;
+  endDateTime: string;
   reason: UnavailabilityReason;
   notes?: string;
 }
@@ -102,8 +101,8 @@ export interface CreateUnavailabilityPayload {
 export interface UnavailabilityPeriod {
   id: string;
   vehicleId: string;
-  startDateTime: string; // ISO 8601 string
-  endDateTime: string; // ISO 8601 string
+  startDateTime: string;
+  endDateTime: string;
   reason: UnavailabilityReason;
   notes: string;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { Vehicle, VehicleStatus } from "./types";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -30,7 +31,6 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import { ApproveVehicleModal } from "./ApproveVehicleModal";
 import Button from "@/components/generic/ui/Button";
 import { AddVehicleModal } from "./AddVehicleModal";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ManageUnavailabilityModal } from "./ManageUnavailabilityModal";
 
 const statusOptions: Option[] = [
@@ -150,7 +150,7 @@ export default function VehicleOnboarding() {
     if (!selectedVehicle) return;
     setActiveMutation.mutate(
       { id: selectedVehicle.id },
-      { onSuccess: closeModal }
+      { onSuccess: closeModal },
     );
   };
 
@@ -158,7 +158,7 @@ export default function VehicleOnboarding() {
     if (!selectedVehicle) return;
     rejectMutation.mutate(
       { id: selectedVehicle.id, status: VehicleStatus.REJECTED },
-      { onSuccess: closeModal }
+      { onSuccess: closeModal },
     );
   };
 
@@ -282,7 +282,7 @@ export default function VehicleOnboarding() {
         cell: (item) => <ActionMenu actions={getVehicleActions(item)} />,
       },
     ],
-    []
+    [],
   );
 
   return (
