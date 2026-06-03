@@ -465,7 +465,7 @@ export default function PaymentsPage() {
           status === "ACTIVE"
         )
           bgClass = "bg-blue-100 text-blue-800";
-        else if (status === "PENDING")
+        else if (status === "PENDING_PAYMENT")
           bgClass = "bg-yellow-100 text-yellow-800";
         else if (
           status === "CANCELLED_BY_HOST" ||
