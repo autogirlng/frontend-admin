@@ -49,6 +49,45 @@ export function Toolbar({
   onImageUpload?: () => void;
   isUploadingImage?: boolean;
 }) {
+  const getTableCommand = (command: string) =>
+    (editor.commands as unknown as Record<string, unknown>)[command];
+  const hasTableCommand = (command: string) =>
+    typeof getTableCommand(command) === "function";
+  const isTableActive = editor.isActive("table");
+
+  const insertTable = () => {
+    const command = getTableCommand("insertTable");
+
+    if (typeof command === "function") {
+      editor.commands.focus();
+      (
+        command as (options: {
+          rows: number;
+          cols: number;
+          withHeaderRow: boolean;
+        }) => boolean
+      )({ rows: 3, cols: 3, withHeaderRow: true });
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .insertContent(
+        "<table><tbody><tr><th><p></p></th><th><p></p></th><th><p></p></th></tr><tr><td><p></p></td><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td><td><p></p></td></tr></tbody></table>",
+      )
+      .run();
+  };
+
+  const runTableCommand = (commandName: string) => {
+    const command = getTableCommand(commandName);
+
+    if (typeof command !== "function") return;
+
+    editor.commands.focus();
+    (command as () => boolean)();
+  };
+
   const setLink = () => {
     const url = window.prompt("URL");
     if (url) editor.chain().focus().setLink({ href: url }).run();
@@ -232,61 +271,56 @@ export function Toolbar({
       tools: [
         {
           icon: Table,
-          action: () =>
-            editor
-              .chain()
-              .focus()
-              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-              .run(),
-          active: editor.isActive("table"),
+          action: insertTable,
+          active: isTableActive,
           title: "Insert Table",
         },
         {
           icon: BetweenVerticalStart,
-          action: () => editor.chain().focus().addColumnBefore().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("addColumnBefore"),
+          disabled: !isTableActive || !hasTableCommand("addColumnBefore"),
           title: "Add Column Before",
         },
         {
           icon: BetweenVerticalEnd,
-          action: () => editor.chain().focus().addColumnAfter().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("addColumnAfter"),
+          disabled: !isTableActive || !hasTableCommand("addColumnAfter"),
           title: "Add Column After",
         },
         {
           icon: Columns3,
-          action: () => editor.chain().focus().deleteColumn().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("deleteColumn"),
+          disabled: !isTableActive || !hasTableCommand("deleteColumn"),
           title: "Delete Column",
         },
         {
           icon: BetweenHorizontalStart,
-          action: () => editor.chain().focus().addRowBefore().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("addRowBefore"),
+          disabled: !isTableActive || !hasTableCommand("addRowBefore"),
           title: "Add Row Before",
         },
         {
           icon: BetweenHorizontalEnd,
-          action: () => editor.chain().focus().addRowAfter().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("addRowAfter"),
+          disabled: !isTableActive || !hasTableCommand("addRowAfter"),
           title: "Add Row After",
         },
         {
           icon: Rows3,
-          action: () => editor.chain().focus().deleteRow().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("deleteRow"),
+          disabled: !isTableActive || !hasTableCommand("deleteRow"),
           title: "Delete Row",
         },
         {
           icon: PanelTop,
-          action: () => editor.chain().focus().toggleHeaderRow().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("toggleHeaderRow"),
+          disabled: !isTableActive || !hasTableCommand("toggleHeaderRow"),
           title: "Toggle Header Row",
         },
         {
           icon: Trash2,
-          action: () => editor.chain().focus().deleteTable().run(),
-          disabled: !editor.isActive("table"),
+          action: () => runTableCommand("deleteTable"),
+          disabled: !isTableActive || !hasTableCommand("deleteTable"),
           title: "Delete Table",
         },
       ],
