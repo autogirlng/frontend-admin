@@ -170,6 +170,7 @@ export interface BlogPost {
   tags: string[];
   metrics: BlogMetrics;
   coverImage: string;
+  coverImagePublicId?: string;
 }
 
 export interface BlogComment {
