@@ -1,3 +1,5 @@
+import type { DeductionType } from "@/lib/types/deductions";
+
 export interface PayoutBooking {
   bookingId: string;
   invoiceNumber: string;
@@ -7,6 +9,9 @@ export interface PayoutBooking {
   geofenceSurcharge: number;
   appliedGeofenceCount: number;
   adminDeduction: number;
+  deductionId?: string;
+  deductionType?: DeductionType;
+  deductionNotes?: string;
   toPayToHost: number;
   hostPaymentStatus: "PENDING" | "PAID";
 }

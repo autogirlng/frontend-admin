@@ -24,6 +24,12 @@ import Highlight from "@tiptap/extension-highlight";
 import Typography from "@tiptap/extension-typography";
 import TaskItem from "@tiptap/extension-task-item";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import {
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@tiptap/extension-table";
 import { common, createLowlight } from "lowlight";
 import { RichTextEditorProps } from "./types";
 import Button from "@/components/generic/ui/Button";
@@ -72,6 +78,12 @@ export function Editor({ onChange, editable = true }: RichTextEditorProps) {
       Typography,
       TaskItem.configure({ nested: true }),
       CodeBlockLowlight.configure({ lowlight }),
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Subscript,
       Superscript,
     ],

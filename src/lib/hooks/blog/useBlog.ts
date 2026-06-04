@@ -115,13 +115,24 @@ export function useApproveBlogContent() {
   });
 }
 
-export function useFetchBlogContents<T>(contentType: BLOG_CONTENT_TYPE) {
+export function useFetchBlogContents<T>(
+  contentType: BLOG_CONTENT_TYPE,
+  page: number = 0,
+  size: number = 10,
+) {
   return useQuery<T, Error>({
-    queryKey: [BLOG_POST_QUERY_KEY, contentType],
+    queryKey: [BLOG_POST_QUERY_KEY, contentType, page, size],
     queryFn: async (): Promise<T> => {
-      const res = await apiClient.get<T>(`/admin/approve/${contentType}`);
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("size", String(size));
+
+      const res = await apiClient.get<T>(
+        `/admin/approve/${contentType}?${params.toString()}`,
+      );
       return res;
     },
+    placeholderData: (previousData) => previousData,
   });
 }
 
