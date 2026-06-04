@@ -2,36 +2,41 @@ import React from "react";
 import { Editor } from "@tiptap/react";
 
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  BetweenHorizontalEnd,
+  BetweenHorizontalStart,
+  BetweenVerticalEnd,
+  BetweenVerticalStart,
   Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Link,
+  CheckSquare,
   Code,
-} from "lucide-react";
-
-import {
   Code2,
+  Columns3,
   Heading1,
   Heading2,
   Heading3,
+  Highlighter,
+  ImageUp,
+  Italic,
+  Link,
   List,
   ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Image,
-  ImageUp,
-  Quote,
+  Loader2,
   Minus,
-  CheckSquare,
+  PanelTop,
+  Quote,
+  Redo,
+  Rows3,
+  Strikethrough,
   Subscript,
   Superscript,
-  Highlighter,
+  Table,
+  Trash2,
+  Underline,
   Undo,
-  Redo,
-  Loader2,
 } from "lucide-react";
 import { ToolbarSection } from "./types";
 
@@ -44,6 +49,45 @@ export function Toolbar({
   onImageUpload?: () => void;
   isUploadingImage?: boolean;
 }) {
+  const getTableCommand = (command: string) =>
+    (editor.commands as unknown as Record<string, unknown>)[command];
+  const hasTableCommand = (command: string) =>
+    typeof getTableCommand(command) === "function";
+  const isTableActive = editor.isActive("table");
+
+  const insertTable = () => {
+    const command = getTableCommand("insertTable");
+
+    if (typeof command === "function") {
+      editor.commands.focus();
+      (
+        command as (options: {
+          rows: number;
+          cols: number;
+          withHeaderRow: boolean;
+        }) => boolean
+      )({ rows: 3, cols: 3, withHeaderRow: true });
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .insertContent(
+        "<table><tbody><tr><th><p></p></th><th><p></p></th><th><p></p></th></tr><tr><td><p></p></td><td><p></p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td><td><p></p></td></tr></tbody></table>",
+      )
+      .run();
+  };
+
+  const runTableCommand = (commandName: string) => {
+    const command = getTableCommand(commandName);
+
+    if (typeof command !== "function") return;
+
+    editor.commands.focus();
+    (command as () => boolean)();
+  };
+
   const setLink = () => {
     const url = window.prompt("URL");
     if (url) editor.chain().focus().setLink({ href: url }).run();
@@ -223,23 +267,89 @@ export function Toolbar({
         },
       ],
     },
+    {
+      tools: [
+        {
+          icon: Table,
+          action: insertTable,
+          active: isTableActive,
+          title: "Insert Table",
+        },
+        {
+          icon: BetweenVerticalStart,
+          action: () => runTableCommand("addColumnBefore"),
+          disabled: !isTableActive || !hasTableCommand("addColumnBefore"),
+          title: "Add Column Before",
+        },
+        {
+          icon: BetweenVerticalEnd,
+          action: () => runTableCommand("addColumnAfter"),
+          disabled: !isTableActive || !hasTableCommand("addColumnAfter"),
+          title: "Add Column After",
+        },
+        {
+          icon: Columns3,
+          action: () => runTableCommand("deleteColumn"),
+          disabled: !isTableActive || !hasTableCommand("deleteColumn"),
+          title: "Delete Column",
+        },
+        {
+          icon: BetweenHorizontalStart,
+          action: () => runTableCommand("addRowBefore"),
+          disabled: !isTableActive || !hasTableCommand("addRowBefore"),
+          title: "Add Row Before",
+        },
+        {
+          icon: BetweenHorizontalEnd,
+          action: () => runTableCommand("addRowAfter"),
+          disabled: !isTableActive || !hasTableCommand("addRowAfter"),
+          title: "Add Row After",
+        },
+        {
+          icon: Rows3,
+          action: () => runTableCommand("deleteRow"),
+          disabled: !isTableActive || !hasTableCommand("deleteRow"),
+          title: "Delete Row",
+        },
+        {
+          icon: PanelTop,
+          action: () => runTableCommand("toggleHeaderRow"),
+          disabled: !isTableActive || !hasTableCommand("toggleHeaderRow"),
+          title: "Toggle Header Row",
+        },
+        {
+          icon: Trash2,
+          action: () => runTableCommand("deleteTable"),
+          disabled: !isTableActive || !hasTableCommand("deleteTable"),
+          title: "Delete Table",
+        },
+      ],
+    },
   ];
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 bg-white sticky top-0 z-10">
       {sections.map((section, si) => (
         <div key={si} className="flex items-center gap-0.5">
-          {section.tools.map(({ icon: Icon, action, active, title }) => (
-            <button
-              key={title}
-              onClick={action}
-              title={title}
-              className={`p-1.5 rounded hover:bg-gray-100 transition-colors text-gray-700
+          {section.tools.map(
+            ({ icon: Icon, action, active, disabled, title }) => (
+              <button
+                key={title}
+                onClick={action}
+                disabled={disabled}
+                title={title}
+                className={`p-1.5 rounded transition-colors
+                ${
+                  disabled
+                    ? "text-gray-300 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100"
+                }
                 ${active ? "bg-gray-200 text-gray-900" : ""}`}
-            >
-              <Icon size={16} />
-            </button>
-          ))}
+              >
+                <Icon size={16} />
+              </button>
+            ),
+          )}
           {si < sections.length - 1 && (
             <div className="w-px h-5 bg-gray-200 mx-1" />
           )}

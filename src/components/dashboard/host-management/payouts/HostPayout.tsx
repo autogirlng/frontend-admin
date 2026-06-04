@@ -9,6 +9,7 @@ import {
   Clock,
   AlertCircle,
   DollarSign,
+  MinusCircle,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import clsx from "clsx";
@@ -25,6 +26,13 @@ import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomBack from "@/components/generic/CustomBack";
 import Button from "@/components/generic/ui/Button";
 import { DownloadHostInvoiceModal } from "../DownloadHostInvoiceModal";
+import {
+  useCreateDeduction,
+  useDeleteDeduction,
+  useUpdateDeduction,
+} from "@/lib/hooks/host-management/deductions/useDeductions";
+import { DeductionModal } from "./DeductionModal";
+import type { DeductionPayload } from "@/lib/types/deductions";
 
 const formatPrice = (amount: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -49,6 +57,9 @@ export default function HostPayout() {
     null,
   );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isDeductionModalOpen, setIsDeductionModalOpen] = useState(false);
+  const [isDeleteDeductionModalOpen, setIsDeleteDeductionModalOpen] =
+    useState(false);
   const [isDownloadHostInvoiceModalOpen, setIsDownloadHostInvoiceModalOpen] =
     useState(false);
 
@@ -60,9 +71,14 @@ export default function HostPayout() {
   } = useGetHostPayouts(hostId, statusFilter.id, currentPage);
 
   const markPaidMutation = useMarkPayoutPaid();
+  const createDeductionMutation = useCreateDeduction();
+  const updateDeductionMutation = useUpdateDeduction();
+  const deleteDeductionMutation = useDeleteDeduction();
 
   const bookings = payoutData?.bookings?.content || [];
   const totalPages = payoutData?.bookings?.totalPages || 0;
+  const isSavingDeduction =
+    createDeductionMutation.isPending || updateDeductionMutation.isPending;
 
   const handleMarkPaid = () => {
     if (!selectedBooking) return;
@@ -77,6 +93,46 @@ export default function HostPayout() {
   const openConfirmModal = (booking: PayoutBooking) => {
     setSelectedBooking(booking);
     setIsConfirmModalOpen(true);
+  };
+
+  const openDeductionModal = (booking: PayoutBooking) => {
+    setSelectedBooking(booking);
+    setIsDeductionModalOpen(true);
+  };
+
+  const closeDeductionModal = () => {
+    setIsDeductionModalOpen(false);
+    setIsDeleteDeductionModalOpen(false);
+    setSelectedBooking(null);
+  };
+
+  const handleDeductionSubmit = (payload: DeductionPayload) => {
+    if (!selectedBooking) return;
+
+    if (selectedBooking.deductionId) {
+      updateDeductionMutation.mutate(
+        {
+          id: selectedBooking.deductionId,
+          payload,
+        },
+        {
+          onSuccess: closeDeductionModal,
+        },
+      );
+      return;
+    }
+
+    createDeductionMutation.mutate(payload, {
+      onSuccess: closeDeductionModal,
+    });
+  };
+
+  const handleDeleteDeduction = () => {
+    if (!selectedBooking?.deductionId) return;
+
+    deleteDeductionMutation.mutate(selectedBooking.deductionId, {
+      onSuccess: closeDeductionModal,
+    });
   };
 
   useEffect(() => {
@@ -163,6 +219,11 @@ export default function HostPayout() {
                 label: "Mark as Paid",
                 icon: CheckCircle,
                 onClick: () => openConfirmModal(item),
+              },
+              {
+                label: "Deduction",
+                icon: MinusCircle,
+                onClick: () => openDeductionModal(item),
               },
             ]}
           />
@@ -317,6 +378,37 @@ export default function HostPayout() {
           onConfirm={handleMarkPaid}
           isLoading={markPaidMutation.isPending}
           variant="primary"
+        />
+      )}
+
+      {isDeductionModalOpen && selectedBooking && (
+        <DeductionModal
+          hostId={hostId}
+          booking={selectedBooking}
+          isLoading={isSavingDeduction}
+          onClose={closeDeductionModal}
+          onDelete={() => setIsDeleteDeductionModalOpen(true)}
+          onSubmit={handleDeductionSubmit}
+        />
+      )}
+
+      {isDeleteDeductionModalOpen && selectedBooking?.deductionId && (
+        <ActionModal
+          title="Delete Deduction"
+          message={
+            <>
+              Are you sure you want to delete the deduction for invoice{" "}
+              <strong className="text-gray-900">
+                {selectedBooking.invoiceNumber}
+              </strong>
+              ? This will refresh the host payout totals.
+            </>
+          }
+          actionLabel="Delete"
+          onClose={() => setIsDeleteDeductionModalOpen(false)}
+          onConfirm={handleDeleteDeduction}
+          isLoading={deleteDeductionMutation.isPending}
+          variant="danger"
         />
       )}
     </main>
