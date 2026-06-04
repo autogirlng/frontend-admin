@@ -14,7 +14,7 @@ import {
   BookCopy,
   ChevronRight,
   Star,
-  Ticket,
+  FileSpreadsheet,
 } from "lucide-react";
 import React from "react";
 import CustomBack from "../generic/CustomBack";
@@ -93,9 +93,14 @@ const setupItems: SetupItem[] = [
     href: "/dashboard/vehicle-onboarding/top-rated-vehicles",
     icon: Star,
   },
+  {
+    title: "Pricing Sheets",
+    description: "Manage the pricing sheets for different vehicle types.",
+    href: "/dashboard/set-up/pricing-sheet",
+    icon: FileSpreadsheet,
+  },
 ];
 
-// 3. The Page Component
 export default function SetupPage() {
   return (
     <main className="py-3 max-w-8xl mx-auto">
@@ -121,12 +126,9 @@ export default function SetupPage() {
                          hover:shadow-md hover:bg-gray-50"
             >
               <div className="flex items-center gap-4">
-                {/* Icon */}
                 <div className="flex-shrink-0 p-3 bg-indigo-50 rounded-full">
                   <Icon className="w-6 h-6 text-[#0096FF]" />
                 </div>
-
-                {/* Text Content */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     {item.title}
@@ -134,8 +136,6 @@ export default function SetupPage() {
                   <p className="text-sm text-gray-500">{item.description}</p>
                 </div>
               </div>
-
-              {/* Arrow Icon */}
               <ChevronRight className="w-5 h-5 text-gray-400 transition-transform group-hover:translate-x-1" />
             </Link>
           );

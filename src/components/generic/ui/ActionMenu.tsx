@@ -101,7 +101,7 @@ export function ActionMenu({ actions }: ActionMenuProps) {
               action.disabled && "cursor-not-allowed opacity-50",
               action.danger
                 ? "text-red-700 hover:bg-red-50"
-                : "text-gray-700 hover:bg-gray-100"
+                : "text-gray-700 hover:bg-gray-100",
             )}
           >
             <Icon className="mr-3 h-4 w-4" aria-hidden="true" />
