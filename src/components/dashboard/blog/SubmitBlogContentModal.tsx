@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { X, Layers, UploadCloud } from "lucide-react";
+import { X, Layers, UploadCloud, ImagePlus } from "lucide-react";
 import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -49,6 +49,7 @@ export function SubmitBlogContentModal({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState<string>("");
   const [coverImageUrl, setCoverImageUrl] = useState<string>("");
+  const [coverImagePublicId, setCoverImagePublicId] = useState<string>("");
 
   const [globalFile, setGlobalFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -61,6 +62,7 @@ export function SubmitBlogContentModal({
       setBlogCategory(postContent.blogCategory.id);
       setTags(postContent.tags);
       setCoverImageUrl(postContent.coverImage || "");
+      setCoverImagePublicId(postContent.coverImagePublicId || "");
     }
   }, [postContent]);
 
@@ -88,6 +90,9 @@ export function SubmitBlogContentModal({
           blogData.coverImage = uploaded.url;
           blogData.coverImagePublicId = uploaded.publicId;
         }
+      } else if (update) {
+        blogData.coverImage = coverImageUrl;
+        blogData.coverImagePublicId = coverImagePublicId;
       }
 
       if (update) {
@@ -137,6 +142,8 @@ export function SubmitBlogContentModal({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setGlobalFile(file);
+      setCoverImageUrl("");
+      setCoverImagePublicId("");
     }
   };
 
@@ -166,6 +173,12 @@ export function SubmitBlogContentModal({
   };
 
   const removeFile = () => {
+    setGlobalFile(null);
+  };
+
+  const removeExistingCoverImage = () => {
+    setCoverImageUrl("");
+    setCoverImagePublicId("");
     setGlobalFile(null);
   };
 
@@ -282,10 +295,10 @@ export function SubmitBlogContentModal({
                   className={clsx(
                     "block border-2 border-dashed p-6 text-center transition-all relative",
                     coverImageUrl
-                      ? "bg-gray-100 border-gray-300 cursor-not-allowed opacity-60"
+                      ? "bg-gray-100 border-gray-300 cursor-pointer"
                       : "cursor-pointer",
                     isDragging ? "border-blue-500 bg-blue-50" : "",
-                    globalFile && !isDragging && !coverImageUrl
+                    globalFile && !isDragging
                       ? "border-green-400 bg-green-50"
                       : !isDragging &&
                           !coverImageUrl &&
@@ -296,14 +309,13 @@ export function SubmitBlogContentModal({
                     id="global-proof-upload"
                     type="file"
                     className="sr-only"
-                    accept="image/*,application/pdf"
+                    accept="image/*"
                     onChange={(e) => handleFileChange(e)}
-                    disabled={!!coverImageUrl}
                   />
 
                   {coverImageUrl ? (
                     <div className="flex flex-col items-center">
-                      <div className="relative">
+                      <div className="relative h-24 w-32 overflow-hidden rounded-md bg-gray-200">
                         <Image
                           src={coverImageUrl}
                           alt="Cover"
@@ -317,12 +329,22 @@ export function SubmitBlogContentModal({
                           </span>
                         </div>
                       </div>
-                      <p className="mt-2 text-sm font-medium text-gray-500">
-                        Cover image already exists
+                      <p className="mt-2 flex items-center gap-1 text-sm font-medium text-blue-700">
+                        <ImagePlus className="h-4 w-4" />
+                        Click to replace cover image
                       </p>
-                      <p className="text-xs text-gray-400">
-                        Remove existing image to upload new one
-                      </p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeExistingCoverImage();
+                        }}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700"
+                      >
+                        <X className="h-3 w-3" />
+                        Remove existing image
+                      </button>
                     </div>
                   ) : globalFile ? (
                     <div className="flex flex-col items-center">
