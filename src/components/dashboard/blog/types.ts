@@ -6,6 +6,7 @@ export type ToolbarItem = {
   icon: React.ElementType;
   action: () => void;
   active?: boolean;
+  disabled?: boolean;
   title: string;
 };
 

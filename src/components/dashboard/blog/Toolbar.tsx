@@ -2,36 +2,41 @@ import React from "react";
 import { Editor } from "@tiptap/react";
 
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  BetweenHorizontalEnd,
+  BetweenHorizontalStart,
+  BetweenVerticalEnd,
+  BetweenVerticalStart,
   Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Link,
+  CheckSquare,
   Code,
-} from "lucide-react";
-
-import {
   Code2,
+  Columns3,
   Heading1,
   Heading2,
   Heading3,
+  Highlighter,
+  ImageUp,
+  Italic,
+  Link,
   List,
   ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Image,
-  ImageUp,
-  Quote,
+  Loader2,
   Minus,
-  CheckSquare,
+  PanelTop,
+  Quote,
+  Redo,
+  Rows3,
+  Strikethrough,
   Subscript,
   Superscript,
-  Highlighter,
+  Table,
+  Trash2,
+  Underline,
   Undo,
-  Redo,
-  Loader2,
 } from "lucide-react";
 import { ToolbarSection } from "./types";
 
@@ -223,23 +228,94 @@ export function Toolbar({
         },
       ],
     },
+    {
+      tools: [
+        {
+          icon: Table,
+          action: () =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run(),
+          active: editor.isActive("table"),
+          title: "Insert Table",
+        },
+        {
+          icon: BetweenVerticalStart,
+          action: () => editor.chain().focus().addColumnBefore().run(),
+          disabled: !editor.isActive("table"),
+          title: "Add Column Before",
+        },
+        {
+          icon: BetweenVerticalEnd,
+          action: () => editor.chain().focus().addColumnAfter().run(),
+          disabled: !editor.isActive("table"),
+          title: "Add Column After",
+        },
+        {
+          icon: Columns3,
+          action: () => editor.chain().focus().deleteColumn().run(),
+          disabled: !editor.isActive("table"),
+          title: "Delete Column",
+        },
+        {
+          icon: BetweenHorizontalStart,
+          action: () => editor.chain().focus().addRowBefore().run(),
+          disabled: !editor.isActive("table"),
+          title: "Add Row Before",
+        },
+        {
+          icon: BetweenHorizontalEnd,
+          action: () => editor.chain().focus().addRowAfter().run(),
+          disabled: !editor.isActive("table"),
+          title: "Add Row After",
+        },
+        {
+          icon: Rows3,
+          action: () => editor.chain().focus().deleteRow().run(),
+          disabled: !editor.isActive("table"),
+          title: "Delete Row",
+        },
+        {
+          icon: PanelTop,
+          action: () => editor.chain().focus().toggleHeaderRow().run(),
+          disabled: !editor.isActive("table"),
+          title: "Toggle Header Row",
+        },
+        {
+          icon: Trash2,
+          action: () => editor.chain().focus().deleteTable().run(),
+          disabled: !editor.isActive("table"),
+          title: "Delete Table",
+        },
+      ],
+    },
   ];
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 bg-white sticky top-0 z-10">
       {sections.map((section, si) => (
         <div key={si} className="flex items-center gap-0.5">
-          {section.tools.map(({ icon: Icon, action, active, title }) => (
-            <button
-              key={title}
-              onClick={action}
-              title={title}
-              className={`p-1.5 rounded hover:bg-gray-100 transition-colors text-gray-700
+          {section.tools.map(
+            ({ icon: Icon, action, active, disabled, title }) => (
+              <button
+                key={title}
+                onClick={action}
+                disabled={disabled}
+                title={title}
+                className={`p-1.5 rounded transition-colors
+                ${
+                  disabled
+                    ? "text-gray-300 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100"
+                }
                 ${active ? "bg-gray-200 text-gray-900" : ""}`}
-            >
-              <Icon size={16} />
-            </button>
-          ))}
+              >
+                <Icon size={16} />
+              </button>
+            ),
+          )}
           {si < sections.length - 1 && (
             <div className="w-px h-5 bg-gray-200 mx-1" />
           )}

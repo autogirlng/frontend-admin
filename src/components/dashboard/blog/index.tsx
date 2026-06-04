@@ -12,6 +12,7 @@ import {
 } from "@/components/dashboard/blog/types";
 import { useFetchBlogContents } from "@/lib/hooks/blog/useBlog";
 import CustomLoader from "@/components/generic/CustomLoader";
+import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import { format } from "date-fns";
 import { UpdateBlogStatusModal } from "@/components/dashboard/blog/UpdateBlogStatus";
 import { Toaster } from "react-hot-toast";
@@ -19,10 +20,15 @@ import { Toaster } from "react-hot-toast";
 const Blog = () => {
   const router = useRouter();
   const [approvalModal, setApprovalModal] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
 
-  const { data, isPending, isError } = useFetchBlogContents<ModeratedBlogPost>(
-    BLOG_CONTENT_TYPE.POST,
-  );
+  const { data, isPending, isFetching, isError } =
+    useFetchBlogContents<ModeratedBlogPost>(
+      BLOG_CONTENT_TYPE.POST,
+      currentPage,
+      pageSize,
+    );
 
   if (isPending) return <CustomLoader />;
 
@@ -124,6 +130,12 @@ const Blog = () => {
                     </article>
                   );
                 })}
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={data?.totalPages || 0}
+                  onPageChange={setCurrentPage}
+                  isLoading={isFetching}
+                />
               </div>
 
               <aside className="space-y-6">
