@@ -268,14 +268,13 @@ export default function Disputes() {
 
       {selectedDispute && (
         <ActionModal
-          title="Update Dispute State"
+          title="Update Dispute Status"
           message={
             <>
-              Update dispute{" "}
-              <span className="font-semibold">{selectedDispute.id}</span>.
+              Update dispute based on resolution progress.
             </>
           }
-          actionLabel="Update State"
+          actionLabel="Update Status"
           onClose={closeUpdateModal}
           onConfirm={handleUpdateDispute}
           isLoading={isUpdatingDispute}
@@ -284,7 +283,7 @@ export default function Disputes() {
         >
           <div className="space-y-4">
             <Select
-              label="State"
+              label="Status"
               options={updateStatusOptions}
               selected={selectedStatus}
               onChange={setSelectedStatus}
