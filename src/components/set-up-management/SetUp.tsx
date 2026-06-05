@@ -146,7 +146,7 @@ export default function SetupPage() {
               <ChevronRight className="w-5 h-5 text-gray-400 transition-transform group-hover:translate-x-1" />
             </Link>
           );
-        })}
+        })} 
       </div>
     </main>
   );
