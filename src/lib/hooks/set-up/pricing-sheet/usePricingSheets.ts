@@ -6,12 +6,14 @@ export interface PricingSheet {
   id: string;
   vehicleMakeName: string;
   vehicleModelName: string;
-  baseYear: number;
-  upgradedYear?: number;
+  startYear: number;
+  endYear: number;
+  upgradedYear?: number | null;
   bookingTypeName: string;
   durationInMinutes: number;
   price: number;
-  active: boolean;
+  active?: boolean;
+  isActive?: boolean;
 }
 
 export interface PricingSheetModel {
@@ -43,14 +45,16 @@ export interface PricingItem {
 
 export interface CreatePricingSheetPayload {
   vehicleModelId: string;
-  baseYear: number;
-  upgradedYear?: number;
+  startYear: number;
+  endYear: number;
+  upgradedYear?: number | null;
   pricingItems: PricingItem[];
 }
 
 export interface UpdatePricingSheetPayload {
-  baseYear: number;
-  upgradedYear?: number;
+  startYear: number;
+  endYear: number;
+  upgradedYear?: number | null;
   bookingTypeId: string;
   price: number;
 }
@@ -73,11 +77,11 @@ export function useGetPricingCatalog(page = 0, searchTerm = "") {
 export function useCreatePricingSheet() {
   const queryClient = useQueryClient();
 
-  return useMutation<PricingSheet, Error, CreatePricingSheetPayload>({
+  return useMutation<PricingSheet[], Error, CreatePricingSheetPayload>({
     mutationFn: (payload) => apiClient.post("/admin/pricing-sheets", payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRICING_CATALOG_QUERY_KEY });
-      toast.success("Pricing sheet created successfully.");
+      toast.success("Pricing sheets created successfully.");
     },
     onError: (error) => {
       toast.error(`Failed to create: ${error.message}`);
@@ -93,8 +97,9 @@ export function useTogglePricingSheetStatus() {
       apiClient.patch(`/admin/pricing-sheets/${id}/status`, { isActive }),
     onSuccess: (updatedSheet) => {
       queryClient.invalidateQueries({ queryKey: PRICING_CATALOG_QUERY_KEY });
+      const status = updatedSheet.isActive ?? updatedSheet.active;
       toast.success(
-        updatedSheet.active
+        status
           ? "Pricing sheet activated successfully."
           : "Pricing sheet deactivated successfully.",
       );
