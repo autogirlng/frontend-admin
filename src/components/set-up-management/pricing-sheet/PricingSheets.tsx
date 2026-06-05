@@ -41,14 +41,14 @@ import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
 
 const CURRENT_YEAR = new Date().getFullYear();
-const BASE_YEARS: Option[] = Array.from(
-  { length: CURRENT_YEAR - 2010 + 1 },
+const YEARS: Option[] = Array.from(
+  { length: CURRENT_YEAR - 2010 + 10 },
   (_, i) => {
     const y = String(2010 + i);
     return { id: y, name: y };
   },
 );
-const UPGRADED_YEARS: Option[] = [{ id: "", name: "None" }, ...BASE_YEARS];
+const UPGRADED_YEARS: Option[] = [{ id: "", name: "None" }, ...YEARS];
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -75,24 +75,24 @@ function useDebounce<T>(value: T, delay = 500): T {
 }
 
 interface SheetFormState {
-  baseYear: Option | null;
+  startYear: Option | null;
+  endYear: Option | null;
   upgradedYear: Option | null;
   bookingType: Option | null;
   price: string;
 }
 
-function emptyForm(): SheetFormState {
-  return {
-    baseYear: null,
-    upgradedYear: UPGRADED_YEARS[0],
-    bookingType: null,
-    price: "",
-  };
-}
-
 function validateForm(f: SheetFormState): Record<string, string> {
   const errs: Record<string, string> = {};
-  if (!f.baseYear) errs.baseYear = "Base year is required.";
+  if (!f.startYear) errs.startYear = "Start year is required.";
+  if (!f.endYear) errs.endYear = "End year is required.";
+  if (
+    f.startYear &&
+    f.endYear &&
+    Number(f.startYear.id) > Number(f.endYear.id)
+  ) {
+    errs.endYear = "End year cannot be before start year.";
+  }
   if (!f.bookingType) errs.bookingType = "Booking type is required.";
   if (!f.price || isNaN(Number(f.price)) || Number(f.price) <= 0)
     errs.price = "A valid price is required.";
@@ -114,14 +114,22 @@ function SheetFormBody({
 }: SheetFormBodyProps) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
-          label="Base Year"
-          options={BASE_YEARS}
-          selected={form.baseYear}
-          onChange={(v) => onChange({ baseYear: v })}
-          placeholder="Select base year"
-          error={errors.baseYear}
+          label="Start Year"
+          options={YEARS}
+          selected={form.startYear}
+          onChange={(v) => onChange({ startYear: v })}
+          placeholder="Select"
+          error={errors.startYear}
+        />
+        <Select
+          label="End Year"
+          options={YEARS}
+          selected={form.endYear}
+          onChange={(v) => onChange({ endYear: v })}
+          placeholder="Select"
+          error={errors.endYear}
         />
         <Select
           label="Upgraded Year"
@@ -259,7 +267,8 @@ function CreateSheetModal({
   onClose,
 }: CreateSheetModalProps) {
   const createMutation = useCreatePricingSheet();
-  const [baseYear, setBaseYear] = useState<Option | null>(null);
+  const [startYear, setStartYear] = useState<Option | null>(null);
+  const [endYear, setEndYear] = useState<Option | null>(null);
   const [upgradedYear, setUpgradedYear] = useState<Option | null>(
     UPGRADED_YEARS[0],
   );
@@ -288,7 +297,11 @@ function CreateSheetModal({
 
   const validate = (): boolean => {
     const yErrs: Record<string, string> = {};
-    if (!baseYear) yErrs.baseYear = "Base year is required.";
+    if (!startYear) yErrs.startYear = "Start year is required.";
+    if (!endYear) yErrs.endYear = "End year is required.";
+    if (startYear && endYear && Number(startYear.id) > Number(endYear.id)) {
+      yErrs.endYear = "Cannot be before start year.";
+    }
     setYearErrors(yErrs);
 
     const iErrs: PricingItemErrors[] = items.map((item) => {
@@ -310,8 +323,9 @@ function CreateSheetModal({
 
     const payload: CreatePricingSheetPayload = {
       vehicleModelId: modelId,
-      baseYear: Number(baseYear!.id),
-      upgradedYear: upgradedYear?.id ? Number(upgradedYear.id) : undefined,
+      startYear: Number(startYear!.id),
+      endYear: Number(endYear!.id),
+      upgradedYear: upgradedYear?.id ? Number(upgradedYear.id) : null,
       pricingItems: items.map((it) => ({
         bookingTypeId: it.bookingTypeId,
         price: Number(it.price),
@@ -346,16 +360,24 @@ function CreateSheetModal({
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">
-              Vehicle Year
+              Vehicle Year Range
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Select
-                label="Base Year"
-                options={BASE_YEARS}
-                selected={baseYear}
-                onChange={setBaseYear}
-                placeholder="Select base year"
-                error={yearErrors.baseYear}
+                label="Start Year"
+                options={YEARS}
+                selected={startYear}
+                onChange={setStartYear}
+                placeholder="Start"
+                error={yearErrors.startYear}
+              />
+              <Select
+                label="End Year"
+                options={YEARS}
+                selected={endYear}
+                onChange={setEndYear}
+                placeholder="End"
+                error={yearErrors.endYear}
               />
               <Select
                 label="Upgraded Year"
@@ -448,7 +470,8 @@ function EditSheetModal({
 }: EditSheetModalProps) {
   const updateMutation = useUpdatePricingSheet();
   const [form, setForm] = useState<SheetFormState>({
-    baseYear: BASE_YEARS.find((y) => y.id === String(sheet.baseYear)) ?? null,
+    startYear: YEARS.find((y) => y.id === String(sheet.startYear)) ?? null,
+    endYear: YEARS.find((y) => y.id === String(sheet.endYear)) ?? null,
     upgradedYear: sheet.upgradedYear
       ? (UPGRADED_YEARS.find((y) => y.id === String(sheet.upgradedYear)) ??
         UPGRADED_YEARS[0])
@@ -468,10 +491,9 @@ function EditSheetModal({
     if (Object.keys(errs).length > 0) return;
 
     const payload: UpdatePricingSheetPayload = {
-      baseYear: Number(form.baseYear!.id),
-      upgradedYear: form.upgradedYear?.id
-        ? Number(form.upgradedYear.id)
-        : undefined,
+      startYear: Number(form.startYear!.id),
+      endYear: Number(form.endYear!.id),
+      upgradedYear: form.upgradedYear?.id ? Number(form.upgradedYear.id) : null,
       bookingTypeId: form.bookingType!.id,
       price: Number(form.price),
     };
@@ -544,6 +566,8 @@ interface SheetRowProps {
 }
 
 function SheetRow({ sheet, onEdit, onDelete, onToggle }: SheetRowProps) {
+  const isSheetActive = sheet.isActive ?? sheet.active;
+
   const actions: ActionMenuItem[] = [
     {
       label: "Edit",
@@ -551,8 +575,8 @@ function SheetRow({ sheet, onEdit, onDelete, onToggle }: SheetRowProps) {
       onClick: () => onEdit(sheet),
     },
     {
-      label: sheet.active ? "Deactivate" : "Activate",
-      icon: sheet.active ? ToggleLeft : ToggleRight,
+      label: isSheetActive ? "Deactivate" : "Activate",
+      icon: isSheetActive ? ToggleLeft : ToggleRight,
       onClick: () => onToggle(sheet),
     },
     {
@@ -564,10 +588,12 @@ function SheetRow({ sheet, onEdit, onDelete, onToggle }: SheetRowProps) {
   ];
 
   return (
-    <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[120px_1fr_80px_140px_auto] items-center gap-x-4 gap-y-1 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
+    <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[150px_1fr_80px_140px_auto] items-center gap-x-4 gap-y-1 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
       <div className="hidden sm:flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded w-fit whitespace-nowrap">
         <Calendar className="h-3 w-3 flex-shrink-0" />
-        <span>{sheet.baseYear}</span>
+        <span>
+          {sheet.startYear} - {sheet.endYear}
+        </span>
         {sheet.upgradedYear && (
           <>
             <ChevronRight className="h-3 w-3" />
@@ -581,7 +607,7 @@ function SheetRow({ sheet, onEdit, onDelete, onToggle }: SheetRowProps) {
         </p>
         <p className="text-xs text-gray-400 sm:hidden flex items-center gap-1 mt-0.5">
           <Calendar className="h-3 w-3" />
-          {sheet.baseYear}
+          {sheet.startYear} - {sheet.endYear}
           {sheet.upgradedYear && ` → ${sheet.upgradedYear}`}
         </p>
       </div>
@@ -596,7 +622,7 @@ function SheetRow({ sheet, onEdit, onDelete, onToggle }: SheetRowProps) {
         <span
           className={clsx(
             "hidden sm:inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap",
-            sheet.active
+            isSheetActive
               ? "bg-green-50 text-green-700"
               : "bg-red-50 text-red-600",
           )}
@@ -604,10 +630,10 @@ function SheetRow({ sheet, onEdit, onDelete, onToggle }: SheetRowProps) {
           <span
             className={clsx(
               "h-1.5 w-1.5 rounded-full flex-shrink-0",
-              sheet.active ? "bg-green-500" : "bg-red-400",
+              isSheetActive ? "bg-green-500" : "bg-red-400",
             )}
           />
-          {sheet.active ? "Active" : "Inactive"}
+          {isSheetActive ? "Active" : "Inactive"}
         </span>
         <ActionMenu actions={actions} />
       </div>
@@ -652,13 +678,14 @@ function ModelAccordion({
     return sheets.filter(
       (s) =>
         s.bookingTypeName.toLowerCase().includes(q) ||
-        String(s.baseYear).includes(q) ||
+        String(s.startYear).includes(q) ||
+        String(s.endYear).includes(q) ||
         String(s.upgradedYear ?? "").includes(q) ||
         String(s.price).includes(q),
     );
   }, [sheets, searchQuery]);
 
-  const activeCount = sheets.filter((s) => s.active).length;
+  const activeCount = sheets.filter((s) => s.isActive ?? s.active).length;
 
   return (
     <div className="border border-gray-200 bg-white overflow-hidden">
@@ -733,7 +760,7 @@ function ModelAccordion({
             </div>
           ) : (
             <>
-              <div className="hidden sm:grid grid-cols-[120px_1fr_80px_140px_auto] gap-x-4 px-4 py-2 bg-gray-50/70 border-b border-gray-100 text-xs font-medium text-gray-400 uppercase tracking-wider">
+              <div className="hidden sm:grid grid-cols-[150px_1fr_80px_140px_auto] gap-x-4 px-4 py-2 bg-gray-50/70 border-b border-gray-100 text-xs font-medium text-gray-400 uppercase tracking-wider">
                 <span>Year(s)</span>
                 <span>Booking Type</span>
                 <span>Duration</span>
@@ -870,7 +897,10 @@ export default function PricingSheets() {
   const handleConfirmToggle = () => {
     if (!togglingSheet) return;
     toggleMutation.mutate(
-      { id: togglingSheet.id, isActive: !togglingSheet.active },
+      {
+        id: togglingSheet.id,
+        isActive: !(togglingSheet.isActive ?? togglingSheet.active),
+      },
       { onSuccess: () => setTogglingSheet(null) },
     );
   };
@@ -884,7 +914,8 @@ export default function PricingSheets() {
               Pricing Sheets
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              Manage vehicle pricing by make, model, year, and booking type.
+              Manage vehicle pricing by make, model, year range, and booking
+              type.
             </p>
           </div>
           {data && (
@@ -1023,7 +1054,7 @@ export default function PricingSheets() {
               <strong>{deletingSheet.bookingTypeName}</strong> sheet for{" "}
               <strong>
                 {deletingSheet.vehicleMakeName} {deletingSheet.vehicleModelName}{" "}
-                ({deletingSheet.baseYear}
+                ({deletingSheet.startYear} - {deletingSheet.endYear}
                 {deletingSheet.upgradedYear
                   ? ` → ${deletingSheet.upgradedYear}`
                   : ""}
@@ -1043,9 +1074,13 @@ export default function PricingSheets() {
       />
       <ConfirmModal
         isOpen={!!togglingSheet}
-        variant={togglingSheet?.active ? "danger" : "primary"}
+        variant={
+          (togglingSheet?.isActive ?? togglingSheet?.active)
+            ? "danger"
+            : "primary"
+        }
         title={
-          togglingSheet?.active
+          (togglingSheet?.isActive ?? togglingSheet?.active)
             ? "Deactivate Pricing Sheet"
             : "Activate Pricing Sheet"
         }
@@ -1054,7 +1089,9 @@ export default function PricingSheets() {
             <span>
               Are you sure you want to{" "}
               <strong>
-                {togglingSheet.active ? "deactivate" : "activate"}
+                {(togglingSheet.isActive ?? togglingSheet.active)
+                  ? "deactivate"
+                  : "activate"}
               </strong>{" "}
               the <strong>{togglingSheet.bookingTypeName}</strong> sheet for{" "}
               <strong>
@@ -1066,7 +1103,11 @@ export default function PricingSheets() {
             ""
           )
         }
-        confirmLabel={togglingSheet?.active ? "Deactivate" : "Activate"}
+        confirmLabel={
+          (togglingSheet?.isActive ?? togglingSheet?.active)
+            ? "Deactivate"
+            : "Activate"
+        }
         cancelLabel="Cancel"
         onConfirm={handleConfirmToggle}
         onCancel={() => setTogglingSheet(null)}
