@@ -9,6 +9,7 @@ import { uploadToCloudinary } from "@/components/dashboard/finance/payments/util
 import {
   BlogPost,
   CreateBlogCategoryPayload,
+  UpdateBlogCategoryPayload,
   CreateBlogPostPayload,
   CreateBlogPostResponseData,
   BlogCategory,
@@ -86,11 +87,47 @@ export function useCreateBlogCategory() {
     onSuccess: () => {
       toast.success("New Blog Category Created");
       queryClient.invalidateQueries({
-        queryKey: [BLOG_POST_QUERY_KEY],
+        queryKey: [BLOG_CATEGORY_QUERY_KEY],
       });
     },
     onError: (error) => {
       toast.error(error.message || "Blog Category Not Created");
+    },
+  });
+}
+
+export function useUpdateBlogCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, UpdateBlogCategoryPayload>({
+    mutationFn: (payload) =>
+      apiClient.put<BlogCategory>("/blog-categories", payload),
+    onSuccess: () => {
+      toast.success("Blog category updated successfully.");
+      queryClient.invalidateQueries({
+        queryKey: [BLOG_CATEGORY_QUERY_KEY],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update blog category");
+    },
+  });
+}
+
+export function useDeleteBlogCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, string>({
+    mutationFn: (categoryId) =>
+      apiClient.delete(`/blog-categories/${categoryId}`),
+    onSuccess: () => {
+      toast.success("Blog category deleted successfully.");
+      queryClient.invalidateQueries({
+        queryKey: [BLOG_CATEGORY_QUERY_KEY],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete blog category");
     },
   });
 }
@@ -101,11 +138,16 @@ export function useApproveBlogContent() {
   return useMutation<unknown, Error, ModeratedBlogApprovalPayload>({
     mutationFn: (payload) =>
       apiClient.put(`/admin/approve/${payload.contentType}/${payload.id}`, {}),
-    onSuccess: () => {
-      toast.success("Blog post approved");
+    onSuccess: (_, variables) => {
+      toast.success("Blog content approved");
       queryClient.invalidateQueries({
         queryKey: [BLOG_POST_QUERY_KEY],
       });
+      if (variables.contentType === BLOG_CONTENT_TYPE.CATEGORY) {
+        queryClient.invalidateQueries({
+          queryKey: [BLOG_CATEGORY_QUERY_KEY],
+        });
+      }
     },
     onError: (error) => {
       toast.error(
@@ -136,14 +178,17 @@ export function useFetchBlogContents<T>(
   });
 }
 
-export function useFetchBlogCategories() {
+export function useFetchBlogCategories(page: number = 0, size: number = 20) {
   return useQuery<PaginatedResponse<BlogCategory>, Error>({
-    queryKey: [BLOG_CATEGORY_QUERY_KEY],
+    queryKey: [BLOG_CATEGORY_QUERY_KEY, page, size],
     queryFn: async (): Promise<PaginatedResponse<BlogCategory>> => {
-      const res =
-        await apiClient.get<PaginatedResponse<BlogCategory>>(
-          `/blog-categories`,
-        );
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("size", String(size));
+
+      const res = await apiClient.get<PaginatedResponse<BlogCategory>>(
+        `/blog-categories?${params.toString()}`,
+      );
       return res;
     },
   });
