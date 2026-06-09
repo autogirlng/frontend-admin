@@ -66,6 +66,8 @@ export interface ApproveVehiclePayload {
   pricing: VehiclePrice[];
   discounts: VehicleDiscount[];
   extraHourlyRate: number;
+  outskirtFee: number;
+  extremeFee: number;
 }
 
 export interface VehicleFull extends Vehicle {
@@ -73,6 +75,8 @@ export interface VehicleFull extends Vehicle {
   pricing: VehiclePrice[];
   discounts: VehicleDiscount[];
   extraHourlyRate: number;
+  outskirtFee: number;
+  extremeFee: number;
 }
 
 export interface BulkCreateVehiclePayload {
