@@ -40,6 +40,8 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
     setActiveGeofenceStateId,
     stateNameMap,
     geofenceNameMap,
+    homeStateId,
+    homeStateName,
     isFetchingStates,
     isFetchingGeofences,
     handleInputChange,
@@ -48,7 +50,6 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
     handleCheckboxChange,
     handlePriceChange,
     handleDiscountChange,
-    handleStateFeeChange,
     handleSubmit,
   } = useVehicleStep5(vehicleId);
 
@@ -62,14 +63,33 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
     id: c.id,
     name: c.name,
   }));
-  const stateOptions: Option[] = states.map((s) => ({
-    id: s.id,
-    name: s.name,
-  }));
+
+  const availableStateOptions: Option[] = states
+    .filter((s) => s.id !== homeStateId)
+    .map((s) => ({ id: s.id, name: s.name }));
+
   const geofenceAreaOptions: Option[] = geofenceAreas.map((g) => ({
     id: g.id,
     name: g.name,
   }));
+
+  const kmOptions: Option[] = Array.from({ length: 100 }, (_, i) => ({
+    id: String(i + 1),
+    name: `${i + 1} KM`,
+  }));
+
+  const geofenceDropdownOptions: Option[] = [];
+  if (homeStateId) {
+    geofenceDropdownOptions.push({
+      id: homeStateId,
+      name: `${homeStateName} (Home State)`,
+    });
+  }
+  formData.supportedStateIds.forEach((id) => {
+    if (id !== homeStateId && stateNameMap[id]) {
+      geofenceDropdownOptions.push({ id, name: stateNameMap[id] });
+    }
+  });
 
   if (isLoading || isLoadingSession) {
     return <CustomLoader />;
@@ -127,7 +147,7 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
             />
           </FormSection>
 
-          <FormSection title="Services">
+          <FormSection title="Services & Retrieval">
             <Select
               label="Will you provide a driver?"
               options={yesNoOptions}
@@ -152,9 +172,32 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
                 handleSelectChange("willProvideFuel", option)
               }
             />
+            <Select
+              label="Support Retrieval Fee?"
+              options={yesNoOptions}
+              placeholder="Select an option"
+              selected={
+                yesNoOptions.find(
+                  (o) => o.id === formData.supportRetrievalFee,
+                ) || null
+              }
+              onChange={(option) =>
+                handleSelectChange("supportRetrievalFee", option)
+              }
+            />
+            {formData.supportRetrievalFee === "yes" && (
+              <TextInput
+                label="Retrieval Fee per KM (NGN)"
+                id="retrievalFeePerKm"
+                type="number"
+                placeholder="e.g., 1500"
+                value={formData.retrievalFeePerKm}
+                onChange={handleInputChange}
+              />
+            )}
           </FormSection>
 
-          <FormSection title="Supported States & Inter-State Fees" gridCols="1">
+          <FormSection title="Interstate Travel States" gridCols="1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
                 label="1. Select Country to view States"
@@ -174,9 +217,16 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
               </div>
             ) : selectedCountryId && states.length > 0 ? (
               <div className="mt-4">
+                {homeStateName && (
+                  <div className="mb-4 p-3 bg-blue-50 text-blue-800 text-sm border border-blue-100">
+                    Your vehicle's home state (<strong>{homeStateName}</strong>)
+                    is automatically supported. Select additional states below
+                    if you allow interstate travel.
+                  </div>
+                )}
                 <CheckboxGroup
-                  label="2. Select Supported States"
-                  options={stateOptions}
+                  label="2. Select Supported Interstate Destinations"
+                  options={availableStateOptions}
                   selectedIds={formData.supportedStateIds}
                   onChange={(id, checked) =>
                     handleCheckboxChange("supportedStateIds", id, checked)
@@ -188,84 +238,27 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
                 No states found for this country.
               </p>
             ) : null}
-
-            {formData.supportedStateIds.length > 0 && (
-              <div className="mt-6 p-5 bg-gray-50 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-800 mb-4">
-                  3. Set State Surcharge Fees
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {formData.supportedStateIds.map((stateId) => (
-                    <div key={stateId} className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <TextInput
-                          label={`${stateNameMap[stateId] || "State"} Fee (NGN)`}
-                          id={`surcharge-${stateId}`}
-                          type="number"
-                          placeholder="e.g. 50000 (0 for home state)"
-                          value={formData.stateSurchargeFees[stateId] || ""}
-                          onChange={(e) =>
-                            handleStateFeeChange(stateId, e.target.value)
-                          }
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleCheckboxChange(
-                            "supportedStateIds",
-                            stateId,
-                            false,
-                          )
-                        }
-                        className="mb-[2px] p-3.5 text-red-500 hover:bg-red-50 hover:text-red-700 rounded border border-transparent hover:border-red-200 transition-colors focus:outline-none"
-                        title={`Remove ${stateNameMap[stateId] || "State"}`}
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </FormSection>
-
-          <FormSection title="Booking Types" gridCols="1">
-            <CheckboxGroup
-              label="Supported Booking Types"
-              options={bookingTypeOptions}
-              selectedIds={formData.supportedBookingTypeIds}
-              onChange={(id, checked) =>
-                handleCheckboxChange("supportedBookingTypeIds", id, checked)
-              }
-            />
           </FormSection>
 
           <FormSection title="Out of Bounds Areas (Geofences)" gridCols="1">
             <p className="text-sm text-gray-500">
-              Select a supported state to view and manage its restricted areas.
+              Select a state to view and manage its restricted areas.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               <Select
                 label="Select State to view Geofences"
-                options={formData.supportedStateIds.map((id) => ({
-                  id,
-                  name: stateNameMap[id] || id,
-                }))}
+                options={geofenceDropdownOptions}
                 selected={
                   activeGeofenceStateId
-                    ? {
-                        id: activeGeofenceStateId,
-                        name:
-                          stateNameMap[activeGeofenceStateId] ||
-                          activeGeofenceStateId,
-                      }
+                    ? geofenceDropdownOptions.find(
+                        (o) => o.id === activeGeofenceStateId,
+                      ) || null
                     : null
                 }
                 onChange={(opt) => setActiveGeofenceStateId(opt.id)}
                 placeholder="Choose a state"
-                disabled={formData.supportedStateIds.length === 0}
+                disabled={geofenceDropdownOptions.length === 0}
               />
             </div>
 
@@ -323,8 +316,57 @@ function VehicleConfigForm({ vehicleId }: { vehicleId: string }) {
               </div>
             )}
           </FormSection>
+          <FormSection title="Interstate & Intercountry Constraints">
+            <TextInput
+              label="Interstate Amount (NGN)"
+              id="interstateAmount"
+              type="number"
+              placeholder="e.g., 25000"
+              value={formData.interstateAmount}
+              onChange={handleInputChange}
+            />
+            <Select
+              label="Interstate Limit (KM)"
+              options={kmOptions}
+              placeholder="Select KM Limit"
+              selected={
+                kmOptions.find((o) => o.id === formData.interstateKm) || null
+              }
+              onChange={(option) => handleSelectChange("interstateKm", option)}
+            />
+            <TextInput
+              label="Intercountry Amount (NGN)"
+              id="intercountryAmount"
+              type="number"
+              placeholder="e.g., 50000"
+              value={formData.intercountryAmount}
+              onChange={handleInputChange}
+            />
+            <Select
+              label="Intercountry Limit (KM)"
+              options={kmOptions}
+              placeholder="Select KM Limit"
+              selected={
+                kmOptions.find((o) => o.id === formData.intercountryKm) || null
+              }
+              onChange={(option) =>
+                handleSelectChange("intercountryKm", option)
+              }
+            />
+          </FormSection>
 
-          <FormSection title="Pricing">
+          <FormSection title="Booking Types" gridCols="1">
+            <CheckboxGroup
+              label="Supported Booking Types"
+              options={bookingTypeOptions}
+              selectedIds={formData.supportedBookingTypeIds}
+              onChange={(id, checked) =>
+                handleCheckboxChange("supportedBookingTypeIds", id, checked)
+              }
+            />
+          </FormSection>
+
+          <FormSection title="General Pricing Constraints">
             <div className="md:col-span-2 space-y-5">
               <h4 className="text-md font-semibold text-gray-800">
                 Booking Rates
