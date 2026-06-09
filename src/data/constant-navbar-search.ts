@@ -274,7 +274,7 @@ export const SEARCHABLE_PAGES = [
     icon: Star,
   },
   {
-    name: "Special Sale Booking",
+    name: "Hourly Pricing Booking",
     href: "/dashboard/set-up/special-sale-booking",
     path: "Configurations / Setup / Special Sale Booking",
     icon: ShieldEllipsis,
