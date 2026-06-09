@@ -96,7 +96,7 @@ const PhotoProgressTracker: React.FC<{
 }> = ({ photos, primaryPhotoId, onRemove, onSetPrimary }) => {
   const filledSlots = photos.map((photo) => (
     <PhotoPreviewCard
-      key={photo.preview}
+      key={photo.publicId || photo.preview}
       previewUrl={photo.preview}
       publicId={photo.publicId}
       isUploading={photo.isUploading}
@@ -129,6 +129,7 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
     onFilesDrop,
     onRemovePhoto,
     onSetPrimary,
+    prefillStagingPhotos,
     handleSubmit,
   } = useVehiclePhotos(vehicleId);
 
@@ -168,9 +169,22 @@ function PhotoUploadForm({ vehicleId }: { vehicleId: string }) {
 
         {canUploadMore && (
           <div>
-            <h3 className="text-lg font-medium text-gray-800">
-              Add photos ({photoCount} / {REQUIRED_PHOTO_COUNT})
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-800">
+                Add photos ({photoCount} / {REQUIRED_PHOTO_COUNT})
+              </h3>
+              {process.env.NEXT_PUBLIC_APP_ENV === "staging" && (
+                <button
+                  type="button"
+                  onClick={() => prefillStagingPhotos(REQUIRED_PHOTO_COUNT)}
+                  className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-200 transition-colors font-semibold"
+                >
+                  <Check className="w-3 h-3" />
+                  Prefill Staging Images
+                </button>
+              )}
+            </div>
+
             <p className="text-sm text-gray-500 mb-4">
               You can drag & drop files or click to select.
             </p>
