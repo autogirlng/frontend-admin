@@ -32,6 +32,8 @@ type PublicDataApiResponse<T> = { status: string; message: string; data: T };
 type VehicleConfigData = {
   id: string;
   vehicleIdentifier: string;
+  city?: string;
+  stateOfRegistration?: string;
   maxTripDurationUnit: string | null;
   maxTripDurationValue: number | null;
   advanceNoticeUnit: string | null;
@@ -44,21 +46,19 @@ type VehicleConfigData = {
   extremeFee: number | null;
   pricing: { bookingTypeId: string; price: number }[] | null;
   discounts: { discountDurationId: string; percentage: number }[] | null;
-  supportedStates:
-    | {
-        id?: string;
-        stateId: string;
-        stateName?: string;
-        surchargeFee: number;
-      }[]
-    | null;
+  supportedStates: { stateId: string; stateName?: string }[] | null;
   extraHourlyRate: number | null;
+  interstateAmount?: number | null;
+  interstateKm?: number | null;
+  intercountryAmount?: number | null;
+  intercountryKm?: number | null;
+  supportRetrievalFee?: boolean | null;
+  retrievalFeePerKm?: number | null;
 };
 
 type DurationState = { value: number | ""; unit: string };
 type PriceState = { [bookingTypeId: string]: string };
 type DiscountState = { [discountDurationId: string]: string };
-type StateFeeState = { [stateId: string]: string };
 
 type Step5FormData = {
   maxTripDuration: DurationState;
@@ -68,12 +68,17 @@ type Step5FormData = {
   supportedBookingTypeIds: string[];
   outOfBoundsAreaIds: string[];
   supportedStateIds: string[];
-  stateSurchargeFees: StateFeeState;
   outskirtFee: string;
   extremeFee: string;
   extraHourlyRate: string;
   pricing: PriceState;
   discounts: DiscountState;
+  interstateAmount: string;
+  interstateKm: string;
+  intercountryAmount: string;
+  intercountryKm: string;
+  supportRetrievalFee: "yes" | "no" | "";
+  retrievalFeePerKm: string;
 };
 
 type PricePayload = {
@@ -83,7 +88,7 @@ type PricePayload = {
   platformFeeType: string;
 };
 type DiscountPayload = { discountDurationId: string; percentage: number };
-type SupportedStatePayload = { stateId: string; surchargeFee: number };
+type SupportedStatePayload = { stateId: string };
 
 type UpdateConfigPayload = {
   maxTripDurationUnit: string;
@@ -100,6 +105,12 @@ type UpdateConfigPayload = {
   extraHourlyRate: number;
   pricing: PricePayload[];
   discounts: DiscountPayload[];
+  interstateAmount?: number;
+  interstateKm?: number;
+  intercountryAmount?: number;
+  intercountryKm?: number;
+  supportRetrievalFee?: boolean;
+  retrievalFeePerKm?: number;
 };
 
 const initialState: Step5FormData = {
@@ -110,12 +121,17 @@ const initialState: Step5FormData = {
   supportedBookingTypeIds: [],
   outOfBoundsAreaIds: [],
   supportedStateIds: [],
-  stateSurchargeFees: {},
   outskirtFee: "",
   extremeFee: "",
   extraHourlyRate: "",
   pricing: {},
   discounts: {},
+  interstateAmount: "",
+  interstateKm: "",
+  intercountryAmount: "",
+  intercountryKm: "",
+  supportRetrievalFee: "",
+  retrievalFeePerKm: "",
 };
 
 async function fetchApiData<T>(endpoint: string): Promise<T[]> {
@@ -147,29 +163,22 @@ export function useVehicleStep5(vehicleId: string) {
     Record<string, string>
   >({});
 
-  const { data: countries, isLoading: isLoadingCountries } = useQuery({
+  const [homeStateId, setHomeStateId] = useState<string | null>(null);
+  const [homeStateName, setHomeStateName] = useState<string | null>(null);
+
+  const { data: countries } = useQuery({
     queryKey: ["countries"],
     queryFn: () => fetchApiData<Country>("/countries"),
     staleTime: 1000 * 60 * 60,
   });
-
-  const {
-    data: states,
-    isLoading: isLoadingStates,
-    isFetching: isFetchingStates,
-  } = useQuery({
+  const { data: states, isFetching: isFetchingStates } = useQuery({
     queryKey: ["states", selectedCountryId],
     queryFn: () =>
       fetchApiData<GeoState>(`/states/country/${selectedCountryId}`),
     enabled: !!selectedCountryId,
     staleTime: 1000 * 60 * 60,
   });
-
-  const {
-    data: geofenceAreas,
-    isLoading: isLoadingGeofence,
-    isFetching: isFetchingGeofences,
-  } = useQuery({
+  const { data: geofenceAreas, isFetching: isFetchingGeofences } = useQuery({
     queryKey: ["geofenceAreas", activeGeofenceStateId],
     queryFn: () =>
       fetchApiData<GeofenceArea>(
@@ -178,13 +187,11 @@ export function useVehicleStep5(vehicleId: string) {
     enabled: !!activeGeofenceStateId,
     staleTime: 1000 * 60 * 5,
   });
-
   const { data: bookingTypes } = useQuery({
     queryKey: ["bookingTypes"],
     queryFn: () => fetchApiData<BookingType>("/booking-types"),
     staleTime: 1000 * 60 * 60,
   });
-
   const { data: discountDurations } = useQuery({
     queryKey: ["discountDurations"],
     queryFn: () => fetchApiData<DiscountDuration>("/discount-durations"),
@@ -204,14 +211,33 @@ export function useVehicleStep5(vehicleId: string) {
   });
 
   useEffect(() => {
-    if (states) {
-      setStateNameMap((prev) => {
-        const next = { ...prev };
-        states.forEach((s) => (next[s.id] = s.name));
-        return next;
-      });
+    if (states && vehicleDetails) {
+      const newMap: Record<string, string> = {};
+      states.forEach((s) => (newMap[s.id] = s.name));
+      setStateNameMap((prev) => ({ ...prev, ...newMap }));
+
+      const targetCity = (
+        vehicleDetails.city ||
+        vehicleDetails.stateOfRegistration ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+      if (targetCity) {
+        const matchedState = states.find(
+          (s) => s.name.toLowerCase() === targetCity,
+        );
+        if (matchedState) {
+          setHomeStateId(matchedState.id);
+          setHomeStateName(matchedState.name);
+
+          if (!activeGeofenceStateId) {
+            setActiveGeofenceStateId(matchedState.id);
+          }
+        }
+      }
     }
-  }, [states]);
+  }, [states, vehicleDetails, activeGeofenceStateId]);
 
   useEffect(() => {
     if (geofenceAreas) {
@@ -246,20 +272,12 @@ export function useVehicleStep5(vehicleId: string) {
       });
 
       const initialSupportedStateIds: string[] = [];
-      const initialStateSurchargeFees: StateFeeState = {};
-      const newMap: Record<string, string> = {};
-
       (vehicleDetails.supportedStates || []).forEach((ss) => {
         initialSupportedStateIds.push(ss.stateId);
-        initialStateSurchargeFees[ss.stateId] = String(ss.surchargeFee || 0);
-        if (ss.stateName) newMap[ss.stateId] = ss.stateName;
       });
-
-      setStateNameMap((prev) => ({ ...prev, ...newMap }));
 
       const initialGeofenceIds: string[] = [];
       const initialGeofenceNameMap: Record<string, string> = {};
-
       (vehicleDetails.outOfBoundsAreas || []).forEach((area) => {
         initialGeofenceIds.push(area.id);
         initialGeofenceNameMap[area.id] = area.name;
@@ -284,7 +302,6 @@ export function useVehicleStep5(vehicleId: string) {
             .sort() || [],
         outOfBoundsAreaIds: initialGeofenceIds.sort(),
         supportedStateIds: initialSupportedStateIds.sort(),
-        stateSurchargeFees: initialStateSurchargeFees,
         outskirtFee: String(
           Math.max(
             0,
@@ -300,6 +317,16 @@ export function useVehicleStep5(vehicleId: string) {
         extraHourlyRate: String(vehicleDetails.extraHourlyRate || ""),
         pricing: initialPrices,
         discounts: initialDiscounts,
+        interstateAmount: String(vehicleDetails.interstateAmount || ""),
+        interstateKm: String(vehicleDetails.interstateKm || ""),
+        intercountryAmount: String(vehicleDetails.intercountryAmount || ""),
+        intercountryKm: String(vehicleDetails.intercountryKm || ""),
+        supportRetrievalFee: vehicleDetails.supportRetrievalFee
+          ? "yes"
+          : vehicleDetails.supportRetrievalFee === false
+            ? "no"
+            : "",
+        retrievalFeePerKm: String(vehicleDetails.retrievalFeePerKm || ""),
       };
 
       setFormData(prefilledState);
@@ -327,7 +354,7 @@ export function useVehicleStep5(vehicleId: string) {
   };
 
   const handleSelectChange = (
-    field: "willProvideDriver" | "willProvideFuel",
+    field: keyof Step5FormData,
     option: Option | null,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: option ? option.id : "" }));
@@ -373,13 +400,6 @@ export function useVehicleStep5(vehicleId: string) {
     }));
   };
 
-  const handleStateFeeChange = (stateId: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      stateSurchargeFees: { ...prev.stateSurchargeFees, [stateId]: value },
-    }));
-  };
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
@@ -406,10 +426,9 @@ export function useVehicleStep5(vehicleId: string) {
       willProvideFuel: formData.willProvideFuel === "yes",
       supportedBookingTypeIds: formData.supportedBookingTypeIds,
       outOfBoundsAreaIds: formData.outOfBoundsAreaIds,
-      supportedStates: formData.supportedStateIds.map((id) => ({
-        stateId: id,
-        surchargeFee: Number(formData.stateSurchargeFees[id] || 0),
-      })),
+      supportedStates: formData.supportedStateIds
+        .filter((id) => id !== homeStateId)
+        .map((id) => ({ stateId: id })),
       outskirtFee:
         Number(formData.outskirtFee || 0) + (isHostVehicle ? 5000 : 0),
       extremeFee: Number(formData.extremeFee || 0) + (isHostVehicle ? 5000 : 0),
@@ -433,15 +452,34 @@ export function useVehicleStep5(vehicleId: string) {
           discountDurationId: id,
           percentage: Number(percentage),
         })),
+      ...(formData.interstateAmount && {
+        interstateAmount: Number(formData.interstateAmount),
+      }),
+      ...(formData.interstateKm && {
+        interstateKm: Number(formData.interstateKm),
+      }),
+      ...(formData.intercountryAmount && {
+        intercountryAmount: Number(formData.intercountryAmount),
+      }),
+      ...(formData.intercountryKm && {
+        intercountryKm: Number(formData.intercountryKm),
+      }),
+      ...(formData.supportRetrievalFee !== "" && {
+        supportRetrievalFee: formData.supportRetrievalFee === "yes",
+      }),
+      ...(formData.supportRetrievalFee === "no"
+        ? { retrievalFeePerKm: 0 }
+        : formData.supportRetrievalFee === "yes" && formData.retrievalFeePerKm
+          ? { retrievalFeePerKm: Number(formData.retrievalFeePerKm) }
+          : {}),
     };
+
     updateConfiguration(payload);
   };
 
-  const isLoading = isLoadingVehicle;
-
   return {
     formData,
-    isLoading,
+    isLoading: isLoadingVehicle,
     isLoadingSession: sessionStatus === "loading",
     isUpdating,
     bookingTypes: bookingTypes || [],
@@ -457,6 +495,8 @@ export function useVehicleStep5(vehicleId: string) {
     setActiveGeofenceStateId,
     stateNameMap,
     geofenceNameMap,
+    homeStateId,
+    homeStateName,
     isFetchingStates,
     isFetchingGeofences,
     handleInputChange,
@@ -465,7 +505,6 @@ export function useVehicleStep5(vehicleId: string) {
     handleCheckboxChange,
     handlePriceChange,
     handleDiscountChange,
-    handleStateFeeChange,
     handleSubmit,
   };
 }
