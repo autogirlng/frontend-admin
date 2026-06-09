@@ -152,7 +152,6 @@ export default function VehicleDetailPage() {
     isLoading: isLoadingVehicle,
     isError,
   } = useGetVehicleDetails(vehicleId);
-
   const { data: bookingsData, isLoading: isLoadingBookings } =
     useGetVehicleBookings(vehicleId, 0, 5);
 
@@ -171,7 +170,6 @@ export default function VehicleDetailPage() {
         setActiveIndex((prev) => (prev + 1) % vehicle.photos.length);
       }, 4000);
     }
-
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
@@ -201,18 +199,14 @@ export default function VehicleDetailPage() {
 
   const handleShare = async () => {
     if (!vehicle || isSharing.current) return;
-
     const baseUrl =
       process.env.NEXT_PUBLIC_CUSTOMER_APP_URL ||
       "https://muvment-customer-app.vercel.app";
-
     const shareUrl = `${baseUrl}/booking/details/${vehicle.slug}`;
-
     const shareText = `Check out this ${vehicle.name} on Muvment!`;
 
     try {
       isSharing.current = true;
-
       if (navigator.share) {
         await navigator.share({
           title: vehicle.name,
@@ -365,14 +359,11 @@ export default function VehicleDetailPage() {
                       <button
                         key={`${photo.cloudinaryPublicId}-${index}`}
                         onClick={() => goToSlide(index)}
-                        className={`
-                          relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all
-                          ${
-                            index === activeIndex
-                              ? "border-[#0096FF] ring-2 ring-blue-100 opacity-100 scale-105"
-                              : "border-transparent hover:border-gray-300 opacity-70 hover:opacity-100"
-                          }
-                        `}
+                        className={`relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all ${
+                          index === activeIndex
+                            ? "border-[#0096FF] ring-2 ring-blue-100 opacity-100 scale-105"
+                            : "border-transparent hover:border-gray-300 opacity-70 hover:opacity-100"
+                        }`}
                       >
                         <img
                           src={photo.cloudinaryUrl}
@@ -432,11 +423,7 @@ export default function VehicleDetailPage() {
                   label="Upgraded Vehicle"
                   value={
                     <span
-                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded ${
-                        vehicle.isVehicleUpgraded
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded ${vehicle.isVehicleUpgraded ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
                     >
                       {vehicle.isVehicleUpgraded ? (
                         <>
@@ -519,9 +506,8 @@ export default function VehicleDetailPage() {
               </InfoCard>
             </div>
           </div>
-
           <div className="lg:col-span-1 space-y-6">
-            <InfoCard icon={DollarSign} title="Pricing">
+            <InfoCard icon={DollarSign} title="Pricing & Fees">
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-bold text-gray-700 mb-3">
@@ -579,6 +565,65 @@ export default function VehicleDetailPage() {
                           : "N/A"}
                       </span>
                     </div>
+                    {vehicle.supportRetrievalFee && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          Retrieval Fee
+                        </span>
+                        <span className="text-sm font-semibold text-gray-900 text-blue-600">
+                          {vehicle.retrievalFeePerKm
+                            ? `₦${vehicle.retrievalFeePerKm.toLocaleString()} / km`
+                            : "N/A"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-bold text-gray-700 mb-3">
+                    Interstate & Intercountry
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">
+                        Interstate Amount
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {vehicle.interstateAmount
+                          ? `₦${vehicle.interstateAmount.toLocaleString()}`
+                          : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">
+                        Interstate Limit
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {vehicle.interstateKm
+                          ? `${vehicle.interstateKm} km`
+                          : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">
+                        Intercountry Amount
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {vehicle.intercountryAmount
+                          ? `₦${vehicle.intercountryAmount.toLocaleString()}`
+                          : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">
+                        Intercountry Limit
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {vehicle.intercountryKm
+                          ? `${vehicle.intercountryKm} km`
+                          : "N/A"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -600,11 +645,7 @@ export default function VehicleDetailPage() {
                       Provides Driver
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${
-                        vehicle.willProvideDriver
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${vehicle.willProvideDriver ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
                     >
                       {vehicle.willProvideDriver ? (
                         <>
@@ -622,11 +663,7 @@ export default function VehicleDetailPage() {
                       Provides Fuel
                     </span>
                     <span
-                      className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${
-                        vehicle.willProvideFuel
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${vehicle.willProvideFuel ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
                     >
                       {vehicle.willProvideFuel ? (
                         <>
@@ -650,11 +687,7 @@ export default function VehicleDetailPage() {
                     Insurance Coverage
                   </span>
                   <span
-                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${
-                      vehicle.hasInsurance
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
+                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${vehicle.hasInsurance ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                   >
                     {vehicle.hasInsurance ? (
                       <>
@@ -670,11 +703,7 @@ export default function VehicleDetailPage() {
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">GPS Tracker</span>
                   <span
-                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${
-                      vehicle.hasTracker
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
+                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full ${vehicle.hasTracker ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
                   >
                     {vehicle.hasTracker ? (
                       <>
@@ -701,10 +730,8 @@ export default function VehicleDetailPage() {
                       <span className="text-sm font-medium text-gray-800">
                         {state.stateName || "Unknown State"}
                       </span>
-                      <span className="text-sm text-gray-500 font-semibold">
-                        {state.surchargeFee > 0
-                          ? `+₦${state.surchargeFee.toLocaleString()}`
-                          : "Base Fare"}
+                      <span className="text-sm text-green-600 font-semibold flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" /> Supported
                       </span>
                     </li>
                   ))}
@@ -811,9 +838,30 @@ export default function VehicleDetailPage() {
           <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl p-6 space-y-8 shadow-inner">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h4 className="text-sm font-bold text-gray-700 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-500" /> Owner Profile
-                </h4>
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                  <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-500" /> Owner Profile
+                  </h4>
+                  {vehicle.owner && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border ${
+                        vehicle.owner.userType === "ADMIN"
+                          ? "bg-blue-50 text-[#0096FF] border-blue-200"
+                          : "bg-purple-50 text-purple-700 border-purple-200"
+                      }`}
+                    >
+                      {vehicle.owner.userType === "ADMIN" ? (
+                        <>
+                          <Shield className="w-3.5 h-3.5" /> Autogirl Car
+                        </>
+                      ) : (
+                        <>
+                          <Users className="w-3.5 h-3.5" /> Host Car
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
                 {vehicle.owner ? (
                   <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
                     <DetailItem
@@ -826,7 +874,10 @@ export default function VehicleDetailPage() {
                         <span className="flex items-center gap-2">
                           {vehicle.owner.email}
                           {vehicle.owner.emailVerified && (
-                            <CheckCircle className="w-3 h-3 text-green-500" />
+                            <CheckCircle
+                              className="w-4 h-4 text-green-500"
+                              aria-label="Verified"
+                            />
                           )}
                         </span>
                       }
@@ -837,7 +888,10 @@ export default function VehicleDetailPage() {
                         <span className="flex items-center gap-2">
                           {vehicle.owner.phoneNumber}
                           {vehicle.owner.phoneVerified && (
-                            <CheckCircle className="w-3 h-3 text-green-500" />
+                            <CheckCircle
+                              className="w-4 h-4 text-green-500"
+                              aria-label="Verified"
+                            />
                           )}
                         </span>
                       }
@@ -883,6 +937,10 @@ export default function VehicleDetailPage() {
                       <DetailItem
                         label="Phone"
                         value={vehicle.assignedDriver.phoneNumber}
+                      />
+                      <DetailItem
+                        label="Owner Type"
+                        value={vehicle.assignedDriver.ownerType}
                       />
                     </div>
                   </div>
