@@ -1,12 +1,9 @@
-// app/components/generic/ui/FileUploadCard.tsx
-
 "use client";
 
 import React from "react";
 import { useDropzone, Accept } from "react-dropzone";
 import {
   UploadCloud,
-  FileText,
   Loader2,
   CheckCircle2,
   AlertTriangle,
@@ -16,6 +13,9 @@ import {
   DocumentUploadState,
   uploadToCloudinary,
 } from "@/lib/hooks/onboarding/steps/useVehicleStep4";
+
+const STAGING_IMAGE_URL =
+  "https://res.cloudinary.com/dgnalaojk/image/upload/f_auto,q_auto,w_450/v1767115432/trv57nsfk4ww6eudsj7f.jpg";
 
 type FileUploadCardProps = {
   label: string;
@@ -74,6 +74,18 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
     });
   };
 
+  const handlePrefill = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onStateChange({
+      status: "success",
+      fileName: "staging-test-document.jpg",
+      cloudinaryUrl: STAGING_IMAGE_URL,
+      cloudinaryPublicId: "mock_staging_id",
+      errorMessage: "",
+    });
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept,
@@ -102,9 +114,9 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
         )}
       </div>
 
-      <div className="mt-10">
+      <div className="mt-10 flex flex-col items-center">
         {status === "idle" && (
-          <div className="text-gray-500">
+          <div className="text-gray-500 flex flex-col items-center">
             <UploadCloud className="w-10 h-10 mx-auto" />
             <p className="mt-2 text-sm">Drop file or click</p>
           </div>
@@ -132,6 +144,17 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({
             <p className="mt-2 text-sm font-medium">Upload Failed</p>
           </div>
         )}
+
+        {process.env.NEXT_PUBLIC_APP_ENV === "staging" &&
+          (status === "idle" || status === "error") && (
+            <button
+              type="button"
+              onClick={handlePrefill}
+              className="mt-4 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold bg-blue-100 text-blue-700 px-3 py-1.5 rounded hover:bg-blue-200 transition-colors shadow-sm"
+            >
+              <CheckCircle2 className="w-3 h-3" /> Prefill
+            </button>
+          )}
       </div>
 
       {status === "success" && (

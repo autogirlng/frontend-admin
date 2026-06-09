@@ -22,6 +22,9 @@ import {
 import TextInput from "@/components/generic/ui/TextInput";
 import { formatPrice } from "./utils";
 
+const STAGING_IMAGE_URL =
+  "https://res.cloudinary.com/dgnalaojk/image/upload/f_auto,q_auto,w_450/v1767115432/trv57nsfk4ww6eudsj7f.jpg";
+
 const FilePreviewThumbnail = ({
   file,
   onRemove,
@@ -93,6 +96,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
   const [individualFiles, setIndividualFiles] = useState<Record<string, File>>(
     {},
   );
+  const [usePrefill, setUsePrefill] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -106,6 +110,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
     if (!isOpen) {
       setGlobalFile(null);
       setIndividualFiles({});
+      setUsePrefill(false);
       setIsUploading(false);
       setIsDragging(false);
       setPaymentType("full");
@@ -126,6 +131,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setUsePrefill(false);
       if (bookingId)
         setIndividualFiles((prev) => ({ ...prev, [bookingId]: file }));
       else setGlobalFile(file);
@@ -164,14 +170,17 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
         delete newFiles[bookingId];
         return newFiles;
       });
-    } else setGlobalFile(null);
+    } else {
+      setGlobalFile(null);
+      setUsePrefill(false);
+    }
   };
 
   const handleConfirm = async () => {
     setIsUploading(true);
     try {
       if (mode === "single" && payment) {
-        if (!globalFile) {
+        if (!globalFile && !usePrefill) {
           toast.error("Please upload a payment proof.");
           setIsUploading(false);
           return;
@@ -195,7 +204,14 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
           finalAmountPaid = amount;
         }
 
-        const uploaded = await uploadToCloudinary(globalFile);
+        let uploaded;
+        if (usePrefill) {
+          uploaded = { url: STAGING_IMAGE_URL, publicId: "mock_staging_id" };
+          await new Promise((res) => setTimeout(res, 500));
+        } else {
+          uploaded = await uploadToCloudinary(globalFile!);
+        }
+
         const payload: OfflinePaymentPayload = {
           paymentImageUrl: uploaded.url,
           publicId: uploaded.publicId,
@@ -219,7 +235,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
 
         if (
           bookingsToProcess.some(
-            (p) => !globalFile && !individualFiles[p.bookingId],
+            (p) => !globalFile && !individualFiles[p.bookingId] && !usePrefill,
           )
         ) {
           toast.error("All bookings must have a proof of payment.");
@@ -228,7 +244,12 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
         }
 
         let globalUploadData: { url: string; publicId: string } | null = null;
-        if (globalFile) {
+        if (usePrefill) {
+          globalUploadData = {
+            url: STAGING_IMAGE_URL,
+            publicId: "mock_staging_id",
+          };
+        } else if (globalFile) {
           globalUploadData = await uploadToCloudinary(globalFile);
         }
 
@@ -409,9 +430,12 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Proof of Payment {mode === "bulk" && "(Master File)"}
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Proof of Payment {mode === "bulk" && "(Master File)"}
+              </label>
+            </div>
+
             <label
               htmlFor="global-proof-upload"
               onDragOver={handleDragOver}
@@ -420,7 +444,7 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
               className={clsx(
                 "block border-2 border-dashed p-6 text-center transition-all cursor-pointer relative",
                 isDragging ? "border-blue-500 bg-blue-50" : "",
-                globalFile && !isDragging
+                (globalFile || usePrefill) && !isDragging
                   ? "border-green-400 bg-green-50"
                   : !isDragging &&
                       "border-gray-300 hover:border-blue-500 hover:bg-gray-50",
@@ -433,16 +457,41 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
                 accept="image/*,application/pdf"
                 onChange={(e) => handleFileChange(e)}
               />
-              {globalFile ? (
+
+              {globalFile || usePrefill ? (
                 <div className="flex flex-col items-center">
-                  <FilePreviewThumbnail
-                    file={globalFile}
-                    onRemove={() => removeFile()}
-                  />
+                  {usePrefill ? (
+                    <div className="relative group inline-block">
+                      <Image
+                        src={STAGING_IMAGE_URL}
+                        alt="Prefill Preview"
+                        width={80}
+                        height={80}
+                        className="h-20 w-20 object-cover rounded-md border border-gray-200"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeFile();
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <FilePreviewThumbnail
+                      file={globalFile!}
+                      onRemove={() => removeFile()}
+                    />
+                  )}
                   <p className="mt-2 text-sm font-medium text-green-700">
-                    File Attached
+                    {usePrefill ? "Test File Attached" : "File Attached"}
                   </p>
-                  <p className="text-xs text-gray-500">{globalFile.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {usePrefill ? "staging-test-image.jpg" : globalFile!.name}
+                  </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
@@ -452,6 +501,19 @@ export const PaymentApprovalModal: React.FC<PaymentApprovalModalProps> = ({
                       ? "Click or Drag to upload Master Proof"
                       : "Click or Drag to upload Proof"}
                   </span>
+                  {process.env.NEXT_PUBLIC_APP_ENV === "staging" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setUsePrefill(true);
+                      }}
+                      className="mt-4 inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-200 transition-colors shadow-sm"
+                    >
+                      <CheckCircle2 className="w-3 h-3" /> Prefill Staging Image
+                    </button>
+                  )}
                 </div>
               )}
             </label>

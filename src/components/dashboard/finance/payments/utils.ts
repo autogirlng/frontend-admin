@@ -15,7 +15,7 @@ export const enumToOptions = (e: object): Option[] =>
   }));
 
 export async function uploadToCloudinary(
-  file: File
+  file: File,
 ): Promise<{ url: string; publicId: string }> {
   const formData = new FormData();
   formData.append("file", file);

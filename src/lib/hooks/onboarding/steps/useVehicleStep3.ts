@@ -31,6 +31,8 @@ type UpdatePhotosPayload = {
 };
 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
+const STAGING_IMAGE_URL =
+  "https://res.cloudinary.com/dgnalaojk/image/upload/f_auto,q_auto,w_450/v1767115432/trv57nsfk4ww6eudsj7f.jpg";
 
 async function uploadToCloudinary(
   file: File,
@@ -176,25 +178,57 @@ export function useVehiclePhotos(vehicleId: string) {
       setPrimaryPhotoId(remainingPhotos[0]?.publicId || null);
     }
 
-    try {
-      const res = await fetch("/api/cloudinary/delete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ publicId: publicIdToRemove }),
-      });
+    if (!publicIdToRemove.startsWith("mock_staging_")) {
+      try {
+        const res = await fetch("/api/cloudinary/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ publicId: publicIdToRemove }),
+        });
 
-      if (!res.ok) {
-        console.error("Failed to delete from Cloudinary API");
+        if (!res.ok) {
+          console.error("Failed to delete from Cloudinary API");
+        }
+      } catch (error) {
+        console.error("Error deleting image:", error);
       }
-    } catch (error) {
-      console.error("Error deleting image:", error);
     }
   };
 
   const onSetPrimary = (publicIdToSet: string) => {
     setPrimaryPhotoId(publicIdToSet);
+  };
+
+  const prefillStagingPhotos = (requiredCount: number) => {
+    const currentCount = photos.length;
+    const needed = requiredCount - currentCount;
+
+    if (needed <= 0) {
+      toast.info("Requirement already met.");
+      return;
+    }
+
+    const mockPhotos: FileState[] = Array.from({ length: needed }).map(
+      (_, i) => {
+        const uniqueId = `mock_staging_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 5)}`;
+        return {
+          preview: STAGING_IMAGE_URL,
+          publicId: uniqueId,
+          isUploading: false,
+          isUploaded: true,
+        };
+      },
+    );
+
+    setPhotos((prev) => {
+      const newPhotos = [...prev, ...mockPhotos];
+      if (!primaryPhotoId && newPhotos.length > 0) {
+        setPrimaryPhotoId(newPhotos[0].publicId!);
+      }
+      return newPhotos;
+    });
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -246,6 +280,7 @@ export function useVehiclePhotos(vehicleId: string) {
     onFilesDrop,
     onRemovePhoto,
     onSetPrimary,
+    prefillStagingPhotos,
     handleSubmit,
   };
 }

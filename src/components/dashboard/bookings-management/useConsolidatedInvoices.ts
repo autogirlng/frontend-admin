@@ -2,14 +2,13 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/apiClient";
 import {
   ConsolidatedInvoice,
   PaginatedResponse,
   CreateConsolidatedPayload,
-  ConfirmConsolidatedInvoicePayload
+  ConfirmConsolidatedInvoicePayload,
 } from "./consolidated-types";
 
 export const CONSOLIDATED_INVOICES_KEY = "consolidatedInvoices";
@@ -48,9 +47,16 @@ export function useCreateConsolidatedInvoice() {
 // 3. POST Confirm Invoice
 export function useConfirmConsolidatedInvoice() {
   const queryClient = useQueryClient();
-  return useMutation<ConfirmConsolidatedInvoicePayload, Error, ConfirmConsolidatedInvoicePayload>({
+  return useMutation<
+    ConfirmConsolidatedInvoicePayload,
+    Error,
+    ConfirmConsolidatedInvoicePayload
+  >({
     mutationFn: (payload) =>
-      apiClient.post(`/admin/invoices/consolidated/${payload.id}/confirm`, payload),
+      apiClient.post(
+        `/admin/invoices/consolidated/${payload.id}/confirm`,
+        payload,
+      ),
     onSuccess: () => {
       toast.success("Invoice confirmed and receipt sent.");
       queryClient.invalidateQueries({ queryKey: [CONSOLIDATED_INVOICES_KEY] });
@@ -66,7 +72,7 @@ export function useDownloadConsolidatedPdf() {
     mutationFn: async ({ id, invoiceNumber }) => {
       await apiClient.getAndDownloadFile(
         `/admin/invoices/consolidated/${id}/pdf`,
-        `${invoiceNumber}.pdf`
+        `${invoiceNumber}.pdf`,
       );
     },
     onSuccess: () => toast.success("PDF download started."),
@@ -80,7 +86,7 @@ export function useDownloadConsolidatedReceipt() {
     mutationFn: async ({ id, invoiceNumber }) => {
       await apiClient.getAndDownloadFile(
         `/admin/invoices/consolidated/${id}/receipt`,
-        `Receipt-${invoiceNumber}.pdf`
+        `Receipt-${invoiceNumber}.pdf`,
       );
     },
     onSuccess: () => toast.success("Receipt download started."),
@@ -92,31 +98,31 @@ export function usePreviewConsolidatedInvoiceBlob() {
   return useMutation<Blob, Error, { id: string }>({
     mutationFn: async ({ id }) => {
       return await apiClient.getFileAsBlob(
-        `/admin/invoices/consolidated/${id}/pdf?preview=true`
+        `/admin/invoices/consolidated/${id}/pdf?preview=true`,
       );
     },
   });
 }
-
 
 export function usePreviewConsolidatedReceiptBlob() {
   return useMutation<Blob, Error, { id: string }>({
     mutationFn: async ({ id }) => {
       return await apiClient.getFileAsBlob(
-        `/admin/invoices/consolidated/${id}/receipt?preview=true`
+        `/admin/invoices/consolidated/${id}/receipt?preview=true`,
       );
     },
   });
 }
 
-
 // 6. GET Consolidated Invoice By ID
-
 
 export function useGetConsolidatedInvoiceById(id: string) {
   return useQuery<ConsolidatedInvoice>({
     queryKey: [CONSOLIDATED_INVOICES_KEY, id],
-    queryFn: async () => apiClient.getConsolidatedInvoices<ConsolidatedInvoice>(`/admin/invoices/consolidated/${id}`),
+    queryFn: async () =>
+      apiClient.getConsolidatedInvoices<ConsolidatedInvoice>(
+        `/admin/invoices/consolidated/${id}`,
+      ),
     enabled: !!id,
     retry: false,
   });
@@ -127,10 +133,7 @@ export function useEditConsolidatedInvoice(id: string) {
   const queryClient = useQueryClient();
   return useMutation<ConsolidatedInvoice, Error, CreateConsolidatedPayload>({
     mutationFn: (payload) =>
-      apiClient.put(
-        `/admin/invoices/consolidated/${id}`,
-        payload
-      ),
+      apiClient.put(`/admin/invoices/consolidated/${id}`, payload),
     onSuccess: () => {
       toast.success("Consolidated invoice updated successfully.");
       queryClient.invalidateQueries({ queryKey: [CONSOLIDATED_INVOICES_KEY] });
@@ -139,5 +142,3 @@ export function useEditConsolidatedInvoice(id: string) {
       toast.error(error.message || "Failed to update invoice."),
   });
 }
-
-
