@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
+// @ts-ignore: CSS module declarations are handled by Next.js app router
 import "./globals.css";
 import Providers from "./providers";
 import QueryProvider from "./QueryProvider";
 import { ToastContainer } from "react-toastify";
+// @ts-ignore: allow side-effect CSS import for react-toastify
 import "react-toastify/dist/ReactToastify.css";
 
 const roboto = Roboto({
