@@ -10,7 +10,10 @@ import {
   useCreateBlogCategory,
   useUpdateBlogCategory,
 } from "@/lib/hooks/blog/useBlog";
-import { BlogCategory } from "@/components/dashboard/blog/types";
+import {
+  BlogCategory,
+  UpdateBlogCategoryPayload,
+} from "@/components/dashboard/blog/types";
 
 interface CreateCategoryModalProps {
   onClose: () => void;
@@ -28,7 +31,7 @@ export function CreateCategoryModal({
   const { mutate: createCategory, isPending: creatingBlogCategory } =
     useCreateBlogCategory();
   const { mutate: updateCategory, isPending: updatingBlogCategory } =
-    useUpdateBlogCategory(category?.id || "");
+    useUpdateBlogCategory();
 
   useEffect(() => {
     if (category) {
@@ -53,8 +56,14 @@ export function CreateCategoryModal({
       authorPhoneNumber,
     };
 
-    if (isEditing) {
-      updateCategory(payload, { onSuccess: onClose });
+    if (isEditing && category) {
+      const updatePayload: UpdateBlogCategoryPayload = {
+        ...payload,
+        id: category.id,
+        slug: category.slug,
+        approvalRef: category.approvalRef,
+      };
+      updateCategory(updatePayload, { onSuccess: onClose });
       return;
     }
 

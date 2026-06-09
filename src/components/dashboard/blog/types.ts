@@ -61,6 +61,7 @@ export interface CreateBlogPostPayload {
 export interface BlogCategory {
   id: string;
   name: string;
+  slug?: string;
   description: string;
   status: string;
   postCount: number;
@@ -204,4 +205,10 @@ export interface CreateBlogCategoryPayload {
   authorName: string;
   authorEmail: string;
   authorPhoneNumber: string;
+}
+
+export interface UpdateBlogCategoryPayload extends CreateBlogCategoryPayload {
+  id: string;
+  slug?: string;
+  approvalRef: string;
 }

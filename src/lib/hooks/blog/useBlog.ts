@@ -9,6 +9,7 @@ import { uploadToCloudinary } from "@/components/dashboard/finance/payments/util
 import {
   BlogPost,
   CreateBlogCategoryPayload,
+  UpdateBlogCategoryPayload,
   CreateBlogPostPayload,
   CreateBlogPostResponseData,
   BlogCategory,
@@ -95,12 +96,12 @@ export function useCreateBlogCategory() {
   });
 }
 
-export function useUpdateBlogCategory(id: string) {
+export function useUpdateBlogCategory() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, CreateBlogCategoryPayload>({
+  return useMutation<unknown, Error, UpdateBlogCategoryPayload>({
     mutationFn: (payload) =>
-      apiClient.put<BlogCategory>("/blog-categories", { ...payload, id }),
+      apiClient.put<BlogCategory>("/blog-categories", payload),
     onSuccess: () => {
       toast.success("Blog category updated successfully.");
       queryClient.invalidateQueries({
