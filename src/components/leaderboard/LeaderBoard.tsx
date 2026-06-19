@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { format, subYears } from "date-fns";
-import { Trophy, Activity, MapPin } from "lucide-react";
+import { Trophy, Activity, MapPin, XCircle } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { useGetLeaderboard } from "./hooks/useLeaderboard";
 import {
@@ -67,6 +67,19 @@ export default function Leaderboard() {
 
   const [selectedVehicleForAnalytics, setSelectedVehicleForAnalytics] =
     useState<{ id: string; name: string } | null>(null);
+
+  const handleClearFilters = () => {
+    setDateRange({
+      from: subYears(new Date(), 1),
+      to: new Date(),
+    });
+    setStatusFilter(statusOptions[2]);
+    setOwnerFilter(null);
+    setSortFilter(sortOptions[0]);
+    setAddressSearch("");
+    setLocation(null);
+    setCurrentPage(0);
+  };
 
   const filters = useMemo(
     () => ({
@@ -207,6 +220,19 @@ export default function Leaderboard() {
       </div>
 
       <div className="bg-white p-5 border border-gray-200 shadow-sm mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+            Filter Results
+          </h2>
+          <Button
+            variant="secondary"
+            onClick={handleClearFilters}
+            className="flex items-center gap-2 py-1.5 px-3 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <XCircle className="w-4 h-4" /> Clear Filters
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
             <AddressInput
