@@ -24,6 +24,7 @@ import {
   Building2,
   Mail,
   BriefcaseBusiness,
+  WavesLadder,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -53,6 +54,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Bookings", href: "/dashboard/bookings", icon: Ticket },
     { name: "Trips", href: "/dashboard/trips", icon: Plane },
+    { name: "Leaderboard", href: "/dashboard/leaderboard", icon: WavesLadder },
     {
       name: "Vehicle Availability",
       href: "/dashboard/availability",

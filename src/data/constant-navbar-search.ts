@@ -36,6 +36,7 @@ import {
   Puzzle,
   ShieldEllipsis,
   Pencil,
+  WavesLadder,
 } from "lucide-react";
 
 export const SEARCHABLE_PAGES = [
@@ -56,6 +57,12 @@ export const SEARCHABLE_PAGES = [
     href: "/dashboard/trips",
     path: "Core / Trips",
     icon: Plane,
+  },
+  {
+    name: "Leader Board",
+    href: "/dashboard/leaderboard",
+    path: "Core / Leader Board",
+    icon: WavesLadder,
   },
   {
     name: "Vehicle Availability",
