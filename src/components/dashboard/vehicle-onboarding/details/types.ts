@@ -93,6 +93,7 @@ export interface SupportedState {
   stateId: string;
   stateName: string;
   countryName?: string;
+  surchargeFee: number;
 }
 
 export interface OutOfBoundsArea {
@@ -102,7 +103,7 @@ export interface OutOfBoundsArea {
 
 export interface VehicleDetail {
   id: string;
-  slug: string;
+  slug?: string;
   vehicleIdentifier: string;
   ownerId: string;
   name: string;
@@ -133,13 +134,6 @@ export interface VehicleDetail {
   outskirtFee: number;
   extremeFee: number;
   isVehicleUpgraded: boolean;
-
-  interstateAmount?: number;
-  interstateKm?: number;
-  intercountryAmount?: number;
-  intercountryKm?: number;
-  supportRetrievalFee?: boolean;
-  retrievalFeePerKm?: number;
 
   photos: VehiclePhoto[];
   documents: VehicleDocument[];

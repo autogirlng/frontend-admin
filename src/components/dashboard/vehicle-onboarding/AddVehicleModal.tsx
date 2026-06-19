@@ -10,6 +10,7 @@ import { useGetHosts } from "@/lib/hooks/host-management/useHosts";
 import { Host } from "../host-management/types";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { BulkCreateVehiclePayload, BulkCreateVehicleResponse } from "./types";
+import { getVehicleBookingUrl } from "@/lib/utils/vehicle-booking-url";
 import Button from "@/components/generic/ui/Button";
 import TextInput from "@/components/generic/ui/TextInput";
 import TextAreaInput from "@/components/generic/ui/TextAreaInput";
@@ -323,11 +324,40 @@ export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
         new vehicles.
       </p>
       {bulkResult && bulkResult.createdVehicleIds.length > 0 && (
-        <div className="mt-4 w-full text-left">
-          <p className="text-sm font-medium">New Vehicle IDs:</p>
-          <pre className="max-h-32 overflow-y-auto bg-gray-100 p-3 mt-2 text-xs">
-            {bulkResult.createdVehicleIds.join("\n")}
-          </pre>
+        <div className="mt-4 w-full text-left space-y-4">
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
+            New bulk-created vehicles use their vehicle ID for booking links
+            until a slug is assigned by the backend.
+          </p>
+          <div>
+            <p className="text-sm font-medium text-gray-900">Created Vehicles</p>
+            <ul className="mt-2 max-h-48 overflow-y-auto space-y-2">
+              {bulkResult.createdVehicleIds.map((vehicleId) => {
+                const bookingUrl = getVehicleBookingUrl({ id: vehicleId });
+
+                return (
+                  <li
+                    key={vehicleId}
+                    className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-left"
+                  >
+                    <p className="text-xs font-mono text-gray-700 break-all">
+                      {vehicleId}
+                    </p>
+                    {bookingUrl && (
+                      <a
+                        href={bookingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-block text-xs text-blue-600 hover:underline break-all"
+                      >
+                        {bookingUrl}
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       )}
       <div className="mt-6">
