@@ -11,6 +11,10 @@ import {
   useVehicleMakes,
   useVehicleModels,
 } from "@/lib/hooks/onboarding/generic/useVehicleMetaData";
+import {
+  useCountries,
+  getCitiesForCountry,
+} from "@/lib/hooks/onboarding/generic/useGeoData";
 import { useVehicleStep1 } from "@/lib/hooks/onboarding/steps/useVehicleStep1";
 import { useVehicleDetails } from "@/lib/hooks/vehicles/useVehicleDetails";
 import { useUpdateVehicleStep1 } from "@/lib/hooks/onboarding/steps/useUpdateVehicleStep1";
@@ -22,47 +26,6 @@ import CustomBack from "@/components/generic/CustomBack";
 import { toast } from "react-toastify";
 
 const currentStep = 1;
-
-const states: Option[] = [
-  { id: "abia", name: "Abia" },
-  { id: "accra", name: "Accra" },
-  { id: "adamawa", name: "Adamawa" },
-  { id: "akwa ibom", name: "Akwa Ibom" },
-  { id: "anambra", name: "Anambra" },
-  { id: "bauchi", name: "Bauchi" },
-  { id: "bayelsa", name: "Bayelsa" },
-  { id: "benue", name: "Benue" },
-  { id: "borno", name: "Borno" },
-  { id: "cross river", name: "Cross River" },
-  { id: "delta", name: "Delta" },
-  { id: "ebonyi", name: "Ebonyi" },
-  { id: "edo", name: "Edo" },
-  { id: "ekiti", name: "Ekiti" },
-  { id: "enugu", name: "Enugu" },
-  { id: "gombe", name: "Gombe" },
-  { id: "imo", name: "Imo" },
-  { id: "jigawa", name: "Jigawa" },
-  { id: "kaduna", name: "Kaduna" },
-  { id: "kano", name: "Kano" },
-  { id: "katsina", name: "Katsina" },
-  { id: "kebbi", name: "Kebbi" },
-  { id: "kogi", name: "Kogi" },
-  { id: "kwara", name: "Kwara" },
-  { id: "lagos", name: "Lagos" },
-  { id: "nasarawa", name: "Nasarawa" },
-  { id: "niger", name: "Niger" },
-  { id: "ogun", name: "Ogun" },
-  { id: "ondo", name: "Ondo" },
-  { id: "osun", name: "Osun" },
-  { id: "oyo", name: "Oyo" },
-  { id: "plateau", name: "Plateau" },
-  { id: "rivers", name: "Rivers" },
-  { id: "sokoto", name: "Sokoto" },
-  { id: "taraba", name: "Taraba" },
-  { id: "yobe", name: "Yobe" },
-  { id: "zamfara", name: "Zamfara" },
-  { id: "abuja", name: "Abuja FCT" },
-];
 
 const years: Option[] = Array.from({ length: 20 }, (_, i) => ({
   id: (2026 - i).toString(),
@@ -101,6 +64,7 @@ export default function Step1() {
   const router = useRouter();
   const [data, setData] = useState<Step1Data>(initialState);
   const [originalData, setOriginalData] = useState<Step1Data>(initialState);
+  const [selectedCountryId, setSelectedCountryId] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [coords, setCoords] = useState<{
     latitude: number;
@@ -129,6 +93,17 @@ export default function Step1() {
   const { data: vehicleTypes, isLoading: loadingTypes } = useVehicleTypes();
   const { data: vehicleMakes, isLoading: loadingMakes } = useVehicleMakes();
   const { data: vehicleModels, isLoading: loadingModels } = useVehicleModels();
+
+  const { data: countries, isLoading: loadingCountries } = useCountries();
+
+  const countryOptions: Option[] = (countries || [])
+    .filter((c) => c.active !== false)
+    .map((c) => ({ id: c.id, name: c.name }));
+
+  const selectedCountry =
+    (countries || []).find((c) => c.id === selectedCountryId) || null;
+
+  const cityOptions: Option[] = getCitiesForCountry(selectedCountry);
 
   const { data: vehicleDetails, isLoading: isLoadingDetails } =
     useVehicleDetails(vehicleId);
@@ -175,6 +150,17 @@ export default function Step1() {
       console.log("❌ Not populating - missing data");
     }
   }, [vehicleDetails, vehicleId, isLoadingDetails]);
+
+  // Country isn't persisted on the vehicle, so when editing an existing
+  // vehicle (or whenever a city is already set) default to Nigeria so its
+  // cities load and the saved city can be pre-selected.
+  useEffect(() => {
+    if (selectedCountryId || !data.locationCityId || !countries?.length) return;
+    const nigeria = countries.find(
+      (c) => c.name?.toLowerCase() === "nigeria",
+    );
+    if (nigeria) setSelectedCountryId(nigeria.id);
+  }, [countries, data.locationCityId, selectedCountryId]);
 
   const handleApiError = (err: any) => {
     console.error("API Error:", err);
@@ -248,9 +234,20 @@ export default function Step1() {
     }
   };
 
+  const getSelectedCountry = (): Option | null => {
+    if (!selectedCountryId) return null;
+    return countryOptions.find((c) => c.id === selectedCountryId) || null;
+  };
+
   const getSelectedCity = (): Option | null => {
     if (!data.locationCityId) return null;
-    return states.find((s) => s.id === data.locationCityId) || null;
+    return cityOptions.find((c) => c.id === data.locationCityId) || null;
+  };
+
+  const handleCountryChange = (option: Option) => {
+    if (option.id === selectedCountryId) return;
+    setSelectedCountryId(option.id);
+    updateData({ locationCityId: "" });
   };
 
   const getSelectedVehicleType = (): Option | null => {
@@ -343,12 +340,28 @@ export default function Step1() {
               />
 
               <Select
+                label="Country"
+                options={countryOptions}
+                selected={getSelectedCountry()}
+                onChange={handleCountryChange}
+                placeholder={
+                  loadingCountries ? "Loading countries..." : "Select country"
+                }
+                disabled={loadingCountries}
+              />
+
+              <Select
                 label="City"
-                options={states}
+                options={cityOptions}
                 selected={getSelectedCity()}
                 onChange={(option) => updateData({ locationCityId: option.id })}
                 error={errors.locationCityId}
-                placeholder="Select city/state"
+                placeholder={
+                  !selectedCountryId
+                    ? "Select a country first"
+                    : "Select city/state"
+                }
+                disabled={!selectedCountryId}
               />
 
               <div className="md:col-span-2">
