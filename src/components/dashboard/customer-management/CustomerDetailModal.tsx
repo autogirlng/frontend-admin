@@ -1,4 +1,3 @@
-// app/dashboard/customer-management/CustomerDetailModal.tsx
 "use client";
 
 import React from "react";
@@ -8,11 +7,11 @@ import {
   Mail,
   Phone,
   ShoppingCart,
-  DollarSign,
   Users,
   Banknote,
   CheckCircle,
   XCircle,
+  Code,
 } from "lucide-react";
 import { useGetCustomerDetails } from "@/lib/hooks/customer-management/useCustomers";
 import CustomLoader from "@/components/generic/CustomLoader";
@@ -23,7 +22,6 @@ interface CustomerDetailModalProps {
   onClose: () => void;
 }
 
-// --- Helper: Avatar Component ---
 const Avatar = ({ src, name }: { src?: string; name: string }) => {
   if (src) {
     return (
@@ -46,7 +44,6 @@ const Avatar = ({ src, name }: { src?: string; name: string }) => {
   );
 };
 
-// --- Helper: Detail Item Component ---
 const DetailItem = ({
   icon: Icon,
   label,
@@ -67,7 +64,6 @@ const DetailItem = ({
   </div>
 );
 
-// Helper to format currency
 const formatPrice = (price: number = 0) => {
   return `₦${price.toLocaleString()}`;
 };
@@ -85,7 +81,7 @@ export function CustomerDetailModal({
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="h-72">
+        <div className="h-72 flex items-center justify-center">
           <CustomLoader />
         </div>
       );
@@ -104,15 +100,14 @@ export function CustomerDetailModal({
 
     return (
       <div className="space-y-6">
-        {/* --- Header Section --- */}
-        <div className="flex items-center gap-4 p-4 bg-gray-50">
+        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
           <Avatar src={customer.profilePictureUrl} name={customer.fullName} />
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               {customer.fullName}
             </h2>
             <span
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 text-xs font-medium rounded-full ${
                 customer.active
                   ? "bg-green-100 text-green-800"
                   : "bg-gray-100 text-gray-800"
@@ -127,8 +122,6 @@ export function CustomerDetailModal({
             </span>
           </div>
         </div>
-
-        {/* --- Main Details Grid --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
           <DetailItem icon={Mail} label="Email" value={customer.email} />
           <DetailItem
@@ -151,6 +144,21 @@ export function CustomerDetailModal({
             label="Referral Wallet"
             value={formatPrice(customer.referralWalletBalance)}
           />
+          <DetailItem
+            icon={Code}
+            label="API Access"
+            value={
+              <span
+                className={
+                  customer.canSeeApi
+                    ? "text-green-600 font-semibold"
+                    : "text-gray-500"
+                }
+              >
+                {customer.canSeeApi ? "Enabled" : "Disabled"}
+              </span>
+            }
+          />
         </div>
       </div>
     );
@@ -158,25 +166,20 @@ export function CustomerDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg bg-white shadow-xl">
-        {/* Header */}
+      <div className="relative w-full max-w-lg bg-white shadow-xl rounded-lg flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-xl font-semibold leading-6 text-gray-900">
             Customer Details
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 focus:outline-none"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        {/* Content */}
-        <div className="p-6">{renderContent()}</div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t rounded-b-lg">
+        <div className="p-6 overflow-y-auto">{renderContent()}</div>
+        <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t rounded-b-lg mt-auto">
           <Button type="button" variant="secondary" onClick={onClose}>
             Close
           </Button>

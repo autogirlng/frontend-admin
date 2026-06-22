@@ -1,4 +1,3 @@
-// app/dashboard/hosts/HostDetailModal.tsx
 "use client";
 
 import React from "react";
@@ -16,8 +15,9 @@ import {
   CheckCircle,
   XCircle,
   User,
+  Code,
 } from "lucide-react";
-import { useGetHostDetails } from "@/lib/hooks/host-management/useHosts"; // Adjust path
+import { useGetHostDetails } from "@/lib/hooks/host-management/useHosts";
 import CustomLoader from "@/components/generic/CustomLoader";
 import Button from "@/components/generic/ui/Button";
 
@@ -26,7 +26,6 @@ interface HostDetailModalProps {
   onClose: () => void;
 }
 
-// --- Helper: Avatar Component ---
 const Avatar = ({ src, name }: { src?: string; name: string }) => {
   if (src) {
     return (
@@ -49,7 +48,6 @@ const Avatar = ({ src, name }: { src?: string; name: string }) => {
   );
 };
 
-// --- Helper: Detail Item Component ---
 const DetailItem = ({
   icon: Icon,
   label,
@@ -70,7 +68,6 @@ const DetailItem = ({
   </div>
 );
 
-// --- Helper: Info Card Wrapper ---
 const InfoCard = ({
   title,
   children,
@@ -84,7 +81,6 @@ const InfoCard = ({
   </div>
 );
 
-// Helper to format currency
 const formatPrice = (price: number = 0) => {
   return `₦${price.toLocaleString()}`;
 };
@@ -112,7 +108,6 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
 
     return (
       <div className="space-y-6">
-        {/* --- Header Section --- */}
         <div className="flex items-center gap-4 p-4 bg-gray-50">
           <Avatar src={host.profilePictureUrl} name={host.fullName} />
           <div>
@@ -135,16 +130,28 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
             </span>
           </div>
         </div>
-
-        {/* --- Main Details Grid --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact & Stats */}
           <InfoCard title="Details">
             <DetailItem icon={Mail} label="Email" value={host.email} />
             <DetailItem
               icon={Phone}
               label="Phone Number"
               value={host.phoneNumber}
+            />
+            <DetailItem
+              icon={Code}
+              label="API Access"
+              value={
+                <span
+                  className={
+                    host.canSeeApi
+                      ? "text-green-600 font-semibold"
+                      : "text-gray-500"
+                  }
+                >
+                  {host.canSeeApi ? "Enabled" : "Disabled"}
+                </span>
+              }
             />
             <DetailItem
               icon={Car}
@@ -157,8 +164,6 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
               value={host.totalBookings}
             />
           </InfoCard>
-
-          {/* Financials */}
           <InfoCard title="Financials">
             <DetailItem
               icon={DollarSign}
@@ -177,8 +182,6 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
             />
           </InfoCard>
         </div>
-
-        {/* --- Bank Details --- */}
         <InfoCard title="Bank Details">
           {host.hasBankDetails ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -193,12 +196,12 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
                 value={host.accountName}
               />
               <DetailItem
-                icon={AlertCircle} // Using AlertCircle as a stand-in for bank #
+                icon={AlertCircle}
                 label="Account Number"
                 value={host.accountNumber}
               />
               <DetailItem
-                icon={AlertCircle} // Using AlertCircle as a stand-in for bank #
+                icon={AlertCircle}
                 label="Bank Code"
                 value={host.bankCode}
               />
@@ -214,7 +217,6 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="relative w-full max-w-3xl bg-white shadow-xl">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-xl font-semibold leading-6 text-gray-900">
             Host Details
@@ -226,13 +228,9 @@ export function HostDetailModal({ hostId, onClose }: HostDetailModalProps) {
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        {/* Content */}
         <div className="p-6 max-h-[80vh] overflow-y-auto">
           {renderContent()}
         </div>
-
-        {/* Footer */}
         <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t rounded-b-lg">
           <Button type="button" variant="secondary" onClick={onClose}>
             Close

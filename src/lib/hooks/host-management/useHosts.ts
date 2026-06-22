@@ -52,7 +52,7 @@ export function useGetHostDetails(hostId: string | null) {
   return useQuery<HostDetail, Error>({
     queryKey: [HOST_DETAIL_KEY, hostId],
     queryFn: () => apiClient.get<HostDetail>(`/admin/users/hosts/${hostId}`),
-    enabled: !!hostId, // Only run if hostId is not null
+    enabled: !!hostId,
   });
 }
 

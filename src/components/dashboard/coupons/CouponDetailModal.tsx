@@ -18,7 +18,11 @@ const DetailItem = ({ icon: Icon, label, value }: any) => (
     <div>
       <p className="text-sm font-medium text-gray-500">{label}</p>
       <p className="text-base font-semibold text-gray-900 break-words">
-        {value || <span className="text-gray-400">N/A</span>}
+        {value !== null && value !== undefined ? (
+          value
+        ) : (
+          <span className="text-gray-400">N/A</span>
+        )}
       </p>
     </div>
   </div>
@@ -97,6 +101,17 @@ export function CouponDetailModal({
                   : "Fixed Amount (₦)"
               }
             />
+            {coupon?.couponType === "PERCENTAGE" &&
+              coupon.maxDiscountAmount && (
+                <DetailItem
+                  icon={Tag}
+                  label="Max Discount Cap"
+                  value={formatDiscount(
+                    coupon.maxDiscountAmount,
+                    "FIXED_AMOUNT",
+                  )}
+                />
+              )}
             {coupon.organizationName && (
               <DetailItem
                 icon={Building2}
@@ -112,15 +127,47 @@ export function CouponDetailModal({
             />
             <DetailItem
               icon={Users}
-              label="Usage Limit"
+              label="Total Usage Limit"
               value={coupon.usageLimit ?? "Unlimited"}
+            />
+            <DetailItem
+              icon={Users}
+              label="Per User Limit"
+              value={coupon.perUserLimit ?? "Unlimited"}
             />
           </div>
 
           <div className="space-y-4">
             <h4 className="font-semibold text-gray-800 border-b pb-2">
-              Validity
+              Configuration & Validity
             </h4>
+            <DetailItem
+              icon={AlertCircle}
+              label="Priority Level"
+              value={coupon.priority ?? 0}
+            />
+
+            <div className="flex gap-4 pt-1 pb-3">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  coupon.firstBookingOnly
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                First Booking Only: {coupon.firstBookingOnly ? "YES" : "NO"}
+              </span>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  coupon.autoApply
+                    ? "bg-purple-100 text-purple-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                Auto Apply: {coupon.autoApply ? "YES" : "NO"}
+              </span>
+            </div>
+
             <DetailItem
               icon={Calendar}
               label="Start Date"

@@ -1,9 +1,9 @@
-// app/dashboard/customer-management/CustomersPage.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import { useGetCustomers } from "@/lib/hooks/customer-management/useCustomers";
 import { useUpdateCustomerStatus } from "@/lib/hooks/customer-management/useUpdateCustomerStatus";
+import { useUpdateCustomerApiVisibility } from "@/lib/hooks/customer-management/useUpdateCustomerApiVisibility";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { Customer } from "./types";
 
@@ -12,12 +12,13 @@ import {
   AlertCircle,
   Search,
   View,
-  Edit,
   Download,
   Trash2,
   CheckCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { useCustomerExport } from "./hooks/useCustomerExport";
 import { useAllCustomerExport } from "./hooks/useAllCustomerExport";
 import Button from "@/components/generic/ui/Button";
@@ -27,16 +28,15 @@ import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
 import CustomBack from "@/components/generic/CustomBack";
 import CustomLoader from "@/components/generic/CustomLoader";
-import { CustomerDetailModal } from "./CustomerDetailModal"; // ✅ Import new modal
+import { CustomerDetailModal } from "./CustomerDetailModal";
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  // ✅ Add "view" to modal state
-  const [modal, setModal] = useState<"status" | "view" | null>(null);
+  const [modal, setModal] = useState<"status" | "view" | "api" | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
+    null,
   );
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -45,16 +45,12 @@ export default function CustomersPage() {
 
   useEffect(() => {
     if (topRef.current) {
-      // 'block: "start"' ensures it aligns to the top of the container
-      // This works even if the scroll is inside a div (not the window)
       topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Fallback just in case
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [currentPage]);
 
-  // --- Data Fetching ---
   const {
     data: paginatedData,
     isLoading,
@@ -64,6 +60,8 @@ export default function CustomersPage() {
 
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateCustomerStatus();
+  const { mutate: updateApiVisibility, isPending: isUpdatingApi } =
+    useUpdateCustomerApiVisibility();
 
   const customers = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
@@ -74,8 +72,7 @@ export default function CustomersPage() {
 
   const { handleExportAllCustomers, isExportingAll } = useAllCustomerExport();
 
-  // --- Modal Handlers ---
-  const openModal = (type: "status" | "view", customer: Customer) => {
+  const openModal = (type: "status" | "view" | "api", customer: Customer) => {
     setSelectedCustomer(customer);
     setModal(type);
   };
@@ -96,17 +93,37 @@ export default function CustomersPage() {
           onSuccess: () => {
             closeModal();
           },
-        }
+        },
       );
     }
   };
 
-  // --- Define Actions for the Menu ---
+  const handleApiConfirm = () => {
+    if (selectedCustomer) {
+      updateApiVisibility(
+        {
+          userId: selectedCustomer.id,
+          canSeeApi: !selectedCustomer.canSeeApi,
+        },
+        {
+          onSuccess: () => {
+            closeModal();
+          },
+        },
+      );
+    }
+  };
+
   const getCustomerActions = (customer: Customer): ActionMenuItem[] => [
     {
       label: "View Details",
       icon: View,
-      onClick: () => openModal("view", customer), // ✅ Use new modal
+      onClick: () => openModal("view", customer),
+    },
+    {
+      label: customer.canSeeApi ? "Hide API" : "Show API",
+      icon: customer.canSeeApi ? EyeOff : Eye,
+      onClick: () => openModal("api", customer),
     },
     customer.active
       ? {
@@ -123,7 +140,6 @@ export default function CustomersPage() {
         },
   ];
 
-  // --- Define Columns for the Customer Table ---
   const columns: ColumnDefinition<Customer>[] = [
     {
       header: "Full Name",
@@ -169,7 +185,6 @@ export default function CustomersPage() {
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
-        {/* --- Header --- */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
@@ -177,8 +192,6 @@ export default function CustomersPage() {
               Manage all customers on the platform.
             </p>
           </div>
-
-          {/* ✅ Export Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <Button
               onClick={handleExportAllCustomers}
@@ -212,8 +225,6 @@ export default function CustomersPage() {
             </Button>
           </div>
         </div>
-
-        {/* --- Search Bar --- */}
         <div className="relative mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -230,8 +241,6 @@ export default function CustomersPage() {
             style={{ paddingLeft: 35 }}
           />
         </div>
-
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -244,8 +253,6 @@ export default function CustomersPage() {
             <p>No customers found.</p>
           </div>
         )}
-
-        {/* Table: Use opacity for loading state on refetch */}
         {!isError && (customers.length > 0 || isLoading) && (
           <div
             className={`${
@@ -259,8 +266,6 @@ export default function CustomersPage() {
             />
           </div>
         )}
-
-        {/* --- Pagination Controls --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -268,8 +273,6 @@ export default function CustomersPage() {
           isLoading={isPlaceholderData}
         />
       </main>
-
-      {/* ✅ Status Update Modal */}
       {modal === "status" && selectedCustomer && (
         <ActionModal
           title={
@@ -294,8 +297,28 @@ export default function CustomersPage() {
           variant={selectedCustomer.active ? "danger" : "primary"}
         />
       )}
-
-      {/* ✅ RENDER NEW MODAL */}
+      {modal === "api" && selectedCustomer && (
+        <ActionModal
+          title={
+            selectedCustomer.canSeeApi
+              ? "Revoke API Access"
+              : "Grant API Access"
+          }
+          message={
+            <>
+              Are you sure you want to{" "}
+              {selectedCustomer.canSeeApi ? "revoke" : "grant"} API visibility
+              for <span className="font-bold">{selectedCustomer.fullName}</span>
+              ?
+            </>
+          }
+          actionLabel={selectedCustomer.canSeeApi ? "Revoke" : "Grant"}
+          onClose={closeModal}
+          onConfirm={handleApiConfirm}
+          isLoading={isUpdatingApi}
+          variant={selectedCustomer.canSeeApi ? "danger" : "primary"}
+        />
+      )}
       {modal === "view" && selectedCustomer && (
         <CustomerDetailModal
           customerId={selectedCustomer.id}

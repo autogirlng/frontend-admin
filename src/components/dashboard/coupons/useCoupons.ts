@@ -8,6 +8,7 @@ import {
   CreateCouponPayload,
   PaginatedResponse,
   BookingCouponResponse,
+  UpdateCouponPayload,
 } from "./types";
 
 export const COUPONS_QUERY_KEY = "coupons";
@@ -70,6 +71,27 @@ export function useCreateCoupon() {
     },
     onError: (error) =>
       toast.error(error.message || "Failed to create coupon."),
+  });
+}
+
+export function useUpdateCoupon() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    Coupon,
+    Error,
+    { id: string; payload: UpdateCouponPayload }
+  >({
+    mutationFn: ({ id, payload }) =>
+      apiClient.patch(`/admin/coupons/${id}`, payload),
+    onSuccess: (updatedCoupon) => {
+      toast.success("Coupon updated successfully.");
+      queryClient.invalidateQueries({ queryKey: [COUPONS_QUERY_KEY] });
+      queryClient.invalidateQueries({
+        queryKey: [COUPON_DETAIL_KEY, updatedCoupon.id],
+      });
+    },
+    onError: (error) =>
+      toast.error(error.message || "Failed to update coupon."),
   });
 }
 

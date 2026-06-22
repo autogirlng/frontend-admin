@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   useGetMyDrivers,
   useSendScheduleLink,
+  useSendDriverCredentials,
   useUnassignDriverFromVehicle,
   useUpdateDriverStatus,
 } from "@/lib/hooks/drivers-management/useDrivers";
@@ -26,6 +27,7 @@ import {
   Edit,
   Unlink,
   Link as LinkIcon,
+  KeyRound,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -46,9 +48,11 @@ export default function DriversPage() {
     | "edit"
     | "assignVehicle"
     | "unassignVehicle"
+    | "sendCredentials"
     | null
   >(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [credentialsEmail, setCredentialsEmail] = useState("");
 
   const [currentPage, setCurrentPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,6 +80,7 @@ export default function DriversPage() {
   } = useGetMyDrivers(currentPage, debouncedSearchTerm);
 
   const sendLinkMutation = useSendScheduleLink();
+  const sendCredentialsMutation = useSendDriverCredentials();
   const { mutate: updateStatus, isPending: isUpdatingStatus } =
     useUpdateDriverStatus();
   const { mutate: unassignDriver, isPending: isUnassigning } =
@@ -92,21 +97,32 @@ export default function DriversPage() {
       | "status"
       | "edit"
       | "assignVehicle"
-      | "unassignVehicle",
+      | "unassignVehicle"
+      | "sendCredentials",
     driver: Driver | null = null,
   ) => {
     setSelectedDriver(driver);
+    setCredentialsEmail("");
     setModal(type);
   };
   const closeModal = () => {
     setModal(null);
     setSelectedDriver(null);
+    setCredentialsEmail("");
   };
 
   const handleSendLink = () => {
     if (!selectedDriver) return;
     sendLinkMutation.mutate(
       { driverId: selectedDriver.id },
+      { onSuccess: closeModal },
+    );
+  };
+
+  const handleSendCredentials = () => {
+    if (!selectedDriver) return;
+    sendCredentialsMutation.mutate(
+      { driverId: selectedDriver.id, email: credentialsEmail.trim() },
       { onSuccess: closeModal },
     );
   };
@@ -162,6 +178,11 @@ export default function DriversPage() {
         label: "View/Edit Schedule",
         icon: Calendar,
         onClick: () => openModal("schedule", driver),
+      },
+      {
+        label: "Send Login Credentials",
+        icon: KeyRound,
+        onClick: () => openModal("sendCredentials", driver),
       },
       driver.active
         ? {
@@ -370,6 +391,40 @@ export default function DriversPage() {
           isLoading={sendLinkMutation.isPending}
           variant="primary"
         />
+      )}
+
+      {modal === "sendCredentials" && selectedDriver && (
+        <ActionModal
+          title="Send Login Credentials"
+          message={
+            <>
+              This will generate a new password for{" "}
+              <strong className="text-gray-900">
+                {selectedDriver.fullName}
+              </strong>{" "}
+              and email their login details for the driver app. Are you sure you
+              want to send credentials to this driver?
+            </>
+          }
+          actionLabel="Yes, Send Credentials"
+          onClose={closeModal}
+          onConfirm={handleSendCredentials}
+          isLoading={sendCredentialsMutation.isPending}
+          isConfirmDisabled={
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentialsEmail.trim())
+          }
+          variant="primary"
+        >
+          <TextInput
+            label="Driver Email"
+            id="credentialsEmail"
+            type="email"
+            placeholder="driver@example.com"
+            value={credentialsEmail}
+            onChange={(e) => setCredentialsEmail(e.target.value)}
+            disabled={sendCredentialsMutation.isPending}
+          />
+        </ActionModal>
       )}
 
       {modal === "status" && selectedDriver && (

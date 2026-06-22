@@ -126,6 +126,20 @@ export function useSendScheduleLink() {
   });
 }
 
+export function useSendDriverCredentials() {
+  return useMutation<unknown, Error, { driverId: string; email: string }>({
+    mutationFn: ({ driverId, email }) =>
+      apiClient.post(`/admin/users/drivers/${driverId}/send-credentials`, {
+        email,
+      }),
+    onSuccess: () => {
+      toast.success("Login credentials sent to the driver successfully.");
+    },
+    onError: (error) =>
+      toast.error(`Failed to send credentials: ${error.message}`),
+  });
+}
+
 export function useGetDriverSchedule(driverId: string, weekStartDate: string) {
   return useQuery<DriverSchedule>({
     queryKey: [DRIVER_SCHEDULE_KEY, driverId, weekStartDate],

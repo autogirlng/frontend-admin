@@ -13,9 +13,6 @@ type MutationInput = {
   isActive: boolean;
 };
 
-/**
- * Hook to update a user's status (activate/deactivate).
- */
 export function useUpdateCustomerStatus() {
   const queryClient = useQueryClient();
 
@@ -30,7 +27,7 @@ export function useUpdateCustomerStatus() {
         exact: false,
       });
       toast.success(
-        `User status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`
+        `User status updated to ${isActive ? "ACTIVE" : "INACTIVE"}`,
       );
     },
     onError: (error) => {
