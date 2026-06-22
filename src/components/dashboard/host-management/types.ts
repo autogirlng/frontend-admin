@@ -16,6 +16,7 @@ export interface Host {
   totalPendingBalance: number;
   active: boolean;
   vacationMode: boolean;
+  canSeeApi: boolean;
 }
 
 export interface HostDetail {
@@ -34,6 +35,7 @@ export interface HostDetail {
   accountName: string;
   bankCode: string;
   active: boolean;
+  canSeeApi: boolean;
   profilePictureUrl?: string;
 }
 

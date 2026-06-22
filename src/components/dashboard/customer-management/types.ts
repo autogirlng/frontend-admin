@@ -1,4 +1,3 @@
-// From GET /admin/users/customers
 export interface Customer {
   id: string;
   fullName: string;
@@ -6,6 +5,7 @@ export interface Customer {
   phoneNumber: string;
   totalBookings: number;
   active: boolean;
+  canSeeApi: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -25,10 +25,10 @@ export interface CustomerDetail {
   referralWalletBalance: number;
   totalReferrals: number;
   active: boolean;
-  profilePictureUrl?: string; // Add profile pic, just in case
+  canSeeApi: boolean;
+  profilePictureUrl?: string;
 }
 
-// From GET /admin/bookings/booking/customer
 export interface BookingCustomer {
   customerName: string;
   email: string;

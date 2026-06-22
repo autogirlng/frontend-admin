@@ -182,6 +182,12 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
   const [organizationId, setOrganizationId] = useState("");
   const [organizationName, setOrganizationName] = useState("");
 
+  const [maxDiscountAmount, setMaxDiscountAmount] = useState("");
+  const [perUserLimit, setPerUserLimit] = useState("");
+  const [firstBookingOnly, setFirstBookingOnly] = useState(false);
+  const [autoApply, setAutoApply] = useState(false);
+  const [priority, setPriority] = useState("0");
+
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const debouncedUserSearch = useDebounce(userSearchTerm, 500);
 
@@ -225,6 +231,13 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
       ...(organizationId && { organizationId }),
       ...(startIso && { startDate: startIso }),
       ...(expiryIso && { expiryDate: expiryIso }),
+      ...(maxDiscountAmount && {
+        maxDiscountAmount: Number(maxDiscountAmount),
+      }),
+      ...(perUserLimit && { perUserLimit: Number(perUserLimit) }),
+      firstBookingOnly,
+      autoApply,
+      priority: Number(priority),
     };
 
     createCoupon(payload, {
@@ -321,6 +334,17 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
                   required
                   max={couponType === "PERCENTAGE" ? 100 : undefined}
                 />
+
+                {couponType === "PERCENTAGE" && (
+                  <TextInput
+                    label="Max Discount Amount (₦)"
+                    id="maxDiscount"
+                    type="number"
+                    placeholder="e.g. 10000"
+                    value={maxDiscountAmount}
+                    onChange={(e) => setMaxDiscountAmount(e.target.value)}
+                  />
+                )}
               </div>
               <TextAreaInput
                 label="Description *"
@@ -339,13 +363,54 @@ export function CreateCouponModal({ onClose }: CreateCouponModalProps) {
               </h4>
 
               <TextInput
-                label="Usage Limit"
+                label="Total Usage Limit"
                 id="limit"
                 type="number"
                 placeholder="Unlimited"
                 value={usageLimit}
                 onChange={(e) => setUsageLimit(e.target.value)}
               />
+
+              <TextInput
+                label="Per User Limit"
+                id="perUserLimit"
+                type="number"
+                placeholder="How many times can a single user use this?"
+                value={perUserLimit}
+                onChange={(e) => setPerUserLimit(e.target.value)}
+              />
+
+              <div className="flex flex-col gap-3 py-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={firstBookingOnly}
+                    onChange={(e) => setFirstBookingOnly(e.target.checked)}
+                    className="w-4 h-4 text-[#0096FF] border-gray-300 rounded focus:ring-[#0096FF]"
+                  />
+                  First Booking Only
+                </label>
+
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoApply}
+                    onChange={(e) => setAutoApply(e.target.checked)}
+                    className="w-4 h-4 text-[#0096FF] border-gray-300 rounded focus:ring-[#0096FF]"
+                  />
+                  Auto Apply to Valid Bookings
+                </label>
+              </div>
+
+              <TextInput
+                label="Priority Level"
+                id="priority"
+                type="number"
+                placeholder="Higher number = higher priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+
               <div className="pt-2">
                 <SearchableOrganizationSelect
                   value={organizationId}

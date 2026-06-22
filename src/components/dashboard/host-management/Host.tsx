@@ -9,6 +9,7 @@ import {
 import type { HostLocationFilters } from "@/lib/hooks/host-management/useHosts";
 import { useSendCredentials } from "@/lib/hooks/host-management/useSendCredentials";
 import { useUpdateHostStatus } from "@/lib/hooks/host-management/useUpdateHostStatus";
+import { useUpdateHostApiVisibility } from "@/lib/hooks/host-management/useUpdateHostApiVisibility";
 import { useEndVacationMode } from "./useVacationMode";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 import { Host } from "./types";
@@ -16,7 +17,6 @@ import TextInput from "@/components/generic/ui/TextInput";
 import Button from "@/components/generic/ui/Button";
 import CreateHostModal from "./CreateHostModal";
 import VacationModeModal from "./VacationModeModal";
-// Import the Edit Modal
 import { EditHostModal } from "@/components/dashboard/host-management/EditHostModal";
 
 import {
@@ -36,6 +36,8 @@ import {
   FileText,
   MessageSquareWarning,
   Gavel,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { ActionMenu, ActionMenuItem } from "@/components/generic/ui/ActionMenu";
@@ -55,8 +57,9 @@ const getStateFilterCoordinates = (
 ): HostLocationFilters => {
   const coordinates = parseWktToLatLngRings(state?.polygon ?? "")
     .flat()
-    .filter(([latitude, longitude]) =>
-      Number.isFinite(latitude) && Number.isFinite(longitude),
+    .filter(
+      ([latitude, longitude]) =>
+        Number.isFinite(latitude) && Number.isFinite(longitude),
     );
 
   if (coordinates.length === 0) {
@@ -84,15 +87,14 @@ export default function HostsPage() {
   const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
   const [selectedState, setSelectedState] = useState<Option | null>(null);
 
-  // New State for Edit Modal
   const [editModalHost, setEditModalHost] = useState<Host | null>(null);
 
-  const [modal, setModal] = useState<"status" | "view" | null>(null);
+  const [modal, setModal] = useState<"status" | "view" | "api" | null>(null);
   const [selectedHost, setSelectedHost] = useState<Host | null>(null);
 
   const [vacationModalHost, setVacationModalHost] = useState<Host | null>(null);
   const [endVacationModalHost, setEndVacationModalHost] = useState<Host | null>(
-    null
+    null,
   );
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -138,6 +140,9 @@ export default function HostsPage() {
   const { mutate: endVacation, isPending: isEndingVacation } =
     useEndVacationMode();
 
+  const { mutate: updateApiVisibility, isPending: isUpdatingApi } =
+    useUpdateHostApiVisibility();
+
   const hosts = paginatedData?.content || [];
   const totalPages = paginatedData?.totalPages || 0;
   const countryOptions =
@@ -166,7 +171,7 @@ export default function HostsPage() {
     setCurrentPage(0);
   };
 
-  const openModal = (type: "status" | "view", host: Host) => {
+  const openModal = (type: "status" | "view" | "api", host: Host) => {
     setSelectedHost(host);
     setModal(type);
   };
@@ -176,7 +181,7 @@ export default function HostsPage() {
     setSelectedHost(null);
     setVacationModalHost(null);
     setEndVacationModalHost(null);
-    setEditModalHost(null); // Clear edit modal state
+    setEditModalHost(null);
   };
 
   const handleStatusConfirm = () => {
@@ -190,7 +195,23 @@ export default function HostsPage() {
           onSuccess: () => {
             closeModal();
           },
-        }
+        },
+      );
+    }
+  };
+
+  const handleApiConfirm = () => {
+    if (selectedHost) {
+      updateApiVisibility(
+        {
+          userId: selectedHost.id,
+          canSeeApi: !selectedHost.canSeeApi,
+        },
+        {
+          onSuccess: () => {
+            closeModal();
+          },
+        },
       );
     }
   };
@@ -210,7 +231,6 @@ export default function HostsPage() {
       label: "Edit Details",
       icon: Edit2,
       onClick: () => {
-        // Now opens the modal instead of navigating
         setEditModalHost(host);
       },
     },
@@ -234,6 +254,11 @@ export default function HostsPage() {
       onClick: () => {
         router.push(`/dashboard/host/mou/${host.id}`);
       },
+    },
+    {
+      label: host.canSeeApi ? "Hide API" : "Show API",
+      icon: host.canSeeApi ? EyeOff : Eye,
+      onClick: () => openModal("api", host),
     },
     {
       label: "Send Credentials",
@@ -349,7 +374,6 @@ export default function HostsPage() {
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
         <div ref={topRef} />
-        {/* --- Header --- */}
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="my-1">
             <h1 className="text-3xl font-bold text-gray-900">Hosts</h1>
@@ -383,8 +407,6 @@ export default function HostsPage() {
             </Button>
           </div>
         </div>
-
-        {/* --- Search Bar --- */}
         <div className="relative mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -440,8 +462,6 @@ export default function HostsPage() {
             </Button>
           )}
         </div>
-
-        {/* --- Table Display --- */}
         {isLoading && !paginatedData && <CustomLoader />}
         {isError && (
           <div className="flex flex-col items-center gap-2 p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -468,8 +488,6 @@ export default function HostsPage() {
             />
           </div>
         )}
-
-        {/* --- Pagination --- */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -477,26 +495,19 @@ export default function HostsPage() {
           isLoading={isPlaceholderData}
         />
       </main>
-
-      {/* --- Create Host Modal --- */}
       {isCreateModalOpen && (
         <CreateHostModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
         />
       )}
-
-      {/* --- Edit Host Modal --- */}
-      {/* Conditionally render: only if editModalHost has data */}
       {editModalHost && (
         <EditHostModal
-            isOpen={!!editModalHost}
-            onClose={closeModal} // Closes modal and clears state
-            hostData={editModalHost}
+          isOpen={!!editModalHost}
+          onClose={closeModal}
+          hostData={editModalHost}
         />
       )}
-
-      {/* --- Status Modal (Activate/Deactivate) --- */}
       {modal === "status" && selectedHost && (
         <ActionModal
           title={selectedHost.active ? "Deactivate Host" : "Activate Host"}
@@ -517,8 +528,25 @@ export default function HostsPage() {
           variant={selectedHost.active ? "danger" : "primary"}
         />
       )}
-
-      {/* --- Vacation Mode Modal (Set) --- */}
+      {modal === "api" && selectedHost && (
+        <ActionModal
+          title={
+            selectedHost.canSeeApi ? "Revoke API Access" : "Grant API Access"
+          }
+          message={
+            <>
+              Are you sure you want to{" "}
+              {selectedHost.canSeeApi ? "revoke" : "grant"} API visibility for{" "}
+              <span className="font-bold">{selectedHost.fullName}</span>?
+            </>
+          }
+          actionLabel={selectedHost.canSeeApi ? "Revoke" : "Grant"}
+          onClose={closeModal}
+          onConfirm={handleApiConfirm}
+          isLoading={isUpdatingApi}
+          variant={selectedHost.canSeeApi ? "danger" : "primary"}
+        />
+      )}
       {vacationModalHost && (
         <VacationModeModal
           hostId={vacationModalHost.id}
@@ -526,8 +554,6 @@ export default function HostsPage() {
           onClose={closeModal}
         />
       )}
-
-      {/* --- End Vacation Mode Confirmation --- */}
       {endVacationModalHost && (
         <ActionModal
           title="End Vacation Mode"

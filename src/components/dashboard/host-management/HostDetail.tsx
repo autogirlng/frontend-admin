@@ -11,7 +11,6 @@ import {
   Car,
   Search,
   Eye,
-  ArrowLeft,
   BadgeCheck,
   AlertCircle,
   Circle,
@@ -19,12 +18,10 @@ import {
 import { Toaster } from "react-hot-toast";
 import clsx from "clsx";
 
-// Hooks
 import { useGetHostDetails } from "@/lib/hooks/host-management/useHosts";
 import { useGetHostVehicles } from "@/lib/hooks/host-management/useHostVehicles";
 import { useDebounce } from "@/lib/hooks/set-up/company-bank-account/useDebounce";
 
-// Components
 import CustomLoader from "@/components/generic/CustomLoader";
 import { ColumnDefinition, CustomTable } from "@/components/generic/ui/Table";
 import { PaginationControls } from "@/components/generic/ui/PaginationControls";
@@ -33,11 +30,8 @@ import Select, { Option } from "@/components/generic/ui/Select";
 import { ActionMenu } from "@/components/generic/ui/ActionMenu";
 import Button from "@/components/generic/ui/Button";
 
-// Types
 import { HostVehicle } from "./types";
 import CustomBack from "@/components/generic/CustomBack";
-
-// --- Helpers ---
 
 const formatPrice = (amount: number) => {
   return new Intl.NumberFormat("en-NG", {
@@ -61,7 +55,6 @@ const formatStatus = (status: string) => {
     .join(" ");
 };
 
-// Helper for Operational Status Badge
 const OperationalStatusBadge = ({ status }: { status: string }) => {
   let colorClasses = "bg-gray-100 text-gray-800";
   let icon = <Circle className="h-2 w-2 text-gray-500" />;
@@ -88,7 +81,7 @@ const OperationalStatusBadge = ({ status }: { status: string }) => {
     <span
       className={clsx(
         "inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full",
-        colorClasses
+        colorClasses,
       )}
     >
       {icon}
@@ -102,7 +95,6 @@ export default function HostDetail() {
   const params = useParams();
   const hostId = params.hostId as string;
 
-  // --- State ---
   const [currentPage, setCurrentPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<Option | null>(null);
@@ -123,7 +115,6 @@ export default function HostDetail() {
     setCurrentPage(0);
   }, [debouncedSearchTerm, statusFilter]);
 
-  // --- API Hooks ---
   const {
     data: host,
     isLoading: isLoadingHost,
@@ -144,10 +135,8 @@ export default function HostDetail() {
   const vehicles = vehiclesData?.content || [];
   const totalPages = vehiclesData?.totalPages || 0;
 
-  // --- Handlers ---
   const handleBack = () => router.back();
 
-  // --- Columns ---
   const columns: ColumnDefinition<HostVehicle>[] = [
     {
       header: "Vehicle",
@@ -229,11 +218,9 @@ export default function HostDetail() {
 
       <CustomBack />
 
-      {/* --- Host Profile Card --- */}
       <div className="bg-white border border-gray-400 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50/50">
           <div className="flex flex-col md:flex-row md:items-center gap-6">
-            {/* Avatar */}
             <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-white shadow-sm">
               {host.profilePictureUrl ? (
                 <img
@@ -252,7 +239,6 @@ export default function HostDetail() {
               )}
             </div>
 
-            {/* Name & Badges */}
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -274,7 +260,6 @@ export default function HostDetail() {
               </div>
             </div>
 
-            {/* Key Stats */}
             <div className="flex gap-6 border-l border-gray-200 pl-6">
               <div>
                 <p className="text-xs text-gray-500 uppercase font-semibold">
@@ -298,7 +283,6 @@ export default function HostDetail() {
           </div>
         </div>
 
-        {/* Financials */}
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-1">
@@ -350,9 +334,7 @@ export default function HostDetail() {
         </div>
       </div>
 
-      {/* --- Fleet Section --- */}
       <div className="space-y-2">
-        {/* Filters */}
         <div className="bg-white py-4 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -378,12 +360,10 @@ export default function HostDetail() {
             />
           </div>
         </div>
-
-        {/* Table */}
         <div
           className={clsx(
             "bg-white overflow-hidden",
-            isPlaceholderData && "opacity-60"
+            isPlaceholderData && "opacity-60",
           )}
         >
           {isLoadingVehicles ? (

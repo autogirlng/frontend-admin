@@ -32,6 +32,6 @@ export function useGetCustomerDetails(customerId: string | null) {
     queryKey: [CUSTOMER_DETAIL_KEY, customerId],
     queryFn: () =>
       apiClient.get<CustomerDetail>(`/admin/users/customers/${customerId}`),
-    enabled: !!customerId, // Only run if customerId is not null
+    enabled: !!customerId,
   });
 }

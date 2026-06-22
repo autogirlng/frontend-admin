@@ -24,6 +24,11 @@ export interface Coupon {
   startDate: string | null;
   expiryDate: string | null;
   active: boolean;
+  maxDiscountAmount?: number;
+  firstBookingOnly?: boolean;
+  perUserLimit?: number;
+  autoApply?: boolean;
+  priority?: number;
 }
 
 export interface CreateCouponPayload {
@@ -36,6 +41,22 @@ export interface CreateCouponPayload {
   organizationId?: string;
   startDate?: string;
   expiryDate?: string;
+  maxDiscountAmount?: number;
+  firstBookingOnly?: boolean;
+  perUserLimit?: number;
+  autoApply?: boolean;
+  priority?: number;
+}
+
+export interface UpdateCouponPayload {
+  description?: string;
+  usageLimit?: number;
+  expiryDate?: string;
+  maxDiscountAmount?: number;
+  firstBookingOnly?: boolean;
+  perUserLimit?: number;
+  autoApply?: boolean;
+  priority?: number;
 }
 
 export interface BookingSegment {
