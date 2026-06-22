@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Toaster } from "react-hot-toast";
-import { AlertCircle, Eye, Filter } from "lucide-react";
+import { AlertCircle, Eye, Filter, KeyRound } from "lucide-react";
 import { BookingType } from "@/components/set-up-management/bookings-types/types";
 import { useGetDriverTrips } from "@/lib/hooks/drivers-management/useDriverTrips";
 import { useGetBookingTypes } from "@/lib/hooks/set-up/booking-types/useBookingTypes";
@@ -17,7 +17,12 @@ import CustomLoader from "@/components/generic/CustomLoader";
 import CustomBack from "@/components/generic/CustomBack";
 import Button from "@/components/generic/ui/Button";
 import { BookingStatus, Trip, TripStatus } from "./trip-types";
-import { useGetDriverDetails } from "@/lib/hooks/drivers-management/useDrivers";
+import {
+  useGetDriverDetails,
+  useSendDriverCredentials,
+} from "@/lib/hooks/drivers-management/useDrivers";
+import { ActionModal } from "@/components/generic/ui/ActionModal";
+import TextInput from "@/components/generic/ui/TextInput";
 
 const enumToOptions = (e: object): Option[] =>
   Object.entries(e).map(([key, value]) => ({ id: value, name: key }));
@@ -39,7 +44,24 @@ export default function DriverTripsPage() {
     dateRange: null as DateRange | null,
   });
 
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [credentialsEmail, setCredentialsEmail] = useState("");
+
   const { data: driverDetails } = useGetDriverDetails(driverId);
+  const sendCredentialsMutation = useSendDriverCredentials();
+
+  const closeCredentialsModal = () => {
+    setIsCredentialsModalOpen(false);
+    setCredentialsEmail("");
+  };
+
+  const handleSendCredentials = () => {
+    sendCredentialsMutation.mutate(
+      { driverId, email: credentialsEmail.trim() },
+      { onSuccess: closeCredentialsModal },
+    );
+  };
+
   const {
     data: paginatedData,
     isLoading,
@@ -165,21 +187,31 @@ export default function DriverTripsPage() {
       <Toaster position="top-right" />
       <CustomBack />
       <main className="py-3 max-w-8xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Driver Trip History
-          </h1>
-          <div className="text-lg text-gray-600 mt-1">
-            {driverDetails && (
-              <p className="text-gray-500 mt-1">
-                Viewing trips for{" "}
-                <span className="font-semibold text-gray-800">
-                  {driverDetails.fullName}
-                </span>{" "}
-                ({driverDetails.driverIdentifier})
-              </p>
-            )}
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Driver Trip History
+            </h1>
+            <div className="text-lg text-gray-600 mt-1">
+              {driverDetails && (
+                <p className="text-gray-500 mt-1">
+                  Viewing trips for{" "}
+                  <span className="font-semibold text-gray-800">
+                    {driverDetails.fullName}
+                  </span>{" "}
+                  ({driverDetails.driverIdentifier})
+                </p>
+              )}
+            </div>
           </div>
+          <Button
+            variant="secondary"
+            className="w-auto px-5"
+            onClick={() => setIsCredentialsModalOpen(true)}
+          >
+            <KeyRound className="h-5 w-5 mr-2" />
+            Send Login Credentials
+          </Button>
         </div>
 
         <div className="p-4 bg-gray-50 border border-gray-200 mb-6">
@@ -278,6 +310,46 @@ export default function DriverTripsPage() {
           isLoading={isPlaceholderData}
         />
       </main>
+
+      {isCredentialsModalOpen && (
+        <ActionModal
+          title="Send Login Credentials"
+          message={
+            <>
+              This will generate a new password
+              {driverDetails ? (
+                <>
+                  {" "}
+                  for{" "}
+                  <strong className="text-gray-900">
+                    {driverDetails.fullName}
+                  </strong>
+                </>
+              ) : null}{" "}
+              and email their login details for the driver app. Are you sure you
+              want to send credentials to this driver?
+            </>
+          }
+          actionLabel="Yes, Send Credentials"
+          onClose={closeCredentialsModal}
+          onConfirm={handleSendCredentials}
+          isLoading={sendCredentialsMutation.isPending}
+          isConfirmDisabled={
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentialsEmail.trim())
+          }
+          variant="primary"
+        >
+          <TextInput
+            label="Driver Email"
+            id="credentialsEmail"
+            type="email"
+            placeholder="driver@example.com"
+            value={credentialsEmail}
+            onChange={(e) => setCredentialsEmail(e.target.value)}
+            disabled={sendCredentialsMutation.isPending}
+          />
+        </ActionModal>
+      )}
     </>
   );
 }
