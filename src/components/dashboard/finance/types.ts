@@ -34,6 +34,8 @@ export interface Payment {
   intendedVehicleIdentifier?: string | null;
   intendedVehicleId?: string | null;
   forceApproved?: boolean;
+  paymentMethod: "ONLINE" | "OFFLINE";
+  hasDva: boolean;
 }
 
 export enum PaymentStatus {
@@ -107,4 +109,41 @@ export interface MoveSegmentsPayload {
 export interface MovePendingBookingPayload {
   newVehicleId: string;
   waivePriceDifference: boolean;
+}
+
+export interface PaymentAllocation {
+  id: string;
+  sequenceNumber: number;
+  monnifyInvoiceReference: string;
+  dvaAccountNumber: string;
+  dvaBankName: string;
+  dvaAccountName: string;
+  amountExpected: number;
+  amountReceived?: number;
+  monnifyTransactionReference?: string;
+  status: string;
+  reason?: string;
+  activatedAt: string;
+  settledAt?: string;
+  invalidatedAt?: string;
+  createdAt: string;
+}
+
+export interface PaymentHistoryResponse {
+  bookingId: string;
+  invoiceNumber: string;
+  totalPayable: number;
+  totalPaid: number;
+  paymentStatus: string;
+  paymentMethod: string;
+  allocations: PaymentAllocation[];
+}
+
+export interface GeneratedDvaResponse {
+  invoiceReference: string;
+  accountNumber: string;
+  bankName: string;
+  accountName: string;
+  amountDue: number;
+  expiryDate: string;
 }

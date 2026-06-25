@@ -10,6 +10,8 @@ import {
   PaginatedResponse,
   MoveSegmentsPayload,
   MovePendingBookingPayload,
+  GeneratedDvaResponse,
+  PaymentHistoryResponse,
 } from "@/components/dashboard/finance/types";
 import { OfflinePaymentApprovalResponse } from "@/components/dashboard/finance/types";
 
@@ -316,6 +318,59 @@ export function useMovePendingBooking() {
     },
     onError: (error: any) => {
       toast.error(error?.message || "Failed to move pending booking.");
+    },
+  });
+}
+
+export function useGetPaymentHistory(bookingId: string | null) {
+  return useQuery({
+    queryKey: ["paymentHistory", bookingId],
+    queryFn: async () => {
+      const data = await apiClient.get<PaymentHistoryResponse>(
+        `/admin/bookings/${bookingId}/payments`,
+      );
+      return data ?? null;
+    },
+    enabled: !!bookingId,
+  });
+}
+
+export function useGenerateBalanceDva() {
+  const queryClient = useQueryClient();
+  return useMutation<GeneratedDvaResponse, Error, { bookingId: string }>({
+    mutationFn: async ({ bookingId }) => {
+      const response = await apiClient.post<{ data: GeneratedDvaResponse }>(
+        `/admin/bookings/${bookingId}/generate-balance-dva`,
+        {},
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("New DVA generated successfully.");
+      queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["paymentHistory"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate DVA.");
+    },
+  });
+}
+
+export function useWaiveBalance() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { bookingId: string; reason: string }>({
+    mutationFn: async ({ bookingId, reason }) => {
+      await apiClient.post(`/admin/bookings/${bookingId}/waive-balance`, {
+        reason,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Outstanding balance waived successfully.");
+      queryClient.invalidateQueries({ queryKey: [PAYMENTS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["paymentHistory"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to waive balance.");
     },
   });
 }

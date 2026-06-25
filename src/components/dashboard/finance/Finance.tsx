@@ -51,6 +51,7 @@ import { AllocateVehicleModal } from "./AllocateVehicleModal";
 import { PaymentConflictModal } from "./payments/PaymentConflictModal";
 import { TransferVehicleModal } from "./TransferVehicleModal";
 import { MovePendingBookingModal } from "./MovePendingBookingModal";
+import { PaymentHistoryModal } from "./PaymentHistoryModal";
 
 export default function PaymentsPage() {
   const router = useRouter();
@@ -117,6 +118,11 @@ export default function PaymentsPage() {
     forceApprove: false,
   });
 
+  const [historyModal, setHistoryModal] = useState<{
+    isOpen: boolean;
+    payment: Payment | null;
+  }>({ isOpen: false, payment: null });
+
   const {
     data: paginatedData,
     isLoading,
@@ -175,7 +181,7 @@ export default function PaymentsPage() {
   const isRowSelectable = (payment: Payment) =>
     (payment.paymentStatus === "PENDING" ||
       payment.paymentStatus === "PARTIALLY_PAID") &&
-    payment.paymentProvider === "OFFLINE";
+    payment.paymentMethod === "OFFLINE";
 
   const handleRowSelect = (rowId: string | number) => {
     const id = rowId.toString();
@@ -233,8 +239,16 @@ export default function PaymentsPage() {
 
     const isForceApprovedNormal =
       payment.bookingCategory === "NORMAL" &&
-      payment.paymentProvider === "OFFLINE" &&
+      payment.paymentMethod === "OFFLINE" &&
       (payment.forceApproved || !!payment.intendedVehicleName);
+
+    if (payment.paymentMethod === "OFFLINE") {
+      actions.push({
+        label: "Manage Offline Payment",
+        icon: FileText,
+        onClick: () => setHistoryModal({ isOpen: true, payment }),
+      });
+    }
 
     if (isUnassigned && (isServicePricing || isForceApprovedNormal)) {
       actions.unshift({
@@ -298,7 +312,7 @@ export default function PaymentsPage() {
     if (
       (payment.paymentStatus === "PENDING" ||
         payment.paymentStatus === "PARTIALLY_PAID") &&
-      payment.paymentProvider === "OFFLINE"
+      payment.paymentMethod === "OFFLINE"
     ) {
       actions.push({
         label:
@@ -452,7 +466,27 @@ export default function PaymentsPage() {
         );
       },
     },
-    { header: "Provider", accessorKey: "paymentProvider" },
+    {
+      header: "Provider / Method",
+      accessorKey: "paymentProvider",
+      cell: (item) => (
+        <div className="flex flex-col items-start gap-1">
+          <span className="font-medium text-gray-900">
+            {item.paymentProvider}
+          </span>
+          <span
+            className={clsx(
+              "px-2 py-0.5 text-[10px] font-semibold rounded uppercase tracking-wide border",
+              item.paymentMethod === "ONLINE"
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : "bg-purple-50 text-purple-700 border-purple-200",
+            )}
+          >
+            {item.paymentMethod}
+          </span>
+        </div>
+      ),
+    },
     {
       header: "Booking Status",
       accessorKey: "bookingStatus",
@@ -778,6 +812,13 @@ export default function PaymentsPage() {
         <MovePendingBookingModal
           bookingId={bookingToMovePending}
           onClose={() => setBookingToMovePending(null)}
+        />
+      )}
+
+      {historyModal.isOpen && historyModal.payment && (
+        <PaymentHistoryModal
+          payment={historyModal.payment}
+          onClose={() => setHistoryModal({ isOpen: false, payment: null })}
         />
       )}
     </>
