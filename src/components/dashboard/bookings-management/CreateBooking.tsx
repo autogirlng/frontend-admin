@@ -419,22 +419,18 @@ export default function CreateBookingPage() {
   );
 
   const bankAccountOptions: Option[] = useMemo(() => {
-    if (!bankAccounts) return [];
-    return bankAccounts.map((acct: CompanyBankAccount) => ({
-      id: acct.id,
-      name: `${acct.bankName} - ${acct.accountNumber} (${acct.accountName})`,
-    }));
+    const defaultOption = { id: "", name: "Default / None" };
+    if (!bankAccounts) return [defaultOption];
+
+    return [
+      defaultOption,
+      ...bankAccounts.map((acct: CompanyBankAccount) => ({
+        id: acct.id,
+        name: `${acct.bankName} - ${acct.accountNumber} (${acct.accountName})`,
+      })),
+    ];
   }, [bankAccounts]);
 
-  // --- Effects ---
-  useEffect(() => {
-    if (bankAccounts && !selectedAccountId) {
-      const defaultAccount = bankAccounts.find((acct) => acct.default);
-      if (defaultAccount) setSelectedAccountId(defaultAccount.id);
-    }
-  }, [bankAccounts, selectedAccountId]);
-
-  // --- Handlers ---
   const handleFilterChange = (
     field: keyof Omit<VehicleSearchFilters, "page">,
     value: any,
@@ -1262,17 +1258,20 @@ export default function CreateBookingPage() {
       <p>Booking ID: {bookingResponse?.bookingId}</p>
       <div className="max-w-xs mx-auto">
         <Select
-          label="Bank Account for Invoice"
+          label="Bank Account for Invoice (Optional)"
           options={bankAccountOptions}
-          selected={bankAccountOptions.find((b) => b.id === selectedAccountId)}
-          onChange={(o) => setSelectedAccountId(o.id)}
+          selected={
+            bankAccountOptions.find(
+              (b) => b.id === (selectedAccountId || ""),
+            ) || bankAccountOptions[0]
+          }
+          onChange={(o) => setSelectedAccountId(o.id === "" ? null : o.id)}
         />
       </div>
       <div className="flex flex-wrap justify-center gap-4">
         <Button
           onClick={handleDownloadInvoice}
           isLoading={downloadInvoiceMutation.isPending}
-          disabled={!selectedAccountId}
           className="w-[200px] my-1"
         >
           <Download className="w-4 h-4 mr-2" /> Invoice
