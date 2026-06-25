@@ -244,7 +244,7 @@ export default function PaymentsPage() {
 
     if (payment.paymentMethod === "OFFLINE") {
       actions.push({
-        label: "Manage Offline Payment",
+        label: "Payment History",
         icon: FileText,
         onClick: () => setHistoryModal({ isOpen: true, payment }),
       });
