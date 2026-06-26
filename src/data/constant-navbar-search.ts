@@ -37,6 +37,7 @@ import {
   ShieldEllipsis,
   Pencil,
   WavesLadder,
+  Handshake,
 } from "lucide-react";
 
 export const SEARCHABLE_PAGES = [
@@ -171,6 +172,12 @@ export const SEARCHABLE_PAGES = [
     href: "/dashboard/set-up/discount-durations",
     path: "Configurations / Setup / Discount Durations",
     icon: Clock,
+  },
+  {
+    name: "Partnerships",
+    href: "/dashboard/partners",
+    path: "Configurations / Setup / Partnership",
+    icon: Handshake,
   },
   {
     name: "GeoSpatial Functions",

@@ -15,6 +15,7 @@ import {
   Star,
   ShieldEllipsis,
   Pencil,
+  Handshake,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -147,6 +148,15 @@ export default function SettingsPage() {
             title="Blog Settings"
             description="Manage blog posts and content."
             iconBgColor="bg-blue-100"
+          />
+
+          {/* 13. Partnership Settings */}
+          <SettingsCard
+            href="/dashboard/partners"
+            icon={Handshake}
+            title="Partnership Settings"
+            description="Manage Partnership."
+            iconBgColor="bg-green-100"
           />
         </div>
       </main>
