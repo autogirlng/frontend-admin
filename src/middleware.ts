@@ -2,14 +2,31 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { AccessibleRoute } from "@/types/route-access";
 
+async function getAccessibleRoutes(
+  accessToken: string,
+): Promise<AccessibleRoute[] | null> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body?.data?.accessibleRoutes ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
   if (pathname === "/login") {
-    if (token) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
+    if (token) return NextResponse.redirect(new URL("/dashboard", req.url));
     return NextResponse.next();
   }
 
@@ -17,20 +34,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Route access control — only enforced when the server has provided a route list
-  const accessibleRoutes = (token.accessibleRoutes as AccessibleRoute[] | undefined) ?? [];
+  const jwtRoutes =
+    (token.accessibleRoutes as AccessibleRoute[] | undefined) ?? [];
+  const freshRoutes = token.accessToken
+    ? await getAccessibleRoutes(token.accessToken as string)
+    : null;
 
-  if (accessibleRoutes.length > 0) {
-    // /dashboard root is always the safe fallback; never block it
-    if (pathname !== "/dashboard") {
-      const isAllowed = accessibleRoutes.some(
-        (route) =>
-          pathname === route.href || pathname.startsWith(route.href + "/"),
-      );
+  const accessibleRoutes: AccessibleRoute[] = freshRoutes ?? jwtRoutes;
 
-      if (!isAllowed) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      }
+  if (accessibleRoutes.length > 0 && pathname !== "/dashboard") {
+    const isAllowed = accessibleRoutes.some(
+      (route) =>
+        pathname === route.href || pathname.startsWith(route.href + "/"),
+    );
+    if (!isAllowed) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
 
