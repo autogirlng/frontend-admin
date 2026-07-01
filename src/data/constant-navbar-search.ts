@@ -38,6 +38,7 @@ import {
   Pencil,
   WavesLadder,
   Handshake,
+  Lock,
 } from "lucide-react";
 
 export const SEARCHABLE_PAGES = [
@@ -304,5 +305,11 @@ export const SEARCHABLE_PAGES = [
     href: "/dashboard/blog",
     path: "Management / Settings / Blog",
     icon: Pencil,
+  },
+  {
+    name: "Route Permissions",
+    href: "/dashboard/settings/route-permissions",
+    path: "Management / Settings / Route Permissions",
+    icon: Lock,
   },
 ];

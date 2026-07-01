@@ -1,3 +1,5 @@
+import { AccessibleRoute } from "@/types/route-access";
+
 export interface UserProfile {
   userId: string;
   firstName: string;
@@ -10,6 +12,7 @@ export interface UserProfile {
   emailVerified: boolean;
   phoneVerified: boolean;
   birthday?: string;
+  accessibleRoutes?: AccessibleRoute[];
 }
 
 export interface UpdateProfilePayload {

@@ -31,7 +31,7 @@ export const authOptions: AuthOptions = {
                 email: credentials.email,
                 password: credentials.password,
               }),
-            }
+            },
           );
 
           const responseData = await res.json();
@@ -39,6 +39,7 @@ export const authOptions: AuthOptions = {
           if (!res.ok || responseData.status !== "SUCCESSFUL") {
             throw new Error(responseData.message || "Invalid credentials");
           }
+
           const user = {
             id: responseData.data.userId,
             email: responseData.data.email,
@@ -46,6 +47,7 @@ export const authOptions: AuthOptions = {
             image: responseData.data.profilePictureUrl,
             accessToken: responseData.data.accessToken,
             refreshToken: responseData.data.refreshToken,
+            accessibleRoutes: responseData.data.accessibleRoutes ?? [],
           };
 
           return user;
@@ -63,6 +65,7 @@ export const authOptions: AuthOptions = {
         token.id = user.id;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
+        token.accessibleRoutes = user.accessibleRoutes;
       }
       return token;
     },
@@ -72,6 +75,7 @@ export const authOptions: AuthOptions = {
         session.user.id = token.id;
         session.user.accessToken = token.accessToken;
         session.user.refreshToken = token.refreshToken;
+        session.user.accessibleRoutes = token.accessibleRoutes;
       }
       return session;
     },

@@ -46,6 +46,7 @@ export const authOptions: AuthOptions = {
             image: responseData.data.profilePictureUrl,
             accessToken: responseData.data.accessToken,
             refreshToken: responseData.data.refreshToken,
+            accessibleRoutes: responseData.data.accessibleRoutes ?? [],
           };
 
           return user;

@@ -1,11 +1,12 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, Search, LogOut, MessageCircle, X } from "lucide-react";
 import { NotificationPopover } from "@/components/notifications/NotificationPopover";
 import { SEARCHABLE_PAGES } from "@/data/constant-navbar-search";
+import { useAccessibleRoutes } from "@/lib/hooks/useAccessibleRoutes";
 
 interface HeaderProps {
   setSidebarOpen: (isOpen: boolean) => void;
@@ -20,6 +21,14 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
 
   const searchRef = useRef<HTMLDivElement>(null);
 
+  const accessibleRoutes = useAccessibleRoutes();
+
+  const accessiblePages = useMemo(() => {
+    if (accessibleRoutes.length === 0) return SEARCHABLE_PAGES;
+    const allowedHrefs = new Set(accessibleRoutes.map((r) => r.href));
+    return SEARCHABLE_PAGES.filter((page) => allowedHrefs.has(page.href));
+  }, [accessibleRoutes]);
+
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
   };
@@ -32,7 +41,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
       setFilteredResults([]);
       setIsSearchOpen(false);
     } else {
-      const filtered = SEARCHABLE_PAGES.filter(
+      const filtered = accessiblePages.filter(
         (page) =>
           page.name.toLowerCase().includes(query.toLowerCase()) ||
           page.path.toLowerCase().includes(query.toLowerCase()),

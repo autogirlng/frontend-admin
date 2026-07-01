@@ -16,6 +16,7 @@ import {
   ShieldEllipsis,
   Pencil,
   Handshake,
+  Lock,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
 
@@ -157,6 +158,15 @@ export default function SettingsPage() {
             title="Partnership Settings"
             description="Manage Partnership."
             iconBgColor="bg-green-100"
+          />
+
+          {/* 14. Route Permissions */}
+          <SettingsCard
+            href="/dashboard/settings/route-permissions"
+            icon={Lock}
+            title="Route Permissions"
+            description="Control which roles, departments, and users can access each dashboard route."
+            iconBgColor="bg-indigo-100"
           />
         </div>
       </main>

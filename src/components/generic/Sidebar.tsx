@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   LayoutDashboard,
   User,
@@ -26,6 +26,7 @@ import {
   BriefcaseBusiness,
   WavesLadder,
 } from "lucide-react";
+import { useAccessibleRoutes } from "@/lib/hooks/useAccessibleRoutes";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -42,51 +43,65 @@ const getInitials = (name = "") => {
   return name.substring(0, 2).toUpperCase();
 };
 
+const MAIN_NAV_LINKS = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Bookings", href: "/dashboard/bookings", icon: Ticket },
+  { name: "Trips", href: "/dashboard/trips", icon: Plane },
+  { name: "Leaderboard", href: "/dashboard/leaderboard", icon: WavesLadder },
+  {
+    name: "Vehicle Availability",
+    href: "/dashboard/availability",
+    icon: GalleryHorizontal,
+  },
+  {
+    name: "Vehicle Onboarding",
+    href: "/dashboard/vehicle-onboarding",
+    icon: Car,
+  },
+  { name: "Hosts", href: "/dashboard/host", icon: CarFront },
+  { name: "Customers", href: "/dashboard/customers", icon: Users },
+  {
+    name: "Organizations",
+    href: "/dashboard/organizations",
+    icon: Building2,
+  },
+  { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
+  { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
+  {
+    name: "Driver Application",
+    href: "/dashboard/drivers/applications",
+    icon: BriefcaseBusiness,
+  },
+  { name: "Contact Us", href: "/dashboard/settings/contact", icon: Mail },
+];
+
+const SETTINGS_LINK = {
+  name: "Settings",
+  href: "/dashboard/settings",
+  icon: Settings,
+};
+
 const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const [isMinimized, setIsMinimized] = useState(false);
 
-  const mainNavLinks = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Bookings", href: "/dashboard/bookings", icon: Ticket },
-    { name: "Trips", href: "/dashboard/trips", icon: Plane },
-    { name: "Leaderboard", href: "/dashboard/leaderboard", icon: WavesLadder },
-    {
-      name: "Vehicle Availability",
-      href: "/dashboard/availability",
-      icon: GalleryHorizontal,
-    },
-    {
-      name: "Vehicle Onboarding",
-      href: "/dashboard/vehicle-onboarding",
-      icon: Car,
-    },
-    { name: "Hosts", href: "/dashboard/host", icon: CarFront },
-    { name: "Customers", href: "/dashboard/customers", icon: Users },
-    {
-      name: "Organizations",
-      href: "/dashboard/organizations",
-      icon: Building2,
-    },
-    { name: "Drivers", href: "/dashboard/drivers", icon: UserStar },
-    { name: "Finance", href: "/dashboard/finance", icon: CirclePoundSterling },
-    {
-      name: "Driver Application",
-      href: "/dashboard/drivers/applications",
-      icon: BriefcaseBusiness,
-    },
-    { name: "Contact Us", href: "/dashboard/settings/contact", icon: Mail },
-  ];
+  const accessibleRoutes = useAccessibleRoutes();
 
-  const settingsLink = {
-    name: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  };
+  const allowedHrefs = useMemo(() => {
+    if (accessibleRoutes.length === 0) return null;
+    return new Set(accessibleRoutes.map((r) => r.href));
+  }, [accessibleRoutes]);
+
+  const visibleNavLinks = useMemo(() => {
+    if (!allowedHrefs) return MAIN_NAV_LINKS;
+    return MAIN_NAV_LINKS.filter((link) => allowedHrefs.has(link.href));
+  }, [allowedHrefs]);
+
+  const isSettingsVisible =
+    !allowedHrefs || allowedHrefs.has(SETTINGS_LINK.href);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -148,7 +163,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
         </div>
         <nav className="flex-1 overflow-y-auto overflow-x-hidden p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
           <ul>
-            {mainNavLinks.map((link) => {
+            {visibleNavLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <li key={link.name} className="mb-2">
@@ -178,28 +193,30 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
           </ul>
         </nav>
         <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
-          <ul>
-            <li className="mb-2">
-              <Link
-                href={settingsLink.href}
-                onClick={() => setSidebarOpen(false)}
-                className={` group flex items-center p-3 rounded-lg transition-colors ${
-                  pathname === settingsLink.href
-                    ? "bg-[#0096FF] text-white"
-                    : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
-                } ${isMinimized ? "justify-center" : ""}`}
-              >
-                <settingsLink.icon
-                  className={`h-5 w-5 ${isMinimized ? "mr-0" : "mr-3"}`}
-                />
-                <span
-                  className={`font-medium ${isMinimized ? "hidden" : "block"}`}
+          {isSettingsVisible && (
+            <ul>
+              <li className="mb-2">
+                <Link
+                  href={SETTINGS_LINK.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={` group flex items-center p-3 rounded-lg transition-colors ${
+                    pathname === SETTINGS_LINK.href
+                      ? "bg-[#0096FF] text-white"
+                      : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
+                  } ${isMinimized ? "justify-center" : ""}`}
                 >
-                  {settingsLink.name}
-                </span>
-              </Link>
-            </li>
-          </ul>
+                  <SETTINGS_LINK.icon
+                    className={`h-5 w-5 ${isMinimized ? "mr-0" : "mr-3"}`}
+                  />
+                  <span
+                    className={`font-medium ${isMinimized ? "hidden" : "block"}`}
+                  >
+                    {SETTINGS_LINK.name}
+                  </span>
+                </Link>
+              </li>
+            </ul>
+          )}
           {session?.user && (
             <div className="relative" ref={dropdownRef}>
               <div
