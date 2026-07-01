@@ -44,10 +44,24 @@ export async function middleware(req: NextRequest) {
 
   if (accessibleRoutes.length > 0 && pathname !== "/dashboard") {
     const isAllowed = accessibleRoutes.some((route) => {
-      // Skip the /dashboard root — it is always the safe fallback and must
-      // never act as a wildcard prefix that matches every sub-route.
       if (route.href === "/dashboard") return false;
-      return pathname === route.href || pathname.startsWith(route.href + "/");
+
+      if (pathname === route.href) return true;
+
+      if (pathname.startsWith(route.href + "/")) {
+        const extra = pathname.slice(route.href.length + 1);
+        return extra
+          .split("/")
+          .filter(Boolean)
+          .every(
+            (segment) =>
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                segment,
+              ) || /^\d+$/.test(segment),
+          );
+      }
+
+      return false;
     });
     if (!isAllowed) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
