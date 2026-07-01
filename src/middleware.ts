@@ -43,10 +43,12 @@ export async function middleware(req: NextRequest) {
   const accessibleRoutes: AccessibleRoute[] = freshRoutes ?? jwtRoutes;
 
   if (accessibleRoutes.length > 0 && pathname !== "/dashboard") {
-    const isAllowed = accessibleRoutes.some(
-      (route) =>
-        pathname === route.href || pathname.startsWith(route.href + "/"),
-    );
+    const isAllowed = accessibleRoutes.some((route) => {
+      // Skip the /dashboard root — it is always the safe fallback and must
+      // never act as a wildcard prefix that matches every sub-route.
+      if (route.href === "/dashboard") return false;
+      return pathname === route.href || pathname.startsWith(route.href + "/");
+    });
     if (!isAllowed) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
