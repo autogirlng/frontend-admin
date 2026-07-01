@@ -31,6 +31,7 @@ import {
   Shield, // ✅ NEW Icon
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useAccessibleRoutes } from "@/lib/hooks/useAccessibleRoutes";
 
 // Helper to format currency
 const formatNaira = (amount: number = 0) => {
@@ -44,6 +45,10 @@ const formatNaira = (amount: number = 0) => {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const accessibleRoutes = useAccessibleRoutes();
+  const canAccessBookings =
+    accessibleRoutes.length === 0 ||
+    accessibleRoutes.some((r) => r.href === "/dashboard/bookings");
 
   // Fetch all stats concurrently
   const { data: bookingStats, isLoading: loadingBookings } =
@@ -73,7 +78,7 @@ export default function DashboardPage() {
       {!isLoading && (
         <div className="space-y-10">
           {/* --- Section 1: Platform Revenue --- */}
-          <section>
+          {canAccessBookings && <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Autogirl Wallet
             </h2>
@@ -96,10 +101,10 @@ export default function DashboardPage() {
                 iconColorClasses="bg-blue-100 text-blue-600"
               />
             </PrimaryStatCard>
-          </section>
+          </section>}
 
           {/* --- Section 2: Booking Revenue (GMV) --- */}
-          <section>
+          {canAccessBookings && <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Booking Revenue (GMV)
             </h2>
@@ -132,10 +137,10 @@ export default function DashboardPage() {
                 iconColorClasses="bg-purple-100 text-purple-600"
               />
             </div>
-          </section>
+          </section>}
 
           {/* --- Section 3: Platform Users --- */}
-          <section>
+          {canAccessBookings && <section>
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               Platform Users
             </h2>
@@ -165,7 +170,7 @@ export default function DashboardPage() {
                 iconColorClasses="bg-gray-200 text-gray-600"
               />
             </div>
-          </section>
+          </section>}
 
           {/* --- Section 4: Vehicle Fleet --- */}
           <section>
