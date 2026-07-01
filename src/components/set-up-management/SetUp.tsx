@@ -17,8 +17,9 @@ import {
   FileSpreadsheet,
   Users,
 } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
 import CustomBack from "../generic/CustomBack";
+import { useAccessibleRoutes } from "@/lib/hooks/useAccessibleRoutes";
 
 interface SetupItem {
   title: string;
@@ -109,6 +110,17 @@ const setupItems: SetupItem[] = [
 ];
 
 export default function SetupPage() {
+  const accessibleRoutes = useAccessibleRoutes();
+  const allowedHrefs = useMemo(
+    () => (accessibleRoutes.length > 0 ? new Set(accessibleRoutes.map((r) => r.href)) : null),
+    [accessibleRoutes],
+  );
+
+  const visibleItems = useMemo(
+    () => (allowedHrefs ? setupItems.filter((i) => allowedHrefs.has(i.href)) : setupItems),
+    [allowedHrefs],
+  );
+
   return (
     <main className="py-3 max-w-8xl mx-auto">
       <CustomBack />
@@ -120,7 +132,7 @@ export default function SetupPage() {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {setupItems.map((item) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
 
           return (
