@@ -19,6 +19,7 @@ import {
   Lock,
 } from "lucide-react";
 import CustomBack from "@/components/generic/CustomBack";
+import CustomLoader from "@/components/generic/CustomLoader";
 import { useAccessibleRoutes } from "@/lib/hooks/useAccessibleRoutes";
 
 const SETTINGS_CARDS = [
@@ -132,7 +133,10 @@ const SETTINGS_CARDS = [
 export default function SettingsPage() {
   const accessibleRoutes = useAccessibleRoutes();
   const allowedHrefs = useMemo(
-    () => (accessibleRoutes.length > 0 ? new Set(accessibleRoutes.map((r) => r.href)) : null),
+    () =>
+      accessibleRoutes && accessibleRoutes.length > 0
+        ? new Set(accessibleRoutes.map((r) => r.href))
+        : null,
     [accessibleRoutes],
   );
 
@@ -156,11 +160,15 @@ export default function SettingsPage() {
         </div>
 
         {/* --- Settings Card Grid --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleCards.map((card) => (
-            <SettingsCard key={card.href} {...card} />
-          ))}
-        </div>
+        {accessibleRoutes === null ? (
+          <CustomLoader />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleCards.map((card) => (
+              <SettingsCard key={card.href} {...card} />
+            ))}
+          </div>
+        )}
       </main>
     </>
   );

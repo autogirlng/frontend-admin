@@ -91,7 +91,7 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
   const accessibleRoutes = useAccessibleRoutes();
 
   const allowedHrefs = useMemo(() => {
-    if (accessibleRoutes.length === 0) return null;
+    if (!accessibleRoutes || accessibleRoutes.length === 0) return null;
     return new Set(accessibleRoutes.map((r) => r.href));
   }, [accessibleRoutes]);
 

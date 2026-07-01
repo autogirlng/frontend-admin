@@ -47,8 +47,9 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const accessibleRoutes = useAccessibleRoutes();
   const canAccessBookings =
-    accessibleRoutes.length === 0 ||
-    accessibleRoutes.some((r) => r.href === "/dashboard/bookings");
+    accessibleRoutes !== null &&
+    (accessibleRoutes.length === 0 ||
+      accessibleRoutes.some((r) => r.href === "/dashboard/bookings"));
 
   // Fetch all stats concurrently
   const { data: bookingStats, isLoading: loadingBookings } =

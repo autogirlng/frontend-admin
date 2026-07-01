@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import React, { useMemo } from "react";
 import CustomBack from "../generic/CustomBack";
+import CustomLoader from "../generic/CustomLoader";
 import { useAccessibleRoutes } from "@/lib/hooks/useAccessibleRoutes";
 
 interface SetupItem {
@@ -112,7 +113,10 @@ const setupItems: SetupItem[] = [
 export default function SetupPage() {
   const accessibleRoutes = useAccessibleRoutes();
   const allowedHrefs = useMemo(
-    () => (accessibleRoutes.length > 0 ? new Set(accessibleRoutes.map((r) => r.href)) : null),
+    () =>
+      accessibleRoutes && accessibleRoutes.length > 0
+        ? new Set(accessibleRoutes.map((r) => r.href))
+        : null,
     [accessibleRoutes],
   );
 
@@ -131,35 +135,39 @@ export default function SetupPage() {
         Configure and manage your platform's infrastructure and settings.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {visibleItems.map((item) => {
-          const Icon = item.icon;
+      {accessibleRoutes === null ? (
+        <CustomLoader />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {visibleItems.map((item) => {
+            const Icon = item.icon;
 
-          return (
-            <Link
-              href={item.href}
-              key={item.title}
-              className="group flex items-center justify-between p-6
-                         bg-white border border-gray-200 rounded-lg 
-                         shadow-sm transition-all
-                         hover:shadow-md hover:bg-gray-50"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 p-3 bg-indigo-50 rounded-full">
-                  <Icon className="w-6 h-6 text-[#0096FF]" />
+            return (
+              <Link
+                href={item.href}
+                key={item.title}
+                className="group flex items-center justify-between p-6
+                           bg-white border border-gray-200 rounded-lg
+                           shadow-sm transition-all
+                           hover:shadow-md hover:bg-gray-50"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 p-3 bg-indigo-50 rounded-full">
+                    <Icon className="w-6 h-6 text-[#0096FF]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-gray-500">{item.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-gray-500">{item.description}</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 transition-transform group-hover:translate-x-1" />
-            </Link>
-          );
-        })} 
-      </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 transition-transform group-hover:translate-x-1" />
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }

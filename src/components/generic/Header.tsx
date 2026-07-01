@@ -24,7 +24,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
   const accessibleRoutes = useAccessibleRoutes();
 
   const accessiblePages = useMemo(() => {
-    if (accessibleRoutes.length === 0) return SEARCHABLE_PAGES;
+    if (!accessibleRoutes || accessibleRoutes.length === 0) return SEARCHABLE_PAGES;
     const allowedHrefs = new Set(accessibleRoutes.map((r) => r.href));
     return SEARCHABLE_PAGES.filter((page) => allowedHrefs.has(page.href));
   }, [accessibleRoutes]);
