@@ -162,38 +162,49 @@ const Sidebar = ({ isSidebarOpen, setSidebarOpen }: SidebarProps) => {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto overflow-x-hidden p-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
-          <ul>
-            {visibleNavLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <li key={link.name} className="mb-2">
-                  <Link
-                    href={link.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center p-3 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-[#0096FF] text-white"
-                        : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
-                    } ${isMinimized ? "justify-center" : ""}`}
-                  >
-                    <link.icon
-                      className={`h-5 w-5 ${isMinimized ? "mr-0" : "mr-3"}`}
-                    />
-                    <span
-                      className={`font-medium ${
-                        isMinimized ? "hidden" : "block"
-                      }`}
-                    >
-                      {link.name}
-                    </span>
-                  </Link>
+          {accessibleRoutes === null ? (
+            <ul className="animate-pulse space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <li key={i} className="flex items-center gap-3 p-3 rounded-lg">
+                  <div className="h-5 w-5 rounded bg-gray-200 flex-shrink-0" />
+                  {!isMinimized && <div className="h-4 rounded bg-gray-200 flex-1" />}
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          ) : (
+            <ul>
+              {visibleNavLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <li key={link.name} className="mb-2">
+                    <Link
+                      href={link.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center p-3 rounded-lg transition-colors ${
+                        isActive
+                          ? "bg-[#0096FF] text-white"
+                          : "text-gray-700 hover:bg-[#7393B3] hover:text-white"
+                      } ${isMinimized ? "justify-center" : ""}`}
+                    >
+                      <link.icon
+                        className={`h-5 w-5 ${isMinimized ? "mr-0" : "mr-3"}`}
+                      />
+                      <span
+                        className={`font-medium ${
+                          isMinimized ? "hidden" : "block"
+                        }`}
+                      >
+                        {link.name}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </nav>
         <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
-          {isSettingsVisible && (
+          {accessibleRoutes !== null && isSettingsVisible && (
             <ul>
               <li className="mb-2">
                 <Link
