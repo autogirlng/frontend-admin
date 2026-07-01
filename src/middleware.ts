@@ -6,7 +6,7 @@ async function getAccessibleRoutes(
   accessToken: string,
 ): Promise<AccessibleRoute[] | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
