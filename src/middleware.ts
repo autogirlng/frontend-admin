@@ -1,6 +1,10 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { AccessibleRoute } from "@/types/route-access";
+import {
+  KNOWN_PAGE_HREFS,
+  ROUTE_PREFIX_ALIASES,
+} from "@/data/known-page-hrefs";
 
 async function getAccessibleRoutes(
   accessToken: string,
@@ -43,26 +47,41 @@ export async function middleware(req: NextRequest) {
   const accessibleRoutes: AccessibleRoute[] = freshRoutes ?? jwtRoutes;
 
   if (accessibleRoutes.length > 0 && pathname !== "/dashboard") {
-    const isAllowed = accessibleRoutes.some((route) => {
-      if (route.href === "/dashboard") return false;
+    const allowedHrefs = new Set(accessibleRoutes.map((r) => r.href));
 
-      if (pathname === route.href) return true;
+    const resolvedPathname = (() => {
+      for (const [aliasPrefix, parentRoute] of Object.entries(
+        ROUTE_PREFIX_ALIASES,
+      )) {
+        if (
+          pathname === aliasPrefix ||
+          pathname.startsWith(aliasPrefix + "/")
+        ) {
+          return parentRoute;
+        }
+      }
+      return pathname;
+    })();
 
-      if (pathname.startsWith(route.href + "/")) {
-        const extra = pathname.slice(route.href.length + 1);
-        return extra
-          .split("/")
-          .filter(Boolean)
-          .every(
-            (segment) =>
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-                segment,
-              ) || /^\d+$/.test(segment),
-          );
+    const isAllowed = (() => {
+      if (allowedHrefs.has(resolvedPathname)) return true;
+
+      let bestParent: string | null = null;
+      for (const href of allowedHrefs) {
+        if (href === "/dashboard") continue;
+        if (
+          resolvedPathname.startsWith(href + "/") &&
+          (bestParent === null || href.length > bestParent.length)
+        ) {
+          bestParent = href;
+        }
       }
 
-      return false;
-    });
+      if (!bestParent) return false;
+
+      return !KNOWN_PAGE_HREFS.has(pathname);
+    })();
+
     if (!isAllowed) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
